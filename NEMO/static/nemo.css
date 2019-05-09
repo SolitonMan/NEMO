@@ -134,6 +134,11 @@ label
 	color: lightgrey;
 }
 
+.red
+{
+	color: red;
+}
+
 .hover-black:hover
 {
 	color: black;
@@ -212,7 +217,7 @@ appear as a pointer (rather than text selector) when mousing over event text. */
 {
 	margin-top: 4px;
 	padding: 4px 0;
-	background-color: #ffffff;
+	background-color: #314D64;
 	border: 1px solid #cccccc;
 	border-radius: 4px;
 	box-shadow: 0 5px 10px rgba(0, 0, 0, .2);

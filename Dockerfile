@@ -1,5 +1,18 @@
 FROM python:3.6
 
+# Install LDAP support
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get update --fix-missing
+RUN apt-get -y upgrade
+RUN apt-get install -y libsasl2-dev libldap2-dev
+RUN apt-get install -y slapd ldap-utils
+RUN pip install python-ldap
+RUN pip install django-auth-ldap
+
+# Install PostgreSQL support
+RUN pip install psycopg2-binary
+
+
 # Intall NEMO (in the current directory) and Gunicorn
 COPY . /nemo/
 RUN pip install /nemo/ gunicorn==19.9.0

@@ -5,7 +5,7 @@ from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.contrib.auth.models import Permission
 
 from NEMO.actions import lock_selected_interlocks, synchronize_with_tool_usage, unlock_selected_interlocks
-from NEMO.models import Account, ActivityHistory, Alert, Area, AreaAccessRecord, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableCategory, ConsumableWithdraw, ContactInformation, ContactInformationCategory, Customization, Door, Interlock, InterlockCard, LandingPageChoice, MembershipHistory, News, Notification, PhysicalAccessLevel, PhysicalAccessLog, Project, Reservation, Resource, ResourceCategory, SafetyIssue, ScheduledOutage, ScheduledOutageCategory, StaffCharge, Task, TaskCategory, TaskHistory, TaskStatus, Tool, TrainingSession, UsageEvent, User, UserType
+from NEMO.models import Account, ActivityHistory, Alert, Area, AreaAccessRecord, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableCategory, ConsumableWithdraw, ContactInformation, ContactInformationCategory, Core, Customization, Door, Interlock, InterlockCard, LandingPageChoice, MembershipHistory, News, Notification, PhysicalAccessLevel, PhysicalAccessLog, Project, Reservation, Resource, ResourceCategory, SafetyIssue, ScheduledOutage, ScheduledOutageCategory, StaffCharge, Task, TaskCategory, TaskHistory, TaskStatus, Tool, TrainingSession, UsageEvent, User, UserType
 
 admin.site.site_header = "NEMO"
 admin.site.site_title = "NEMO"
@@ -151,11 +151,11 @@ class ToolAdminForm(forms.ModelForm):
 
 @register(Tool)
 class ToolAdmin(admin.ModelAdmin):
-	list_display = ('name', 'category', 'visible', 'operational', 'problematic', 'is_configurable')
-	list_filter = ('visible', 'operational', 'category')
+	list_display = ('name', 'category', 'core_id', 'visible', 'operational', 'problematic', 'is_configurable')
+	list_filter = ('visible', 'operational', 'category', 'core_id')
 	form = ToolAdminForm
 	fieldsets = (
-		(None, {'fields': ('name', 'category', 'qualified_users', 'post_usage_questions'),}),
+		(None, {'fields': ('name', 'category', 'core_id', 'qualified_users', 'post_usage_questions'),}),
 		('Current state', {'fields': ('visible', 'operational'),}),
 		('Contact information', {'fields': ('primary_owner', 'backup_owners', 'notification_email_address', 'location', 'phone_number'),}),
 		('Usage policy', {'fields': ('reservation_horizon', 'minimum_usage_block_time', 'maximum_usage_block_time', 'maximum_reservations_per_day', 'minimum_time_between_reservations', 'maximum_future_reservation_time', 'missed_reservation_threshold', 'requires_area_access', 'grant_physical_access_level_upon_qualification', 'grant_badge_reader_access_upon_qualification', 'interlock', 'allow_delayed_logoff'),}),
@@ -301,7 +301,7 @@ class ConsumableCategoryAdmin(admin.ModelAdmin):
 
 @register(ConsumableWithdraw)
 class ConsumableWithdrawAdmin(admin.ModelAdmin):
-	list_display = ('id', 'customer', 'merchant', 'consumable', 'quantity', 'project', 'date')
+	list_display = ('id', 'customer', 'merchant', 'consumable', 'quantity', 'project', 'date', 'core_id')
 	list_filter = ('date', 'consumable')
 	date_hierarchy = 'date'
 
@@ -378,7 +378,7 @@ class UserTypeAdmin(admin.ModelAdmin):
 class UserAdmin(admin.ModelAdmin):
 	filter_horizontal = ('groups', 'user_permissions', 'qualifications', 'projects', 'physical_access_levels')
 	fieldsets = (
-		('Personal information', {'fields': ('first_name', 'last_name', 'username', 'email', 'badge_number', 'type', 'domain')}),
+		('Personal information', {'fields': ('first_name', 'last_name', 'username', 'email', 'badge_number', 'type', 'domain', 'core_ids')}),
 		('Permissions', {'fields': ('is_active', 'is_staff', 'is_technician', 'is_superuser', 'training_required', 'groups', 'user_permissions', 'physical_access_levels')}),
 		('Important dates', {'fields': ('date_joined', 'last_login', 'access_expiration')}),
 		('NanoFab information', {'fields': ('qualifications', 'projects')}),
@@ -393,6 +393,7 @@ class UserAdmin(admin.ModelAdmin):
 		record_local_many_to_many_changes(request, obj, form, 'projects')
 		record_local_many_to_many_changes(request, obj, form, 'qualifications')
 		record_local_many_to_many_changes(request, obj, form, 'physical_access_levels')
+		record_local_many_to_many_changes(request, obj, form, 'core_ids')
 		record_active_state(request, obj, form, 'is_active', not change)
 
 
@@ -472,3 +473,4 @@ class NotificationAdmin(admin.ModelAdmin):
 admin.site.register(ResourceCategory)
 admin.site.register(Area)
 admin.site.register(Permission)
+admin.site.register(Core)

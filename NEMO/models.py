@@ -1,6 +1,7 @@
 import datetime
 import socket
 import struct
+import requests
 from datetime import timedelta
 from logging import getLogger
 
@@ -104,6 +105,9 @@ class User(models.Model):
 	USERNAME_FIELD = 'username'
 	REQUIRED_FIELDS = ['first_name', 'last_name', 'email']
 	objects = UserManager()
+
+	# Core relationship
+	core_ids = models.ManyToManyField('Core', related_name="user_core", blank=True)
 
 	def has_perm(self, perm, obj=None):
 		"""
@@ -238,6 +242,9 @@ class Tool(models.Model):
 	missed_reservation_threshold = models.PositiveIntegerField(null=True, blank=True, help_text="The amount of time (in minutes) that a tool reservation may go unused before it is automatically marked as \"missed\" and hidden from the calendar. Usage can be from any user, regardless of who the reservation was originally created for. The cancellation process is triggered by a timed job on the web server.")
 	allow_delayed_logoff = models.BooleanField(default=False, help_text='Upon logging off users may enter a delay before another user may use the tool. Some tools require "spin-down" or cleaning time after use.')
 	post_usage_questions = models.TextField(null=True, blank=True, help_text="")
+
+	# Core info
+	core_id = models.ForeignKey('Core', related_name="tool_core", help_text="The core facility of which this tool is part.", null=True)
 
 	class Meta:
 		ordering = ['name']
@@ -440,6 +447,9 @@ class Area(models.Model):
 	name = models.CharField(max_length=200, help_text='What is the name of this area? The name will be displayed on the tablet login and logout pages.')
 	welcome_message = models.TextField(help_text='The welcome message will be displayed on the tablet login page. You can use HTML and JavaScript.')
 
+	# add core id
+	core_id = models.ForeignKey('Core', related_name='area_core', null=True)
+
 	class Meta:
 		ordering = ['name']
 
@@ -602,6 +612,9 @@ class ConsumableWithdraw(models.Model):
 	project = models.ForeignKey(Project, help_text="The withdraw will be billed to this project.")
 	date = models.DateTimeField(default=timezone.now, help_text="The date and time when the user withdrew the consumable.")
 
+	# add core_id to assign transaction to appropriate core
+	core_id = models.ForeignKey('Core', null=True, related_name='conswith_core')
+
 	class Meta:
 		ordering = ['-date']
 
@@ -648,6 +661,10 @@ class Interlock(models.Model):
 
 	def __issue_command(self, command_type):
 		if settings.DEBUG:
+			uri = 'http://' + str(self.card.server) + '/state.xml?relay' + str(self.card.number) + 'State=' + str(command_type)
+			print(uri)
+			req = requests.get(uri)
+
 			self.most_recent_reply = "Interlock interface mocked out because settings.DEBUG = True. Interlock last set on " + format_datetime(timezone.now()) + "."
 			self.state = command_type
 			self.save()
@@ -655,107 +672,15 @@ class Interlock(models.Model):
 
 		interlocks_logger = getLogger("NEMO.interlocks")
 
-		# The string in this next function call identifies the format of the interlock message.
-		# '!' means use network byte order (big endian) for the contents of the message.
-		# '20s' means that the message begins with a 20 character string.
-		# Each 'i' is an integer field (4 bytes).
-		# Each 'b' is a byte field (1 byte).
-		# '18s' means that the message ends with a 18 character string.
-		# More information on Python structs can be found at:
-		# http://docs.python.org/library/struct.html
-		command_schema = struct.Struct('!20siiiiiiiiibbbbb18s')
-		command_message = command_schema.pack(
-			b'EQCNTL_BEGIN_COMMAND',
-			1,  # Instruction count
-			self.card.number,
-			self.card.even_port,
-			self.card.odd_port,
-			self.channel,
-			0,  # Command return value
-			command_type,  # Type
-			0,  # Command
-			0,  # Delay
-			0,  # SD overload
-			0,  # RD overload
-			0,  # ADC done
-			0,  # Busy
-			0,  # Instruction return value
-			b'EQCNTL_END_COMMAND'
-		)
+		
+		# build uri to toggle relay then call requests.get()
+		uri = 'http://' + str(self.card.server) + '/state.xml?relay' + str(self.card.number) + 'State=' + str(command_type)
+		req = requests.get(uri)
 
-		reply_message = ""
-
-		# Create a TCP socket to send the interlock command.
-		sock = socket.socket()
-		try:
-			sock.settimeout(3.0)  # Set the send/receive timeout to be 3 seconds.
-			server_address = (self.card.server, self.card.port)
-			sock.connect(server_address)
-			sock.send(command_message)
-			# The reply schema is the same as the command schema except there are no start and end strings.
-			reply_schema = struct.Struct('!iiiiiiiiibbbbb')
-			reply = sock.recv(reply_schema.size)
-			reply = reply_schema.unpack(reply)
-
-			# Update the state of the interlock in the database if the command succeeded.
-			if reply[5]:
-				self.state = command_type
-			else:
-				self.state = self.State.UNKNOWN
-
-			# Compose the status message of the last command and write it to the database.
-			reply_message = f"Reply received at {format_datetime(timezone.now())}. "
-			if command_type == self.State.UNLOCKED:
-				reply_message += "Unlock"
-			elif command_type == self.State.LOCKED:
-				reply_message += "Lock"
-			else:
-				reply_message += "Unknown"
-			reply_message += " command "
-			if reply[5]:  # Index 5 of the reply is the return value of the whole command.
-				reply_message += "succeeded."
-			else:
-				reply_message += "failed. Response information: " +\
-								"Instruction count = " + str(reply[0]) + ", " +\
-								"card number = " + str(reply[1]) + ", " +\
-								"even port = " + str(reply[2]) + ", " +\
-								"odd port = " + str(reply[3]) + ", " +\
-								"channel = " + str(reply[4]) + ", " +\
-								"command return value = " + str(reply[5]) + ", " +\
-								"instruction type = " + str(reply[6]) + ", " +\
-								"instruction = " + str(reply[7]) + ", " +\
-								"delay = " + str(reply[8]) + ", " +\
-								"SD overload = " + str(reply[9]) + ", " +\
-								"RD overload = " + str(reply[10]) + ", " +\
-								"ADC done = " + str(reply[11]) + ", " +\
-								"busy = " + str(reply[12]) + ", " +\
-								"instruction return value = " + str(reply[13]) + "."
-
-		# Log any errors that occurred during the operation into the database.
-		except OSError as error:
-			reply_message = "Socket error"
-			if error.errno:
-				reply_message += " " + str(error.errno)
-			reply_message += ": " + str(error)
-			self.state = self.State.UNKNOWN
-		except struct.error as error:
-			reply_message = "Response format error. " + str(error)
-			self.state = self.State.UNKNOWN
-		except Exception as error:
-			reply_message = "General exception. " + str(error)
-			self.state = self.State.UNKNOWN
-		finally:
-			sock.close()
-			self.most_recent_reply = reply_message
-			self.save()
-			if self.state == self.State.UNKNOWN:
-				interlocks_logger.error(f"Interlock {self.id} is in an unknown state. Most recent reply at {format_datetime(timezone.now())}: {self.most_recent_reply}")
-			elif self.state == self.State.LOCKED:
-				interlocks_logger.debug(f"Interlock {self.id} locked successfully at {format_datetime(timezone.now())}")
-			elif self.state == self.State.UNLOCKED:
-				interlocks_logger.debug(f"Interlock {self.id} unlocked successfully at {format_datetime(timezone.now())}")
-			# If the command type equals the current state then the command worked which will return true:
-			return self.state == command_type
+		self.most_recent_reply = "Executed " + uri + " successfully."
+		self.state = command_type
+		self.save()
+		return self.state == command_type
 
 	class Meta:
 		unique_together = ('card', 'channel')
@@ -1209,3 +1134,10 @@ class News(models.Model):
 	class Meta:
 		ordering = ['-last_updated']
 		verbose_name_plural = 'News'
+
+
+class Core(models.Model):
+	name = models.CharField(max_length=500)
+	
+	def __str__(self):
+		return str(self.name)
