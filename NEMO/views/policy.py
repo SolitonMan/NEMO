@@ -80,6 +80,12 @@ def check_policy_to_enable_tool(tool, operator, user, project, staff_charge):
 	if tool.scheduled_outage_in_progress() and not operator.is_staff:
 		return HttpResponseBadRequest("A scheduled outage is in effect. You must wait for the outage to end before you can use the tool.")
 
+	# Refuses login on tools that require reservations if there is no reservation
+	if tool.reservation_required and not operator.is_staff:
+		td=timedelta(minutes=15)
+		if not Reservation.objects.filter(start__lt=timezone.now()+td, end__gt=timezone.now(), cancelled=False, missed=False, shortened=False, user=operator, tool=tool).exists():
+			return HttpResponseBadRequest("A reservation is required to enable this tool.")
+
 	return HttpResponse()
 
 

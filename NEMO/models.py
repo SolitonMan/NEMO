@@ -242,6 +242,7 @@ class Tool(models.Model):
 	missed_reservation_threshold = models.PositiveIntegerField(null=True, blank=True, help_text="The amount of time (in minutes) that a tool reservation may go unused before it is automatically marked as \"missed\" and hidden from the calendar. Usage can be from any user, regardless of who the reservation was originally created for. The cancellation process is triggered by a timed job on the web server.")
 	allow_delayed_logoff = models.BooleanField(default=False, help_text='Upon logging off users may enter a delay before another user may use the tool. Some tools require "spin-down" or cleaning time after use.')
 	post_usage_questions = models.TextField(null=True, blank=True, help_text="")
+	reservation_required = models.BooleanField(default=False, help_text='Require that users have a current (within 15 minutes) reservation in order to use the tool')
 
 	# Core info
 	core_id = models.ForeignKey('Core', related_name="tool_core", help_text="The core facility of which this tool is part.", null=True)
