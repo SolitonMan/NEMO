@@ -86,7 +86,7 @@ class User(models.Model):
 	physical_access_levels = models.ManyToManyField('PhysicalAccessLevel', blank=True, related_name='users')
 
 	# Permissions
-	is_active = models.BooleanField('active', default=True, help_text='Designates whether this user can log in to NEMO. Unselect this instead of deleting accounts.')
+	is_active = models.BooleanField('active', default=True, help_text='Designates whether this user can log in to LEO. Unselect this instead of deleting accounts.')
 	is_staff = models.BooleanField('staff status', default=False, help_text='Designates whether the user can log into this admin site.')
 	is_technician = models.BooleanField('technician status', default=False, help_text='Specifies how to bill staff time for this user. When checked, customers are billed at technician rates.')
 	is_superuser = models.BooleanField('superuser status', default=False, help_text='Designates that this user has all permissions without explicitly assigning them.')
@@ -587,6 +587,9 @@ class Consumable(models.Model):
 	reminder_threshold = models.IntegerField(help_text="More of this item should be ordered when the quantity falls below this threshold.")
 	reminder_email = models.EmailField(help_text="An email will be sent to this address when the quantity of this item falls below the reminder threshold.")
 
+	# add core_id to manage inventory for the appropriate core
+	core_id = models.ForeignKey('Core', null=True, related_name='consumable_core')
+	
 	class Meta:
 		ordering = ['name']
 
@@ -613,8 +616,6 @@ class ConsumableWithdraw(models.Model):
 	project = models.ForeignKey(Project, help_text="The withdraw will be billed to this project.")
 	date = models.DateTimeField(default=timezone.now, help_text="The date and time when the user withdrew the consumable.")
 
-	# add core_id to assign transaction to appropriate core
-	core_id = models.ForeignKey('Core', null=True, related_name='conswith_core')
 
 	class Meta:
 		ordering = ['-date']
@@ -662,7 +663,12 @@ class Interlock(models.Model):
 
 	def __issue_command(self, command_type):
 		if settings.DEBUG:
-			uri = 'http://' + str(self.card.server) + '/state.xml?relay' + str(self.card.number) + 'State=' + str(command_type)
+			# use a temp variable to account for the need to use 0 as the LOCKED command
+			cmdst = command_type
+			if cmdst == 2:
+				cmdst = 0
+
+			uri = 'http://' + str(self.card.server) + '/state.xml?relay' + str(self.card.number) + 'State=' + str(cmdst)
 			print(uri)
 			req = requests.get(uri)
 
@@ -675,7 +681,13 @@ class Interlock(models.Model):
 
 		
 		# build uri to toggle relay then call requests.get()
-		uri = 'http://' + str(self.card.server) + '/state.xml?relay' + str(self.card.number) + 'State=' + str(command_type)
+
+		# use a temp variable to account for the need to use 0 as the LOCKED command
+		cmdst = command_type
+		if cmdst == 2:
+			cmdst = 0
+
+		uri = 'http://' + str(self.card.server) + '/state.xml?relay' + str(self.card.number) + 'State=' + str(cmdst)
 		req = requests.get(uri)
 
 		self.most_recent_reply = "Executed " + uri + " successfully."
@@ -1070,10 +1082,10 @@ class Notification(models.Model):
 class LandingPageChoice(models.Model):
 	image = models.ImageField(help_text='An image that symbolizes the choice. It is automatically resized to 128x128 pixels when displayed, so set the image to this size before uploading to optimize bandwidth usage and landing page load time')
 	name = models.CharField(max_length=40, help_text='The textual name that will be displayed underneath the image')
-	url = models.CharField(max_length=200, verbose_name='URL', help_text='The URL that the choice leads to when clicked. Relative paths such as /calendar/ are used when linking within the NEMO site. Use fully qualified URL paths such as https://www.google.com/ to link to external sites.')
+	url = models.CharField(max_length=200, verbose_name='URL', help_text='The URL that the choice leads to when clicked. Relative paths such as /calendar/ are used when linking within the LEO site. Use fully qualified URL paths such as https://www.google.com/ to link to external sites.')
 	display_priority = models.IntegerField(help_text="The order in which choices are displayed on the landing page, from left to right, top to bottom. Lower values are displayed first.")
 	open_in_new_tab = models.BooleanField(default=False, help_text="Open the URL in a new browser tab when it's clicked")
-	secure_referral = models.BooleanField(default=True, help_text="Improves security by blocking HTTP referer [sic] information from the targeted page. Enabling this prevents the target page from manipulating the calling page's DOM with JavaScript. This should always be used for external links. It is safe to uncheck this when linking within the NEMO site. Leave this box checked if you don't know what this means")
+	secure_referral = models.BooleanField(default=True, help_text="Improves security by blocking HTTP referer [sic] information from the targeted page. Enabling this prevents the target page from manipulating the calling page's DOM with JavaScript. This should always be used for external links. It is safe to uncheck this when linking within the LEO site. Leave this box checked if you don't know what this means")
 	hide_from_mobile_devices = models.BooleanField(default=False, help_text="Hides this choice when the landing page is viewed from a mobile device")
 	hide_from_desktop_computers = models.BooleanField(default=False, help_text="Hides this choice when the landing page is viewed from a desktop computer")
 	hide_from_users = models.BooleanField(default=False, help_text="Hides this choice from normal users. When checked, only staff, technicians, and super-users can see the choice")

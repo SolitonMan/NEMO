@@ -7,8 +7,8 @@ from django.contrib.auth.models import Permission
 from NEMO.actions import lock_selected_interlocks, synchronize_with_tool_usage, unlock_selected_interlocks
 from NEMO.models import Account, ActivityHistory, Alert, Area, AreaAccessRecord, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableCategory, ConsumableWithdraw, ContactInformation, ContactInformationCategory, Core, Customization, Door, Interlock, InterlockCard, LandingPageChoice, MembershipHistory, News, Notification, PhysicalAccessLevel, PhysicalAccessLog, Project, Reservation, Resource, ResourceCategory, SafetyIssue, ScheduledOutage, ScheduledOutageCategory, StaffCharge, Task, TaskCategory, TaskHistory, TaskStatus, Tool, TrainingSession, UsageEvent, User, UserType
 
-admin.site.site_header = "NEMO"
-admin.site.site_title = "NEMO"
+admin.site.site_header = "LEO"
+admin.site.site_title = "LEO"
 admin.site.index_title = "Detailed administration"
 
 
@@ -290,7 +290,7 @@ class UsageEventAdmin(admin.ModelAdmin):
 
 @register(Consumable)
 class ConsumableAdmin(admin.ModelAdmin):
-	list_display = ('name', 'quantity', 'category', 'visible', 'reminder_threshold', 'reminder_email')
+	list_display = ('name', 'quantity', 'category', 'visible', 'reminder_threshold', 'reminder_email', 'core_id')
 	list_filter = ('visible', 'category')
 
 
@@ -301,7 +301,7 @@ class ConsumableCategoryAdmin(admin.ModelAdmin):
 
 @register(ConsumableWithdraw)
 class ConsumableWithdrawAdmin(admin.ModelAdmin):
-	list_display = ('id', 'customer', 'merchant', 'consumable', 'quantity', 'project', 'date', 'core_id')
+	list_display = ('id', 'customer', 'merchant', 'consumable', 'quantity', 'project', 'date')
 	list_filter = ('date', 'consumable')
 	date_hierarchy = 'date'
 
