@@ -110,6 +110,7 @@ class LDAPAuthenticationBackend(ModelBackend):
 @require_http_methods(['GET', 'POST'])
 @sensitive_post_parameters('password')
 def login_user(request):
+	request.session['has_core'] = False
 	if 'NEMO.views.authentication.RemoteUserAuthenticationBackend' in settings.AUTHENTICATION_BACKENDS or 'NEMO.views.authentication.NginxKerberosAuthorizationHeaderAuthenticationBackend' in settings.AUTHENTICATION_BACKENDS:
 		if request.user.is_authenticated:
 			return HttpResponseRedirect(reverse('landing'))
@@ -128,7 +129,27 @@ def login_user(request):
 	if user:
 		login(request, user)
 		try:
-			next_page = request.GET[REDIRECT_FIELD_NAME]
+			# check for a Core relationship for the user
+			count = user.core_ids.all().count()
+			if count == 0:
+				# send the user to the landing page; no Core relationship exists
+				request.session['active_core'] = "none"
+				request.session['active_core_id'] = 0
+				request.session['has_core'] = False
+				next_page = request.GET[REDIRECT_FIELD_NAME]
+
+			if count == 1:
+				# set the Core to the relevant option then redirect to the landing page
+				request.session['active_core'] = request.user.core_ids.values_list('name', flat=True).get()
+				request.session['active_core_id'] = request.user.core_ids.values_list('id', flat=True).get()
+				request.session['has_core'] = True
+				next_page = request.GET[REDIRECT_FIELD_NAME]
+
+			if count > 1:
+				request.session['has_core'] = True
+				request.session['active_core'] = ""
+				next_page = "/choose_core/"
+
 			resolve(next_page)  # Make sure the next page is a legitimate URL for NEMO
 		except:
 			next_page = reverse('landing')
@@ -141,3 +162,17 @@ def login_user(request):
 def logout_user(request):
 	logout(request)
 	return HttpResponseRedirect(reverse('landing'))
+
+@require_http_methods(['GET', 'POST'])
+def choose_core(request):
+	if request.method == "GET":
+		# get the cores to which the user is associated
+		dictionary = {
+			'cores' : request.user.core_ids.all(),
+		}
+		return render(request, 'choose_core.html', dictionary)
+	core_id = request.POST.get('core_id','')
+	request.session['active_core'] = request.user.core_ids.values_list('name', flat=True).get(id=core_id)
+	request.session['active_core_id'] = core_id
+	next_page = reverse('landing')
+	return HttpResponseRedirect(next_page)

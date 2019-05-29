@@ -26,6 +26,7 @@ urlpatterns = [
 	# Authentication & error pages:
 	url(r'^login/$', authentication.login_user, name='login'),
 	url(r'^logout/$', authentication.logout_user, name='logout'),
+	url(r'^choose_core/$', authentication.choose_core, name='choose_core'),
 
 	# Root URL defaults to the calendar page on desktop systems, and the mobile homepage for mobile devices:
 	url(r'^$', landing.landing, name='landing'),

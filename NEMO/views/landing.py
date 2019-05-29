@@ -5,6 +5,7 @@ from django.db.models import Q
 from django.shortcuts import render
 from django.utils import timezone
 from django.views.decorators.http import require_GET
+from django.http import HttpResponseRedirect
 
 from NEMO.models import Alert, LandingPageChoice, Reservation, Resource, UsageEvent
 from NEMO.views.alerts import delete_expired_alerts
@@ -15,6 +16,13 @@ from NEMO.views.notifications import delete_expired_notifications, get_notificai
 @login_required
 @require_GET
 def landing(request):
+	has_core = request.session.get('has_core', 'unknown')
+	if has_core != 'unknown':
+		if has_core:
+			active_core = request.session.get('active_core')	
+			if active_core == "":
+				return HttpResponseRedirect("/choose_core/")
+
 	delete_expired_alerts()
 	delete_expired_notifications()
 	usage_events = UsageEvent.objects.filter(operator=request.user.id, end=None).prefetch_related('tool', 'project')
