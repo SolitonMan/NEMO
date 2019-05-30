@@ -157,7 +157,7 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge):
 	user = get_object_or_404(User, id=user_id)
 	project = get_object_or_404(Project, id=project_id)
 	staff_charge = staff_charge == 'true'
-	response = check_policy_to_enable_tool(tool, operator, user, project, staff_charge)
+	response = check_policy_to_enable_tool(tool, operator, user, project, staff_charge, request)
 	if response.status_code != HTTPStatus.OK:
 		return response
 
@@ -194,7 +194,7 @@ def disable_tool(request, tool_id):
 	if tool.get_current_usage_event() is None:
 		return HttpResponse()
 	downtime = timedelta(minutes=quiet_int(request.POST.get('downtime')))
-	response = check_policy_to_disable_tool(tool, request.user, downtime)
+	response = check_policy_to_disable_tool(tool, request.user, downtime, request)
 	if response.status_code != HTTPStatus.OK:
 		return response
 	try:

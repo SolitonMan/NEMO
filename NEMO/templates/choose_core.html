@@ -28,25 +28,31 @@
 	<link rel="stylesheet" type="text/css" href="{% static "bootstrap/css/bootstrap-theme.css" %}"/>
 </head>
 <body>
-
-{% block title %}LEO{% endblock %}
-{% block content %}
+<nav class="navbar navbar-default navbar-static-top">
 	<div class="container">
-	<h1>Core Selection</h1>
-	<p>Please select the Core Facility to use for this session.</p>
-	<form method="POST" action="{% url 'choose_core' %}">
+		<div class="navbar-header">
+			<a class="navbar-brand">LEO</a>
+		</div>
+	</div>
+</nav>
+{% block content %}
+	<div class="body-container">
+		<div class="container">
+			<h1>Core Selection</h1>
+			<p>Please select the Core Facility to use for this session.</p>
+			<form method="POST" action="{% url 'choose_core' %}">
 
-	{% csrf_token %}
+			{% csrf_token %}
 
-	Core: <select name="core_id">
-	{% for core in cores %}
-		<option value="{{ core.id }}">{{ core.name }}</option>
-	{% endfor %}
-	</select>
-	<br />
-	<input type="submit" class="btn btn-success form-control" style="width: 30%" value="Select Core">
-
-	</form>
+			Core: <select name="core_id">
+			{% for core in cores %}
+				<option value="{{ core.id }}">{{ core.name }}</option>
+			{% endfor %}
+			</select>
+			<br />
+			<input type="submit" class="btn btn-success form-control" style="width: 30%" value="Select Core">
+			</form>
+		</div>
 	</div>
 {% endblock %}
 {% block extra_whitespace %}{# Hide extra whitespace #}{% endblock %}

@@ -11,7 +11,7 @@ from NEMO.utilities import format_datetime
 from NEMO.views.customization import get_customization, get_media_file_contents
 
 
-def check_policy_to_enable_tool(tool, operator, user, project, staff_charge):
+def check_policy_to_enable_tool(tool, operator, user, project, staff_charge, request):
 	"""
 	Check that the user is allowed to enable the tool. Enable the tool if the policy checks pass.
 	"""
@@ -86,22 +86,41 @@ def check_policy_to_enable_tool(tool, operator, user, project, staff_charge):
 		if not Reservation.objects.filter(start__lt=timezone.now()+td, end__gt=timezone.now(), cancelled=False, missed=False, shortened=False, user=operator, tool=tool).exists():
 			return HttpResponseBadRequest("A reservation is required to enable this tool.")
 
+	# Prevent tool login for user from a different core
+	active_core_id = request.session.get("active_core_id")
+	if str(active_core_id) != "0" and str(active_core_id) != "None":
+		msg = "You are part of the core " + request.session.get("active_core") + " while the " + tool.name + " is part of the core " + tool.core_id.name + ". You cannot operate a tool that is part of a different core."
+		if str(tool.core_id.id) != str(active_core_id) and not operator.is_superuser:
+			return HttpResponseBadRequest(msg)
+
+
 	return HttpResponse()
 
 
-def check_policy_to_disable_tool(tool, operator, downtime):
+def check_policy_to_disable_tool(tool, operator, downtime, request):
+	# Prevent tool disabling from a user in a different core
+	active_core_id = request.session.get("active_core_id")
+	if str(active_core_id) != "0" and str(active_core_id) != "None":
+		if str(tool.core_id.id) != str(active_core_id) and not operator.is_superuser:
+			return HttpResponseBadRequest("You cannot disable a tool that is part of a different Core.")
+
 	""" Check that the user is allowed to disable the tool. """
 	current_usage_event = tool.get_current_usage_event()
 	if current_usage_event.operator != operator and current_usage_event.user != operator and not operator.is_staff:
 		return HttpResponseBadRequest('You may not disable a tool while another user is using it unless you are a staff member.')
+
 	if downtime < timedelta():
 		return HttpResponseBadRequest('Downtime cannot be negative.')
+
 	if downtime > timedelta(minutes=120):
 		return HttpResponseBadRequest('Post-usage tool downtime may not exceed 120 minutes.')
+
 	if tool.delayed_logoff_in_progress() and downtime > timedelta():
 		return HttpResponseBadRequest('The tool is already in a delayed-logoff state. You may not issue additional delayed logoffs until the existing one expires.')
+
 	if not tool.allow_delayed_logoff and downtime > timedelta():
 		return HttpResponseBadRequest('Delayed logoff is not allowed for this tool.')
+
 	return HttpResponse()
 
 
