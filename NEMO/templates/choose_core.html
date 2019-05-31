@@ -40,6 +40,7 @@
 		<div class="container">
 			<h1>Core Selection</h1>
 			<p>Please select the Core Facility to use for this session.</p>
+			<p>
 			<form method="POST" action="{% url 'choose_core' %}">
 
 			{% csrf_token %}
@@ -49,9 +50,10 @@
 				<option value="{{ core.id }}">{{ core.name }}</option>
 			{% endfor %}
 			</select>
-			<br />
+			<br /><br />
 			<input type="submit" class="btn btn-success form-control" style="width: 30%" value="Select Core">
 			</form>
+			</p>
 		</div>
 	</div>
 {% endblock %}

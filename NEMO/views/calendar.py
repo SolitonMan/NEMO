@@ -208,7 +208,7 @@ def create_reservation(request):
 	new_reservation.start = start
 	new_reservation.end = end
 	new_reservation.short_notice = determine_insufficient_notice(tool, start)
-	policy_problems, overridable = check_policy_to_save_reservation(None, new_reservation, user, explicit_policy_override)
+	policy_problems, overridable = check_policy_to_save_reservation(request, None, new_reservation, user, explicit_policy_override)
 
 	# If there was a problem in saving the reservation then return the error...
 	if policy_problems:
@@ -301,7 +301,7 @@ def create_outage(request):
 	outage.end = end
 
 	# If there was a problem in saving the reservation then return the error...
-	policy_problem = check_policy_to_create_outage(outage)
+	policy_problem = check_policy_to_create_outage(outage, request)
 	if policy_problem:
 		return HttpResponseBadRequest(policy_problem)
 
@@ -371,7 +371,7 @@ def modify_reservation(request, start_delta, end_delta):
 		reservation_to_cancel = Reservation.objects.get(pk=request.POST['id'])
 	except Reservation.DoesNotExist:
 		return HttpResponseNotFound("The reservation that you wish to modify doesn't exist!")
-	response = check_policy_to_cancel_reservation(reservation_to_cancel, request.user)
+	response = check_policy_to_cancel_reservation(reservation_to_cancel, request.user, request)
 	# Do not move the reservation if the user was not authorized to cancel it.
 	if response.status_code != HTTPStatus.OK:
 		return response
@@ -403,7 +403,7 @@ def modify_reservation(request, start_delta, end_delta):
 	new_reservation.project = reservation_to_cancel.project
 	new_reservation.user = reservation_to_cancel.user
 	new_reservation.creation_time = now
-	policy_problems, overridable = check_policy_to_save_reservation(reservation_to_cancel, new_reservation, request.user, False)
+	policy_problems, overridable = check_policy_to_save_reservation(request, reservation_to_cancel, new_reservation, request.user, False)
 	if policy_problems:
 		return HttpResponseBadRequest(policy_problems[0])
 	else:
@@ -422,7 +422,7 @@ def modify_outage(request, start_delta, end_delta):
 	if start_delta:
 		outage.start += start_delta
 	outage.end += end_delta
-	policy_problem = check_policy_to_create_outage(outage)
+	policy_problem = check_policy_to_create_outage(outage, request)
 	if policy_problem:
 		return HttpResponseBadRequest(policy_problem)
 	else:
@@ -446,7 +446,7 @@ def determine_insufficient_notice(tool, start):
 def cancel_reservation(request, reservation_id):
 	""" Cancel a reservation for a user. """
 	reservation = get_object_or_404(Reservation, id=reservation_id)
-	response = check_policy_to_cancel_reservation(reservation, request.user)
+	response = check_policy_to_cancel_reservation(reservation, request.user, request)
 	# Staff must provide a reason when cancelling a reservation they do not own.
 	reason = parse_parameter_string(request.POST, 'reason')
 	if reservation.user != request.user and not reason:

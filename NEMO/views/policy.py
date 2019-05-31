@@ -124,7 +124,7 @@ def check_policy_to_disable_tool(tool, operator, downtime, request):
 	return HttpResponse()
 
 
-def check_policy_to_save_reservation(cancelled_reservation, new_reservation, user, explicit_policy_override):
+def check_policy_to_save_reservation(request, cancelled_reservation, new_reservation, user, explicit_policy_override):
 	""" Check the reservation creation policy and return a list of policy problems """
 
 	# The function will check all policies. Policy problems are placed in the policy_problems list. overridable is True if the policy problems can be overridden by a staff member.
@@ -286,11 +286,18 @@ def check_policy_to_save_reservation(cancelled_reservation, new_reservation, use
 		if amount_reserved_in_the_future.total_seconds() / 60 > new_reservation.tool.maximum_future_reservation_time:
 			policy_problems.append("You may only reserve up to " + str(new_reservation.tool.maximum_future_reservation_time) + " minutes of time on this tool, starting from the current time onward.")
 
+	# Check that a staff member is part of the core to which tool belongs
+	active_core_id = request.session.get("active_core_id")
+	if str(active_core_id) != "0" and str(active_core_id) != "None":
+		if str(active_core_id) != str(reservation.tool.core_id.id) and not user.is_superuser:
+			msg = "Your core of " + request.session.get("active_core") + " is not the same as the core of " + str(reservation.tool.core_id.name) + " to which the " + str(reservation.tool.name) + " belongs.  You cannot make a reservation for this tool."
+			policy_problems.append(msg)
+
 	# Return the list of all policies that are not met.
 	return policy_problems, overridable
 
 
-def check_policy_to_cancel_reservation(reservation, user):
+def check_policy_to_cancel_reservation(reservation, user, request):
 	"""
 	Checks the reservation deletion policy.
 	If all checks pass the function returns an HTTP "OK" response.
@@ -313,10 +320,17 @@ def check_policy_to_cancel_reservation(reservation, user):
 	if reservation.missed:
 		return HttpResponseBadRequest("This reservation was missed and cannot be modified.")
 
+	# Staff may only cancel reservations for tools in their core
+	active_core_id = request.session.get("active_core_id")
+	if str(active_core_id) != "0" and str(active_core_id) != "None":
+		if str(active_core_id) != str(reservation.tool.core_id.id) and not user.is_superuser:
+			msg = "Your core of " + request.session.get("active_core") + " is not the same as the core of " + str(reservation.tool.core_id.name) + " to which the " + str(reservation.tool.name) + " belongs.  You cannot cancel a reservation for this tool."
+			return HttpResponseBadRequest(msg)
+
 	return HttpResponse()
 
 
-def check_policy_to_create_outage(outage):
+def check_policy_to_create_outage(outage, request):
 	policy_problems = []
 	# Outages may not have a start time that is earlier than the end time.
 	if outage.start >= outage.end:
@@ -332,5 +346,11 @@ def check_policy_to_create_outage(outage):
 	if coincident_events.count() > 0:
 		return "Your scheduled outage coincides with a reservation that already exists. Please choose a different time."
 
+	# prevent staff from creating outages on tools in different cores
+	active_core_id = request.session.get("active_core_id")
+	if str(active_core_id) != "0" and str(active_core_id) != "None":
+		if str(active_core_id) != str(outage.tool.core_id.id) and not user.is_superuser:
+			msg = "Your core of " + request.session.get("active_core") + " is not the same as the core of " + str(outage.tool.core_id.name) + " to which the " + str(outage.tool.name) + " belongs.  You cannot create an outage for this tool."
+			policy_problems.append(msg)
 	# No policy issues! The outage can be created...
 	return None

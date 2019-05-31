@@ -172,7 +172,12 @@ def choose_core(request):
 		}
 		return render(request, 'choose_core.html', dictionary)
 	core_id = request.POST.get('core_id','')
+
+#	if str(core_id) == "0":   # logging in as a user instead of a staff member
+#		request.session['active_core'] = "none"
+#	else:
 	request.session['active_core'] = request.user.core_ids.values_list('name', flat=True).get(id=core_id)
+
 	request.session['active_core_id'] = core_id
 	next_page = reverse('landing')
 	return HttpResponseRedirect(next_page)
