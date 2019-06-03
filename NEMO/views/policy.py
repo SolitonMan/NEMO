@@ -176,6 +176,13 @@ def check_policy_to_save_reservation(request, cancelled_reservation, new_reserva
 		else:
 			policy_problems.append(str(new_reservation.user) + " does not belong to the project named " + str(new_reservation.project) + ".")
 
+	# Check that a staff member is part of the core to which tool belongs
+	active_core_id = request.session.get("active_core_id")
+	if str(active_core_id) != "0" and str(active_core_id) != "None":
+		if str(active_core_id) != str(new_reservation.tool.core_id.id) and not user.is_superuser:
+			msg = "Your core of " + request.session.get("active_core") + " is not the same as the core of " + str(new_reservation.tool.core_id.name) + " to which the " + str(new_reservation.tool.name) + " belongs.  You cannot make a reservation for this tool."
+			policy_problems.append(msg)
+
 	# If the user is a staff member or there's an explicit policy override then the policy check is finished.
 	if user.is_staff or explicit_policy_override:
 		return policy_problems, overridable
@@ -286,13 +293,6 @@ def check_policy_to_save_reservation(request, cancelled_reservation, new_reserva
 		if amount_reserved_in_the_future.total_seconds() / 60 > new_reservation.tool.maximum_future_reservation_time:
 			policy_problems.append("You may only reserve up to " + str(new_reservation.tool.maximum_future_reservation_time) + " minutes of time on this tool, starting from the current time onward.")
 
-	# Check that a staff member is part of the core to which tool belongs
-	active_core_id = request.session.get("active_core_id")
-	if str(active_core_id) != "0" and str(active_core_id) != "None":
-		if str(active_core_id) != str(reservation.tool.core_id.id) and not user.is_superuser:
-			msg = "Your core of " + request.session.get("active_core") + " is not the same as the core of " + str(reservation.tool.core_id.name) + " to which the " + str(reservation.tool.name) + " belongs.  You cannot make a reservation for this tool."
-			policy_problems.append(msg)
-
 	# Return the list of all policies that are not met.
 	return policy_problems, overridable
 
@@ -331,7 +331,6 @@ def check_policy_to_cancel_reservation(reservation, user, request):
 
 
 def check_policy_to_create_outage(outage, request):
-	policy_problems = []
 	# Outages may not have a start time that is earlier than the end time.
 	if outage.start >= outage.end:
 		return "Outage start time (" + format_datetime(outage.start) + ") must be before the end time (" + format_datetime(outage.end) + ")."
@@ -351,6 +350,7 @@ def check_policy_to_create_outage(outage, request):
 	if str(active_core_id) != "0" and str(active_core_id) != "None":
 		if str(active_core_id) != str(outage.tool.core_id.id) and not user.is_superuser:
 			msg = "Your core of " + request.session.get("active_core") + " is not the same as the core of " + str(outage.tool.core_id.name) + " to which the " + str(outage.tool.name) + " belongs.  You cannot create an outage for this tool."
-			policy_problems.append(msg)
+			return HttpResponseBadRequest(msg)
+
 	# No policy issues! The outage can be created...
 	return None
