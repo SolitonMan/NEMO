@@ -3,7 +3,7 @@ from itertools import chain
 
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
-from django.http import HttpResponseBadRequest
+from django.http import HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.utils.dateparse import parse_time, parse_date
 from django.views.decorators.http import require_GET, require_POST
@@ -12,11 +12,14 @@ from NEMO.models import Reservation, Tool, Project, ScheduledOutage
 from NEMO.utilities import extract_date, localize, beginning_of_the_day, end_of_the_day
 from NEMO.views.calendar import extract_configuration, determine_insufficient_notice
 from NEMO.views.policy import check_policy_to_save_reservation
+from NEMO.views.authentication import check_for_core
 
 
 @login_required
 @require_GET
 def choose_tool(request, next_page):
+	if check_for_core(request):
+		return HttpResponseRedirect("/choose_core/")
 	dictionary = {
 		'tools': Tool.objects.filter(visible=True).order_by('category', 'name'),
 	}
@@ -35,6 +38,8 @@ def choose_tool(request, next_page):
 @login_required
 @require_GET
 def new_reservation(request, tool_id, date=None):
+	if check_for_core(request):
+		return HttpResponseRedirect("/choose_core/")
 	# If the user has no active projects then they're not allowed to make reservations.
 	if request.user.active_project_count() == 0:
 		return render(request, 'mobile/no_active_projects.html')
@@ -50,6 +55,8 @@ def new_reservation(request, tool_id, date=None):
 @login_required
 @require_POST
 def make_reservation(request):
+	if check_for_core(request):
+		return HttpResponseRedirect("/choose_core/")
 	""" Create a reservation for a user. """
 	try:
 		date = parse_date(request.POST['date'])
@@ -66,7 +73,7 @@ def make_reservation(request):
 	reservation.start = start
 	reservation.end = end
 	reservation.short_notice = determine_insufficient_notice(tool, start)
-	policy_problems, overridable = check_policy_to_save_reservation(None, reservation, request.user, False)
+	policy_problems, overridable = check_policy_to_save_reservation(request, None, reservation, request.user, False)
 
 	# If there was a problem in saving the reservation then return the error...
 	if policy_problems:
@@ -90,6 +97,8 @@ def make_reservation(request):
 @login_required
 @require_GET
 def view_calendar(request, tool_id, date=None):
+	if check_for_core(request):
+		return HttpResponseRedirect("/choose_core/")
 	tool = get_object_or_404(Tool, id=tool_id)
 	if date:
 		try:

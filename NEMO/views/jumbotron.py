@@ -2,20 +2,26 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from django.utils import timezone
 from django.views.decorators.http import require_GET
+from django.http import HttpResponseRedirect
 
 from NEMO.models import AreaAccessRecord, UsageEvent, Alert, Resource
 from NEMO.views.alerts import delete_expired_alerts
+from NEMO.views.authentication import check_for_core
 
 
 @login_required
 @require_GET
 def jumbotron(request):
+	if check_for_core(request):
+		return HttpResponseRedirect("/choose_core/")
 	return render(request, 'jumbotron/jumbotron.html')
 
 
 @login_required
 @require_GET
 def jumbotron_content(request):
+	if check_for_core(request):
+		return HttpResponseRedirect("/choose_core/")
 	delete_expired_alerts()
 	dictionary = {
 		'nanofab_occupants': AreaAccessRecord.objects.filter(end=None, staff_charge=None).prefetch_related('customer', 'project').order_by('area__name', 'start'),

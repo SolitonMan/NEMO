@@ -135,18 +135,18 @@ def login_user(request):
 				# send the user to the landing page; no Core relationship exists
 				request.session['active_core'] = "none"
 				request.session['active_core_id'] = 0
-				request.session['has_core'] = False
+				request.session['has_core'] = "false"
 				next_page = request.GET[REDIRECT_FIELD_NAME]
 
 			if count == 1:
 				# set the Core to the relevant option then redirect to the landing page
 				request.session['active_core'] = request.user.core_ids.values_list('name', flat=True).get()
 				request.session['active_core_id'] = request.user.core_ids.values_list('id', flat=True).get()
-				request.session['has_core'] = True
+				request.session['has_core'] = "true"
 				next_page = request.GET[REDIRECT_FIELD_NAME]
 
 			if count > 1:
-				request.session['has_core'] = True
+				request.session['has_core'] = "true"
 				request.session['active_core'] = ""
 				next_page = "/choose_core/"
 
@@ -173,11 +173,20 @@ def choose_core(request):
 		return render(request, 'choose_core.html', dictionary)
 	core_id = request.POST.get('core_id','')
 
-#	if str(core_id) == "0":   # logging in as a user instead of a staff member
-#		request.session['active_core'] = "none"
-#	else:
 	request.session['active_core'] = request.user.core_ids.values_list('name', flat=True).get(id=core_id)
 
 	request.session['active_core_id'] = core_id
 	next_page = reverse('landing')
 	return HttpResponseRedirect(next_page)
+
+def check_for_core(request):
+	has_core = request.session.get('has_core')
+	if has_core != "None":  #None would indicate the value isn't set per session.get()
+		if str(has_core) == "true":
+			active_core = request.session.get('active_core')	
+			if active_core == "":
+				return True
+			else:
+				return False
+		return False
+	return False	

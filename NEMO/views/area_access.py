@@ -3,7 +3,7 @@ from time import sleep
 
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required, permission_required
-from django.http import HttpResponse, HttpResponseBadRequest
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -14,11 +14,13 @@ from NEMO.models import Area, AreaAccessRecord, Door, PhysicalAccessLog, Physica
 from NEMO.tasks import postpone
 from NEMO.utilities import parse_start_and_end_date
 from NEMO.views.customization import get_customization
-
+from NEMO.views.authentication import check_for_core
 
 @staff_member_required(login_url=None)
 @require_GET
 def area_access(request):
+	if check_for_core(request):
+		return HttpResponseRedirect("/choose_core/")
 	""" Presents a page that displays audit records for all NanoFab areas. """
 	today = timezone.now().strftime('%m/%d/%Y')
 	yesterday = (timezone.now() - timedelta(days=1)).strftime('%m/%d/%Y')
@@ -40,6 +42,8 @@ def area_access(request):
 @permission_required('NEMO.add_areaaccessrecord')
 @require_GET
 def welcome_screen(request, door_id):
+	if check_for_core(request):
+		return HttpResponseRedirect("/choose_core/")
 	door = get_object_or_404(Door, id=door_id)
 	return render(request, 'area_access/welcome_screen.html', {'area': door.area, 'door': door})
 
@@ -48,6 +52,8 @@ def welcome_screen(request, door_id):
 @permission_required('NEMO.change_areaaccessrecord')
 @require_GET
 def farewell_screen(request, door_id):
+	if check_for_core(request):
+		return HttpResponseRedirect("/choose_core/")
 	door = get_object_or_404(Door, id=door_id)
 	return render(request, 'area_access/farewell_screen.html', {'area': door.area, 'door': door})
 
@@ -56,6 +62,8 @@ def farewell_screen(request, door_id):
 @permission_required('NEMO.add_areaaccessrecord')
 @require_POST
 def login_to_area(request, door_id):
+	if check_for_core(request):
+		return HttpResponseRedirect("/choose_core/")
 	door = get_object_or_404(Door, id=door_id)
 
 	badge_number = request.POST.get('badge_number', '')
@@ -183,6 +191,8 @@ def unlock_door(door_id):
 @permission_required('NEMO.change_areaaccessrecord')
 @require_POST
 def logout_of_area(request, door_id):
+	if check_for_core(request):
+		return HttpResponseRedirect("/choose_core/")
 	try:
 		badge_number = int(request.POST.get('badge_number', ''))
 		user = User.objects.get(badge_number=badge_number)
@@ -201,6 +211,8 @@ def logout_of_area(request, door_id):
 @staff_member_required(login_url=None)
 @require_POST
 def force_area_logout(request, user_id):
+	if check_for_core(request):
+		return HttpResponseRedirect("/choose_core/")
 	user = get_object_or_404(User, id=user_id)
 	record = user.area_access_record()
 	if record is None:
@@ -214,6 +226,8 @@ def force_area_logout(request, user_id):
 @permission_required('NEMO.change_areaaccessrecord')
 @require_POST
 def open_door(request, door_id):
+	if check_for_core(request):
+		return HttpResponseRedirect("/choose_core/")
 	door = get_object_or_404(Door, id=door_id)
 	badge_number = request.POST.get('badge_number', '')
 	try:
@@ -232,6 +246,8 @@ def open_door(request, door_id):
 @login_required
 @require_http_methods(['GET', 'POST'])
 def change_project(request, new_project=None):
+	if check_for_core(request):
+		return HttpResponseRedirect("/choose_core/")
 	""" For area access, allow the user to stop billing a project and start billing another project. """
 	if request.method == 'GET':
 		return render(request, 'area_access/change_project.html')
@@ -267,6 +283,8 @@ def change_project(request, new_project=None):
 @staff_member_required(login_url=None)
 @require_http_methods(['GET', 'POST'])
 def new_area_access_record(request):
+	if check_for_core(request):
+		return HttpResponseRedirect("/choose_core/")
 	dictionary = {
 		'customers': User.objects.filter(is_active=True)
 	}
@@ -320,6 +338,8 @@ def new_area_access_record(request):
 @login_required
 @require_http_methods(['GET', 'POST'])
 def self_log_in(request):
+	if check_for_core(request):
+		return HttpResponseRedirect("/choose_core/")
 	if not able_to_self_log_in_to_area(request.user):
 		return redirect(reverse('landing'))
 	dictionary = {

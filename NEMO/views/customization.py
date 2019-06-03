@@ -1,7 +1,7 @@
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.files.storage import get_storage_class
 from django.core.validators import validate_email
-from django.http import HttpResponseBadRequest
+from django.http import HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_GET, require_POST
 
@@ -79,6 +79,8 @@ def set_customization(name, value):
 @staff_member_required(login_url=None)
 @require_GET
 def customization(request):
+	if check_for_core(request):
+		return HttpResponseRedirect("/choose_core/")
 	dictionary = {x: get_media_file_contents(x + '.html') for x in customizable_content}
 	dictionary.update({y: get_customization(y) for y in customizable_key_values})
 	return render(request, 'customizations.html', dictionary)
@@ -87,6 +89,8 @@ def customization(request):
 @staff_member_required(login_url=None)
 @require_POST
 def customize(request, element):
+	if check_for_core(request):
+		return HttpResponseRedirect("/choose_core/")
 	if element in customizable_content:
 		store_media_file(request.FILES.get(element, ''), element + '.html')
 	elif element == 'email_addresses':
@@ -99,3 +103,15 @@ def customize(request, element):
 	else:
 		return HttpResponseBadRequest('Invalid customization')
 	return redirect('customization')
+
+def check_for_core(request):
+	has_core = request.session.get('has_core')
+	if has_core != "None":
+		if str(has_core) == "true":
+			active_core = request.session.get('active_core')
+			if active_core == "":
+				return True
+			else:
+				return False
+		return False
+	return False

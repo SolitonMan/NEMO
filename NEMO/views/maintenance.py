@@ -4,13 +4,17 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_GET
+from django.http import HttpResponseRedirect
 
 from NEMO.models import Task, TaskCategory, TaskStatus
+from NEMO.views.authentication import check_for_core
 
 
 @staff_member_required(login_url=None)
 @require_GET
 def maintenance(request, sort_by=''):
+	if check_for_core(request):
+		return HttpResponseRedirect("/choose_core/")
 	pending_tasks = Task.objects.filter(cancelled=False, resolved=False)
 	if sort_by in ['urgency', 'force_shutdown', 'tool', 'problem_category', 'last_updated', 'creation_time']:
 		if sort_by == 'last_updated':
@@ -34,6 +38,8 @@ def maintenance(request, sort_by=''):
 @staff_member_required(login_url=None)
 @require_GET
 def task_details(request, task_id):
+	if check_for_core(request):
+		return HttpResponseRedirect("/choose_core/")
 	task = get_object_or_404(Task, id=task_id)
 
 	if task.cancelled or task.resolved:
