@@ -276,7 +276,7 @@ class ProjectAdmin(admin.ModelAdmin):
 
 @register(Reservation)
 class ReservationAdmin(admin.ModelAdmin):
-	list_display = ('id', 'user', 'creator', 'tool', 'project', 'start', 'end', 'duration', 'cancelled', 'missed')
+	list_display = ('id', 'user', 'creator', 'tool', 'project', 'start', 'end', 'duration', 'cancelled', 'missed', 'recurrences')
 	list_filter = ('cancelled', 'missed', 'tool')
 	date_hierarchy = 'start'
 

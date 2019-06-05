@@ -12,6 +12,8 @@ RUN pip install django-auth-ldap
 # Install PostgreSQL support
 RUN pip install psycopg2-binary
 
+# install django-recurrence library to support recurring events
+RUN pip install django-recurrence
 
 # Intall NEMO (in the current directory) and Gunicorn
 COPY . /nemo/

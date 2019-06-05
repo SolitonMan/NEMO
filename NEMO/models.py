@@ -21,6 +21,8 @@ from NEMO.utilities import format_datetime
 from NEMO.views.constants import ADDITIONAL_INFORMATION_MAXIMUM_LENGTH
 from NEMO.widgets.configuration_editor import ConfigurationEditor
 
+from recurrence.fields import RecurrenceField
+
 
 class CalendarDisplay(models.Model):
 	"""
@@ -545,6 +547,7 @@ class Reservation(CalendarDisplay):
 	additional_information = models.TextField(null=True, blank=True)
 	self_configuration = models.BooleanField(default=False, help_text="When checked, indicates that the user will perform their own tool configuration (instead of requesting that the NanoFab staff configure it for them).")
 	title = models.TextField(default='', blank=True, max_length=200, help_text="Shows a custom title for this reservation on the calendar. Leave this field blank to display the reservation's user name as the title (which is the default behaviour).")
+	recurrences = RecurrenceField(null=True) 
 
 	def duration(self):
 		return self.end - self.start

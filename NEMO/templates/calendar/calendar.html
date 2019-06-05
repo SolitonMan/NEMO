@@ -267,7 +267,7 @@ function create_calendar()
 	{
 		"header":
 		{
-			left: "prev,next today{% if user.is_staff %} proxyReservation scheduledOutage{% endif %}",
+			left: "prev,next today{% if user.is_staff %} proxyReservation scheduledOutage recurringEvent{% endif %}",
 			center: "title",
 			right: "agendaDay,agendaWeek,month"
 		},
@@ -315,6 +315,10 @@ function create_calendar()
 			"scheduledOutage": {
 				"text": "Schedule an outage",
 				"click": scheduled_outage
+			},
+			"recurringEvent": {
+				"text": "Schedule a recurring event",
+				"click": recurring_event
 			}
 		}
 	};
@@ -338,6 +342,17 @@ function reserve_for_someone_else_callback(response, status, xml_http_request)
 {
 	$("#dialog .modal-content").html(response);
 	$("#dialog").modal('show');
+}
+
+function recurring_event()
+{
+	var recurring_event_button = $(".fc-recurringEvent-button")[0];
+	if ($(recurring_event_button).html() === "Schedule a recurring event") {
+		$(recurring_event_button).blur().html("Recurring Event Mode");
+	}
+	else {
+		$(recurring_event_button).blur().html("Schedule a recurring event");
+	}
 }
 
 function scheduled_outage()
