@@ -3,6 +3,7 @@ from django.conf.urls import include, url
 from django.contrib import admin
 from django.contrib.auth.decorators import login_required
 from django.views.static import serve
+from django.views.i18n import JavaScriptCatalog
 from rest_framework import routers
 
 from NEMO.views import abuse, accounts_and_projects, alerts, api, area_access, authentication, calendar, configuration_agenda, consumables, contact_staff, customization, email, feedback, get_projects, history, jumbotron, kiosk, landing, maintenance, mobile, usage, news, qualifications, remote_work, resources, safety, sidebar, staff_charges, status_dashboard, tasks, tool_control, training, tutorials, users
@@ -180,10 +181,17 @@ urlpatterns = [
 	url(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}, name='media'),
 ]
 
+js_info_dict = {
+    'packages': ('recurrence', ),
+}
+
 if settings.ALLOW_CONDITIONAL_URLS:
 	urlpatterns += [
 		url(r'^admin/', include(admin.site.urls)),
 		url(r'^api/', include(router.urls)),
+
+		# adding support for django-recurrence
+		url(r'^jsi18n/$', JavaScriptCatalog.as_view(), js_info_dict),
 
 		# Tablet area access
 		url(r'^welcome_screen/(?P<door_id>\d+)/$', area_access.welcome_screen, name='welcome_screen'),

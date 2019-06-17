@@ -21,6 +21,7 @@ from NEMO.views.policy import check_policy_to_save_reservation, check_policy_to_
 from NEMO.widgets.tool_tree import ToolTree
 from NEMO.views.authentication import check_for_core
 
+from recurrence.fields import RecurrenceField
 
 @login_required
 @require_GET
@@ -84,6 +85,11 @@ def reservation_event_feed(request, start, end):
 		return HttpResponseRedirect("/choose_core/")
 	events = Reservation.objects.filter(cancelled=False, missed=False, shortened=False)
 	outages = None
+
+	fmt_in = "%Y-%m-%dT%H:%M:%S"
+	fmt_out = "%Y%m%dT%H%M%S"
+	recurrences = {}
+
 	# Exclude events for which the following is true:
 	# The event starts and ends before the time-window, and...
 	# The event starts and ends after the time-window.
@@ -104,10 +110,21 @@ def reservation_event_feed(request, start, end):
 	if personal_schedule:
 		events = events.filter(user=request.user)
 
+	# structure reservations to support existence of rrule recurrences
+	for e in events:
+		if e.recurrences:
+			tmp = str(e.recurrences)
+			#for rule in e.recurrences.rrules:
+			#	tmp = tmp + rule.to_text()
+			tmp = tmp[6:]
+			tmp = tmp + ";DTSTART=" +  e.start.strftime(fmt_out)
+			recurrences[e.id] = tmp
+
 	dictionary = {
 		'events': events,
 		'outages': outages,
 		'personal_schedule': personal_schedule,
+		'recurrences': recurrences,
 	}
 	return render(request, 'calendar/reservation_event_feed.html', dictionary)
 

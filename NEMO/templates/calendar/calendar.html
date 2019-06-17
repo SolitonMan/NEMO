@@ -3,8 +3,15 @@
 {% block title %}Calendar{% endblock %}
 {% block extrahead %}
 	{% load static %}
-	<link rel="stylesheet" type="text/css" href="{% static "fullcalendar/fullcalendar.css" %}" />
-	<script type="text/javascript" src="{% static "fullcalendar/fullcalendar.js" %}"></script>
+	<link rel="stylesheet" type="text/css" href="{% static "fullcalendar/fc.core.min.css" %}"/>
+	<link rel="stylesheet" type="text/css" href="{% static "fullcalendar/fc.daygrid.min.css" %}" />
+	<link rel="stylesheet" type="text/css" href="{% static "fullcalendar/fc.timegrid.min.css" %}" />	
+	<script type="text/javascript" src="{% static "fullcalendar/fc.core.min.js"  %}"></script>
+	<script type="text/javascript" src="{% static "fullcalendar/fc.interaction.min.js" %}"></script>
+	<script type="text/javascript" src="{% static "fullcalendar/fc.daygrid.min.js" %}"></script>
+	<script type="text/javascript" src="{% static "fullcalendar/fc.timegrid.min.js" %}"></script>
+	<script type="text/javascript" src="{% static "fullcalendar/rrule.main.js" %}"></script>
+	<script type="text/javascript" src="{% static "fullcalendar/fc.rrule.min.js" %}"></script>
 {% endblock %}
 {% block body %}
 
@@ -44,24 +51,27 @@
 <input type="hidden" id="impersonate" name="impersonate" value="test">
 
 <script type="text/javascript">
+var calendar;  {# global calendar variable #}
 
 function get_event_type()
 {
 	return $("#event_type").text().trim().toLowerCase();
 }
-
 function set_event_type(text)
 {
 	$("#event_type").html(text);
 }
-
 {# Check which tool we want to display information for and establish the calendar feed. #}
 {# This function also checks if the user wishes to display their personal calendar feed (that is, all events #}
 {# specific to them for all tools). #}
 function update_event_sources()
 {
 	{# Remove all event sources from the calendar. #}
-	$("#calendar").fullCalendar("removeEventSource", "{% url 'event_feed' %}");
+	var eventSources = calendar.getEventSources();
+
+	for (e in eventSources) {
+		e.remove();
+	}
 
 	var event_type = get_event_type();
 	var tool_event_source =
@@ -72,7 +82,6 @@ function update_event_sources()
 			event_type: event_type
 		}
 	};
-
 	if(event_type === 'reservations' || event_type === 'nanofab usage')
 	{
 		var item = get_selected_item();
@@ -92,17 +101,15 @@ function update_event_sources()
 		else
 			return;
 	}
-
-	$("#calendar").fullCalendar("addEventSource", tool_event_source);
-
+	calendar.addEventSource(tool_event_source);
 	refresh_sidebar_icons();
 }
-
 {# This function is a callback for when a reservation is successfully created by the user. #}
 {# It renders the event to the calendar by refetching the event feed. #}
 function event_creation_success_callback(response, status, xml_http_request, ajax_post)
 {
-	$("#calendar").fullCalendar("unselect");
+	calendar.unselect();
+
 	{# If the response is empty then the reservation was successfully created. #}
 	if(response === "")
 		refresh_calendar_and_sidebar();
@@ -114,16 +121,14 @@ function event_creation_success_callback(response, status, xml_http_request, aja
 		$("#dialog").modal('show');
 	}
 }
-
 {# This function is a callback for when reservation creation fails. #}
 {# It removes the visual indication of the reservation (on the calendar) #}
 {# and refreshes it with current events. #}
 function unselect_and_refresh()
 {
-	$("#calendar").fullCalendar("unselect");
+	calendar.unselect();
 	refresh_calendar_and_sidebar();
 }
-
 function submit_event_with_more_information(ajax_post)
 {
 	if($('#dialog_cancelled').val() === "true")
@@ -136,7 +141,6 @@ function submit_event_with_more_information(ajax_post)
 			return event_creation_success_callback(response, status, xml_http_request, ajax_post)
 		});
 }
-
 {# This function is called when the user clicks and drags on the calendar to create a reservation. #}
 function create(start, end, jsEvent, view)
 {
@@ -150,10 +154,9 @@ function create(start, end, jsEvent, view)
 	var personal_schedule = item.hasClass('personal_schedule');
 	if(!item_selected || !reservation_view || personal_schedule)
 	{
-		$("#calendar").fullCalendar("unselect");
+		calendar.unselect();
 		return;
 	}
-
 	var event_properties =
 	{
 		"start": start.unix(),
@@ -184,11 +187,10 @@ function create(start, end, jsEvent, view)
 		.fail([unselect_and_refresh, ajax_failure_callback("Oops! Something went wrong")])
 		.done(function(response, status, xml_http_request) { return event_creation_success_callback(response, status, xml_http_request, ajax_post) });
 }
-
 {# This function is called when the user clicks and drags on the calendar to resize a reservation. #}
-function resize(event, delta, revertFunc, jsEvent, ui, view)
+function resize(info)
 {
-	var pieces = event.id.split(" ");
+	var pieces = info.event.id.split(" ");
 	var type = pieces[0];
 	var id = pieces[1];
 	var event_changes =
@@ -197,79 +199,77 @@ function resize(event, delta, revertFunc, jsEvent, ui, view)
 		"delta": delta.asMinutes()
 	};
 	if(type === "Reservation")
-		ajax_post("{% url 'resize_reservation' %}", event_changes, undefined, [revertFunc, ajax_failure_callback("Reservation resize failed")], refresh_calendar_and_sidebar);
+		ajax_post("{% url 'resize_reservation' %}", event_changes, undefined, [info.revertFunc, ajax_failure_callback("Reservation resize failed")], refresh_calendar_and_sidebar);
 	else if(type === "Outage")
-		ajax_post("{% url 'resize_outage' %}", event_changes, undefined, [revertFunc, ajax_failure_callback("Outage resize failed")], refresh_calendar_and_sidebar);
+		ajax_post("{% url 'resize_outage' %}", event_changes, undefined, [info.revertFunc, ajax_failure_callback("Outage resize failed")], refresh_calendar_and_sidebar);
 }
-
 {# This function is called when the user clicks and drags an event in order to move their reservation. #}
-function move(event, delta, revertFunc, jsEvent, ui, view)
+function move(info)
 {
-	var pieces = event.id.split(" ");
+	var pieces = info.event.id.split(" ");
 	var type = pieces[0];
 	var id = pieces[1];
 	var event_changes =
 	{
 		"id": id,
-		"delta": delta.asMinutes()
+		"delta": info.delta.asMinutes()
 	};
 	if(type === "Reservation")
-		ajax_post("{% url 'move_reservation' %}", event_changes, undefined, [revertFunc, ajax_failure_callback("Reservation move failed")], refresh_calendar_and_sidebar);
+		ajax_post("{% url 'move_reservation' %}", event_changes, undefined, [info.revertFunc, ajax_failure_callback("Reservation move failed")], refresh_calendar_and_sidebar);
 	else if(type === "Outage")
-		ajax_post("{% url 'move_outage' %}", event_changes, undefined, [revertFunc, ajax_failure_callback("Outage move failed")], refresh_calendar_and_sidebar);
+		ajax_post("{% url 'move_outage' %}", event_changes, undefined, [info.revertFunc, ajax_failure_callback("Outage move failed")], refresh_calendar_and_sidebar);
 }
-
-function details(event, jsEvent, view)
+function details(info)
 {
 	var failure_dialog = ajax_failure_callback("Unable to display details");
-	ajax_get(event.details_url, undefined, ajax_success_callback, [failure_dialog, refresh_calendar_and_sidebar]);
+	ajax_get(info.event.details_url, undefined, ajax_success_callback, [failure_dialog, refresh_calendar_and_sidebar]);
+	info.jsEvent.preventDefault();
 }
-
 function cancel_reservation(url, reservation_id, reason)
 {
 	var failure_dialog = ajax_failure_callback("Unable to cancel this reservation");
 	function reservation_cancel_success_callback()
 	{
-		$("#calendar").fullCalendar("removeEvents", reservation_id);
+		var e = calendar.getEventById(reservation_id);
+		e.removeEvent();
 	}
 	var contents = undefined;
 	if(reason)
 		contents = {'reason': reason};
 	ajax_post(url, contents, reservation_cancel_success_callback, [failure_dialog, refresh_calendar_and_sidebar]);
 }
-
 function cancel_outage(url, outage_id)
 {
 	var failure_dialog = ajax_failure_callback("Unable to cancel this outage");
 	function outage_cancel_success_callback()
 	{
-		$("#calendar").fullCalendar("removeEvents", outage_id);
+		var e = calendar.getEventById(outage_id);
+		e.remove();
 		refresh_sidebar_icons();
 	}
 	ajax_post(url, undefined, outage_cancel_success_callback, [failure_dialog, refresh_calendar_and_sidebar]);
 }
-
 function set_reservation_title(url, reservation_id, title)
 {
 	var failure_dialog = ajax_failure_callback("Unable to set reservation title");
 	ajax_post(url, {'title': title}, refresh_calendar_and_sidebar, [failure_dialog, refresh_calendar_and_sidebar]);
 }
-
 function on_browser_resize()
 {
-	$('#calendar').fullCalendar('option', 'height', $("#calendar").height());
+	var c = document.getElementById("calendar");
+	calendar.setOption('height', c.style.height);
 }
-
 function create_calendar()
 {
 	{# Documentation for properties: http://arshaw.com/fullcalendar/docs/ #}
 	var calendar_properties =
 	{
+		"plugins": [ "interaction", "dayGrid", "timeGrid", "rrule" ],
 		"header":
 		{
-			left: "prev,next today{% if user.is_staff %} proxyReservation scheduledOutage recurringEvent{% endif %}",
+			left: "prev,next today{% if user.is_staff %} proxyReservation scheduledOutage{% endif %}",
 			center: "title",
-			right: "agendaDay,agendaWeek,month"
+			right: "timeGridDay,timeGridWeek,dayGridMonth"
 		},
 		"views": {
 			"day": {
@@ -283,30 +283,6 @@ function create_calendar()
 				"titleFormat": 'MMMM YYYY'
 			}
 		},
-		"firstDay": 1, {# Make Monday the first day of the week #}
-		"scrollTime": '07:00:00', {# The day starts at 7 AM #}
-		"defaultView": "agendaWeek",
-		"allDaySlot": false,
-		"allDayDefault": false,
-		"slotDuration": '00:15:00', {# 15 minutes each row #}
-		"slotLabelInterval": '1:00', {# One hour intervals for label #}
-		"editable": false,
-		"selectable": true,
-		"selectHelper": true,
-		"select": create,
-		"eventResize": resize,
-		"eventDrop": move,
-		"eventClick": details,
-		"height": $("#calendar").height(),
-		"handleWindowResize": true,
-		"windowResize": on_browser_resize,
-		"slotEventOverlap": false,
-		"buttonText": {
-			"today": "Today",
-			"day": "Day",
-			"week": "Week",
-			"month": "Month"
-		},
 		"customButtons": {
 			"proxyReservation": {
 				"text": "Reserve for someone else",
@@ -315,16 +291,12 @@ function create_calendar()
 			"scheduledOutage": {
 				"text": "Schedule an outage",
 				"click": scheduled_outage
-			},
-			"recurringEvent": {
-				"text": "Schedule a recurring event",
-				"click": recurring_event
 			}
 		}
 	};
-	$("#calendar").fullCalendar(calendar_properties);
+	var calendar = new FullCalendar.Calendar(document.getElementById("calendar"),calendar_properties);
+	calendar.render();
 }
-
 function reserve_for_someone_else()
 {
 	var proxy_reservation_button = $(".fc-proxyReservation-button")[0];
@@ -337,24 +309,11 @@ function reserve_for_someone_else()
 		$($(".fc-scheduledOutage-button")[0]).show();
 	}
 }
-
 function reserve_for_someone_else_callback(response, status, xml_http_request)
 {
 	$("#dialog .modal-content").html(response);
 	$("#dialog").modal('show');
 }
-
-function recurring_event()
-{
-	var recurring_event_button = $(".fc-recurringEvent-button")[0];
-	if ($(recurring_event_button).html() === "Schedule a recurring event") {
-		$(recurring_event_button).blur().html("Recurring Event Mode");
-	}
-	else {
-		$(recurring_event_button).blur().html("Schedule a recurring event");
-	}
-}
-
 function scheduled_outage()
 {
 	var scheduled_outage_button = $(".fc-scheduledOutage-button")[0];
@@ -370,13 +329,11 @@ function scheduled_outage()
 		$(scheduled_outage_button).blur().html("Schedule an outage");
 	}
 }
-
 function refresh_calendar_and_sidebar()
 {
-	$("#calendar").fullCalendar('refetchEvents');
+	calendar.refetchEvents();
 	refresh_sidebar_icons();
 }
-
 function change_calendar_event_type(calling_element)
 {
 	set_event_type(calling_element.text);
@@ -424,21 +381,18 @@ function change_calendar_event_type(calling_element)
 		clear_specific_user();
 	}
 }
-
 function get_specific_user_activity(jquery_event, search_selection, dataset_name)
 {
 	$("#user_search").typeahead('val', search_selection.id).hide();
 	$("#chosen_user_button").text(search_selection.name).show();
 	update_event_sources();
 }
-
 function clear_specific_user()
 {
 	$("#chosen_user_button").hide();
 	$("#user_search").typeahead('val', '').show().focus();
 	update_event_sources();
 }
-
 function on_load()
 {
 	create_calendar();
@@ -459,9 +413,6 @@ function on_load()
 	{% endif %}
 	$('[data-toggle~="tooltip"]').tooltip({ container: 'body' });
 }
-
 $(on_load);
-
 </script>
-
 {% endblock %}
