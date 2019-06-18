@@ -13,7 +13,6 @@ from django.views.decorators.http import require_GET, require_POST
 from NEMO.forms import EmailBroadcastForm
 from NEMO.models import Tool, Account, Project, User
 from NEMO.views.customization import get_media_file_contents
-from NEMO.views.authentication import check_for_core
 
 
 logger = getLogger(__name__)
@@ -22,8 +21,6 @@ logger = getLogger(__name__)
 @login_required
 @require_GET
 def get_email_form(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	recipient = request.GET.get('recipient', '')
 	try:
 		validate_email(recipient)
@@ -35,8 +32,6 @@ def get_email_form(request):
 @login_required
 @require_GET
 def get_email_form_for_user(request, user_id):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	recipient = get_object_or_404(User, id=user_id)
 	return render(request, 'email/email_form.html', {'name': recipient.get_full_name(), 'recipient': recipient.email})
 
@@ -44,8 +39,6 @@ def get_email_form_for_user(request, user_id):
 @login_required
 @require_POST
 def send_email(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	try:
 		recipient = request.POST['recipient']
 		validate_email(recipient)
@@ -80,8 +73,6 @@ def send_email(request):
 @staff_member_required(login_url=None)
 @require_GET
 def email_broadcast(request, audience=''):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	dictionary = {}
 	if audience == 'tool':
 		dictionary['search_base'] = Tool.objects.filter(visible=True)
@@ -96,8 +87,6 @@ def email_broadcast(request, audience=''):
 @staff_member_required(login_url=None)
 @require_GET
 def compose_email(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	audience = request.GET.get('audience')
 	selection = request.GET.get('selection')
 	try:
@@ -132,8 +121,6 @@ def compose_email(request):
 @staff_member_required(login_url=None)
 @require_POST
 def send_broadcast_email(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	if not get_media_file_contents('generic_email.html'):
 		return HttpResponseBadRequest('Generic email template not defined. Visit the NEMO customizable_key_values page to upload a template.')
 	form = EmailBroadcastForm(request.POST)

@@ -147,8 +147,22 @@ def login_user(request):
 
 			if count > 1:
 				request.session['has_core'] = "true"
-				request.session['active_core'] = ""
-				next_page = "/choose_core/"
+				names = request.user.core_ids.values_list('name', flat=True)
+				ids = request.user.core_ids.values_list('id', flat=True)
+				active_core = ""
+				active_core_ids = ""
+
+				for n in enumerate(names):
+					active_core = active_core + str(n[1]) + ","
+
+				for i in enumerate(ids):
+					active_core_ids = active_core_ids + str(i[1]) + ","
+
+
+				request.session['active_core'] = str(active_core)
+				request.session['active_core_id'] = str(active_core_ids)
+
+				next_page = request.GET[REDIRECT_FIELD_NAME]
 
 			resolve(next_page)  # Make sure the next page is a legitimate URL for NEMO
 		except:

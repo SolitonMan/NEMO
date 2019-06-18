@@ -13,14 +13,11 @@ from django.views.decorators.http import require_GET, require_http_methods, requ
 from NEMO.admin import record_local_many_to_many_changes, record_active_state
 from NEMO.forms import UserForm
 from NEMO.models import User, Project, Tool, PhysicalAccessLevel, Reservation, StaffCharge, UsageEvent, AreaAccessRecord, ActivityHistory
-from NEMO.views.authentication import check_for_core
 
 
 @staff_member_required(login_url=None)
 @require_GET
 def users(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	all_users = User.objects.all()
 	return render(request, 'users/users.html', {'users': all_users})
 
@@ -28,8 +25,6 @@ def users(request):
 @staff_member_required(login_url=None)
 @require_http_methods(['GET', 'POST'])
 def create_or_modify_user(request, user_id):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	dictionary = {
 		'projects': Project.objects.filter(active=True, account__active=True),
 		'tools': Tool.objects.filter(visible=True),
@@ -168,8 +163,6 @@ def create_or_modify_user(request, user_id):
 @staff_member_required(login_url=None)
 @require_http_methods(['GET', 'POST'])
 def deactivate(request, user_id):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	dictionary = {
 		'user_to_deactivate': get_object_or_404(User, id=user_id),
 		'reservations': Reservation.objects.filter(user=user_id, cancelled=False, missed=False, end__gt=timezone.now()),
@@ -252,8 +245,6 @@ def deactivate(request, user_id):
 @staff_member_required(login_url=None)
 @require_POST
 def reset_password(request, user_id):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	try:
 		user = get_object_or_404(User, id=user_id)
 		result = requests.post(urljoin(settings.IDENTITY_SERVICE['url'], '/reset_password/'), {'username': user.username, 'domain': user.domain}, timeout=3)
@@ -280,8 +271,6 @@ def reset_password(request, user_id):
 @staff_member_required(login_url=None)
 @require_POST
 def unlock_account(request, user_id):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	try:
 		user = get_object_or_404(User, id=user_id)
 		result = requests.post(urljoin(settings.IDENTITY_SERVICE['url'], '/unlock_account/'), {'username': user.username, 'domain': user.domain}, timeout=3)

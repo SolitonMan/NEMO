@@ -6,14 +6,11 @@ from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
 from NEMO.models import User, StaffCharge, AreaAccessRecord, Project, Area
-from NEMO.views.authentication import check_for_core
 
 
 @staff_member_required(login_url=None)
 @require_GET
 def staff_charges(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	staff_charge = request.user.get_staff_charge()
 	if staff_charge:
 		try:
@@ -39,8 +36,6 @@ def staff_charges(request):
 @staff_member_required(login_url=None)
 @require_POST
 def begin_staff_charge(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	if request.user.charging_staff_time():
 		return HttpResponseBadRequest('You cannot create a new staff charge when one is already in progress.')
 	charge = StaffCharge()
@@ -54,8 +49,6 @@ def begin_staff_charge(request):
 @staff_member_required(login_url=None)
 @require_POST
 def end_staff_charge(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")	
 	if not request.user.charging_staff_time():
 		return HttpResponseBadRequest('You do not have a staff charge in progress, so you cannot end it.')
 	charge = request.user.get_staff_charge()
@@ -73,8 +66,6 @@ def end_staff_charge(request):
 @staff_member_required(login_url=None)
 @require_POST
 def begin_staff_area_charge(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	charge = request.user.get_staff_charge()
 	if not charge:
 		return HttpResponseBadRequest('You do not have a staff charge in progress, so you cannot begin an area access charge.')
@@ -96,8 +87,6 @@ def begin_staff_area_charge(request):
 @staff_member_required(login_url=None)
 @require_POST
 def end_staff_area_charge(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")	
 	charge = request.user.get_staff_charge()
 	if not charge:
 		return HttpResponseBadRequest('You do not have a staff charge in progress, so you cannot end area access.')

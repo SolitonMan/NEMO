@@ -6,15 +6,12 @@ from django.views.decorators.http import require_GET
 
 from NEMO.decorators import disable_session_expiry_refresh
 from NEMO.models import Area, AreaAccessRecord, Resource, ScheduledOutage, Task, Tool, UsageEvent
-from NEMO.views.authentication import check_for_core
 
 
 @login_required
 @require_GET
 @disable_session_expiry_refresh
 def status_dashboard(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	"""
 	Present a web page to allow users to view the status and usage of all tools.
 	"""
@@ -94,8 +91,6 @@ def merge(tools, tasks, unavailable_resources, usage_events, scheduled_outages):
 @require_GET
 @disable_session_expiry_refresh
 def occupancy(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	area = request.GET.get('occupancy')
 	if area is None or not Area.objects.filter(name=area).exists():
 		return HttpResponse()

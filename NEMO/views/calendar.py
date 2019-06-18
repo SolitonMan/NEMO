@@ -19,14 +19,11 @@ from NEMO.views.constants import ADDITIONAL_INFORMATION_MAXIMUM_LENGTH
 from NEMO.views.customization import get_customization, get_media_file_contents
 from NEMO.views.policy import check_policy_to_save_reservation, check_policy_to_cancel_reservation, check_policy_to_create_outage
 from NEMO.widgets.tool_tree import ToolTree
-from NEMO.views.authentication import check_for_core
 
 
 @login_required
 @require_GET
 def calendar(request, tool_id=None):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	""" Present the calendar view to the user. """
 
 	if request.device == 'mobile':
@@ -51,8 +48,6 @@ def calendar(request, tool_id=None):
 @require_GET
 @disable_session_expiry_refresh
 def event_feed(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	""" Get all reservations for a specific time-window. Optionally: filter by tool or user name. """
 	try:
 		start, end = extract_dates(request.GET)
@@ -80,8 +75,6 @@ def event_feed(request):
 
 
 def reservation_event_feed(request, start, end):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	events = Reservation.objects.filter(cancelled=False, missed=False, shortened=False)
 	outages = None
 	# Exclude events for which the following is true:
@@ -113,8 +106,6 @@ def reservation_event_feed(request, start, end):
 
 
 def usage_event_feed(request, start, end):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	usage_events = UsageEvent.objects
 	# Exclude events for which the following is true:
 	# The event starts and ends before the time-window, and...
@@ -156,8 +147,6 @@ def usage_event_feed(request, start, end):
 
 
 def specific_user_feed(request, user, start, end):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	# Find all tool usage events for a user.
 	# Exclude events for which the following is true:
 	# The event starts and ends before the time-window, and...
@@ -193,8 +182,6 @@ def specific_user_feed(request, user, start, end):
 @login_required
 @require_POST
 def create_reservation(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	""" Create a reservation for a user. """
 	try:
 		start, end = extract_times(request.POST)
@@ -269,8 +256,6 @@ def create_reservation(request):
 
 
 def extract_configuration(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	cleaned_configuration = []
 	for key, value in request.POST.items():
 		entry = parse_configuration_entry(key, value)
@@ -301,8 +286,6 @@ def parse_configuration_entry(key, value):
 @staff_member_required(login_url=None)
 @require_POST
 def create_outage(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	""" Create a reservation for a user. """
 	try:
 		start, end = extract_times(request.POST)
@@ -337,8 +320,6 @@ def create_outage(request):
 @login_required
 @require_POST
 def resize_reservation(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	""" Resize a reservation for a user. """
 	try:
 		delta = timedelta(minutes=int(request.POST['delta']))
@@ -350,8 +331,6 @@ def resize_reservation(request):
 @staff_member_required(login_url=None)
 @require_POST
 def resize_outage(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	""" Resize an outage """
 	try:
 		delta = timedelta(minutes=int(request.POST['delta']))
@@ -363,8 +342,6 @@ def resize_outage(request):
 @login_required
 @require_POST
 def move_reservation(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	""" Move a reservation for a user. """
 	try:
 		delta = timedelta(minutes=int(request.POST['delta']))
@@ -376,8 +353,6 @@ def move_reservation(request):
 @staff_member_required(login_url=None)
 @require_POST
 def move_outage(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	""" Move a reservation for a user. """
 	try:
 		delta = timedelta(minutes=int(request.POST['delta']))
@@ -387,8 +362,6 @@ def move_outage(request):
 
 
 def modify_reservation(request, start_delta, end_delta):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	"""
 	Cancel the user's old reservation and create a new one. Reservations are cancelled and recreated so that
 	reservation abuse can be tracked if necessary. This function should be called by other views and should
@@ -442,8 +415,6 @@ def modify_reservation(request, start_delta, end_delta):
 
 
 def modify_outage(request, start_delta, end_delta):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	try:
 		outage = ScheduledOutage.objects.get(pk=request.POST['id'])
 	except ScheduledOutage.DoesNotExist:
@@ -473,8 +444,6 @@ def determine_insufficient_notice(tool, start):
 @login_required
 @require_POST
 def cancel_reservation(request, reservation_id):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	""" Cancel a reservation for a user. """
 	reservation = get_object_or_404(Reservation, id=reservation_id)
 	response = check_policy_to_cancel_reservation(reservation, request.user, request)
@@ -514,8 +483,6 @@ def cancel_reservation(request, reservation_id):
 @staff_member_required(login_url=None)
 @require_POST
 def cancel_outage(request, outage_id):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	outage = get_object_or_404(ScheduledOutage, id=outage_id)
 	outage.delete()
 	if request.device == 'desktop':
@@ -528,8 +495,6 @@ def cancel_outage(request, outage_id):
 @staff_member_required(login_url=None)
 @require_POST
 def set_reservation_title(request, reservation_id):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	""" Cancel a reservation for a user. """
 	reservation = get_object_or_404(Reservation, id=reservation_id)
 	reservation.title = request.POST.get('title', '')[:reservation._meta.get_field('title').max_length]
@@ -541,8 +506,6 @@ def set_reservation_title(request, reservation_id):
 @permission_required('NEMO.trigger_timed_services', raise_exception=True)
 @require_GET
 def email_reservation_reminders(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	# Exit early if the reservation reminder email template has not been customized for the organization yet.
 	reservation_reminder_message = get_media_file_contents('reservation_reminder_email.html')
 	reservation_warning_message = get_media_file_contents('reservation_warning_email.html')
@@ -576,8 +539,6 @@ def email_reservation_reminders(request):
 @permission_required('NEMO.trigger_timed_services', raise_exception=True)
 @require_GET
 def email_usage_reminders(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	projects_to_exclude = request.GET.getlist("projects_to_exclude[]")
 	busy_users = AreaAccessRecord.objects.filter(end=None, staff_charge=None).exclude(project__id__in=projects_to_exclude)
 	busy_tools = UsageEvent.objects.filter(end=None).exclude(project__id__in=projects_to_exclude)
@@ -627,8 +588,6 @@ def email_usage_reminders(request):
 @login_required
 @require_GET
 def reservation_details(request, reservation_id):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	reservation = get_object_or_404(Reservation, id=reservation_id)
 	if reservation.cancelled:
 		error_message = 'This reservation was cancelled by {0} at {1}.'.format(reservation.cancelled_by, format_datetime(reservation.cancellation_time))
@@ -639,8 +598,6 @@ def reservation_details(request, reservation_id):
 @login_required
 @require_GET
 def outage_details(request, outage_id):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	outage = get_object_or_404(ScheduledOutage, id=outage_id)
 	return render(request, 'calendar/outage_details.html', {'outage': outage})
 
@@ -648,8 +605,6 @@ def outage_details(request, outage_id):
 @login_required
 @require_GET
 def usage_details(request, event_id):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	event = get_object_or_404(UsageEvent, id=event_id)
 	return render(request, 'calendar/usage_details.html', {'event': event})
 
@@ -657,8 +612,6 @@ def usage_details(request, event_id):
 @login_required
 @require_GET
 def area_access_details(request, event_id):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	event = get_object_or_404(AreaAccessRecord, id=event_id)
 	return render(request, 'calendar/area_access_details.html', {'event': event})
 
@@ -667,8 +620,6 @@ def area_access_details(request, event_id):
 @require_GET
 @permission_required('NEMO.trigger_timed_services', raise_exception=True)
 def cancel_unused_reservations(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	# Exit early if the missed reservation email template has not been customized for the organization yet.
 	if not get_media_file_contents('missed_reservation_email.html'):
 		return HttpResponseNotFound('The missed reservation email template has not been customized for your organization yet. Please visit the NEMO customizable_key_values page to upload a template, then missed email notifications can be sent.')
@@ -704,8 +655,6 @@ def cancel_unused_reservations(request):
 @staff_member_required(login_url=None)
 @require_GET
 def proxy_reservation(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	return render(request, 'calendar/proxy_reservation.html', {'users': User.objects.filter(is_active=True)})
 
 

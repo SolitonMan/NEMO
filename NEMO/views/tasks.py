@@ -16,7 +16,6 @@ from NEMO.utilities import bootstrap_primary_color, format_datetime
 from NEMO.views.customization import get_customization, get_media_file_contents
 from NEMO.views.safety import send_safety_email_notification
 from NEMO.views.tool_control import determine_tool_status
-from NEMO.views.authentication import check_for_core
 
 tasks_logger = getLogger("NEMO.Tasks")
 
@@ -24,8 +23,6 @@ tasks_logger = getLogger("NEMO.Tasks")
 @login_required
 @require_POST
 def create(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	"""
 	This function handles feedback from users. This could be a problem report or shutdown notification.
 	"""
@@ -72,8 +69,6 @@ def create(request):
 
 
 def send_new_task_emails(request, task):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	message = get_media_file_contents('new_task_email.html')
 	if message:
 		dictionary = {
@@ -107,8 +102,6 @@ def send_new_task_emails(request, task):
 @login_required
 @require_POST
 def cancel(request, task_id):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	task = get_object_or_404(Task, id=task_id)
 	if task.cancelled or task.resolved:
 		dictionary = {
@@ -165,8 +158,6 @@ Visit {url} to view the tool control page for the task.
 @staff_member_required(login_url=None)
 @require_POST
 def update(request, task_id):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	task = get_object_or_404(Task, id=task_id)
 	form = TaskForm(request.user, data=request.POST, instance=task)
 	next_page = request.POST.get('next_page', 'tool_control')
@@ -195,8 +186,6 @@ def update(request, task_id):
 @staff_member_required(login_url=None)
 @require_GET
 def task_update_form(request, task_id):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	task = get_object_or_404(Task, id=task_id)
 	categories = TaskCategory.objects.filter(stage=TaskCategory.Stage.INITIAL_ASSESSMENT)
 	dictionary = {
@@ -211,8 +200,6 @@ def task_update_form(request, task_id):
 @staff_member_required(login_url=None)
 @require_GET
 def task_resolution_form(request, task_id):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	task = get_object_or_404(Task, id=task_id)
 	categories = TaskCategory.objects.filter(stage=TaskCategory.Stage.COMPLETION)
 	dictionary = {

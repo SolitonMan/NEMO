@@ -5,13 +5,10 @@ from django.views.decorators.http import require_GET, require_POST, require_http
 
 from NEMO.forms import ProjectForm, AccountForm
 from NEMO.models import Account, Project, User, MembershipHistory, ActivityHistory
-from NEMO.views.authentication import check_for_core
 
 @staff_member_required(login_url=None)
 @require_GET
 def accounts_and_projects(request, kind=None, identifier=None):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	try:
 		if kind == 'project':
 			account = Project.objects.get(id=identifier).account
@@ -33,8 +30,6 @@ def accounts_and_projects(request, kind=None, identifier=None):
 @staff_member_required(login_url=None)
 @require_POST
 def toggle_active(request, kind, identifier):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	if kind == 'account':
 		entity = get_object_or_404(Account, id=identifier)
 	elif kind == 'project':
@@ -54,8 +49,6 @@ def toggle_active(request, kind, identifier):
 @staff_member_required(login_url=None)
 @require_http_methods(['GET', 'POST'])
 def create_project(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	dictionary = {
 		'account_list': Account.objects.all(),
 	}
@@ -83,8 +76,6 @@ def create_project(request):
 @staff_member_required(login_url=None)
 @require_http_methods(['GET', 'POST'])
 def create_account(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	if request.method == 'GET':
 		return render(request, 'accounts_and_projects/create_account.html')
 	form = AccountForm(request.POST)
@@ -102,8 +93,6 @@ def create_account(request):
 @staff_member_required(login_url=None)
 @require_POST
 def remove_user_from_project(request, user_id, project_id):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	user = get_object_or_404(User, id=user_id)
 	project = get_object_or_404(Project, id=project_id)
 	if project.user_set.filter(id=user.id).exists():
@@ -124,8 +113,6 @@ def remove_user_from_project(request, user_id, project_id):
 @staff_member_required(login_url=None)
 @require_POST
 def add_user_to_project(request, user_id, project_id):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	user = get_object_or_404(User, id=user_id)
 	project = get_object_or_404(Project, id=project_id)
 	if user not in project.user_set.all():

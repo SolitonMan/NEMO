@@ -7,14 +7,11 @@ from django.http import HttpResponseRedirect
 
 from NEMO.models import User, Project
 from NEMO.views.customization import get_customization, get_media_file_contents
-from NEMO.views.authentication import check_for_core
 
 
 @login_required
 @require_http_methods(['GET', 'POST'])
 def nanofab_rules(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	if request.method == 'GET':
 		tutorial = get_media_file_contents('nanofab_rules_tutorial.html')
 		if tutorial:

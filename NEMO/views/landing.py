@@ -11,14 +11,11 @@ from NEMO.models import Alert, LandingPageChoice, Reservation, Resource, UsageEv
 from NEMO.views.alerts import delete_expired_alerts
 from NEMO.views.area_access import able_to_self_log_in_to_area
 from NEMO.views.notifications import delete_expired_notifications, get_notificaiton_counts
-from NEMO.views.authentication import check_for_core
 
 
 @login_required
 @require_GET
 def landing(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 
 	delete_expired_alerts()
 	delete_expired_notifications()

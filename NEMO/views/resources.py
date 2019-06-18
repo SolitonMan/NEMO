@@ -5,22 +5,17 @@ from django.views.decorators.http import require_GET, require_http_methods, requ
 
 from NEMO.forms import ScheduledOutageForm
 from NEMO.models import Resource, UsageEvent, Tool, ScheduledOutage, ScheduledOutageCategory
-from NEMO.views.authentication import check_for_core
 
 
 @staff_member_required(login_url=None)
 @require_GET
 def resources(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	return render(request, 'resources/resources.html', {'resources': Resource.objects.all().order_by('category', 'name')})
 
 
 @staff_member_required(login_url=None)
 @require_http_methods(['GET', 'POST'])
 def modify_resource(request, resource_id):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	resource = get_object_or_404(Resource, id=resource_id)
 	dictionary = {'resource': resource}
 	if request.method == 'GET':
@@ -51,8 +46,6 @@ def modify_resource(request, resource_id):
 @staff_member_required(login_url=None)
 @require_http_methods(['GET', 'POST'])
 def schedule_outage(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	outage_id = request.GET.get('outage_id') or request.POST.get('outage_id')
 	try:
 		outage = ScheduledOutage.objects.get(id=outage_id)
@@ -83,8 +76,6 @@ def schedule_outage(request):
 @staff_member_required(login_url=None)
 @require_POST
 def delete_scheduled_outage(request, outage_id):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	try:
 		ScheduledOutage.objects.filter(id=outage_id).delete()
 	except Http404:

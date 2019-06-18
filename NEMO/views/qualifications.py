@@ -8,14 +8,11 @@ from django.shortcuts import render, get_object_or_404
 from django.views.decorators.http import require_GET, require_POST
 
 from NEMO.models import Tool, MembershipHistory, User
-from NEMO.views.authentication import check_for_core
 
 
 @staff_member_required(login_url=None)
 @require_GET
 def qualifications(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	""" Present a web page to allow staff to qualify or disqualify users on particular tools. """
 	users = User.objects.filter(is_active=True)
 	tools = Tool.objects.filter(visible=True)
@@ -25,8 +22,6 @@ def qualifications(request):
 @staff_member_required(login_url=None)
 @require_POST
 def modify_qualifications(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	""" Change the tools that a set of users is qualified to use. """
 	action = request.POST.get('action')
 	if action != 'qualify' and action != 'disqualify':
@@ -101,8 +96,6 @@ def modify_qualifications(request):
 @staff_member_required(login_url=None)
 @require_GET
 def get_qualified_users(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	tool = get_object_or_404(Tool, id=request.GET.get('tool_id'))
 	users = User.objects.filter(is_active=True)
 	dictionary = {

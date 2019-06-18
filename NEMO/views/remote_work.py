@@ -6,14 +6,11 @@ from django.views.decorators.http import require_GET, require_POST
 
 from NEMO.models import UsageEvent, StaffCharge, User
 from NEMO.utilities import month_list, get_month_timeframe
-from NEMO.views.authentication import check_for_core
 
 
 @staff_member_required(login_url=None)
 @require_GET
 def remote_work(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	first_of_the_month, last_of_the_month = get_month_timeframe(request.GET.get('date'))
 	operator = request.GET.get('operator')
 	if operator:
@@ -42,8 +39,6 @@ def remote_work(request):
 @staff_member_required(login_url=None)
 @require_POST
 def validate_staff_charge(request, staff_charge_id):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	staff_charge = get_object_or_404(StaffCharge, id=staff_charge_id)
 	staff_charge.validated = True
 	staff_charge.save()
@@ -53,8 +48,6 @@ def validate_staff_charge(request, staff_charge_id):
 @staff_member_required(login_url=None)
 @require_POST
 def validate_usage_event(request, usage_event_id):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	usage_event = get_object_or_404(UsageEvent, id=usage_event_id)
 	usage_event.validated = True
 	usage_event.save()

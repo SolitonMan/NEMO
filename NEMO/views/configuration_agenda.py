@@ -7,14 +7,11 @@ from django.http import HttpResponseRedirect
 
 from NEMO.models import Tool, Reservation
 from NEMO.utilities import localize, naive_local_current_datetime
-from NEMO.views.authentication import check_for_core
 
 
 @staff_member_required(login_url=None)
 @require_GET
 def configuration_agenda(request, time_period='today'):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")	
 	tools = Tool.objects.exclude(configuration__isnull=True).exclude(configuration__exclude_from_configuration_agenda=True).values_list('id', flat=True)
 	start = None
 	end = None

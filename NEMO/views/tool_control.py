@@ -17,14 +17,11 @@ from NEMO.utilities import extract_times, quiet_int
 from NEMO.views.policy import check_policy_to_disable_tool, check_policy_to_enable_tool
 from NEMO.widgets.dynamic_form import DynamicForm
 from NEMO.widgets.tool_tree import ToolTree
-from NEMO.views.authentication import check_for_core
 
 
 @login_required
 @require_GET
 def tool_control(request, tool_id=None):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 
 	""" Presents the tool control view to the user, allowing them to being/end using a tool or see who else is using it. """
 	if request.user.active_project_count() == 0:
@@ -46,8 +43,6 @@ def tool_control(request, tool_id=None):
 @login_required
 @require_GET
 def tool_status(request, tool_id):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	""" Gets the current status of the tool (that is, whether it is currently in use or not). """
 	tool = get_object_or_404(Tool, id=tool_id, visible=True)
 
@@ -77,8 +72,6 @@ def tool_status(request, tool_id):
 @staff_member_required(login_url=None)
 @require_GET
 def use_tool_for_other(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	dictionary = {
 		'users': User.objects.filter(is_active=True).exclude(id=request.user.id)
 	}
@@ -88,8 +81,6 @@ def use_tool_for_other(request):
 @login_required
 @require_POST
 def tool_configuration(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	""" Sets the current configuration of a tool. """
 	try:
 		configuration = Configuration.objects.get(id=request.POST['configuration_id'])
@@ -121,8 +112,6 @@ def tool_configuration(request):
 @login_required
 @require_POST
 def create_comment(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	form = CommentForm(request.POST)
 	if not form.is_valid():
 		return HttpResponseBadRequest(nice_errors(form).as_ul())
@@ -137,8 +126,6 @@ def create_comment(request):
 @login_required
 @require_POST
 def hide_comment(request, comment_id):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	comment = get_object_or_404(Comment, id=comment_id)
 	if comment.author_id != request.user.id and not request.user.is_staff:
 		return HttpResponseBadRequest("You may only hide a comment if you are its author or a staff member.")
@@ -161,8 +148,6 @@ def determine_tool_status(tool):
 @login_required
 @require_POST
 def enable_tool(request, tool_id, user_id, project_id, staff_charge):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	""" Enable a tool for a user. The user must be qualified to do so based on the lab usage policy. """
 
 	if not settings.ALLOW_CONDITIONAL_URLS:
@@ -202,8 +187,6 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge):
 @login_required
 @require_POST
 def disable_tool(request, tool_id):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 
 	if not settings.ALLOW_CONDITIONAL_URLS:
 		return HttpResponseBadRequest('Tool control is only available on campus.')
@@ -258,8 +241,6 @@ def disable_tool(request, tool_id):
 @login_required
 @require_GET
 def past_comments_and_tasks(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	try:
 		start, end = extract_times(request.GET)
 	except:
@@ -282,8 +263,6 @@ def past_comments_and_tasks(request):
 @login_required
 @require_GET
 def ten_most_recent_past_comments_and_tasks(request, tool_id):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	tasks = Task.objects.filter(tool_id=tool_id).order_by('-creation_time')[:10]
 	comments = Comment.objects.filter(tool_id=tool_id).order_by('-creation_date')[:10]
 	past = list(chain(tasks, comments))

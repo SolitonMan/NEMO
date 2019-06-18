@@ -14,15 +14,12 @@ from NEMO.views.policy import check_policy_to_disable_tool, check_policy_to_enab
 from NEMO.views.status_dashboard import create_tool_summary
 from NEMO.utilities import quiet_int
 from NEMO.widgets.dynamic_form import DynamicForm
-from NEMO.views.authentication import check_for_core
 
 
 @login_required
 @permission_required('NEMO.kiosk')
 @require_POST
 def enable_tool(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	tool = Tool.objects.get(id=request.POST['tool_id'])
 	customer = User.objects.get(id=request.POST['customer_id'])
 	project = Project.objects.get(id=request.POST['project_id'])
@@ -58,8 +55,6 @@ def enable_tool(request):
 @permission_required('NEMO.kiosk')
 @require_POST
 def disable_tool(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	tool = Tool.objects.get(id=request.POST['tool_id'])
 	customer = User.objects.get(id=request.POST['customer_id'])
 	downtime = timedelta(minutes=quiet_int(request.POST.get('downtime')))
@@ -108,8 +103,6 @@ def disable_tool(request):
 @permission_required('NEMO.kiosk')
 @require_GET
 def choices(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	try:
 		customer = User.objects.get(badge_number=request.GET['badge_number'])
 	except:
@@ -129,8 +122,6 @@ def choices(request):
 @permission_required('NEMO.kiosk')
 @require_GET
 def category_choices(request, category, user_id):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	try:
 		customer = User.objects.get(id=user_id)
 	except:
@@ -150,8 +141,6 @@ def category_choices(request, category, user_id):
 @permission_required('NEMO.kiosk')
 @require_GET
 def tool_information(request, tool_id, user_id, back):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	tool = Tool.objects.get(id=tool_id, visible=True)
 	customer = User.objects.get(id=user_id)
 	dictionary = {
@@ -177,8 +166,6 @@ def tool_information(request, tool_id, user_id, back):
 @permission_required('NEMO.kiosk')
 @require_GET
 def kiosk(request, location=None):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	if location and Tool.objects.filter(location=location, visible=True).exists():
 		dictionary = {
 			'location': location,

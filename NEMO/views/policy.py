@@ -89,8 +89,8 @@ def check_policy_to_enable_tool(tool, operator, user, project, staff_charge, req
 	# Prevent tool login for user from a different core
 	active_core_id = request.session.get("active_core_id")
 	if str(active_core_id) != "0" and str(active_core_id) != "None":
-		msg = "You are part of the core " + request.session.get("active_core") + " while the " + tool.name + " is part of the core " + tool.core_id.name + ". You cannot operate a tool that is part of a different core."
-		if str(tool.core_id.id) != str(active_core_id) and not operator.is_superuser:
+		msg = "The " + tool.name + " is part of the core " + tool.core_id.name + ". You cannot operate a tool that is part of a different core."
+		if str(tool.core_id.id) not in str(active_core_id) and not operator.is_superuser:
 			return HttpResponseBadRequest(msg)
 
 
@@ -101,7 +101,7 @@ def check_policy_to_disable_tool(tool, operator, downtime, request):
 	# Prevent tool disabling from a user in a different core
 	active_core_id = request.session.get("active_core_id")
 	if str(active_core_id) != "0" and str(active_core_id) != "None":
-		if str(tool.core_id.id) != str(active_core_id) and not operator.is_superuser:
+		if str(tool.core_id.id) not in str(active_core_id) and not operator.is_superuser:
 			return HttpResponseBadRequest("You cannot disable a tool that is part of a different Core.")
 
 	""" Check that the user is allowed to disable the tool. """
@@ -179,8 +179,8 @@ def check_policy_to_save_reservation(request, cancelled_reservation, new_reserva
 	# Check that a staff member is part of the core to which tool belongs
 	active_core_id = request.session.get("active_core_id")
 	if str(active_core_id) != "0" and str(active_core_id) != "None":
-		if str(active_core_id) != str(new_reservation.tool.core_id.id) and not user.is_superuser:
-			msg = "Your core of " + request.session.get("active_core") + " is not the same as the core of " + str(new_reservation.tool.core_id.name) + " to which the " + str(new_reservation.tool.name) + " belongs.  You cannot make a reservation for this tool."
+		if str(new_reservation.tool.core_id.id) not in str(active_core_id) and not user.is_superuser:
+			msg = "Your core is not the same as the core of " + str(new_reservation.tool.core_id.name) + " to which the " + str(new_reservation.tool.name) + " belongs.  You cannot make a reservation for this tool."
 			policy_problems.append(msg)
 
 	# If the user is a staff member or there's an explicit policy override then the policy check is finished.
@@ -323,8 +323,8 @@ def check_policy_to_cancel_reservation(reservation, user, request):
 	# Staff may only cancel reservations for tools in their core
 	active_core_id = request.session.get("active_core_id")
 	if str(active_core_id) != "0" and str(active_core_id) != "None":
-		if str(active_core_id) != str(reservation.tool.core_id.id) and not user.is_superuser:
-			msg = "Your core of " + request.session.get("active_core") + " is not the same as the core of " + str(reservation.tool.core_id.name) + " to which the " + str(reservation.tool.name) + " belongs.  You cannot cancel a reservation for this tool."
+		if str(reservation.tool.core_id.id) not in str(active_core_id) and not user.is_superuser:
+			msg = "Your core is not the same as the core of " + str(reservation.tool.core_id.name) + " to which the " + str(reservation.tool.name) + " belongs.  You cannot cancel a reservation for this tool."
 			return HttpResponseBadRequest(msg)
 
 	return HttpResponse()
@@ -348,8 +348,8 @@ def check_policy_to_create_outage(outage, request):
 	# prevent staff from creating outages on tools in different cores
 	active_core_id = request.session.get("active_core_id")
 	if str(active_core_id) != "0" and str(active_core_id) != "None":
-		if str(active_core_id) != str(outage.tool.core_id.id) and not user.is_superuser:
-			msg = "Your core of " + request.session.get("active_core") + " is not the same as the core of " + str(outage.tool.core_id.name) + " to which the " + str(outage.tool.name) + " belongs.  You cannot create an outage for this tool."
+		if str(outage.tool.core_id.id) not in str(active_core_id) and not user.is_superuser:
+			msg = "Your core is not the same as the core of " + str(outage.tool.core_id.name) + " to which the " + str(outage.tool.name) + " belongs.  You cannot create an outage for this tool."
 			return HttpResponseBadRequest(msg)
 
 	# No policy issues! The outage can be created...

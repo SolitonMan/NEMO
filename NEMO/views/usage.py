@@ -7,14 +7,11 @@ from requests import get
 
 from NEMO.models import AreaAccessRecord, ConsumableWithdraw, Reservation, StaffCharge, TrainingSession, UsageEvent, User
 from NEMO.utilities import get_month_timeframe, month_list
-from NEMO.views.authentication import check_for_core
 
 
 @login_required
 @require_GET
 def usage(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	first_of_the_month, last_of_the_month = get_month_timeframe(request.GET.get('timeframe'))
 	dictionary = {
 		'area_access': AreaAccessRecord.objects.filter(customer=request.user, end__gt=first_of_the_month, end__lte=last_of_the_month),
@@ -34,8 +31,6 @@ def usage(request):
 @login_required
 @require_GET
 def billing_information(request, timeframe=''):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	dictionary = {}
 	if not hasattr(settings, 'BILLING_SERVICE') or not settings.BILLING_SERVICE['available']:
 		return HttpResponse()

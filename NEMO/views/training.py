@@ -9,13 +9,10 @@ from django.shortcuts import render
 from django.views.decorators.http import require_GET, require_POST
 
 from NEMO.models import User, Tool, TrainingSession, Project, MembershipHistory
-from NEMO.views.authentication import check_for_core
 
 @staff_member_required(login_url=None)
 @require_GET
 def training(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	""" Present a web page to allow staff to charge training and qualify users on particular tools. """
 	users = User.objects.filter(is_active=True).exclude(id=request.user.id)
 	tools = Tool.objects.filter(visible=True)
@@ -25,8 +22,6 @@ def training(request):
 @staff_member_required(login_url=None)
 @require_GET
 def training_entry(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	entry_number = int(request.GET['entry_number'])
 	return render(request, 'training/training_entry.html', {'entry_number': entry_number, 'charge_types': TrainingSession.Type.Choices})
 
@@ -38,8 +33,6 @@ def is_valid_field(field):
 @staff_member_required(login_url=None)
 @require_POST
 def charge_training(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	try:
 		charges = {}
 		for key, value in request.POST.items():

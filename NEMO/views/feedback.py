@@ -8,14 +8,11 @@ from django.http import HttpResponseRedirect
 from NEMO.utilities import parse_parameter_string
 from NEMO.views.constants import FEEDBACK_MAXIMUM_LENGTH
 from NEMO.views.customization import get_customization, get_media_file_contents
-from NEMO.views.authentication import check_for_core
 
 
 @login_required
 @require_http_methods(['GET', 'POST'])
 def feedback(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	recipient = get_customization('feedback_email_address')
 	email_contents = get_media_file_contents('feedback_email.html')
 	if not recipient or not email_contents:

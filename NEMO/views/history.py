@@ -6,14 +6,11 @@ from django.utils.text import capfirst
 from django.views.decorators.http import require_GET
 
 from NEMO.models import Account, Project, User, ActivityHistory, MembershipHistory
-from NEMO.views.authentication import check_for_core
 
 
 @staff_member_required(login_url=None)
 @require_GET
 def history(request, item_type, item_id):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	if item_type == "account":
 		item = get_object_or_404(Account, id=item_id)
 	elif item_type == "project":

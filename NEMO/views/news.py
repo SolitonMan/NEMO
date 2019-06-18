@@ -10,14 +10,11 @@ from django.http import HttpResponseRedirect
 from NEMO.models import News
 from NEMO.utilities import format_datetime
 from NEMO.views.notifications import create_news_notification, delete_news_notification, get_notifications
-from NEMO.views.authentication import check_for_core
 
 
 @login_required
 @require_GET
 def view_recent_news(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	dictionary = {
 		'news': News.objects.filter(archived=False),
 		'notifications': get_notifications(request.user, News),
@@ -28,8 +25,6 @@ def view_recent_news(request):
 @login_required
 @require_GET
 def view_archived_news(request, page=1):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	page = int(page)
 	news = News.objects.filter(archived=True).order_by('-created')
 	paginator = Paginator(news, 20)
@@ -47,8 +42,6 @@ def view_archived_news(request, page=1):
 @staff_member_required(login_url=None)
 @require_POST
 def archive_story(request, story_id):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	try:
 		story = News.objects.get(id=story_id)
 		story.archived = True
@@ -62,16 +55,12 @@ def archive_story(request, story_id):
 @staff_member_required(login_url=None)
 @require_GET
 def new_news_form(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	return render(request, 'news/new_news_form.html')
 
 
 @staff_member_required(login_url=None)
 @require_GET
 def news_update_form(request, story_id):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	dictionary = {}
 	try:
 		dictionary['story'] = News.objects.get(id=story_id)
@@ -83,8 +72,6 @@ def news_update_form(request, story_id):
 @staff_member_required(login_url=None)
 @require_POST
 def publish(request, story_id=None):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")	
 	now = timezone.now()
 	if story_id:
 		try:

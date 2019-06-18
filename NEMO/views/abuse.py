@@ -8,14 +8,11 @@ from django.views.decorators.http import require_GET
 
 from NEMO.forms import ReservationAbuseForm
 from NEMO.models import Reservation, Tool, User
-from NEMO.views.authentication import check_for_core
 
 
 @staff_member_required(login_url=None)
 @require_GET
 def abuse(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	dictionary = {'tools': Tool.objects.filter(visible=True)}
 	try:
 		form = ReservationAbuseForm(request.GET)
@@ -46,8 +43,6 @@ def abuse(request):
 @staff_member_required(login_url=None)
 @require_GET
 def user_drill_down(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	try:
 		form = ReservationAbuseForm(request.GET)
 		form.is_valid()

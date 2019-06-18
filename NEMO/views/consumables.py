@@ -5,14 +5,11 @@ from django.http import HttpResponseRedirect
 
 from NEMO.forms import ConsumableWithdrawForm
 from NEMO.models import Consumable, User
-from NEMO.views.authentication import check_for_core
 
 
 @staff_member_required(login_url=None)
 @require_http_methods(['GET', 'POST'])
 def consumables(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	form = ConsumableWithdrawForm(request.POST or None, initial={'quantity': 1})
 
 	dictionary = {

@@ -7,13 +7,10 @@ from django.views.decorators.http import require_POST, require_http_methods
 
 from NEMO.forms import AlertForm
 from NEMO.models import Alert
-from NEMO.views.authentication import check_for_core
 
 @staff_member_required(login_url=None)
 @require_http_methods(['GET', 'POST'])
 def alerts(request):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	alert_id = request.GET.get('alert_id') or request.POST.get('alert_id')
 	try:
 		alert = Alert.objects.get(id=alert_id)
@@ -43,8 +40,6 @@ def alerts(request):
 @login_required
 @require_POST
 def delete_alert(request, alert_id):
-	if check_for_core(request):
-		return HttpResponseRedirect("/choose_core/")
 	try:
 		alert = get_object_or_404(Alert, id=alert_id)
 		if alert.user == request.user:  # Users can delete their own alerts

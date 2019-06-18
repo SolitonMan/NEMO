@@ -110,9 +110,6 @@
 						</script>
 					</li>
 				{% endif %}
-				{% if request.session.active_core != "none" %}
-				<li class="hidden-sm"><p class="navbar-text" style="color: red;">Core:{{ request.session.active_core }}</p></li>
-				{% endif %}
 				<li class="hidden-sm"><p class="navbar-text">Welcome, {{ user.first_name }}</p></li>
 				{% if logout_allowed %}
 					<li><a href="{% url 'logout' %}">Logout</a></li>
