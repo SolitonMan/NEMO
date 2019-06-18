@@ -10,6 +10,8 @@
 	<script type="text/javascript" src="{% static "fullcalendar/fc.interaction.min.js" %}"></script>
 	<script type="text/javascript" src="{% static "fullcalendar/fc.daygrid.min.js" %}"></script>
 	<script type="text/javascript" src="{% static "fullcalendar/fc.timegrid.min.js" %}"></script>
+	<script type="text/javascript" src="{% static "fullcalendar/fc.moment.min.js" %}"></script>
+	<script type="text/javascript" src="{% static "fullcalendar/fc.moment.tz.min.js" %}"></script>
 	<script type="text/javascript" src="{% static "fullcalendar/rrule.main.js" %}"></script>
 	<script type="text/javascript" src="{% static "fullcalendar/fc.rrule.min.js" %}"></script>
 {% endblock %}
@@ -67,10 +69,12 @@ function set_event_type(text)
 function update_event_sources()
 {
 	{# Remove all event sources from the calendar. #}
-	var eventSources = calendar.getEventSources();
+	if (calendar) {
+		var eventSources = calendar.getEventSources();
 
-	for (e in eventSources) {
-		e.remove();
+		for (e in eventSources) {
+			e.remove();
+		}
 	}
 
 	var event_type = get_event_type();
@@ -101,7 +105,7 @@ function update_event_sources()
 		else
 			return;
 	}
-	calendar.addEventSource(tool_event_source);
+	if (calendar) calendar.addEventSource(tool_event_source);
 	refresh_sidebar_icons();
 }
 {# This function is a callback for when a reservation is successfully created by the user. #}
@@ -264,7 +268,7 @@ function create_calendar()
 	{# Documentation for properties: http://arshaw.com/fullcalendar/docs/ #}
 	var calendar_properties =
 	{
-		"plugins": [ "interaction", "dayGrid", "timeGrid", "rrule" ],
+		"plugins": [ "interaction", "dayGrid", "timeGrid", "moment", "momentTimezone", "rrule" ],
 		"header":
 		{
 			left: "prev,next today{% if user.is_staff %} proxyReservation scheduledOutage{% endif %}",
@@ -282,6 +286,29 @@ function create_calendar()
 			"month": {
 				"titleFormat": 'MMMM YYYY'
 			}
+		},
+		"firstDay": 1, {# Make Monday the first day of the week #}
+		"scrollTime": '07:00:00', {# The day starts at 7 AM #}
+		"defaultView": "timeGridWeek",
+		"allDaySlot": false,
+		"allDayDefault": false,
+		"slotDuration": '00:15:00', {# 15 minutes each row #}
+		"slotLabelInterval": '1:00', {# One hour intervals for label #}
+		"editable": false,
+		"selectable": true,
+		"select": create,
+		"eventResize": resize,
+		"eventDrop": move,
+		"eventClick": details,
+		"height": $("#calendar").height(),
+		"handleWindowResize": true,
+		"windowResize": on_browser_resize,
+		"slotEventOverlap": false,
+		"buttonText": {
+			"today": "Today",
+			"day": "Day",
+			"week": "Week",
+			"month": "Month"
 		},
 		"customButtons": {
 			"proxyReservation": {
@@ -331,7 +358,7 @@ function scheduled_outage()
 }
 function refresh_calendar_and_sidebar()
 {
-	calendar.refetchEvents();
+	if (calendar) calendar.refetchEvents();
 	refresh_sidebar_icons();
 }
 function change_calendar_event_type(calling_element)

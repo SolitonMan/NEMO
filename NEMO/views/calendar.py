@@ -116,7 +116,7 @@ def reservation_event_feed(request, start, end):
 			tmp = str(e.recurrences)
 			#for rule in e.recurrences.rrules:
 			#	tmp = tmp + rule.to_text()
-			tmp = tmp[6:]
+			#tmp = tmp[6:]
 			tmp = tmp + ";DTSTART=" +  e.start.strftime(fmt_out)
 			recurrences[e.id] = tmp
 
