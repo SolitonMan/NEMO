@@ -23,7 +23,7 @@ from NEMO.widgets.tool_tree import ToolTree
 
 @login_required
 @require_GET
-def calendar(request, tool_id=None):
+def calendar(request, tool_id=None, qualified_only=None, core_only=None):
 	""" Present the calendar view to the user. """
 
 	if request.device == 'mobile':
@@ -32,15 +32,27 @@ def calendar(request, tool_id=None):
 		else:
 			return redirect('choose_tool', 'view_calendar')
 
+
 	tools = Tool.objects.filter(visible=True).order_by('category', 'name')
+
+	if qualified_only == '1':
+		tools = tools.filter(id__in=request.user.qualifications.all()).order_by('category', 'name')
+
+	if core_only == '1':
+		tools = tools.filter(core_id__in=request.user.core_ids.all()).order_by('category', 'name')
+
 	rendered_tool_tree_html = ToolTree().render(None, {'tools': tools})
 	dictionary = {
 		'rendered_tool_tree_html': rendered_tool_tree_html,
 		'tools': tools,
 		'auto_select_tool': tool_id,
+		'qualified_only': qualified_only,
+		'core_only': core_only,
 	}
+
 	if request.user.is_staff:
 		dictionary['users'] = User.objects.all()
+
 	return render(request, 'calendar/calendar.html', dictionary)
 
 

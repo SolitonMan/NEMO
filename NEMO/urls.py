@@ -57,7 +57,8 @@ urlpatterns = [
 	url(r'^task_resolution_form/(?P<task_id>\d+)/$', tasks.task_resolution_form, name='task_resolution_form'),
 
 	# Calendar:
-	url(r'^calendar/(?P<tool_id>\d+)/$', calendar.calendar, name='calendar'),
+	#url(r'^calendar/(?P<tool_id>\d+)/$', calendar.calendar, name='calendar'),
+	url(r'^calendar/(?P<tool_id>\d+)/(?P<qualified_only>\d+)/(?P<core_only>\d+)/$', calendar.calendar, name='calendar'),
 	url(r'^calendar/$', calendar.calendar, name='calendar'),
 	url(r'^event_feed/$', calendar.event_feed, name='event_feed'),
 	url(r'^create_reservation/$', calendar.create_reservation, name='create_reservation'),

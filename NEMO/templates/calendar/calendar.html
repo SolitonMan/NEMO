@@ -24,8 +24,11 @@
 		</ul>
 	</div>
 	<div id="expand-collapse" class="btn-group sidebar-item">
-		<button type="button" class="btn btn-default" style="width:50%" onclick="expand_all_categories()" title="Expand all tool categories"><span class="glyphicon glyphicon-resize-full"></span></button>
-		<button type="button" class="btn btn-default" style="width:50%" onclick="collapse_all_categories()" title="Collapse all tool categories"><span class="glyphicon glyphicon-resize-small"></span></button>
+		<button type="button" class="btn btn-default" style="width:{% if user.is_superuser %}50%{% else %}33%{% endif %}" onclick="expand_all_categories()" title="Expand all tool categories"><span class="glyphicon glyphicon-resize-full"></span></button>
+		<button type="button" class="btn btn-default" style="width:{% if user.is_superuser %}50%{% else %}33%{% endif %}" onclick="collapse_all_categories()" title="Collapse all tool categories"><span class="glyphicon glyphicon-resize-small"></span></button>
+		{% if not user.is_superuser %}
+		<button type="button" class="btn btn-default" style="width:33%" onclick="update_tool_filter(this)" title="{% if user.is_staff %}{% if core_only == '1' %}Show all tools{% else %}Show core tools only{% endif %}{% else %}{% if qualified_only == '1' %}Show all tools{% else %}Show qualified tools only{% endif %}{% endif %}"><span class="glyphicon glyphicon-filter"></span></button>
+		{% endif %}
 	</div>
 	<input type="text" id="tool_search" placeholder="Search for a tool" class="form-control sidebar-item" autocomplete="off">
 	<input type="text" id="user_search" placeholder="Search for a user" class="form-control sidebar-item" autocomplete="off" style="display:none">
@@ -44,6 +47,29 @@
 <input type="hidden" id="impersonate" name="impersonate" value="test">
 
 <script type="text/javascript">
+function update_tool_filter(btn)
+{
+	//alert(btn.title);
+{% if user.is_staff %}
+	// toggle between all tools and core tools, depending on filter button title
+	if (btn.title == "Show all tools") {
+		// call view calendar.calendar for showing all tools
+		window.open("{% url 'calendar' 0 0 0 %}","_self");
+	} else {
+		// call view calendar.calendar for showing only core tools
+		window.open("{% url 'calendar' 0 0 1 %}","_self");
+	}	
+{% else %}
+	// toggle between all tools and qualified tools, depending on filter button title
+	if (btn.title == "Show all tools") {
+		// call view calendar.calendar for showing all tools
+		window.open("{% url 'calendar' 0 0 0 %}","_self");
+	} else {
+		// call view calendar.calendar for showing only qualified tools
+		window.open("{% url 'calendar' 0 1 0 %}","_self");
+	}
+{% endif %}
+}
 
 function get_event_type()
 {
@@ -443,6 +469,7 @@ function on_load()
 		$("#user_search").autocomplete('users', get_specific_user_activity, {{ users|json_search_base }});
 	{% endif %}
 	$('[data-toggle~="tooltip"]').tooltip({ container: 'body' });
+	expand_all_categories();
 }
 
 $(on_load);
