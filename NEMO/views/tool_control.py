@@ -21,18 +21,29 @@ from NEMO.widgets.tool_tree import ToolTree
 
 @login_required
 @require_GET
-def tool_control(request, tool_id=None):
+def tool_control(request, tool_id=None, qualified_only=None, core_only=None):
 
 	""" Presents the tool control view to the user, allowing them to being/end using a tool or see who else is using it. """
 	if request.user.active_project_count() == 0:
 		return render(request, 'no_project.html')
+
 	# The tool-choice sidebar is not available for mobile devices, so redirect the user to choose a tool to view.
 	if request.device == 'mobile' and tool_id is None:
 		return redirect('choose_tool', next_page='tool_control')
+
 	tools = Tool.objects.filter(visible=True).order_by('category', 'name')
+
+	if qualified_only == '1':
+		tools = tools.filter(id__in=request.user.qualifications.all()).order_by('category', 'name')
+
+	if core_only == '1':
+		tools = tools.filter(core_id__in=request.user.core_ids.all()).order_by('category', 'name')
+
 	dictionary = {
 		'tools': tools,
 		'selected_tool': tool_id,
+		'qualified_only': qualified_only,
+		'core_only': core_only,
 	}
 	# The tool-choice sidebar only needs to be rendered for desktop devices, not mobile devices.
 	if request.device == 'desktop':

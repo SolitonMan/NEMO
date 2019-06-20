@@ -38,6 +38,7 @@ urlpatterns = [
 
 	# Tool control:
 	url(r'^tool_control/(?P<tool_id>\d+)/$', tool_control.tool_control, name='tool_control'),
+	url(r'^tool_control/(?P<tool_id>\d+)/(?P<qualified_only>\d+)/(?P<core_only>\d+)/$', tool_control.tool_control, name='tool_control'),
 	url(r'^tool_control/$', tool_control.tool_control, name='tool_control'),
 	url(r'^tool_status/(?P<tool_id>\d+)/$', tool_control.tool_status, name='tool_status'),
 	url(r'^use_tool_for_other/$', tool_control.use_tool_for_other, name='use_tool_for_other'),
