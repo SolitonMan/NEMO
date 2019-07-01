@@ -456,7 +456,7 @@ function on_load()
 	setInterval(refresh_calendar_and_sidebar, 30000);
 	set_tool_link_callback(update_event_sources);
 	enable_tool_tree_toggling();
-	$('#tool_search').autocomplete('tools', on_tool_search_selection, {{ tools|json_search_base }});
+	$('#tool_search').autocomplete('tools', on_tool_search_selection, {{ cat_tools }});
 	$("#tool_search").focus();
 	load_sidebar_state();
 	$("#tool_tree").show(); {# Tool tree is initially hidden so that previous expand/collapse state of categories is configured before it's visible. #}

@@ -11,6 +11,8 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.template import Template, Context
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
+from django.utils.html import escape
+from django.utils.safestring import mark_safe
 
 from NEMO.decorators import disable_session_expiry_refresh
 from NEMO.models import Tool, Reservation, Configuration, UsageEvent, AreaAccessRecord, StaffCharge, User, Project, ScheduledOutage, ScheduledOutageCategory
@@ -34,12 +36,22 @@ def calendar(request, tool_id=None, qualified_only=None, core_only=None):
 
 
 	tools = Tool.objects.filter(visible=True).order_by('category', 'name')
+	ctools = Tool.objects.filter(visible=True).order_by('category', 'name')
 
 	if qualified_only == '1':
 		tools = tools.filter(id__in=request.user.qualifications.all()).order_by('category', 'name')
+		ctools = ctools.filter(id__in=request.user.qualifications.all()).order_by('category', 'name')
 
 	if core_only == '1':
 		tools = tools.filter(core_id__in=request.user.core_ids.all()).order_by('category', 'name')
+		ctools = ctools.filter(core_id__in=request.user.core_ids.all()).order_by('category', 'name')
+
+	# create searchable names for tools that include the category
+	categorized_tools = "["
+	for t in ctools:
+		categorized_tools += '{{"name":"{0}", "id":{1}}},'.format(escape(str(t.category))+"/"+escape(str(t.name)), t.id)
+	categorized_tools = categorized_tools.rstrip(",") + "]"
+	categorized_tools = mark_safe(categorized_tools)
 
 	rendered_tool_tree_html = ToolTree().render(None, {'tools': tools})
 	dictionary = {
@@ -48,6 +60,7 @@ def calendar(request, tool_id=None, qualified_only=None, core_only=None):
 		'auto_select_tool': tool_id,
 		'qualified_only': qualified_only,
 		'core_only': core_only,
+		'cat_tools': categorized_tools,
 	}
 
 	if request.user.is_staff:

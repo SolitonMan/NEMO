@@ -220,7 +220,16 @@
 			{% if device == 'desktop' %}
 				set_tool_link_callback(refresh_tool_status);
 				enable_tool_tree_toggling();
-				$('#tool_search').autocomplete('tools', on_tool_search_selection, {{ tools|json_search_base }});
+				$('#tool_search').autocomplete('tools', on_tool_search_selection, {{ cat_tools }});
+
+				/*
+				* This is a test of the simple tag calling functionality for tools
+				* {% json_search_base_with_extra_fields tools "category" "location" "interlock" "primary_owner" as toolcat %}
+
+					{{ toolcat }}
+
+				*/
+
 				$("#tool_search").focus();
 				load_sidebar_state();
 				$("#tool_tree").show();
