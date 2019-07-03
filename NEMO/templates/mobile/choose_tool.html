@@ -10,7 +10,7 @@
 	<form>
 		<div class="form-group">
 			<label for="search">Search for a tool</label>
-			<input class="form-control" type="text" id="search" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" oninput="mobile_search(this, '/{{ next_page }}/')" data-search-results-target="#search_results" data-search-base='{{ tools|json_search_base }}'>
+			<input class="form-control" type="text" id="search" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" oninput="mobile_search(this, '/{{ next_page }}/')" data-search-results-target="#search_results" data-search-base='{{ cat_tools }}'>
 		</div>
 	</form>
 	<div id="search_results"></div>

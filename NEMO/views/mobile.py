@@ -7,6 +7,8 @@ from django.http import HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.utils.dateparse import parse_time, parse_date
 from django.views.decorators.http import require_GET, require_POST
+from django.utils.html import escape
+from django.utils.safestring import mark_safe
 
 from NEMO.models import Reservation, Tool, Project, ScheduledOutage
 from NEMO.utilities import extract_date, localize, beginning_of_the_day, end_of_the_day
@@ -20,6 +22,17 @@ def choose_tool(request, next_page):
 	dictionary = {
 		'tools': Tool.objects.filter(visible=True).order_by('category', 'name'),
 	}
+
+	ctools = Tool.objects.filter(visible=True).order_by('category', 'name')
+
+	categorized_tools = "["
+	for t in ctools:
+		categorized_tools += '{{"name":"{0}", "id":{1}}},'.format(escape(str(t.category))+"/"+escape(str(t.name)), t.id)
+	categorized_tools = categorized_tools.rstrip(",") + "]"
+	categorized_tools = mark_safe(categorized_tools)
+
+	dictionary['cat_tools'] = categorized_tools
+
 	if next_page == 'view_calendar':
 		# If the user has no active projects then they're not allowed to make reservations. Redirect them home.
 		if request.user.active_project_count() == 0:
