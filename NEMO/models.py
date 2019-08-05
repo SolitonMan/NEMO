@@ -984,7 +984,8 @@ class PhysicalAccessType(object):
 
 class PhysicalAccessLog(models.Model):
 	user = models.ForeignKey(User)
-	door = models.ForeignKey(Door)
+	door = models.ForeignKey(Door, null=True)
+	area = models.ForeignKey(Area, null=True)
 	time = models.DateTimeField()
 	result = models.BooleanField(choices=PhysicalAccessType.Choices, default=None)
 	details = models.TextField(null=True, blank=True, help_text="Any details that should accompany the log entry. For example, the reason physical access was denied.")

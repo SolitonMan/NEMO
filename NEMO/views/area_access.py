@@ -38,24 +38,38 @@ def area_access(request):
 @login_required
 @permission_required('NEMO.add_areaaccessrecord')
 @require_GET
-def welcome_screen(request, door_id):
-	door = get_object_or_404(Door, id=door_id)
-	return render(request, 'area_access/welcome_screen.html', {'area': door.area, 'door': door})
+def welcome_screen(request, door_id=None, area_id=None):
+	if door_id is not None and door_id != 0:
+		door = get_object_or_404(Door, id=door_id)
+		area = door.area
+	if area_id is not None:
+		area = get_object_or_404(Area, id=area_id)
+
+	return render(request, 'area_access/welcome_screen.html', {'area': area, 'door': door})
 
 
 @login_required
 @permission_required('NEMO.change_areaaccessrecord')
 @require_GET
-def farewell_screen(request, door_id):
-	door = get_object_or_404(Door, id=door_id)
-	return render(request, 'area_access/farewell_screen.html', {'area': door.area, 'door': door})
+def farewell_screen(request, door_id=None, area_id=None):
+	if door_id is not None and door_id != 0:
+		door = get_object_or_404(Door, id=door_id)
+		area = door.area
+	if area_id is not None:
+		area = get_object_or_404(Area, id=area_id)
+
+	return render(request, 'area_access/farewell_screen.html', {'area': area, 'door': door})
 
 
 @login_required
 @permission_required('NEMO.add_areaaccessrecord')
 @require_POST
-def login_to_area(request, door_id):
-	door = get_object_or_404(Door, id=door_id)
+def login_to_area(request, door_id=None, area_id=None):
+	if door_id is not None and door_id != 0:
+		door = get_object_or_404(Door, id=door_id)
+		area = door.area
+	if area_id is not None and area_id != 0:
+		area = get_object_or_404(Area, id=area_id)
 
 	badge_number = request.POST.get('badge_number', '')
 	if badge_number == '':
@@ -68,7 +82,11 @@ def login_to_area(request, door_id):
 
 	log = PhysicalAccessLog()
 	log.user = user
-	log.door = door
+	if door_id is not None and door_id != 0:
+		log.door = door
+		log.area = door.area
+	if area_id is not None and area_id != 0:
+		log.area = area
 	log.time = timezone.now()
 	log.result = PhysicalAccessType.DENY  # Assume the user does not have access
 
@@ -86,7 +104,7 @@ def login_to_area(request, door_id):
 		return render(request, 'area_access/physical_access_denied.html', {'message': message})
 
 	# Check if the user normally has access to this door at the current time
-	if not any([access_level.accessible() for access_level in user.physical_access_levels.filter(area=door.area)]):
+	if not any([access_level.accessible() for access_level in user.physical_access_levels.filter(area=area)]):
 		log.details = "This user is not assigned to a physical access level that allows access to this door at this time."
 		log.save()
 		message = "You do not have access to this area of the NanoFab at this time. Please visit the User Office if you believe this is an error."
@@ -101,7 +119,7 @@ def login_to_area(request, door_id):
 
 	# Users may not access an area if a required resource is unavailable.
 	# Staff are exempt from this rule.
-	unavailable_resources = door.area.required_resources.filter(available=False)
+	unavailable_resources = area.required_resources.filter(available=False)
 	if unavailable_resources and not user.is_staff:
 		log.details = "The user was blocked from entering this area because a required resource was unavailable."
 		log.save()
@@ -117,7 +135,7 @@ def login_to_area(request, door_id):
 	if current_area_access_record and current_area_access_record.area == door.area:
 		# No log entry necessary here because all validation checks passed.
 		# The log entry is captured when the subsequent choice is made by the user.
-		return render(request, 'area_access/already_logged_in.html', {'area': door.area, 'project': current_area_access_record.project, 'badge_number': user.badge_number})
+		return render(request, 'area_access/already_logged_in.html', {'area': area, 'project': current_area_access_record.project, 'badge_number': user.badge_number})
 
 	previous_area = None
 	if user.active_project_count() == 1:
@@ -136,8 +154,9 @@ def login_to_area(request, door_id):
 		record.customer = user
 		record.project = user.active_projects()[0]
 		record.save()
-		unlock_door(door.id)
-		return render(request, 'area_access/login_success.html', {'area': door.area, 'name': user.first_name, 'project': record.project, 'previous_area': previous_area})
+		if door_id is not None and door_id != 0:
+			unlock_door(door.id)
+		return render(request, 'area_access/login_success.html', {'area': area, 'name': user.first_name, 'project': record.project, 'previous_area': previous_area})
 	elif user.active_project_count() > 1:
 		project_id = request.POST.get('project_id')
 		if project_id:
@@ -158,16 +177,17 @@ def login_to_area(request, door_id):
 				previous_area = previous_area_access_record.area
 
 			record = AreaAccessRecord()
-			record.area = door.area
+			record.area = area
 			record.customer = user
 			record.project = project
 			record.save()
-			unlock_door(door.id)
-			return render(request, 'area_access/login_success.html', {'area': door.area, 'name': user.first_name, 'project': record.project, 'previous_area': previous_area})
+			if door_id is not None and door_id != 0:
+				unlock_door(door.id)
+			return render(request, 'area_access/login_success.html', {'area': area, 'name': user.first_name, 'project': record.project, 'previous_area': previous_area})
 		else:
 			# No log entry necessary here because all validation checks passed, and the user must indicate which project
 			# the wish to login under. The log entry is captured when the subsequent choice is made by the user.
-			return render(request, 'area_access/choose_project.html', {'area': door.area, 'user': user})
+			return render(request, 'area_access/choose_project.html', {'area': area, 'user': user})
 
 
 @postpone
@@ -181,7 +201,7 @@ def unlock_door(door_id):
 @login_required
 @permission_required('NEMO.change_areaaccessrecord')
 @require_POST
-def logout_of_area(request, door_id):
+def logout_of_area(request, door_id=None, area_id=None):
 	try:
 		badge_number = int(request.POST.get('badge_number', ''))
 		user = User.objects.get(badge_number=badge_number)
@@ -197,7 +217,7 @@ def logout_of_area(request, door_id):
 		return render(request, 'area_access/not_logged_in.html')
 
 
-@staff_member_required(login_url=None)
+@login_required
 @require_POST
 def force_area_logout(request, user_id):
 	user = get_object_or_404(User, id=user_id)

@@ -35,6 +35,10 @@ def json_search_base(items_to_search):
 	result = result.rstrip(',') + ']'
 	return mark_safe(result)
 
+@register.simple_tag
+def update_variable(value):
+    """Allows to update existing variable in template"""
+    return value
 
 @register.simple_tag
 def json_search_base_with_extra_fields(items_to_search, *extra_fields):

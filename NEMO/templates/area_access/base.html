@@ -118,6 +118,7 @@
 		{
 			let data = {
 				'door_id': {{ door.id }},
+				'area_id': {{ area.id }},
 				'badge_number': badge_number,
 				'csrfmiddlewaretoken': '{{ csrf_token }}'
 			};
@@ -125,18 +126,19 @@
 				data.project_id = project_id;
 			$("#default_content").hide();
 			$("#error").hide();
-			$("#status").html("<h1>Logging you in to the {{ area|lower }}...</h1>").show().load('{% url 'login_to_area' door.id %}', data, load_complete);
+			$("#status").html("<h1>Logging you in to the {{ area|lower }}...</h1>").show().load('{% url 'login_to_area' door.id area.id %}', data, load_complete);
 		}
 		function exit_area(badge_number)
 		{
 			let data = {
 				'door_id': {{ door.id }},
+				'area_id': {{ area.id }},
 				'badge_number': badge_number,
 				'csrfmiddlewaretoken': '{{ csrf_token }}'
 			};
 			$("#default_content").hide();
 			$("#error").hide();
-			$("#status").html("<h1>Logging you out of the {{ area|lower }}...</h1>").show().load('{% url 'logout_of_area' door.id %}', data, load_complete);
+			$("#status").html("<h1>Logging you out of the {{ area|lower }}...</h1>").show().load('{% url 'logout_of_area' door.id area.id %}', data, load_complete);
 		}
 		function fetch_occupancy()
 		{

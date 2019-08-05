@@ -190,8 +190,8 @@ if settings.ALLOW_CONDITIONAL_URLS:
 		# Tablet area access
 		url(r'^welcome_screen/(?P<door_id>\d+)/$', area_access.welcome_screen, name='welcome_screen'),
 		url(r'^farewell_screen/(?P<door_id>\d+)/$', area_access.farewell_screen, name='farewell_screen'),
-		url(r'^login_to_area/(?P<door_id>\d+)/$', area_access.login_to_area, name='login_to_area'),
-		url(r'^logout_of_area/(?P<door_id>\d+)/$', area_access.logout_of_area, name='logout_of_area'),
+		url(r'^login_to_area/(?P<door_id>\d+)/(?P<area_id>\d+)/$', area_access.login_to_area, name='login_to_area'),
+		url(r'^logout_of_area/(?P<door_id>\d+)/(?P<area_id>\d+)/$', area_access.logout_of_area, name='logout_of_area'),
 		url(r'^open_door/(?P<door_id>\d+)/$', area_access.open_door, name='open_door'),
 
 		# Tablet kiosk

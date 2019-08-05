@@ -20,7 +20,20 @@ def status_dashboard(request):
 		dictionary = {
 			'tool_summary': create_tool_summary(),
 			'nanofab_occupants': AreaAccessRecord.objects.filter(end=None, staff_charge=None).prefetch_related('customer', 'project', 'area'),
+			'user_current_logins': request.user.in_area()
 		}
+		if request.user.is_superuser:
+			areas = Area.objects.all()
+
+		elif request.user.is_staff:
+			areas = Area.objects.filter(core_id__in=request.user.core_ids.all())
+
+		else:
+			areas = Area.objects.filter(id__lt=0)
+
+		dictionary['areas'] = areas
+
+
 		return render(request, 'status_dashboard/status_dashboard.html', dictionary)
 	elif interest == "tools":
 		dictionary = {

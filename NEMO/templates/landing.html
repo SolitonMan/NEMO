@@ -19,6 +19,20 @@
 			</div>
 		</div>
 	{% endif %}
+	<script type="text/javascript">
+	function reload_page() {
+		//alert("Reloading...");
+		location.reload();
+	}
+	
+
+        function force_user_out_of_the_area(url)
+        {
+                var failure_dialog = ajax_failure_callback("Unable to force the user to log out of the area");
+                ajax_post(url, undefined, undefined, failure_dialog, reload_page());
+        }
+
+	</script>
 	<div class="row">
 		{% if upcoming_reservations %}
 			<div class="col-lg-4">
@@ -73,6 +87,11 @@
 						</div>
 						{% if active_project_count > 1 %}</a>{% endif %}
 					{% endwith %}
+					{% if not usage_events %}
+						<div class="alert alert-info" onclick="force_user_out_of_the_area('{% url 'force_area_logout' user.id %}')">
+						<!--div class="alert alert-info" onclick="reload_page();"-->
+						You are logged into the <b>{{ user.area_access_record.area|lower }}</b>.  Click here to log out of the area.
+					{% endif %}
 				{% endif %}
 				{% if self_log_in %}
 					<a href="{% url 'self_log_in' %}" style="text-decoration: none">
