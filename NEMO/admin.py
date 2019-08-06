@@ -399,8 +399,8 @@ class UserAdmin(admin.ModelAdmin):
 
 @register(PhysicalAccessLog)
 class PhysicalAccessLogAdmin(admin.ModelAdmin):
-	list_display = ('user', 'door', 'time', 'result')
-	list_filter = ('door', 'result')
+	list_display = ('user', 'door', 'area', 'time', 'result')
+	list_filter = ('door', 'area', 'result')
 	search_fields = ('user',)
 	date_hierarchy = 'time'
 
