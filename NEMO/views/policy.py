@@ -6,7 +6,7 @@ from django.http import HttpResponse, HttpResponseBadRequest
 from django.template import Template, Context
 from django.utils import timezone
 
-from NEMO.models import Reservation, AreaAccessRecord, ScheduledOutage
+from NEMO.models import Reservation, AreaAccessRecord, ScheduledOutage, PhysicalAccessLevel, User
 from NEMO.utilities import format_datetime
 from NEMO.views.customization import get_customization, get_media_file_contents
 
@@ -43,18 +43,12 @@ def check_policy_to_enable_tool(tool, operator, user, project, staff_charge, req
 		return HttpResponseBadRequest("A resource that is required to operate this tool is unavailable.")
 
 	# The tool operator may not activate tools in a particular area unless they are logged in to the area.
-	# Staff are exempt from this rule.
-	if tool.requires_area_access and AreaAccessRecord.objects.filter(area=tool.requires_area_access, customer=operator, staff_charge=None, end=None).count() == 0 and not operator.is_staff:
-		dictionary = {
-			'operator': operator,
-			'tool': tool,
-		}
-		abuse_email_address = get_customization('abuse_email_address')
-		message = get_media_file_contents('unauthorized_tool_access_email.html')
-		if abuse_email_address and message:
-			rendered_message = Template(message).render(Context(dictionary))
-			send_mail("Area access requirement", '', abuse_email_address, [abuse_email_address], html_message=rendered_message)
-		return HttpResponseBadRequest("You must be logged in to the {} to operate this tool.".format(tool.requires_area_access.name.lower()))
+	# If they have access to the area, log them in automatically and let them know the log in to the area has occurrred
+	if tool.requires_area_access and AreaAccessRecord.objects.filter(area=tool.requires_area_access,customer=operator,end=None).count() == 0:
+		if operator.physical_access_levels.filter(area=tool.requires_area_access).count() == 0 and not operator.is_staff:
+			# return bad response that user doesn't have permission to the area
+			return HttpResponseBadRequest("You don't have permission to be logged in to the {} to operate this tool.  Please contact a system administrator to request access.".format(tool.requires_area_access.name.lower()))
+
 
 	# Staff may only charge staff time for one user at a time.
 	if staff_charge and operator.charging_staff_time():

@@ -109,6 +109,9 @@ class User(models.Model):
 	# Core relationship
 	core_ids = models.ManyToManyField('Core', related_name="user_core", blank=True)
 
+	## multiple project and user UsageEvents
+	#events = model.ManyToManyField(UsageEvent, through='UsageEventProject')
+
 	def has_perm(self, perm, obj=None):
 		"""
 		Returns True if the user has each of the specified permissions. If
@@ -431,11 +434,12 @@ class TrainingSession(models.Model):
 
 class StaffCharge(CalendarDisplay):
 	staff_member = models.ForeignKey(User, related_name='staff_charge_actor')
-	customer = models.ForeignKey(User, related_name='staff_charge_customer')
-	project = models.ForeignKey('Project')
+	customer = models.ForeignKey(User, related_name='staff_charge_customer', null=True)
+	project = models.ForeignKey('Project', related_name='staff_charge_project', null=True)
 	start = models.DateTimeField(default=timezone.now)
 	end = models.DateTimeField(null=True, blank=True)
 	validated = models.BooleanField(default=False)
+	projects = models.ManyToManyField('Project', through='StaffChargeProject')
 
 	class Meta:
 		ordering = ['-start']
@@ -443,6 +447,11 @@ class StaffCharge(CalendarDisplay):
 	def __str__(self):
 		return str(self.id)
 
+class StaffChargeProject(models.Model):
+	staff_charge = models.ForeignKey('StaffCharge', on_delete=models.CASCADE)
+	project = models.ForeignKey('Project', on_delete=models.CASCADE)
+	customer = models.ForeignKey('User', on_delete=models.CASCADE)
+	project_percent = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
 
 class Area(models.Model):
 	name = models.CharField(max_length=200, help_text='What is the name of this area? The name will be displayed on the tablet login and logout pages.')
@@ -460,11 +469,12 @@ class Area(models.Model):
 
 class AreaAccessRecord(CalendarDisplay):
 	area = models.ForeignKey(Area)
-	customer = models.ForeignKey(User)
-	project = models.ForeignKey('Project')
+	customer = models.ForeignKey(User, null=True)
+	project = models.ForeignKey('Project', related_name='area_access_record_project', null=True)
 	start = models.DateTimeField(default=timezone.now)
 	end = models.DateTimeField(null=True, blank=True)
 	staff_charge = models.ForeignKey(StaffCharge, blank=True, null=True)
+	projects = models.ManyToManyField('Project', through='AreaAccessRecordProject')
 
 	class Meta:
 		ordering = ['-start']
@@ -472,6 +482,11 @@ class AreaAccessRecord(CalendarDisplay):
 	def __str__(self):
 		return str(self.id)
 
+class AreaAccessRecordProject(models.Model):
+	area_access_record = models.ForeignKey('AreaAccessRecord', on_delete=models.CASCADE)
+	project = models.ForeignKey('Project', on_delete=models.CASCADE)
+	customer = models.ForeignKey('User', on_delete=models.CASCADE)
+	project_percent = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
 
 class ConfigurationHistory(models.Model):
 	configuration = models.ForeignKey(Configuration)
@@ -504,6 +519,9 @@ class Project(models.Model):
 	application_identifier = models.CharField(max_length=100)
 	account = models.ForeignKey(Account, help_text="All charges for this project will be billed to the selected account.")
 	active = models.BooleanField(default=True, help_text="Users may only charge to a project if it is active. Deactivate the project to block billable activity (such as tool usage and consumable check-outs).")
+	#events = models.ManyToManyField('UsageEvent', through='UsageEventProject', related_name='project_events')
+	#accesses = models.ManyToManyField('AreaAccessRecord', through='AreaAccessRecordProject', related_name='project_accesses')
+	#staff_charges = models.ManyToManyField('StaffCharge', through='StaffChargeProject', related_name='project_staff_charges')
 
 	class Meta:
 		ordering = ['name']
@@ -560,14 +578,15 @@ class Reservation(CalendarDisplay):
 
 
 class UsageEvent(CalendarDisplay):
-	user = models.ForeignKey(User, related_name="usage_event_user")
+	user = models.ForeignKey(User, related_name="usage_event_user", null=True)
 	operator = models.ForeignKey(User, related_name="usage_event_operator")
-	project = models.ForeignKey(Project)
+	project = models.ForeignKey(Project, related_name="usage_event_project", null=True)
 	tool = models.ForeignKey(Tool, related_name='+')  # The related_name='+' disallows reverse lookups. Helper functions of other models should be used instead.
 	start = models.DateTimeField(default=timezone.now)
 	end = models.DateTimeField(null=True, blank=True)
 	validated = models.BooleanField(default=False)
 	run_data = models.TextField(null=True, blank=True)
+	projects = models.ManyToManyField('Project', through='UsageEventProject')
 
 	def duration(self):
 		return calculate_duration(self.start, self.end, "In progress")
@@ -578,6 +597,11 @@ class UsageEvent(CalendarDisplay):
 	def __str__(self):
 		return str(self.id)
 
+class UsageEventProject(models.Model):
+	usage_event = models.ForeignKey('UsageEvent', on_delete=models.CASCADE)
+	project = models.ForeignKey('Project', on_delete=models.CASCADE)
+	project_percent = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+	customer = models.ForeignKey('User', on_delete=models.CASCADE)
 
 class Consumable(models.Model):
 	name = models.CharField(max_length=100)

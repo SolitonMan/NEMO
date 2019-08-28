@@ -84,10 +84,12 @@ urlpatterns = [
 
 	# Staff charges:
 	url(r'^staff_charges/$', staff_charges.staff_charges, name='staff_charges'),
+	url(r'^staff_charge_entry/$', staff_charges.staff_charge_entry, name='staff_charge_entry'),
 	url(r'^begin_staff_charge/$', staff_charges.begin_staff_charge, name='begin_staff_charge'),
 	url(r'^end_staff_charge/$', staff_charges.end_staff_charge, name='end_staff_charge'),
 	url(r'^begin_staff_area_charge/$', staff_charges.begin_staff_area_charge, name='begin_staff_area_charge'),
 	url(r'^end_staff_area_charge/$', staff_charges.end_staff_area_charge, name='end_staff_area_charge'),
+	url(r'^staff_charge_projects_save/$', staff_charges.staff_charge_projects_save, name='staff_charge_projects_save'),
 
 	# Status dashboard:
 	url(r'^status_dashboard/$', status_dashboard.status_dashboard, name='status_dashboard'),

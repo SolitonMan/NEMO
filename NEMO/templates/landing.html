@@ -87,11 +87,8 @@
 						</div>
 						{% if active_project_count > 1 %}</a>{% endif %}
 					{% endwith %}
-					{% if not active_area_access %}
 						<div class="alert alert-info" onclick="force_user_out_of_the_area('{% url 'force_area_logout' user.id %}')">
-						<!--div class="alert alert-info" onclick="reload_page();"-->
 						You are logged into the <b>{{ user.area_access_record.area|lower }}</b>.  Click here to log out of the area.
-					{% endif %}
 				{% endif %}
 				{% if self_log_in %}
 					<a href="{% url 'self_log_in' %}" style="text-decoration: none">

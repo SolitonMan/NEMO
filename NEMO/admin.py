@@ -5,7 +5,7 @@ from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.contrib.auth.models import Permission
 
 from NEMO.actions import lock_selected_interlocks, synchronize_with_tool_usage, unlock_selected_interlocks
-from NEMO.models import Account, ActivityHistory, Alert, Area, AreaAccessRecord, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableCategory, ConsumableWithdraw, ContactInformation, ContactInformationCategory, Core, Customization, Door, Interlock, InterlockCard, LandingPageChoice, MembershipHistory, News, Notification, PhysicalAccessLevel, PhysicalAccessLog, Project, Reservation, Resource, ResourceCategory, SafetyIssue, ScheduledOutage, ScheduledOutageCategory, StaffCharge, Task, TaskCategory, TaskHistory, TaskStatus, Tool, TrainingSession, UsageEvent, User, UserType
+from NEMO.models import Account, ActivityHistory, Alert, Area, AreaAccessRecord, AreaAccessRecordProject, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableCategory, ConsumableWithdraw, ContactInformation, ContactInformationCategory, Core, Customization, Door, Interlock, InterlockCard, LandingPageChoice, MembershipHistory, News, Notification, PhysicalAccessLevel, PhysicalAccessLog, Project, Reservation, Resource, ResourceCategory, SafetyIssue, ScheduledOutage, ScheduledOutageCategory, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskHistory, TaskStatus, Tool, TrainingSession, UsageEvent, UsageEventProject, User, UserType
 
 admin.site.site_header = "LEO"
 admin.site.site_title = "LEO"
@@ -186,12 +186,22 @@ class StaffChargeAdmin(admin.ModelAdmin):
 	list_filter = ('start',)
 	date_hierarchy = 'start'
 
+@register(StaffChargeProject)
+class StaffChargeProjectAdmin(admin.ModelAdmin):
+	list_display = ('id', 'staff_charge', 'customer', 'project', 'project_percent')
+	list_filter = ('staff_charge', 'customer', 'project')
+
 
 @register(AreaAccessRecord)
 class AreaAccessRecordAdmin(admin.ModelAdmin):
 	list_display = ('id', 'customer', 'area', 'project', 'start', 'end')
 	list_filter = ('area', 'start',)
 	date_hierarchy = 'start'
+
+@register(AreaAccessRecordProject)
+class AreaAccessRecordProjectAdmin(admin.ModelAdmin):
+	list_display = ('id', 'area_access_record', 'customer', 'project', 'project_percent')
+	list_filter = ('area_access_record', 'customer', 'project')
 
 
 @register(Configuration)
@@ -287,6 +297,11 @@ class UsageEventAdmin(admin.ModelAdmin):
 	list_filter = ('start', 'end', 'tool')
 	date_hierarchy = 'start'
 
+
+@register(UsageEventProject)
+class UsageEventProjectAdmin(admin.ModelAdmin):
+	list_display = ('id', 'usage_event', 'customer', 'project', 'project_percent')
+	list_filter = ('usage_event', 'customer', 'project')
 
 @register(Consumable)
 class ConsumableAdmin(admin.ModelAdmin):

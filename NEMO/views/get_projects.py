@@ -18,7 +18,8 @@ def get_projects(request):
 		entry_number = int(request.GET['entry_number'])
 		return render(request, 'training/get_projects.html', {'projects': projects, 'entry_number': entry_number})
 	elif source_template == 'staff_charges':
-		return render(request, 'staff_charges/get_projects.html', {'projects': projects})
+		entry_number = int(request.GET['entry_number'])
+		return render(request, 'staff_charges/get_projects.html', {'projects': projects, 'entry_number': entry_number})
 	return JsonResponse(dict(projects=list(projects.values('id', 'name'))))
 
 

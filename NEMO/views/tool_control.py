@@ -14,7 +14,7 @@ from django.utils.html import escape
 from django.utils.safestring import mark_safe
 
 from NEMO.forms import CommentForm, nice_errors
-from NEMO.models import Comment, Configuration, ConfigurationHistory, Project, Reservation, StaffCharge, Task, TaskCategory, TaskStatus, Tool, UsageEvent, User
+from NEMO.models import AreaAccessRecord, Comment, Configuration, ConfigurationHistory, Project, Reservation, StaffCharge, Task, TaskCategory, TaskStatus, Tool, UsageEvent, User
 from NEMO.utilities import extract_times, quiet_int
 from NEMO.views.policy import check_policy_to_disable_tool, check_policy_to_enable_tool
 from NEMO.widgets.dynamic_form import DynamicForm
@@ -204,6 +204,18 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge):
 		new_staff_charge.customer = user
 		new_staff_charge.project = project
 		new_staff_charge.save()
+
+	if tool.requires_area_access and AreaAccessRecord.objects.filter(area=tool.requires_area_access,customer=operator,end=None).count() == 0:
+		aar = AreaAccessRecord()
+		aar.area = tool.requires_area_access
+		aar.customer = operator
+		aar.project = project
+		aar.start = timezone.now()
+
+		if staff_charge:
+			aar.staff_charge = new_staff_charge
+
+		aar.save()
 
 	return response
 

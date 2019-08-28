@@ -3,27 +3,107 @@
 {% block title %}Staff charges{% endblock %}
 {% block content %}
 	<h1>Staff charges</h1>
-	<p>Use this form to charge a user for staff time and area access time when you are working on a project on their behalf. You may only work on one user project at a time for a customer.</p>
+	<p>Use this form to charge one or more customers for staff time and area access time when you are working on a project on their behalf.</p>
 	{% if error %}
 		<div class="alert alert-danger">
 			{{ error }}
 		</div>
 	{% endif %}
-	<form id="new_staff_charge" action="{% url 'staff_charges' %}" class="form-horizontal" method="get">
-		<div class="form-group">
-			<label for="customer_search" class="control-label col-sm-1">Customer</label>
-			<div class="col-sm-4">
-				<input id="customer_search" type="text" class="form-control" placeholder="Search for a customer">
-				<input id="customer" name="customer" type="hidden">
-			</div>
-		</div>
+	<form id="new_staff_charge" onsubmit="return on_submit()">
+		{% csrf_token %}
+		<table id="staff_charge_entries" class="table">
+			<tr>
+				<th>&nbsp;</th>
+				<th style="min-width:200px">Customer</th>
+				<th style="min-width:200px">Project</th>
+			</tr>
+			{# Rows are inserted here on load and when "Add another customer" is clicked. #}
+			{% include 'staff_charges/staff_charge_entry.html' with entry_number=0 %}
+			<tr>
+				<td colspan="3" style="text-align:center"><a href="javascript:void(0)" onclick="add_customer()">Add another customer</a></td>
+			</tr>
+		</table>
+		<br>
+		<input type="submit" class="btn btn-default" id="begin_staff_time_charges" value="Begin charging staff time">
 	</form>
 	<script>
+		var current_entry_number = 1;
 		function select_user(jquery_event, search_selection, dataset_name)
 		{
 			$("#customer").val(search_selection.id);
-			$("#new_staff_charge").submit();
 		}
-		$('#customer_search').autocomplete('users', select_user, {{ users|json_search_base }}).focus();
+
+		function add_customer() 
+		{
+			var failure_dialog = ajax_failure_callback("Cannot add new entry", "The web browser was not able to communicate with the server.");
+			ajax_get("{% url 'staff_charge_entry' %}", { "entry_number": current_entry_number }, add_entry_success_callback, failure_dialog);
+			function add_entry_success_callback(response, status, xml_http_request)
+			{
+				$("#staff_charge_entries tr:last").before(response);
+				enable_autocompletion(current_entry_number);
+				current_entry_number++;
+			}
+		}
+
+		function enable_autocompletion(entry_number)
+		{
+			var id = "#user_textbox__" + entry_number;
+			$(id).autocomplete('user', on_autocomplete_selection, {{ users|json_search_base }}).focus();
+		}
+
+		function remove_row(number)
+		{
+			$("#row_" + number).remove();
+		}
+
+		function on_autocomplete_selection(jquery_event, search_selection, dataset_name)
+		{
+			$(this).typeahead('val', search_selection.id).hide();
+			var row = $(this).data('row');
+			var button_id = "#" + dataset_name + "_button__" + row;
+			$(button_id).val(search_selection.name).show();
+			if(dataset_name == "user")
+				fetch_projects(row, search_selection.id);
+		}
+
+		function fetch_projects(row, user_id)
+		{
+			var parameters =
+			{
+				"source_template": "staff_charges",
+				"user_id": user_id,
+				"entry_number": row
+			};
+			var target_element = "#project__" + row;
+			var url = "{% url 'get_projects' %}?" + jQuery.param(parameters);
+			var report_error = ajax_complete_callback("Could not fetch projects for user", "There was a problem obtaining the list of projects for the user.");
+			$(target_element).load(url, undefined, report_error);
+		}
+
+		function purge_customer(row)
+		{
+			$("#user_button__" + row).hide();
+			$("#project__" + row).html("");
+			$("#user_textbox__" + row).typeahead('val', '').show().focus();
+		}
+
+		function on_submit()
+		{
+			var failure_dialog = ajax_failure_callback("Could not begin charging staff time");
+			ajax_post("{% url 'begin_staff_charge' %}", serialize("#new_staff_charge"), reload_staff_charges, failure_dialog);
+			return false;
+		}
+
+		function reload_staff_charges()
+		{
+			location.reload();
+		}
+
+		function on_load()
+		{
+			enable_autocompletion(0);
+		}
+		$(on_load);
+
 	</script>
 {% endblock %}
