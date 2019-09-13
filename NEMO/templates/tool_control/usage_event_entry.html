@@ -1,0 +1,10 @@
+<tr id="row_{{ entry_number }}">
+	<td style="vertical-align: middle"><span class="glyphicon glyphicon-remove-circle grey pointer" onclick="remove_row({{ entry_number }})"></span></td>
+	<td>
+		<input type="text" class="form-control" id="user_textbox__{{ entry_number }}" name="chosen_user__{{ entry_number }}" data-row="{{ entry_number }}">
+		<input type="button" class="btn btn-default" style="display:none" id="user_button__{{ entry_number }}" onclick="purge_customer({{ entry_number }})">
+	</td>
+	<td id="project__{{ entry_number }}" style="vertical-align: middle">
+
+	</td>
+</tr>

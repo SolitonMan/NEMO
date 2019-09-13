@@ -34,6 +34,8 @@
 	{% endif %}
 
 	<script>
+	var current_entry_number = 1;
+
 	function update_tool_filter(btn)
 	{
 		//alert(btn.title);
@@ -82,11 +84,21 @@
 				content += "</div>";
 				$("#content").html(content);
 			}
+			if (current_entry_number == 1) 
+			{
+				enable_autocompletion(0)
+			}
+			$("#project_choice_multi").hide();
 		}
 
-		function use_tool_for_self()
+		function use_tool_for_self(tool_id)
 		{
+			$("#start").unbind("click");
+			$("#start").click(enable_tool);
 			$("#project_choice").html("Fetching project list...").show().load("{% url 'get_projects_for_self' %}", undefined, load_projects_completion_callback);
+			$("#project_choice_multi").hide();
+			$("#project_choice_multi").html("");
+			current_entry_number = 0;
 		}
 
 		function select_project(element, project_id)
@@ -111,9 +123,10 @@
 				$("#customer_project").html("Unable to retrieve a list of projects for this user.")
 		}
 
-		function enable_tool(tool_id)
+		function enable_tool()
 		{
 			$("#start").prop("disabled", true);
+			var tool_id =  parseInt($("#tool_id").val());
 			var user_id = parseInt($("#user_id").val());
 			var project_id = parseInt($("#project_id").val());
 			var staff_charge = false;
@@ -143,10 +156,55 @@
 
 			{# Only staff can perform the functions in this if-block. #}
 
-			function use_tool_for_other()
+			function use_tool_for_other(tool_id)
 			{
 				$("#start").hide();
-				$("#project_choice").html("Fetching user list...").show().load("{% url 'use_tool_for_other' %}", undefined, load_projects_completion_callback);
+				$("#project_choice").html("");
+				$("#project_choice").hide();
+
+
+				{% if staff_charge_projects %}
+				
+					var scp = {{ staff_charge_projects }};
+
+					if ($("#project_choice_multi").html() == "") {
+						$("#project_choice_multi").html($("#project_choice_multi_source").html());
+					}
+
+					var table_row;
+
+					for (s in scp) {
+						//console.log(scp[s]);
+						//alert(scp[s]["project"] + "  -  " + scp[s]["customer"]);
+
+						// for each record add a row to the table
+						table_row = "<tr id=\"row_" + current_entry_number + "\"><td style=\"vertical-align: middle\">&nbsp;</td><td>" + scp[s]["customer"] + "<input type=\"hidden\" value=\"" + scp[s]["user_id"] + "\" id=\"user_textbox__" + current_entry_number + "\" name=\"chosen_user__" + current_entry_number + "\" data-row=\"" + current_entry_number + "\"></td><td id=\"project__" + current_entry_number + "\" style=\"vertical-align: middle\">" + scp[s]["project"] + "<input type=\"hidden\" value=\"" + scp[s]["project_id"] + "\" name=\"chosen_project__" + current_entry_number + "\"></td></tr>";
+						$("#usage_event_entries tr:last").before(table_row);
+						current_entry_number++;
+					}
+
+					// remove option to add new customers
+					$("#usage_event_entries tr:last").remove();
+					$("#usage_event_entries tr:last").after("<tr><td colspan=\"3\">You are currently applying staff charges to the listed customer(s).  To change customer(s) please proceed to the <a href=\"{% url 'staff_charges' %}\">staff charges</a> page and end the current charges.  To proceed with charging tool time to the current customer(s) click the Start button. ");
+
+					$("#project_choice_multi").show();
+					$("#start").unbind("click");
+					$("#start").click(on_submit);
+					$("#start").show();
+
+				{% else %}
+
+					if ($("#project_choice_multi").html() == "") {				
+						$("#project_choice_multi").html($("#project_choice_multi_source").html());
+						add_customer();
+				
+						$("#project_choice_multi").show();
+						// change default onclick event for start button
+						$("#start").unbind("click");
+						$("#start").click(on_submit);
+					}
+
+				{% endif %}
 			}
 
 			function clear_customer()
@@ -188,6 +246,107 @@
 				var failure_dialog = ajax_failure_callback("Unable to end staff charge", "There was a problem ending your staff charge.");
 				ajax_post("{% url 'end_staff_charge' %}", undefined, reload_page, failure_dialog);
 			}
+
+			{# Adding supporting javascript functions to implement a multi-project selection option for tool user #}
+
+			function add_customer() 
+			{
+				var failure_dialog = ajax_failure_callback("Cannot add new entry", "The web browser was not able to communicate with the server.");
+				ajax_get("{% url 'staff_charge_entry' %}", { "entry_number": current_entry_number }, add_entry_success_callback, failure_dialog);
+				function add_entry_success_callback(response, status, xml_http_request)
+				{
+					$("#usage_event_entries tr:last").before(response);
+					enable_autocompletion(current_entry_number);
+					current_entry_number++;
+				}
+			}
+			function enable_autocompletion(entry_number)
+			{
+				var id = "#user_textbox__" + entry_number;
+				$(id).autocomplete('user', on_autocomplete_selection, {{ users|json_search_base }}).focus();
+			}
+			function remove_row(number)
+			{
+				$("#row_" + number).remove();
+			}
+			function on_autocomplete_selection(jquery_event, search_selection, dataset_name)
+			{
+				$(this).typeahead('val', search_selection.id).hide();
+				var row = $(this).data('row');
+				var button_id = "#" + dataset_name + "_button__" + row;
+				$(button_id).val(search_selection.name).show();
+				if(dataset_name == "user")
+					fetch_projects(row, search_selection.id);
+			}
+			function fetch_projects(row, user_id)
+			{
+				var parameters =
+				{
+					"source_template": "staff_charges",
+					"user_id": user_id,
+					"entry_number": row
+				};
+				var target_element = "#project__" + row;
+				var url = "{% url 'get_projects' %}?" + jQuery.param(parameters);
+				var report_error = ajax_complete_callback("Could not fetch projects for user", "There was a problem obtaining the list of projects for the user.");
+				$(target_element).load(url, undefined, function(responseTxt, statusTxt, xhr) {
+					if(statusTxt == "success") {
+						$("#chosen_project__" + row).change(function() {
+							$("#start").show();
+						});
+					} else {
+						ajax_complete_callback("Could not fetch projects for user", "There was a problem obtaining the list of projects for the user.");
+					}
+				});
+			}
+			function purge_customer(row)
+			{
+				$("#user_button__" + row).hide();
+				$("#project__" + row).html("");
+				$("#user_textbox__" + row).typeahead('val', '').show().focus();
+			}
+			function on_submit()
+			{
+				// check for all project fields having selected values
+				var s;
+				var o;
+				var u;
+				var b;
+
+				for (var i=0; i<current_entry_number; i++) {
+					b = false;
+					s = "#user_textbox__" + i;
+
+					if ($(s).length) {
+						if ($(s).css("display") != "none") {
+							alert("Please select a user for each row, or else delete the row.");
+							$(s).focus();
+							return false;
+						} else {
+							b = true;
+						}
+					}
+
+					if (b) {
+						s = "#chosen_project__" + i;
+						if ($(s).prop("type") != "hidden") {
+							o = $(s).find(":selected").val();
+							if (o == "-1") {
+								alert("Please select a value for each project field for each customer, or else delete the row.");
+								$(s).focus();
+								return false;
+							}
+						}
+					}
+				}
+
+				var failure_dialog = ajax_failure_callback("Could not begin charging staff time");
+				var success_callbacks = [reload_page]; 
+				ajax_post("{% url 'enable_tool_multi' %}", serialize("#tool_control"), success_callbacks, failure_dialog);
+				return false;
+			}	
+
+
 		{% endif %}
 
 		function load_tasks_and_comments(tool_id)
@@ -218,6 +377,7 @@
 		function on_load()
 		{
 			{% if device == 'desktop' %}
+
 				set_tool_link_callback(refresh_tool_status);
 				enable_tool_tree_toggling();
 				$('#tool_search').autocomplete('tools', on_tool_search_selection, {{ cat_tools }});

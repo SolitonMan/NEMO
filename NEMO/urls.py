@@ -46,6 +46,7 @@ urlpatterns = [
 	url(r'^create_comment/$', tool_control.create_comment, name='create_comment'),
 	url(r'^hide_comment/(?P<comment_id>\d+)/$', tool_control.hide_comment, name='hide_comment'),
 	url(r'^enable_tool/(?P<tool_id>\d+)/user/(?P<user_id>\d+)/project/(?P<project_id>\d+)/staff_charge/(?P<staff_charge>(true|false))/$', tool_control.enable_tool, name='enable_tool'),
+	url(r'^enable_tool_multi/$', tool_control.enable_tool_multi, name='enable_tool_multi'),
 	url(r'^disable_tool/(?P<tool_id>\d+)/$', tool_control.disable_tool, name='disable_tool'),
 	url(r'^past_comments_and_tasks/$', tool_control.past_comments_and_tasks, name='past_comments_and_tasks'),
 	url(r'^ten_most_recent_past_comments_and_tasks/(?P<tool_id>\d+)/$', tool_control.ten_most_recent_past_comments_and_tasks, name='ten_most_recent_past_comments_and_tasks'),

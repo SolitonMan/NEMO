@@ -177,6 +177,8 @@
 
 		{# Display tool control... #}
 		<form id="tool_control">
+			<input type="hidden" id="tool_id" name="tool_id" value="{{ tool.id }}" />
+			{% csrf_token %}
 			{% if tool.in_use %}
 				{% if tool.get_current_usage_event.operator.id == user.id or tool.get_current_usage_event.user.id == user.id %}
 					{{ post_usage_questions }}
@@ -191,13 +193,13 @@
 			{% else %}
 				{% if user.is_staff %}
 					<h4>What would you like to do?</h4>
-					<div class="radio"><label><input type="radio" onchange="use_tool_for_self()" name="staff_charge" value="false">Use this tool for my own project</label></div>
-					<div class="radio"><label><input type="radio" onchange="use_tool_for_other()" name="staff_charge" value="false">Use this tool on behalf of another user</label></div>
+					<div class="radio"><label><input type="radio" onchange="use_tool_for_self({{ tool.id }})" name="staff_charge" value="false">Use this tool for my own project</label></div>
+					<div class="radio"><label><input type="radio" onchange="use_tool_for_other({{ tool.id }})" name="staff_charge" value="false">Use this tool on behalf of another user</label></div>
 					{% if user.charging_staff_time %}
 						{% with user.get_staff_charge as staff_charge %}
 							<div class="radio disabled">
 								<label id="staff_charge_tooltip_container" class="light-grey" data-toggle="tooltip" data-placement="right" title="This option is not available because you are already charging staff time to {{ staff_charge.customer }} for the project named {{ staff_charge.project }} since {{ staff_charge.start }}.">
-									<input type="radio" onchange="use_tool_for_other()" disabled>
+									<input type="radio" onchange="use_tool_for_other({{ tool.id }})" disabled>
 									<span id="staff_charge_tooltip_location">Use this tool on behalf of another user and begin charging staff time</span>
 								</label>
 							</div>
@@ -206,14 +208,15 @@
 							</script>
 						{% endwith %}
 					{% else %}
-						<div class="radio"><label><input type="radio" onchange="use_tool_for_other()" name="staff_charge" value="true">Use this tool on behalf of another user and begin charging staff time</label></div>
+						<div class="radio"><label><input type="radio" onchange="use_tool_for_other({{ tool.id }})" name="staff_charge" value="true">Use this tool on behalf of another user and begin charging staff time</label></div>
 					{% endif %}
 					<div id="project_choice"></div>
+					<div id="project_choice_multi"></div>
 				{% elif tool.operational and not tool.required_resource_is_unavailable and not tool.delayed_logoff_in_progress and not tool.scheduled_outage_in_progress %}
 					{% include 'tool_control/get_projects.html' with active_projects=user.active_projects user_id=user.id %}
 				{% endif %}
 				{% if user.is_staff or tool.operational and not tool.required_resource_is_unavailable and not tool.delayed_logoff_in_progress and not tool.scheduled_outage_in_progress %}
-					<button id="start" class="btn btn-default" style="display:none" onclick="enable_tool({{ tool.id }}); return false"><span class="glyphicon glyphicon-play"></span> Start using the {{ tool.name }}</button>
+					<button id="start" class="btn btn-default" style="display:none"><span class="glyphicon glyphicon-play"></span> Start using the {{ tool.name }}</button>
 				{% endif %}
 			{% endif %}
 		</form>
@@ -428,6 +431,21 @@
 		</form>
 		<div style="height:150px">{# Spacer #}</div>
 	</div>
+</div>
+
+<div id="project_choice_multi_source" style="display:none;">
+	<table id="usage_event_entries" class="table">
+		<tr>
+			<th>&nbsp;</th>
+			<th style="min-width:200px">Customer</th>
+			<th style="min-width:200px">Project</th>
+		</tr>
+		{# Rows are inserted here on load and when "Add another customer" is clicked. #}
+		<tr>
+			<td colspan="3" style="text-align:center"><a href="javascript:void(0)" onclick="add_customer()">Add another customer</a></td>
+		</tr>
+	</table>
+	<br>
 </div>
 
 <script>

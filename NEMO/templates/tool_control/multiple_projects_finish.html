@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% load custom_tags_and_filters %}
+{% block title %}Tool use - multiple projects{% endblock %}
+
+{% block content %}
+	<h1>Tool use - multiple projects</h1>
+
+{% if uep|length == 0 %}
+	<span class="danger-highlight">No active usage event project records</span>
+{% elif uep|length == 1 %}
+	<p>Charges will assigned 100% for {{ uep.customer.first_name }} {{ uep.customer.last_name }} to project {{ uep.project.name }}</p>
+{% else %}
+	<p>Please assign the desired percent of staff charges to each project included:</p>
+	<form id="usage_event_projects" onsubmit="return on_submit()" class="form-horizontal">
+		{% csrf_token %}
+		<table class="table">
+			<tr>
+				<th>Customer</th>
+				<th>Project</th>
+				<th>Percent</th>
+			</tr>
+		{% for u in uep %}
+			<tr>
+				<td>{{ u.customer.first_name }} {{ u.customer.last_name }}</td>
+				<td>{{ u.project.name }}</td>
+				<td><input type="text" name="project_percent__{{ u.id }}" value="" /></td>
+			</tr>
+		{% endfor %}
+		</table>
+		<br />
+		<input type="submit" value="Record Tool Usage" class="btn btn-default"/>
+	</form>
+	<script>
+	function on_submit()
+	{
+		var failure_dialog = ajax_failure_callback("There was an error processing the data.  Please check the form and try again.");
+		ajax_post("{% url 'usage_event_projects_save' %}", serialize("#usage_event_projects"), reload_events, failure_dialog);
+		return false;
+	}
+
+	function reload_events()
+	{
+		window.location = "{% url 'tool_control' tool_id %}";
+	}
+	</script>
+{% endif %}
+{% endblock %}

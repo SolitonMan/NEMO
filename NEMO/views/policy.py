@@ -91,6 +91,73 @@ def check_policy_to_enable_tool(tool, operator, user, project, staff_charge, req
 	return HttpResponse()
 
 
+def check_policy_to_enable_tool_for_multi(tool, operator, user, project, request):
+	"""
+	Check that the user is allowed to enable the tool. Enable the tool if the policy checks pass.
+	"""
+
+	# The tool must be visible to users.
+	if not tool.visible:
+		return HttpResponseBadRequest("This tool is currently hidden from users.")
+
+	# The tool must be operational.
+	# If the tool is non-operational then it may only be accessed by staff members.
+	if not tool.operational and not operator.is_staff:
+		return HttpResponseBadRequest("This tool is currently non-operational.")
+
+	# The user must be qualified to use the tool.
+	if tool not in operator.qualifications.all() and not operator.is_staff:
+		return HttpResponseBadRequest("You are not qualified to use this tool.")
+
+	# Only staff members can operate a tool on behalf of another user.
+	if (user and operator.pk != user.pk) and not operator.is_staff:
+		return HttpResponseBadRequest("You must be a staff member to use a tool on another user's behalf.")
+
+	# All required resources must be available to operate a tool except for staff.
+	if tool.required_resource_set.filter(available=False).exists() and not operator.is_staff:
+		return HttpResponseBadRequest("A resource that is required to operate this tool is unavailable.")
+
+	# The tool operator may not activate tools in a particular area unless they are logged in to the area.
+	# If they have access to the area, log them in automatically and let them know the log in to the area has occurrred
+	if tool.requires_area_access and AreaAccessRecord.objects.filter(area=tool.requires_area_access,customer=operator,end=None).count() == 0:
+		if operator.physical_access_levels.filter(area=tool.requires_area_access).count() == 0 and not operator.is_staff:
+			# return bad response that user doesn't have permission to the area
+			return HttpResponseBadRequest("You don't have permission to be logged in to the {} to operate this tool.  Please contact a system administrator to request access.".format(tool.requires_area_access.name.lower()))
+
+
+	# Users may only charge to projects they are members of.
+	if project not in user.active_projects():
+		return HttpResponseBadRequest('The designated user is not assigned to the selected project.')
+
+	# The tool operator must not have a lock on usage
+	if operator.training_required:
+		return HttpResponseBadRequest("You are blocked from using all tools in the NanoFab. Please complete the NanoFab rules tutorial in order to use tools.")
+
+	# Users may only use a tool when delayed logoff is not in effect. Staff are exempt from this rule.
+	if tool.delayed_logoff_in_progress() and not operator.is_staff:
+		return HttpResponseBadRequest("Delayed tool logoff is in effect. You must wait for the delayed logoff to expire before you can use the tool.")
+
+	# Users may not enable a tool during a scheduled outage. Staff are exempt from this rule.
+	if tool.scheduled_outage_in_progress() and not operator.is_staff:
+		return HttpResponseBadRequest("A scheduled outage is in effect. You must wait for the outage to end before you can use the tool.")
+
+	# Refuses login on tools that require reservations if there is no reservation
+	if tool.reservation_required and not operator.is_staff:
+		td=timedelta(minutes=15)
+		if not Reservation.objects.filter(start__lt=timezone.now()+td, end__gt=timezone.now(), cancelled=False, missed=False, shortened=False, user=operator, tool=tool).exists():
+			return HttpResponseBadRequest("A reservation is required to enable this tool.")
+
+	# Prevent tool login for user from a different core
+	active_core_id = request.session.get("active_core_id")
+	if str(active_core_id) != "0" and str(active_core_id) != "None":
+		msg = "The " + tool.name + " is part of the core " + tool.core_id.name + ". You cannot operate a tool that is part of a different core."
+		if str(tool.core_id.id) not in str(active_core_id) and not operator.is_superuser:
+			return HttpResponseBadRequest(msg)
+
+
+	return HttpResponse()
+
+
 def check_policy_to_disable_tool(tool, operator, downtime, request):
 	# Prevent tool disabling from a user in a different core
 	active_core_id = request.session.get("active_core_id")

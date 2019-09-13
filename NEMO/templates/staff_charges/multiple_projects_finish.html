@@ -11,7 +11,7 @@
 	<p>Charges will assigned 100% for {{ scp.customer.first_name }} {{ scp.customer.last_name }} to project {{ scp.project.name }}</p>
 {% else %}
 	<p>Please assign the desired percent of staff charges to each project included:</p>
-	<form id="staff_charge_projects" action="{% url 'staff_charge_projects_save' %}" class="form-horizontal" method="post">
+	<form id="staff_charge_projects" onsubmit="return on_submit()" class="form-horizontal">
 		{% csrf_token %}
 		<table class="table">
 			<tr>
@@ -30,5 +30,18 @@
 		<br />
 		<input type="submit" value="Record Staff Charges" class="btn btn-default"/>
 	</form>
+	<script>
+	function on_submit()
+	{
+		var failure_dialog = ajax_failure_callback("There was an error processing the data.  Please check the form and try again.");
+		ajax_post("{% url 'staff_charge_projects_save' %}", serialize("#staff_charge_projects"), reload_staff_charges, failure_dialog);
+		return false;
+	}
+
+	function reload_staff_charges()
+	{
+		window.location = "{% url 'staff_charges' %}";
+	}
+	</script>
 {% endif %}
 {% endblock %}

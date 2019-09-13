@@ -9,7 +9,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
-from NEMO.models import User, StaffCharge, AreaAccessRecord, Project, Area, StaffChargeProject
+from NEMO.models import User, StaffCharge, AreaAccessRecord, Project, Area, StaffChargeProject, AreaAccessRecordProject
 
 
 @staff_member_required(login_url=None)
@@ -42,8 +42,11 @@ def staff_charges(request):
 def begin_staff_charge(request):
 	if request.user.charging_staff_time():
 		return HttpResponseBadRequest('You cannot create a new staff charge when one is already in progress.')
+
+	charge = StaffCharge()
+
 	try:
-		charge = StaffCharge()
+		#charge = StaffCharge()
 		#charge.customer = User.objects.get(id=request.POST['customer'])
 		#charge.project = Project.objects.get(id=request.POST['project'])
 		charge.staff_member = request.user
@@ -59,15 +62,27 @@ def begin_staff_charge(request):
 					project_charges[index] = StaffChargeProject()
 					project_charges[index].staff_charge = charge
 				if attribute == "chosen_user":
-					project_charges[index].customer = User.objects.get(id=value)
+					if value is not None and value != "":
+						project_charges[index].customer = User.objects.get(id=value)
+					else:
+						charge.delete()
+						return HttpResponseBadRequest('Please choose a customer')
+
 				if attribute == "chosen_project":
-					project_charges[index].project = Project.objects.get(id=value)	
+					if value is not None and value != "" and value != "-1":
+						project_charges[index].project = Project.objects.get(id=value)	
+					else:
+						charge.delete()
+						return HttpResponseBadRequest('Please choose a project to which to bill your staff charges')
 
 		for p in project_charges.values():
 			p.full_clean(exclude='project_percent')
 			p.save()
 
+
 	except Exception:
+		charge.delete()
+
 		return HttpResponseBadRequest('An error occurred while processing the staff charge project selections. None of the charges were committed to the database. Please review the form for errors and omissions then submit the form again.')
 
 	return redirect(reverse('staff_charges'))
@@ -89,8 +104,6 @@ def end_staff_charge(request):
 	if not request.user.charging_staff_time():
 		return HttpResponseBadRequest('You do not have a staff charge in progress, so you cannot end it.')
 	charge = request.user.get_staff_charge()
-	charge.end = timezone.now()
-	charge.save()
 
 	# close out the project entries for this run
 	scp = StaffChargeProject.objects.filter(staff_charge_id=charge.id)
@@ -98,6 +111,8 @@ def end_staff_charge(request):
 	if scp.count() == 1:
 		# set project_percent to 100
 		scp.update(project_percent=100.0)
+		charge.end = timezone.now()
+		charge.save()
 	else:
 		# gather records and send to form for editing
 		params = {
@@ -121,17 +136,49 @@ def end_staff_charge(request):
 @staff_member_required(login_url=None)
 @require_POST
 def staff_charge_projects_save(request):
+	msg = ''
+
 	try:
+		prc = 0.0
+		charge = StaffCharge()
+
 		for key, value in request.POST.items():
 			if is_valid_field(key):
 				attribute, separator, scpid = key.partition("__")
 				scpid = int(scpid)
-				if attribute == "project_percent":
-					StaffChargeProject.objects.filter(id=scpid).update(project_percent=value)
+				if not charge.id:
+					s = StaffChargeProject.objects.filter(id=scpid)
+					charge = s[0].staff_charge
 
-	except Exception:
-		return HttpResponseBadRequest('An error occurred while processing the staff charge project percentages. None of the charges were committed to the database.')
-	
+				if attribute == "project_percent":
+					if value == '':
+						msg = 'You must enter a numerical value for the percent to charge to a project'
+						charge.update(end=null)
+						raise Exception()
+					else:
+						prc = prc + float(value)
+
+		if int(prc) != 100:
+			msg = 'Percent values must total to 100.0'
+			charge.update(end=null)
+			raise Exception()
+
+		for key, value in request.POST.items():
+                        if is_valid_field(key):
+                                attribute, separator, scpid = key.partition("__")
+                                scpid = int(scpid)
+                                if attribute == "project_percent":
+                                        StaffChargeProject.objects.filter(id=scpid).update(project_percent=value)		
+
+		charge.end = timezone.now()
+		charge.save()
+
+	except Exception as inst:
+		if msg == '':
+			return HttpResponseBadRequest(inst)
+		else:
+			return HttpResponseBadRequest(msg)
+
 	return redirect(reverse('staff_charges'))
 
 @staff_member_required(login_url=None)

@@ -1,3 +1,7 @@
+from re import search
+
+import requests
+
 from copy import deepcopy
 from datetime import timedelta
 from http import HTTPStatus
@@ -14,9 +18,9 @@ from django.utils.html import escape
 from django.utils.safestring import mark_safe
 
 from NEMO.forms import CommentForm, nice_errors
-from NEMO.models import AreaAccessRecord, Comment, Configuration, ConfigurationHistory, Project, Reservation, StaffCharge, Task, TaskCategory, TaskStatus, Tool, UsageEvent, User
+from NEMO.models import AreaAccessRecord, AreaAccessRecordProject, Comment, Configuration, ConfigurationHistory, Project, Reservation, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskStatus, Tool, UsageEvent, UsageEventProject, User
 from NEMO.utilities import extract_times, quiet_int
-from NEMO.views.policy import check_policy_to_disable_tool, check_policy_to_enable_tool
+from NEMO.views.policy import check_policy_to_disable_tool, check_policy_to_enable_tool, check_policy_to_enable_tool_for_multi
 from NEMO.widgets.dynamic_form import DynamicForm
 from NEMO.widgets.tool_tree import ToolTree
 
@@ -51,13 +55,33 @@ def tool_control(request, tool_id=None, qualified_only=None, core_only=None):
 	categorized_tools = categorized_tools.rstrip(",") + "]"
 	categorized_tools = mark_safe(categorized_tools)
 
+	users = User.objects.filter(is_active=True).exclude(id=request.user.id)
+
 	dictionary = {
 		'tools': tools,
 		'selected_tool': tool_id,
 		'qualified_only': qualified_only,
 		'core_only': core_only,
 		'cat_tools': categorized_tools,
+		'users': users,
 	}
+
+
+	if request.user.charging_staff_time():
+		# retrieve staff charges to provide a current listing of customers
+		staff_charge = request.user.get_staff_charge()
+		staff_charge_projects = StaffChargeProject.objects.filter(staff_charge=staff_charge.id)
+
+		scp_out = "["
+
+		for s in staff_charge_projects:
+			scp_out += '{{"project":"{0}", "customer":"{1}", "project_id":"{2}", "user_id":"{3}"}},'.format(escape(str(s.project)), escape(str(s.customer)), escape(str(s.project.id)), escape(str(s.customer.id)))
+		scp_out = scp_out.rstrip(",") + "]"
+		scp_out = mark_safe(scp_out)
+
+		dictionary['staff_charge_projects'] = scp_out
+
+
 	# The tool-choice sidebar only needs to be rendered for desktop devices, not mobile devices.
 	if request.device == 'desktop':
 		dictionary['rendered_tool_tree_html'] = ToolTree().render(None, {'tools': tools})
@@ -95,9 +119,10 @@ def tool_status(request, tool_id):
 
 @staff_member_required(login_url=None)
 @require_GET
-def use_tool_for_other(request):
+def use_tool_for_other(request, entry_number):
 	dictionary = {
-		'users': User.objects.filter(is_active=True).exclude(id=request.user.id)
+		'users': User.objects.filter(is_active=True).exclude(id=request.user.id),
+		'entry_number': entry_number
 	}
 	return render(request, 'tool_control/use_tool_for_other.html', dictionary)
 
@@ -219,6 +244,122 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge):
 
 	return response
 
+@staff_member_required(login_url=None)
+@require_POST
+def enable_tool_multi(request):
+	""" Enable a tool for a single operator to charge to multiple customers.  """
+	id = 0
+	try:
+		id = int(request.POST.get('tool_id'))
+	except ValueError:
+			return HttpResponseBadRequest('request.POST.get(\'tool_id\') = ' + request.POST.get('tool_id'))
+	tool = get_object_or_404(Tool, id=id)
+	operator = request.user
+
+	# initiate a UsageEvent
+	new_usage_event = UsageEvent()
+	new_usage_event.operator = operator
+	new_usage_event.tool = tool
+	new_usage_event.save()	
+
+	project_events = {}
+
+	for key, value in request.POST.items():
+		if is_valid_field(key):
+			attribute, separator, index = key.partition("__")
+			index = int(index)
+			if index not in project_events:
+				project_events[index] = UsageEventProject()
+				project_events[index].usage_event = new_usage_event
+			if attribute == "chosen_user":
+				if value is not None and value != "":
+					project_events[index].customer = User.objects.get(id=value)
+				else:
+					new_usage_event.delete()
+					return HttpResponseBadRequest('Please choose a user for whom the tool will be run.')
+			if attribute == "chosen_project":
+				if value is not None and value != "" and value != "-1":
+					project_events[index].project = Project.objects.get(id=value)
+				else:
+					new_usage_event.delete()
+					return HttpResponseBadRequest('Please choose a project for charges made during this run.')
+
+			if hasattr(project_events[index], 'customer') and hasattr(project_events[index], 'project'):
+				response = check_policy_to_enable_tool_for_multi(tool, operator, project_events[index].customer, project_events[index].project, request)
+				if response.status_code != HTTPStatus.OK:
+					return response
+
+	for p in project_events.values():
+		p.full_clean(exclude='project_percent')
+		p.save()
+
+	# All policy checks passed so enable the tool for the user.
+	if tool.interlock and not tool.interlock.unlock():
+		raise Exception("The interlock command for this tool failed. The error message returned: " + str(tool.interlock.most_recent_reply))
+
+	# record staff charges
+	if request.user.charging_staff_time():
+		new_staff_charge = request.user.get_staff_charge()
+	else:
+		new_staff_charge = StaffCharge()
+		new_staff_charge.staff_member = request.user
+		new_staff_charge.save()
+
+	project_charges = {}
+
+	for key, value in request.POST.items():
+		if is_valid_field(key):
+			attribute, separator, index = key.partition("__")
+			index = int(index)
+			if index not in project_charges:
+				project_charges[index] = StaffChargeProject()
+				project_charges[index].staff_charge = new_staff_charge
+			if attribute == "chosen_user":
+				if value is not None and value != "":
+					project_charges[index].customer = User.objects.get(id=value)
+				else:
+					new_staff_charge.delete()
+					new_usage_event.delete()
+					return HttpResponseBadRequest('Please choose a user for whom the tool will be run.')
+			if attribute == "chosen_project":
+				if value is not None and value != "" and value != "-1":
+					project_charges[index].project = Project.objects.get(id=value)
+				else:
+					new_staff_charge.delete()
+					new_usage_event.delete()
+					return HttpResponseBadRequest('Please choose a project for charges made during this run.')
+
+	for p in project_charges.values():
+		if not StaffChargeProject.objects.filter(staff_charge=p.staff_charge, customer=p.customer, project=p.project).exists():
+			p.full_clean(exclude='project_percent')
+			p.save()
+		 
+#	if tool.requires_area_access and AreaAccessRecord.objects.filter(area=tool.requires_area_access,customer=operator,end=None).count() == 0:
+#		aar = AreaAccessRecord()
+#		aar.area = tool.requires_area_access
+#		aar.customer = operator
+#		aar.project = project
+#		aar.start = timezone.now()
+
+#		if staff_charge:
+#			aar.staff_charge = new_staff_charge
+
+#		aar.save()
+
+
+	return response
+
+
+def is_valid_field(field):
+	return search("^(chosen_user|chosen_project|project_percent)__[0-9]+$", field) is not None
+
+
+@staff_member_required(login_url=None)
+@require_GET
+def usage_event_entry(request):
+	entry_number = int(request.GET['entry_number'])
+	return render(request, 'tool_control/usage_event_entry.html', {'entry_number': entry_number})
+
 
 @login_required
 @require_POST
@@ -260,6 +401,12 @@ def disable_tool(request, tool_id):
 	current_usage_event = tool.get_current_usage_event()
 	current_usage_event.end = timezone.now() + downtime
 
+	if current_usage_event.project is None and current_usage_event.user is None:
+		# multi user event possibility, check
+		if UsageEventProject.objects.filter(usage_event=current_usage_event.id).count() > 0:
+			return disable_tool_multi(request, tool_id, current_usage_event)
+
+
 	# Collect post-usage questions
 	dynamic_form = DynamicForm(tool.post_usage_questions)
 	current_usage_event.run_data = dynamic_form.extract(request)
@@ -273,6 +420,35 @@ def disable_tool(request, tool_id):
 
 	return response
 
+
+@staff_member_required(login_url=None)
+def disable_tool_multi(request, tool_id, usage_event):
+	# process request for multiple users and staff charges
+	uep = UsageEventProject.objects.filter(usage_event=usage_event.id)
+	downtime = timedelta(minutes=quiet_int(request.POST.get('downtime')))
+
+	if uep.count() == 1:
+		# set project_percent to 100
+		uep.update(project_percent=100.0)
+		usage_event.end = timezone.now() + downtime
+		
+	else:
+		# gather records and send to form for editing
+		params = {
+			'usage_event': usage_event,
+			'uep': uep,
+			'tool_id': tool_id,
+		}
+		response = render(request, 'tool_control/multiple_projects_finish.html', params)
+
+	return response
+
+	
+@staff_member_required(login_url=None)
+def usage_event_projects_save(request):
+	
+
+	return response
 
 @login_required
 @require_GET

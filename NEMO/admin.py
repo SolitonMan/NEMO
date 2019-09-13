@@ -286,14 +286,14 @@ class ProjectAdmin(admin.ModelAdmin):
 
 @register(Reservation)
 class ReservationAdmin(admin.ModelAdmin):
-	list_display = ('id', 'user', 'creator', 'tool', 'project', 'start', 'end', 'duration', 'cancelled', 'missed')
+	list_display = ('id', 'user', 'creator', 'tool', 'project', 'additional_information', 'start', 'end', 'duration', 'cancelled', 'missed')
 	list_filter = ('cancelled', 'missed', 'tool')
 	date_hierarchy = 'start'
 
 
 @register(UsageEvent)
 class UsageEventAdmin(admin.ModelAdmin):
-	list_display = ('id', 'tool', 'user', 'operator', 'project', 'start', 'end', 'duration')
+	list_display = ('id', 'tool', 'user', 'operator', 'project', 'start', 'end', 'duration', 'run_data')
 	list_filter = ('start', 'end', 'tool')
 	date_hierarchy = 'start'
 

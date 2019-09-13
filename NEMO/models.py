@@ -209,6 +209,12 @@ class User(models.Model):
 		except StaffCharge.DoesNotExist:
 			return None
 
+	def get_overridden_staff_charges(self):
+		try:
+			return StaffCharge.objects.filter(staff_member=self.id, charge_end_override=True, override_confirmed=False)
+		except StaffCharge.DoesNotExist:
+			return None 
+
 	class Meta:
 		ordering = ['first_name']
 		permissions = (
@@ -439,6 +445,9 @@ class StaffCharge(CalendarDisplay):
 	start = models.DateTimeField(default=timezone.now)
 	end = models.DateTimeField(null=True, blank=True)
 	validated = models.BooleanField(default=False)
+	charge_end_override = models.BooleanField(default=False, null=True, blank=True)
+	override_confirmed = models.BooleanField(default=False, null=True, blank=True)
+	related_override_charge = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True)
 	projects = models.ManyToManyField('Project', through='StaffChargeProject')
 
 	class Meta:
@@ -452,6 +461,8 @@ class StaffChargeProject(models.Model):
 	project = models.ForeignKey('Project', on_delete=models.CASCADE)
 	customer = models.ForeignKey('User', on_delete=models.CASCADE)
 	project_percent = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+	created = models.DateTimeField(default=timezone.now, null=True)
+	updated = models.DateTimeField(default=timezone.now, null=True)
 
 class Area(models.Model):
 	name = models.CharField(max_length=200, help_text='What is the name of this area? The name will be displayed on the tablet login and logout pages.')
@@ -487,6 +498,8 @@ class AreaAccessRecordProject(models.Model):
 	project = models.ForeignKey('Project', on_delete=models.CASCADE)
 	customer = models.ForeignKey('User', on_delete=models.CASCADE)
 	project_percent = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+	created = models.DateTimeField(default=timezone.now, null=True)
+	updated = models.DateTimeField(default=timezone.now, null=True)
 
 class ConfigurationHistory(models.Model):
 	configuration = models.ForeignKey(Configuration)
@@ -578,9 +591,9 @@ class Reservation(CalendarDisplay):
 
 
 class UsageEvent(CalendarDisplay):
-	user = models.ForeignKey(User, related_name="usage_event_user", null=True)
+	user = models.ForeignKey(User, related_name="usage_event_user", null=True, blank=True)
 	operator = models.ForeignKey(User, related_name="usage_event_operator")
-	project = models.ForeignKey(Project, related_name="usage_event_project", null=True)
+	project = models.ForeignKey(Project, related_name="usage_event_project", null=True, blank=True)
 	tool = models.ForeignKey(Tool, related_name='+')  # The related_name='+' disallows reverse lookups. Helper functions of other models should be used instead.
 	start = models.DateTimeField(default=timezone.now)
 	end = models.DateTimeField(null=True, blank=True)
@@ -602,6 +615,9 @@ class UsageEventProject(models.Model):
 	project = models.ForeignKey('Project', on_delete=models.CASCADE)
 	project_percent = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
 	customer = models.ForeignKey('User', on_delete=models.CASCADE)
+	created = models.DateTimeField(default=timezone.now, null=True)
+	updated = models.DateTimeField(default=timezone.now, null=True)
+
 
 class Consumable(models.Model):
 	name = models.CharField(max_length=100)
