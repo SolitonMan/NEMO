@@ -26,6 +26,51 @@
 		<br>
 		<input type="submit" class="btn btn-default" id="begin_staff_time_charges" value="Begin charging staff time">
 	</form>
+
+	{% if scp|length > 0 %}
+	<br/><br/>
+
+	<div style="display: block;">
+	<h1>Overridden Staff Charges</h1>
+	<p>The following staff charge(s) are marked as being overridden but not yet confirmed.  Please fill out the relevant percentages where appropriate and click "End the current charges" to confirm a completed override, or select "Continue the current charges" to add further time to the charges.</p>
+	{% for o in override_charges %}
+		<form id="override_charges_{{ o.id }}" onsubmit="return submit_override({{ o.id }})" class="form-horizontal">
+		{% csrf_token %}
+		<input type="hidden" value="true" name="override_confirmed" />
+		<input type="hidden" value="{{ o.id }}" name="staff_charge_id" id="staff_charge_id" />
+		<table class="table">
+			<tr>
+				<td colspan="3">
+					<b>Start:</b> {{ o.start }} 
+					<br/>
+					<b>End:</b>{{ o.end }}
+				</td>
+			</tr>
+			<tr>
+				<th>Customer</th>
+				<th>Project</th>
+				<th>&nbsp;</th>
+			</tr>
+		{% for s in scp %}
+			{% if o.id == s.staff_charge.id %}
+			<tr>
+				<td>{{ s.customer }}</td>
+				<td>{{ s.project }}</td>
+				<td>
+					<input type="text" name="project_percent__{{ s.id }}" id="project_percent__{{ s.id }}" /></td>
+			<tr>
+			{% endif %}
+		{% endfor %}
+			<tr>
+				<td colspan="3">
+					<input type="submit" value="End the current charges" class="btn btn-default" />
+					<input type="button" class="btn btn-default" value="Continue the current charges" onclick="continue_staff_charges({{ o.id }}, '{% url 'continue_staff_charge' o.id %}');" />
+		</table>
+		</form>
+		<br/><br/>
+	{% endfor %}
+	</div>
+	{% endif %}
 	<script>
 		var current_entry_number = 1;
 		function select_user(jquery_event, search_selection, dataset_name)
@@ -92,6 +137,19 @@
 			var failure_dialog = ajax_failure_callback("Could not begin charging staff time");
 			ajax_post("{% url 'begin_staff_charge' %}", serialize("#new_staff_charge"), reload_staff_charges, failure_dialog);
 			return false;
+		}
+
+		function submit_override(num) 
+		{
+			var form_id = "#override_charges_" + num;
+			var failure_dialog = ajax_failure_callback("There was an error processing the data.  Please check the form and try again.");
+			ajax_post("{% url 'staff_charge_projects_save' %}", serialize(form_id), reload_staff_charges, failure_dialog);
+			return false;
+		}
+
+		function continue_staff_charges(id, url) 
+		{
+			location.href = url;
 		}
 
 		function reload_staff_charges()

@@ -1,18 +1,14 @@
-{% extends 'base.html' %}
-{% load custom_tags_and_filters %}
-{% block title %}Tool use - multiple projects{% endblock %}
+<div class="modal-header">
+	<button type="button" class="close" data-dismiss="modal">&times;</button>
+	<h4>Tool use - multiple projects</h4>
+</div>
 
-{% block content %}
-	<h1>Tool use - multiple projects</h1>
-
-{% if uep|length == 0 %}
-	<span class="danger-highlight">No active usage event project records</span>
-{% elif uep|length == 1 %}
-	<p>Charges will assigned 100% for {{ uep.customer.first_name }} {{ uep.customer.last_name }} to project {{ uep.project.name }}</p>
-{% else %}
+<div class="modal-body">
 	<p>Please assign the desired percent of staff charges to each project included:</p>
 	<form id="usage_event_projects" onsubmit="return on_submit()" class="form-horizontal">
 		{% csrf_token %}
+		<input type="hidden" name="usage_event_id" id="usage_event_id" value="{{ usage_event.id }}" />
+		<input type="hidden" name="downtime" id="downtime" value="{{ downtime }}" />
 		<table class="table">
 			<tr>
 				<th>Customer</th>
@@ -43,5 +39,4 @@
 		window.location = "{% url 'tool_control' tool_id %}";
 	}
 	</script>
-{% endif %}
-{% endblock %}
+</div>

@@ -11,7 +11,7 @@
 	<p>Charges will assigned 100% for {{ scp.customer.first_name }} {{ scp.customer.last_name }} to project {{ scp.project.name }}</p>
 {% else %}
 	<p>Please assign the desired percent of staff charges to each project included:</p>
-	<form id="staff_charge_projects" onsubmit="return on_submit()" class="form-horizontal">
+	<form id="staff_charge_projects" action="{% url 'staff_charge_projects_save' %}" method="POST" class="form-horizontal">
 		{% csrf_token %}
 		<table class="table">
 			<tr>
@@ -28,6 +28,10 @@
 		{% endfor %}
 		</table>
 		<br />
+		<input type="hidden" value="{{ staff_charge_id }}" name="staff_charge_id" />
+		{% if override_confirm %}
+		<input type="hidden" value="True" name="override_confirm" />
+		{% endif %}
 		<input type="submit" value="Record Staff Charges" class="btn btn-default"/>
 	</form>
 	<script>

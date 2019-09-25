@@ -12,6 +12,8 @@ RUN pip install django-auth-ldap
 # Install PostgreSQL support
 RUN pip install psycopg2-binary
 
+# Install DEBUG support
+RUN pip install django-developer-panel
 
 # Intall NEMO (in the current directory) and Gunicorn
 COPY . /nemo/

@@ -3,6 +3,7 @@ from re import search
 import requests
 
 from django.contrib.admin.views.decorators import staff_member_required
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import render, redirect
 from django.urls import reverse
@@ -34,7 +35,21 @@ def staff_charges(request):
 		else:
 			error = str(customer) + ' does not have any active projects. You cannot bill staff time to this user.'
 	users = User.objects.filter(is_active=True).exclude(id=request.user.id)
-	return render(request, 'staff_charges/new_staff_charge.html', {'users': users, 'error': error})
+
+	# if the user has any open charges pass the information to the form
+	overridden_charges = StaffCharge.objects.filter(staff_member=request.user, charge_end_override=True, override_confirmed=False)
+
+	if overridden_charges.count() > 0:
+		scp = StaffChargeProject.objects.filter(staff_charge__in=overridden_charges)
+
+	params = {'users': users, 'error': error}
+
+	if overridden_charges.count() > 0:
+		params['override_charges'] = overridden_charges
+		if scp.count() > 0:
+			params['scp'] = scp
+
+	return render(request, 'staff_charges/new_staff_charge.html', params)
 
 
 @staff_member_required(login_url=None)
@@ -105,31 +120,39 @@ def end_staff_charge(request):
 		return HttpResponseBadRequest('You do not have a staff charge in progress, so you cannot end it.')
 	charge = request.user.get_staff_charge()
 
-	# close out the project entries for this run
-	scp = StaffChargeProject.objects.filter(staff_charge_id=charge.id)
-
-	if scp.count() == 1:
-		# set project_percent to 100
-		scp.update(project_percent=100.0)
-		charge.end = timezone.now()
-		charge.save()
-	else:
-		# gather records and send to form for editing
-		params = {
-			'charge': charge,
-			'scp': scp,
-		}
-		return render(request, 'staff_charges/multiple_projects_finish.html', params)
-
 	try:
-		area_access = AreaAccessRecord.objects.get(staff_charge=charge, end=None)
-		area_access.end = timezone.now()
-		area_access.save()
+		# close out the project entries for this run
+		scp = StaffChargeProject.objects.filter(staff_charge=charge)
+
+		if scp.count() == 1:
+			# set project_percent to 100
+			scp.update(project_percent=100.0)
+			charge.end = timezone.now()
+			charge.save()
+
+			return update_related_charges(request, charge, StaffCharge.objects.get(related_override_charge=charge))
+
+		else:
+			# gather records and send to form for editing
+			params = {
+				'charge': charge,
+				'scp': scp,
+				'staff_charge_id': charge.id,
+			}
+			return render(request, 'staff_charges/multiple_projects_finish.html', params)
+
+		#area_access = AreaAccessRecord.objects.get(staff_charge=charge, end=None)
+		#area_access.end = timezone.now()
+		#area_access.save()
 
 		# close out any area access record project entries
 
-	except AreaAccessRecord.DoesNotExist:
-		pass
+	#except AreaAccessRecord.DoesNotExist:
+	#	pass
+
+	except ObjectDoesNotExist:
+		return update_related_charges(request, charge, None)
+
 	return redirect(reverse('staff_charges'))
 
 
@@ -140,7 +163,8 @@ def staff_charge_projects_save(request):
 
 	try:
 		prc = 0.0
-		charge = StaffCharge()
+		staff_charge_id = int(request.POST.get("staff_charge_id"))
+		charge = StaffCharge.objects.get(id=staff_charge_id)
 
 		for key, value in request.POST.items():
 			if is_valid_field(key):
@@ -153,14 +177,16 @@ def staff_charge_projects_save(request):
 				if attribute == "project_percent":
 					if value == '':
 						msg = 'You must enter a numerical value for the percent to charge to a project'
-						charge.update(end=null)
+						charge.end=null
+						charge.save()
 						raise Exception()
 					else:
 						prc = prc + float(value)
 
 		if int(prc) != 100:
 			msg = 'Percent values must total to 100.0'
-			charge.update(end=null)
+			charge.end=null
+			charge.save()
 			raise Exception()
 
 		for key, value in request.POST.items():
@@ -169,9 +195,27 @@ def staff_charge_projects_save(request):
                                 scpid = int(scpid)
                                 if attribute == "project_percent":
                                         StaffChargeProject.objects.filter(id=scpid).update(project_percent=value)		
-
+					
 		charge.end = timezone.now()
+		if charge.charge_end_override:
+			charge.override_confirmed = True
 		charge.save()
+
+		# assign percentages to related staff charge project entries
+
+		while StaffCharge.objects.filter(related_override_charge=charge).count() > 0:
+			old_charge = StaffCharge.objects.get(related_override_charge=charge)
+			old_scp = StaffChargeProject.objects.filter(staff_charge=old_charge)
+
+			for s in old_scp:
+				new_scp = StaffChargeProject.objects.get(staff_charge=charge, project=s.project, customer = s.customer)
+				s.project_percent=new_scp.project_percent
+				s.save()
+
+			charge = old_charge
+
+	except ObjectDoesNotExist:
+		return HttpResponseBadRequest("No entry found related to StaffCharge with id {0}".format(str(charge.id)))
 
 	except Exception as inst:
 		if msg == '':
@@ -180,6 +224,78 @@ def staff_charge_projects_save(request):
 			return HttpResponseBadRequest(msg)
 
 	return redirect(reverse('staff_charges'))
+
+
+@staff_member_required(login_url=None)
+def update_related_charges(request, new_charge=None, old_charge=None):
+
+	if old_charge is None:
+                return redirect(reverse('staff_charges'))
+
+	#return HttpResponseBadRequest('update_related_charges for'+str(old_charge.id))
+
+	# find any outstanding StaffChargeProject entries that need to be updated for a related charge being ended
+	try:
+		old_charge.override_confirmed = True
+		old_charge.save()
+
+		old_scp = StaffChargeProject.objects.filter(staff_charge=old_charge)
+		
+		for s in old_scp:
+			new_scp = StaffChargeProject.objects.get(staff_charge=new_charge, project=s.project, customer = s.customer)
+			s.project_percent=new_scp.project_percent
+			s.save()
+
+		if StaffCharge.objects.filter(related_override_charge=old_charge).exists():
+			related_charge = StaffCharge.objects.get(related_override_charge=old_charge)
+			return update_related_charges(request, old_charge, related_charge)
+
+		else:
+			return update_related_charges(request, old_charge, None)
+
+	except Exception as inst:
+		return HttpResponseBadRequest(inst)
+
+
+
+@staff_member_required(login_url=None)
+def continue_staff_charge(request, staff_charge_id):
+	staff_charge = StaffCharge.objects.get(id=staff_charge_id)
+
+	if staff_charge is None:
+		return HttpResponseBadRequest('No staff charge was found with the selected cristeria.  Please review your choice and if this problem persists contact a system administrator.')
+
+	try:
+		# create a new staff charge and associate with chosen one
+		new_staff_charge = StaffCharge()
+		new_staff_charge.staff_member = staff_charge.staff_member
+		new_staff_charge.start = timezone.now()
+		new_staff_charge.charge_end_override = False
+		new_staff_charge.override_confirmed = False
+		new_staff_charge.save()
+
+		staff_charge.related_override_charge = new_staff_charge
+		staff_charge.override_confirmed = True
+		staff_charge.save()
+
+		# copy the StaffChargeProject records
+		scp = StaffChargeProject.objects.filter(staff_charge=staff_charge)
+		
+		if scp.count() > 0:
+			for s in scp:
+				new_scp = StaffChargeProject()
+				new_scp.staff_charge = new_staff_charge
+				new_scp.project = s.project
+				new_scp.customer = s.customer
+				new_scp.created = timezone.now()
+				new_scp.updated = timezone.now()
+				new_scp.save()
+
+	except Exception as inst:
+		return HttpResponseBadRequest(inst)
+
+	return redirect(reverse('staff_charges'))
+
 
 @staff_member_required(login_url=None)
 @require_POST

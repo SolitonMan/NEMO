@@ -16,6 +16,7 @@ from django.utils import timezone
 from django.views.decorators.http import logger, require_GET, require_POST
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
+from django.urls import reverse
 
 from NEMO.forms import CommentForm, nice_errors
 from NEMO.models import AreaAccessRecord, AreaAccessRecordProject, Comment, Configuration, ConfigurationHistory, Project, Reservation, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskStatus, Tool, UsageEvent, UsageEventProject, User
@@ -299,7 +300,17 @@ def enable_tool_multi(request):
 
 	# record staff charges
 	if request.user.charging_staff_time():
-		new_staff_charge = request.user.get_staff_charge()
+		if request.POST.get("override_staff_charge") == "true":
+			current_staff_charge = request.user.get_staff_charge()
+			current_staff_charge.charge_end_override = True
+			current_staff_charge.override_confirmed = False
+			current_staff_charge.end = timezone.now()
+			current_staff_charge.save()
+			new_staff_charge = StaffCharge()
+			new_staff_charge.staff_member = request.user
+			new_staff_charge.save()
+		else:
+			new_staff_charge = request.user.get_staff_charge()
 	else:
 		new_staff_charge = StaffCharge()
 		new_staff_charge.staff_member = request.user
@@ -403,7 +414,8 @@ def disable_tool(request, tool_id):
 
 	if current_usage_event.project is None and current_usage_event.user is None:
 		# multi user event possibility, check
-		if UsageEventProject.objects.filter(usage_event=current_usage_event.id).count() > 0:
+		current_usage_event.save()
+		if UsageEventProject.objects.filter(usage_event=current_usage_event).exists():
 			return disable_tool_multi(request, tool_id, current_usage_event)
 
 
@@ -413,6 +425,7 @@ def disable_tool(request, tool_id):
 	dynamic_form.charge_for_consumable(current_usage_event.user, current_usage_event.operator, current_usage_event.project, current_usage_event.run_data)
 
 	current_usage_event.save()
+
 	if request.user.charging_staff_time():
 		existing_staff_charge = request.user.get_staff_charge()
 		if existing_staff_charge.customer == current_usage_event.user and existing_staff_charge.project == current_usage_event.project:
@@ -422,33 +435,109 @@ def disable_tool(request, tool_id):
 
 
 @staff_member_required(login_url=None)
+@require_POST
 def disable_tool_multi(request, tool_id, usage_event):
 	# process request for multiple users and staff charges
-	uep = UsageEventProject.objects.filter(usage_event=usage_event.id)
+	if not UsageEventProject.objects.filter(usage_event=usage_event).exists():
+		tool = Tool.objects.get(id=tool_id)
+		return HttpResponseBadRequest("Unable to find projects for {0} being run by {1}".format(str(tool), str(usage_event.operator)))
+
+	uep = UsageEventProject.objects.filter(usage_event=usage_event)
 	downtime = timedelta(minutes=quiet_int(request.POST.get('downtime')))
+	tool = Tool.objects.get(id=tool_id)
 
-	if uep.count() == 1:
-		# set project_percent to 100
-		uep.update(project_percent=100.0)
-		usage_event.end = timezone.now() + downtime
-		
-	else:
-		# gather records and send to form for editing
-		params = {
-			'usage_event': usage_event,
-			'uep': uep,
-			'tool_id': tool_id,
-		}
-		response = render(request, 'tool_control/multiple_projects_finish.html', params)
+	try:
+		if uep.count() == 1:
+			# set project_percent to 100
+			uep.update(project_percent=100.0)
+			if request.user.charging_staff_time():
+				existing_staff_charge = request.user.get_staff_charge()
+				if existing_staff_charge.customer == usage_event.user and existing_staff_charge.project == usage_event.project:
+					response = render(request, 'staff_charges/reminder.html', {'tool': tool})
+				elif existing_staff_charge.customer is None and existing_staff_charge.project is None:
+					scp = StaffChargeProject.objects.get(staff_charge=existing_staff_charge, project=uep.project, customer=uep.customer)
+					if scp is not None:
+						response = render(request, 'staff_charges/reminder.html', {'tool': tool})
+				else:
+					response = render(request, 'staff_charges/general_reminder.html', { 'staff_charge': existing_staff_charge})
 
-	return response
+				return response
 
+			else:
+				return tool_control(request, tool_id, None, None)
+	
+		else:
+			# gather records and send to form for editing
+			params = {
+				'usage_event': usage_event,
+				'uep': uep,
+				'tool_id': tool_id,
+				'downtime': request.POST.get('downtime')
+			}
+			return render(request, 'tool_control/multiple_projects_finish.html', params)
+	except StaffChargeProject.DoesNotExist:
+		existing_staff_charge = request.user.get_staff_charge()
+		return render(request, 'staff_charges/general_reminder.html', { 'staff_charge': existing_staff_charge})
 	
 @staff_member_required(login_url=None)
+@require_POST
 def usage_event_projects_save(request):
-	
+	msg = ''
 
-	return response
+	try:
+
+		prc = 0.0
+		usage_event_id = int(request.POST.get('usage_event_id'))
+		event = UsageEvent.objects.get(id=usage_event_id)
+		downtime = timedelta(minutes=quiet_int(request.POST.get('downtime')))
+
+		for key, value in request.POST.items():
+			if is_valid_field(key):
+				attribute, separator, uepid = key.partition("__")
+				uepid = int(uepid)
+				if not event.id:
+					u = UsageEventProject.objects.filter(id=uepid)
+					event = u[0].usage_event
+
+				if attribute == "project_percent":
+					if value == '':
+						msg = 'You must enter a numerical value for the percent to charge to a project'
+						event.end=null
+						event.save()
+						raise Exception()
+					else:
+						prc = prc + float(value)
+
+		if int(prc) != 100:
+			msg = 'Percent values must total to 100.0'
+			event.end=null
+			event.save()
+			raise Exception()
+
+		for key, value in request.POST.items():
+			if is_valid_field(key):
+				attribute, separator, uepid = key.partition("__")
+				uepid = int(uepid)
+				if attribute == "project_percent":
+					UsageEventProject.objects.filter(id=uepid).update(project_percent=value)
+
+		event.end = timezone.now() + downtime
+		event.save()
+
+		if request.user.charging_staff_time():
+			existing_staff_charge = request.user.get_staff_charge()
+			response = render(request, 'staff_charges/general_reminder.html', {'staff_charge': existing_staff_charge})
+			return response
+
+	except Exception as inst:
+		if msg == '':
+			return HttpResponseBadRequest(inst)
+		else:
+			return HttpResponseBadRequest(msg)
+
+	return redirect(reverse('tool_control'))
+
+
 
 @login_required
 @require_GET

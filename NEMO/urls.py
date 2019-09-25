@@ -50,6 +50,7 @@ urlpatterns = [
 	url(r'^disable_tool/(?P<tool_id>\d+)/$', tool_control.disable_tool, name='disable_tool'),
 	url(r'^past_comments_and_tasks/$', tool_control.past_comments_and_tasks, name='past_comments_and_tasks'),
 	url(r'^ten_most_recent_past_comments_and_tasks/(?P<tool_id>\d+)/$', tool_control.ten_most_recent_past_comments_and_tasks, name='ten_most_recent_past_comments_and_tasks'),
+	 url(r'^usage_event_projects_save/$', tool_control.usage_event_projects_save, name='usage_event_projects_save'),
 
 	# Tasks:
 	url(r'^create_task/$', tasks.create, name='create_task'),
@@ -91,6 +92,7 @@ urlpatterns = [
 	url(r'^begin_staff_area_charge/$', staff_charges.begin_staff_area_charge, name='begin_staff_area_charge'),
 	url(r'^end_staff_area_charge/$', staff_charges.end_staff_area_charge, name='end_staff_area_charge'),
 	url(r'^staff_charge_projects_save/$', staff_charges.staff_charge_projects_save, name='staff_charge_projects_save'),
+	url(r'^continue_staff_charge/(?P<staff_charge_id>\d+)/$', staff_charges.continue_staff_charge, name='continue_staff_charge'),
 
 	# Status dashboard:
 	url(r'^status_dashboard/$', status_dashboard.status_dashboard, name='status_dashboard'),

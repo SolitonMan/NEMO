@@ -182,7 +182,7 @@ class TrainingSessionAdmin(admin.ModelAdmin):
 
 @register(StaffCharge)
 class StaffChargeAdmin(admin.ModelAdmin):
-	list_display = ('id', 'staff_member', 'customer', 'start', 'end')
+	list_display = ('id', 'staff_member', 'customer', 'start', 'end', 'charge_end_override', 'override_confirmed', 'related_override_charge')
 	list_filter = ('start',)
 	date_hierarchy = 'start'
 

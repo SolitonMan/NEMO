@@ -445,8 +445,8 @@ class StaffCharge(CalendarDisplay):
 	start = models.DateTimeField(default=timezone.now)
 	end = models.DateTimeField(null=True, blank=True)
 	validated = models.BooleanField(default=False)
-	charge_end_override = models.BooleanField(default=False, null=True, blank=True)
-	override_confirmed = models.BooleanField(default=False, null=True, blank=True)
+	charge_end_override = models.BooleanField(default=False, blank=True)
+	override_confirmed = models.BooleanField(default=False, blank=True)
 	related_override_charge = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True)
 	projects = models.ManyToManyField('Project', through='StaffChargeProject')
 

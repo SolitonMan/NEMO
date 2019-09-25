@@ -31,6 +31,7 @@
 			<div style="height:50px"></div>
 		</div>
 		<div id="content" class="application-content" style="padding-right: 20px; overflow-y:scroll"></div>
+
 	{% endif %}
 
 	<script>
@@ -93,6 +94,7 @@
 
 		function use_tool_for_self(tool_id)
 		{
+			$("#override_staff_charge").remove();
 			$("#start").unbind("click");
 			$("#start").click(enable_tool);
 			$("#project_choice").html("Fetching project list...").show().load("{% url 'get_projects_for_self' %}", undefined, load_projects_completion_callback);
@@ -164,7 +166,8 @@
 
 
 				{% if staff_charge_projects %}
-				
+
+					$("#tool_control").append("<input type=\"hidden\" name=\"override_staff_charge\" id=\"override_staff_charge\" value=\"false\" />");				
 					var scp = {{ staff_charge_projects }};
 
 					if ($("#project_choice_multi").html() == "") {
@@ -178,14 +181,14 @@
 						//alert(scp[s]["project"] + "  -  " + scp[s]["customer"]);
 
 						// for each record add a row to the table
-						table_row = "<tr id=\"row_" + current_entry_number + "\"><td style=\"vertical-align: middle\">&nbsp;</td><td>" + scp[s]["customer"] + "<input type=\"hidden\" value=\"" + scp[s]["user_id"] + "\" id=\"user_textbox__" + current_entry_number + "\" name=\"chosen_user__" + current_entry_number + "\" data-row=\"" + current_entry_number + "\"></td><td id=\"project__" + current_entry_number + "\" style=\"vertical-align: middle\">" + scp[s]["project"] + "<input type=\"hidden\" value=\"" + scp[s]["project_id"] + "\" name=\"chosen_project__" + current_entry_number + "\"></td></tr>";
+						table_row = "<tr id=\"row_" + current_entry_number + "\"><td style=\"vertical-align: middle\"><span class=\"glyphicon glyphicon-remove-circle grey pointer\" onclick=\"remove_row(" + current_entry_number + ");{% if staff_charge_projects%}update_override(true);{% endif %}\"></span></td><td>" + scp[s]["customer"] + "<input type=\"hidden\" value=\"" + scp[s]["user_id"] + "\" id=\"user_textbox__" + current_entry_number + "\" name=\"chosen_user__" + current_entry_number + "\" data-row=\"" + current_entry_number + "\"></td><td id=\"project__" + current_entry_number + "\" style=\"vertical-align: middle\">" + scp[s]["project"] + "<input type=\"hidden\" value=\"" + scp[s]["project_id"] + "\" name=\"chosen_project__" + current_entry_number + "\" id=\"chosen_project__" + current_entry_number + "\"></td></tr>";
 						$("#usage_event_entries tr:last").before(table_row);
 						current_entry_number++;
 					}
 
 					// remove option to add new customers
-					$("#usage_event_entries tr:last").remove();
-					$("#usage_event_entries tr:last").after("<tr><td colspan=\"3\">You are currently applying staff charges to the listed customer(s).  To change customer(s) please proceed to the <a href=\"{% url 'staff_charges' %}\">staff charges</a> page and end the current charges.  To proceed with charging tool time to the current customer(s) click the Start button. ");
+					//$("#usage_event_entries tr:last").remove();
+					$("#usage_event_entries").after("<div>You are currently applying staff charges to the listed customer(s).  To end this charge before using the tool please proceed to the <a href=\"{% url 'staff_charges' %}\">staff charges</a> page and end the current charges.  To proceed with charging tool time to the current customer(s) click the Start button.  You may also alter the selection of customer(s) by adding new ones or removing currently selected individuals.</div>");
 
 					$("#project_choice_multi").show();
 					$("#start").unbind("click");
@@ -193,6 +196,8 @@
 					$("#start").show();
 
 				{% else %}
+
+					$("#override_staff_charge").remove();
 
 					if ($("#project_choice_multi").html() == "") {				
 						$("#project_choice_multi").html($("#project_choice_multi_source").html());
@@ -205,6 +210,10 @@
 					}
 
 				{% endif %}
+			}
+
+			function update_override(val) {
+				$("#override_staff_charge").val(val);
 			}
 
 			function clear_customer()
@@ -258,6 +267,9 @@
 					$("#usage_event_entries tr:last").before(response);
 					enable_autocompletion(current_entry_number);
 					current_entry_number++;
+					{% if staff_charge_projects %}
+					update_override(true);
+					{% endif %}
 				}
 			}
 			function enable_autocompletion(entry_number)
@@ -307,6 +319,10 @@
 			}
 			function on_submit()
 			{
+				//if ($("#override_staff_charge")) {
+				//	alert($("#override_staff_charge").val());
+				//}
+
 				// check for all project fields having selected values
 				var s;
 				var o;
@@ -339,6 +355,64 @@
 						}
 					}
 				}
+
+				// if override_staff_charge exists and is true then check that it indeed SHOULD be true by comparing the entries to be submitted with the values stored originally
+				{% if staff_charge_projects %}
+				var scp = {{ staff_charge_projects }};
+				var p;
+				var bCurrent;
+				var pr = "";
+				var user_val = "";
+				var project_val = "";
+
+				// determine the number of entries in the current form
+				var j=0;
+
+				for (var i=0; i<current_entry_number; i++) {
+					s = "#user_textbox__" + i;
+					if ($(s).length) {
+						j++;
+					}
+				}
+
+				if (scp.length != j) { // at least some changes made
+					$("#override_staff_charge").val(true);
+				} else {
+					// need to compare user/project between form values and existing values
+					b = false;
+					bCurrent = false;
+
+					for (var i=0; i<current_entry_number; i++) {
+						s = "#user_textbox__" + i;
+						bCurrent = false;
+
+						if ($(s).length) {
+							pr = "#chosen_project__" + i;
+
+							user_val = $(s).val();
+							project_val = $(pr).val();
+
+							for (p in scp) {
+
+								if (scp[p]["user_id"] == user_val && scp[p]["project_id"] == project_val) {
+									bCurrent = true;
+								}
+
+							}
+
+							if (!bCurrent) {
+								b = true;
+								update_override(true);
+							}
+						}
+					}
+
+					if (!b) {
+						update_override(false);
+					}
+				}
+
+				{% endif %}
 
 				var failure_dialog = ajax_failure_callback("Could not begin charging staff time");
 				var success_callbacks = [reload_page]; 
@@ -400,7 +474,7 @@
 				setInterval(refresh_sidebar_icons, 30000);
 			{% endif %}
 			refresh_tool_status();
-			expand_all_categories();
+			collapse_all_categories();
 		}
 
 		$(on_load);

@@ -1,0 +1,15 @@
+<div class="modal-header">
+	<button type="button" class="close" data-dismiss="modal">&times;</button>
+	<h4 class="modal-title">Would you like to end your staff charge?</h4>
+</div>
+
+<div class="modal-body">
+		You are charging staff time to the project(s) named
+		{{ staff_charge.projects }} since {{ staff_charge.start }}.
+		Would you like to stop charging staff time?
+</div>
+
+<div class="modal-footer">
+	<button type="button" class="btn btn-success" data-dismiss="modal">Continue charging staff time</button><br><div style="height:10px"></div>
+	<button type="button" class="btn btn-danger" data-dismiss="modal" onclick="$('#dialog').one('hidden.bs.modal', end_staff_charge);">Stop charging staff time</button>
+</div>
