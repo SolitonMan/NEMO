@@ -429,13 +429,12 @@ def disable_tool(request, tool_id):
 	if request.user.charging_staff_time():
 		existing_staff_charge = request.user.get_staff_charge()
 		if existing_staff_charge.customer == current_usage_event.user and existing_staff_charge.project == current_usage_event.project:
-			response = render(request, 'staff_charges/reminder.html', {'tool': tool})
+			return render(request, 'staff_charges/reminder.html', {'tool': tool})
 
-	return response
+	return redirect(reverse('tool_control'))
 
 
 @staff_member_required(login_url=None)
-@require_POST
 def disable_tool_multi(request, tool_id, usage_event):
 	# process request for multiple users and staff charges
 	if not UsageEventProject.objects.filter(usage_event=usage_event).exists():

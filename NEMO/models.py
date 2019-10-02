@@ -449,6 +449,7 @@ class StaffCharge(CalendarDisplay):
 	override_confirmed = models.BooleanField(default=False, blank=True)
 	related_override_charge = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True)
 	projects = models.ManyToManyField('Project', through='StaffChargeProject')
+	customers = models.ManyToManyField('User', through='StaffChargeProject')
 
 	class Meta:
 		ordering = ['-start']
@@ -486,6 +487,7 @@ class AreaAccessRecord(CalendarDisplay):
 	end = models.DateTimeField(null=True, blank=True)
 	staff_charge = models.ForeignKey(StaffCharge, blank=True, null=True)
 	projects = models.ManyToManyField('Project', through='AreaAccessRecordProject')
+	customers = models.ManyToManyField('User', through='AreaAccessRecordProject', related_name='AreaAccessRecordMultipleCustomers')
 
 	class Meta:
 		ordering = ['-start']
@@ -600,6 +602,7 @@ class UsageEvent(CalendarDisplay):
 	validated = models.BooleanField(default=False)
 	run_data = models.TextField(null=True, blank=True)
 	projects = models.ManyToManyField('Project', through='UsageEventProject')
+	customers = models.ManyToManyField('User', through='UsageEventProject')
 
 	def duration(self):
 		return calculate_duration(self.start, self.end, "In progress")

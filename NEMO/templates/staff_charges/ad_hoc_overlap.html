@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% load custom_tags_and_filters %}
+{% block title %}Ad Hoc Staff Charge Overlap{% endblock %}
+
+{% block content %}
+        <h1>Ad Hoc Staff Charges Overlap</h1>
+	<p>The ad hoc charge you entered conflicts with the listed existing charge(s).  Please select which item should take precedence.  Selecting your new charge will overwrite (and appropriately reduce) an existing charge, while selecting the existing charge will reduce the new charge to the appopriate times.</p>
+	<p><b>Start Time Selected:</b> {{ ad_hoc_start }}</p>
+	<p><b>End Time Selected:</b> {{ ad_hoc_end }}</p>
+	<p><b>Customers Selected:</b>
+		{% for c in ad_hoc_customers %}
+			{{ c.first_name }}&nbsp;{{ c.last_name }}<br/>
+		{% endfor %}
+	</p>
+	<p><b>Projects Selected:</b>
+		{% for p in ad_hoc_projects %}
+			{{ p.name }}<br/>
+		{% endfor %}
+	</p>
+
+	<h3>Conflicted Times</h3>
+	<table class="table">
+		<tr>
+			<th>Start</th>
+			<th>End</th>
+			<th>Customers</th>
+			<th>Projects</th>
+		</tr>
+	{% for s in staff_charges_start %}
+		<tr>
+			<td>{{ s.start }}</td>
+			<td>{{ s.end }}</td>
+			<td>
+			{% for c in s.customers.all %}
+				{{ c.first_name }}&nbsp;{{ c.last_name }}<br/>
+			{% endfor %}
+			</td>
+			<td>
+			{% for p in s.projects.all %}
+				{{ p.name }}<br/>
+			{% endfor %}
+			</td>
+		</tr>
+	{% endfor %}
+	{% for s in staff_charges_end %}
+		<tr>
+			<td>{{ s.start }}</td>
+			<td>{{ s.end }}</td>
+			<td>
+			{% for c in s.customers.all %}
+				{{ c.first_name }}&nbsp;{{ c.last_name }}<br/>
+			{% endfor %}
+			</td>
+			<td>
+			{% for p in s.projects.all %}
+				{{ p.name }}<br/>
+			{% endfor %}
+			</td>
+		</tr>
+	{% endfor %}
+	{% for s in staff_charges_middle %}
+		<tr>
+			<td>{{ s.start }}</td>
+			<td>{{ s.end }}</td>
+			<td>
+			{% for c in s.customers.all %}
+				{{ c.first_name }}&nbsp;{{ c.last_name }}<br/>
+			{% endfor %}
+			</td>
+			<td>
+			{% for p in s.projects.all %}
+				{{ p.name }}<br/>
+			{% endfor %}
+			</td>
+		</tr>
+	{% endfor %}
+	{% for s in staff_charges_over %}
+		<tr>
+			<td>{{ s.start }}</td>
+			<td>{{ s.end }}</td>
+			<td>
+			{% for c in s.customers.all %}
+				{{ c.first_name }}&nbsp;{{ c.last_name }}<br/>
+			{% endfor %}
+			</td>
+			<td>
+			{% for p in s.projects.all %}
+				{{ p.name }}<br/>
+			{% endfor %}
+			</td>
+		</tr>
+	{% endfor %}
+	</table>
+
+	<button onclick="go_back();">Return to Staff Charges</button>
+
+	<script type="text/javascript">
+	function go_back() 
+	{ 
+		window.location='{% url 'staff_charges' %}'  
+	}
+	</script>
+{% endblock %}

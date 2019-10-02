@@ -1,9 +1,14 @@
 {% extends 'base.html' %}
 {% load custom_tags_and_filters %}
 {% block title %}Staff charges{% endblock %}
+{% block extrahead %}
+	{% load static %}
+	<script type="text/javascript" src="{% static "datetimepicker/bootstrap-datetimepicker.js" %}"></script>
+	<link rel="stylesheet" type="text/css" href="{% static "datetimepicker/bootstrap-datetimepicker.css" %}" />
+{% endblock %}
 {% block content %}
 	<h1>Staff charges</h1>
-	<p>Use this form to charge one or more customers for staff time and area access time when you are working on a project on their behalf.</p>
+	<p>Use this form to charge one or more customers for staff time and area access time when you are working on a project on their behalf.  This will track your charges in real time.</p>
 	{% if error %}
 		<div class="alert alert-danger">
 			{{ error }}
@@ -23,12 +28,89 @@
 				<td colspan="3" style="text-align:center"><a href="javascript:void(0)" onclick="add_customer()">Add another customer</a></td>
 			</tr>
 		</table>
-		<br>
 		<input type="submit" class="btn btn-default" id="begin_staff_time_charges" value="Begin charging staff time">
+	</form>
+	<br/>
+	<hr/>
+	<br/>
+	<h1>Ad hoc staff charges</h1>
+	<p>Use the form below to save a record for a staff time charge that was not captured in real time.  You can see existing charges you have made by clicking the "Show Charges" button.</p>
+	<div>
+		<input type="button" value="Show Charges" onclick="show_user_charges();" />
+		<input type="button" value="Hide Charges" onclick="hide_user_charges();" />
+		<table id="existing_charges" class="table">
+			<tr>
+				<th>Start</th>
+				<th>End</th>
+				<th>Customers</th>
+				<th>Projects</th>
+			</tr>
+			{% if current_user_charges %}
+				{% for s in current_user_charges %}
+				<tr>
+					<td>{{ s.start }}</td>
+					<td>{{ s.end }}</td>
+					<td>
+					{% for c in s.customers.all %}
+						{{ c.first_name }}&nbsp;{{ c.last_name }}<br/>
+					{% endfor %}
+					</td>
+					<td>
+					{% for p in s.projects.all %}
+						{{ p.name }}<br/>
+					{% endfor %}
+					</td>
+				</tr>
+				{% endfor %}
+			{% else %}
+			<tr>
+				<td colspan="4">No staff charges found</td>
+			</tr>
+			{% endif %}
+		</table>
+			
+	</div>
+	<form id="ad_hoc_staff_charge" action="{% url 'ad_hoc_staff_charge' %}" method="POST">
+		{% csrf_token %}
+		<table id="ad_hoc_entries" class="table">
+			<tr>
+                                <th>&nbsp;</th>
+				<th>Start</th>
+				<td>
+					<div class="datetimepicker-container">
+						<input type="text" name="ad_hoc_start" id="ad_hoc_start" value="" />
+					</div>
+				</td>
+				<th>&nbsp;</th>
+			</tr>
+			<tr>
+                                <th>&nbsp;</th>
+				<th>End</th>
+				<td>
+					<div class="datetimepicker-container">
+						<input type="text" name="ad_hoc_end" id="ad_hoc_end" value="" />
+					</div>
+				</td>
+				<th>&nbsp;</th>
+			</tr>
+			<tr>
+                                <th>&nbsp;</th>
+				<th style="min-width:200px">Customer</th>
+                                <th style="min-width:200px">Project</th>
+				<th style="min-width:100px">Percent</th>
+                        </tr>
+			{% include 'staff_charges/ad_hoc_staff_charge_entry.html' with entry_number=0 %}
+			<tr>
+				<td colspan="4" style="text-align:center"><a href="javascript:void(0)" onclick="add_ad_hoc_customer()">Add another customer</a></td>
+			</tr>
+		</table>
+		<input type="submit" class="btn btn-default" id="save_ad_hoc_staff_time_charge" value="Save ad hoc staff time charge">
 	</form>
 
 	{% if scp|length > 0 %}
-	<br/><br/>
+	<br/>
+	<hr/>
+	<br/>
 
 	<div style="display: block;">
 	<h1>Overridden Staff Charges</h1>
@@ -49,7 +131,7 @@
 			<tr>
 				<th>Customer</th>
 				<th>Project</th>
-				<th>&nbsp;</th>
+				<th>Percent</th>
 			</tr>
 		{% for s in scp %}
 			{% if o.id == s.staff_charge.id %}
@@ -73,6 +155,18 @@
 	{% endif %}
 	<script>
 		var current_entry_number = 1;
+		var ad_hoc_entry_number = 1;
+
+		function show_user_charges()
+		{
+			$("#existing_charges").show("slow");
+		}
+
+		function hide_user_charges()
+		{
+			 $("#existing_charges").hide("slow");
+		}
+
 		function select_user(jquery_event, search_selection, dataset_name)
 		{
 			$("#customer").val(search_selection.id);
@@ -90,16 +184,39 @@
 			}
 		}
 
+		function add_ad_hoc_customer()
+		{
+			var failure_dialog = ajax_failure_callback("Cannot add new entry", "The web browser was not able to communicate with the server.");
+                        ajax_get("{% url 'ad_hoc_staff_charge_entry' %}", { "entry_number": ad_hoc_entry_number }, add_entry_success_callback, failure_dialog);
+                        function add_entry_success_callback(response, status, xml_http_request)
+                        {
+                                $("#ad_hoc_entries tr:last").before(response);
+                                enable_ad_hoc_autocompletion(ad_hoc_entry_number);
+                                ad_hoc_entry_number++;
+                        }
+		}
+
 		function enable_autocompletion(entry_number)
 		{
 			var id = "#user_textbox__" + entry_number;
 			$(id).autocomplete('user', on_autocomplete_selection, {{ users|json_search_base }}).focus();
 		}
 
+		function enable_ad_hoc_autocompletion(entry_number)
+                {
+                        var id = "#ad_hoc_user_textbox__" + entry_number;
+                        $(id).autocomplete('user', on_ad_hoc_autocomplete_selection, {{ users|json_search_base }}).focus();
+                }
+
 		function remove_row(number)
 		{
 			$("#row_" + number).remove();
 		}
+
+		function remove_ad_hoc_row(number)
+                {
+                        $("#ad_hoc_row_" + number).remove();
+                }
 
 		function on_autocomplete_selection(jquery_event, search_selection, dataset_name)
 		{
@@ -108,18 +225,34 @@
 			var button_id = "#" + dataset_name + "_button__" + row;
 			$(button_id).val(search_selection.name).show();
 			if(dataset_name == "user")
-				fetch_projects(row, search_selection.id);
+				fetch_projects(row, search_selection.id, false);
 		}
 
-		function fetch_projects(row, user_id)
+		function on_ad_hoc_autocomplete_selection(jquery_event, search_selection, dataset_name)
+                {
+                        $(this).typeahead('val', search_selection.id).hide();
+                        var row = $(this).data('row');
+                        var button_id = "#ad_hoc_" + dataset_name + "_button__" + row;
+                        $(button_id).val(search_selection.name).show();
+                        if(dataset_name == "user")
+                                fetch_projects(row, search_selection.id, true);
+                }
+
+		function fetch_projects(row, user_id, ad_hoc)
 		{
 			var parameters =
 			{
 				"source_template": "staff_charges",
 				"user_id": user_id,
-				"entry_number": row
+				"entry_number": row,
+				"ad_hoc": ad_hoc
 			};
-			var target_element = "#project__" + row;
+			var target_element;
+			if (ad_hoc) {
+				target_element = "#ad_hoc_project__" + row;
+			} else {
+				target_element = "#project__" + row;
+			}
 			var url = "{% url 'get_projects' %}?" + jQuery.param(parameters);
 			var report_error = ajax_complete_callback("Could not fetch projects for user", "There was a problem obtaining the list of projects for the user.");
 			$(target_element).load(url, undefined, report_error);
@@ -132,11 +265,37 @@
 			$("#user_textbox__" + row).typeahead('val', '').show().focus();
 		}
 
+		function purge_ad_hoc_customer(row)
+                {
+                        $("#ad_hoc_user_button__" + row).hide();
+                        $("#ad_hoc_project__" + row).html("");
+                        $("#ad_hoc_user_textbox__" + row).typeahead('val', '').show().focus();
+                }
+
 		function on_submit()
 		{
 			var failure_dialog = ajax_failure_callback("Could not begin charging staff time");
 			ajax_post("{% url 'begin_staff_charge' %}", serialize("#new_staff_charge"), reload_staff_charges, failure_dialog);
 			return false;
+		}
+
+		function on_ad_hoc_submit()
+		{
+			var failure_dialog = ajax_failure_callback("There was a problem with your ad hoc submission");
+			ajax_post("{% url 'ad_hoc_staff_charge' %}", serialize("#ad_hoc_staff_charge"), ad_hoc_overlap_callback, failure_dialog);
+			return false;
+		}
+
+		function ad_hoc_overlap_callback(response, status, xml_http_request)
+		{
+			if (response)
+			{
+				if (response.redirectURL === undefined) {
+					$("div.body-container").find("div.container").html(response);
+				} else {
+					location.href = "{% url 'staff_charges' %}";
+				}
+			}
 		}
 
 		function submit_override(num) 
@@ -159,7 +318,11 @@
 
 		function on_load()
 		{
+			hide_user_charges();
 			enable_autocompletion(0);
+			enable_ad_hoc_autocompletion(0);
+			$("#ad_hoc_start").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss'});
+			$("#ad_hoc_end").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss'});
 		}
 		$(on_load);
 

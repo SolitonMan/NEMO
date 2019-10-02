@@ -8,6 +8,7 @@ from django.http import HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.dateparse import parse_time, parse_date, parse_datetime
 from django.views.decorators.http import require_GET, require_POST
 
 from NEMO.models import User, StaffCharge, AreaAccessRecord, Project, Area, StaffChargeProject, AreaAccessRecordProject
@@ -48,6 +49,11 @@ def staff_charges(request):
 		params['override_charges'] = overridden_charges
 		if scp.count() > 0:
 			params['scp'] = scp
+
+	# get all staff charges for this user so ad hoc charges can be made with an appropriate reference
+	my_staff_charges = StaffCharge.objects.filter(staff_member=request.user)
+	if my_staff_charges:
+		params['current_user_charges'] = my_staff_charges
 
 	return render(request, 'staff_charges/new_staff_charge.html', params)
 
@@ -112,6 +118,180 @@ def is_valid_field(field):
 def staff_charge_entry(request):
 	entry_number = int(request.GET['entry_number'])
 	return render(request, 'staff_charges/staff_charge_entry.html', {'entry_number': entry_number})
+
+
+
+@staff_member_required(login_url=None)
+@require_GET
+def ad_hoc_staff_charge_entry(request):
+        entry_number = int(request.GET['entry_number'])
+        return render(request, 'staff_charges/ad_hoc_staff_charge_entry.html', {'entry_number': entry_number})
+
+
+
+@staff_member_required(login_url=None)
+@require_POST
+def ad_hoc_staff_charge(request):
+	try:
+		ad_hoc_start = request.POST.get('ad_hoc_start', None)
+		if ad_hoc_start == '':
+			ad_hoc_start = None
+
+		ad_hoc_end = request.POST.get('ad_hoc_end', None)
+		if ad_hoc_end == '':
+			ad_hoc_end = None
+
+		msg = ''
+
+		if ad_hoc_start is None or ad_hoc_end is None:
+			msg = 'The start date and end date are required to save an ad hoc staff charge.'
+			raise Exception(msg)
+
+		ad_hoc_start = parse_datetime(ad_hoc_start)
+		ad_hoc_end = parse_datetime(ad_hoc_end)
+
+		if ad_hoc_start is None or ad_hoc_end is None:
+			msg = 'The start date and end date are required to save an ad hoc staff charge. The values must be valid datetimes.'
+			raise Exception(msg)
+
+		if StaffCharge.objects.filter(staff_member=request.user, start__range=(ad_hoc_start, ad_hoc_end), end__gt=ad_hoc_end).exists() or StaffCharge.objects.filter(staff_member=request.user, end__range=(ad_hoc_start, ad_hoc_end), start__lt=ad_hoc_start).exists() or StaffCharge.objects.filter(staff_member=request.user, start__lt=ad_hoc_start, end__gt=ad_hoc_end).exists() or StaffCharge.objects.filter(staff_member=request.user, start__gt=ad_hoc_start, end__lt=ad_hoc_end).exists():
+			# msg = 'Your ad hoc staff charge overlaps an existing charge you have made.'
+
+			if StaffCharge.objects.filter(staff_member=request.user, start__range=(ad_hoc_start, ad_hoc_end), end__gt=ad_hoc_end).exists():
+				staff_charges_start = StaffCharge.objects.filter(staff_member=request.user, start__range=(ad_hoc_start, ad_hoc_end), end__gt=ad_hoc_end)
+			else:
+				staff_charges_start = None
+
+			if StaffCharge.objects.filter(staff_member=request.user, end__range=(ad_hoc_start, ad_hoc_end), start__lt=ad_hoc_start).exists():
+				staff_charges_end = StaffCharge.objects.filter(staff_member=request.user, end__range=(ad_hoc_start, ad_hoc_end), start__lt=ad_hoc_start)
+			else:
+				staff_charges_end = None
+
+			if StaffCharge.objects.filter(staff_member=request.user, start__lt=ad_hoc_start, end__gt=ad_hoc_end).exists():
+				staff_charges_middle = StaffCharge.objects.filter(staff_member=request.user, start__lt=ad_hoc_start, end__gt=ad_hoc_end)
+			else:
+				staff_charges_middle = None
+
+			if StaffCharge.objects.filter(staff_member=request.user, start__gt=ad_hoc_start, end__lt=ad_hoc_end).exists():
+				staff_charges_over = StaffCharge.objects.filter(staff_member=request.user, start__gt=ad_hoc_start, end__lt=ad_hoc_end)
+			else:
+				staff_charges_over = None
+
+			params = {
+				'staff_charges_start': staff_charges_start,
+				'staff_charges_end': staff_charges_end,
+				'staff_charges_middle': staff_charges_middle,
+				'staff_charges_over': staff_charges_over,
+				'ad_hoc_start': ad_hoc_start,
+				'ad_hoc_end': ad_hoc_end,
+			}
+
+
+			project_ids = []
+			customer_ids = []
+			for key, value in request.POST.items():
+				if is_valid_field(key):
+					attribute, separator, index = key.partition("__")
+					index = int(index)
+
+					if attribute == "chosen_user":
+						customer_ids.append(value)
+
+					if attribute == "chosen_project":
+						project_ids.append(value)
+
+			projects = Project.objects.filter(id__in=project_ids)
+			customers = User.objects.filter(id__in=customer_ids)
+			params['ad_hoc_projects'] = projects
+			params['ad_hoc_customers'] = customers
+
+			strSC = ""
+
+#			if staff_charges_start is not None:
+#				for s in staff_charges_start:
+#					flds = s._meta.get_fields(True, True)
+#					for f in flds:
+#						strSC += f.name + "=" + f.value_to_string(s) + "&"
+#
+#			if staff_charges_end is not None:
+#				for s in staff_charges_end:
+#					flds = s._meta.get_fields(True, True)
+#					for f in flds:
+#						strSC += f.name + "=" + f.value_to_string(s) + "&"
+#
+#			if staff_charges_middle is not None:
+#				for s in staff_charges_middle:
+#					flds = s._meta.get_fields(True, True)
+#					for f in flds:
+#						strSC += f.name + "=" + f.value_to_string(s) + "&"
+#
+#			params['allfields'] = strSC
+
+			return render(request, 'staff_charges/ad_hoc_overlap.html', params)
+
+		charge = StaffCharge()
+		charge.staff_member = request.user
+		charge.start = ad_hoc_start
+		charge.end = ad_hoc_end
+		charge.save()
+
+		prc = 0.0
+
+		project_charges = {}
+
+		for key, value in request.POST.items():
+			if is_valid_field(key):
+				attribute, separator, index = key.partition("__")
+				index = int(index)
+				if index not in project_charges:
+					project_charges[index] = StaffChargeProject()
+					project_charges[index].staff_charge = charge
+				if attribute == "chosen_user":
+					if value is not None and value != "":
+						project_charges[index].customer = User.objects.get(id=value)
+					else:
+						charge.delete()
+						msg = 'Please choose a customer'
+						raise Exception()
+
+				if attribute == "chosen_project":
+					if value is not None and value != "" and value != "-1":
+						project_charges[index].project = Project.objects.get(id=value)	
+					else:
+						charge.delete()
+						msg = 'Please choose a project to which to bill your staff charges'
+						raise Exception()
+
+				if attribute == "project_percent":
+					if value == '':
+						msg = 'You must enter a numerical value for the percent to charge to a project'
+						charge.delete()
+						raise Exception()
+					else:
+						prc = prc + float(value)
+						project_charges[index].project_percent = value
+
+
+		if int(prc) != 100:
+			msg = 'Percent values must total to 100.0'
+			charge.delete()
+			raise Exception()
+
+		for p in project_charges.values():
+			p.full_clean()
+			p.save()
+
+	except Exception as inst:
+		if msg == '':
+			return HttpResponseBadRequest(inst)
+		else:
+			return HttpResponseBadRequest(msg)
+
+	except ValueError as inst:
+		return HttpResponseBadRequest(inst)
+
+	return redirect(reverse('staff_charges'))
+
 
 @staff_member_required(login_url=None)
 @require_POST

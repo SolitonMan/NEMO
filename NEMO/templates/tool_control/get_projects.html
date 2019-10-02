@@ -10,9 +10,12 @@
 {% else %}
 	<h4>Charge tool usage to which project?</h4>
 	<div class="list-group" style="display:table">
+		<select name="user_projects" id="user_projects" onchange="select_project(this, this.options[this.selectedIndex].value);">
+			<option value="0">Please select a project to use for this tool</option>
 		{% for p in active_projects %}
-			<a href="javascript:void(0)" class="list-group-item project-choice" onclick="select_project(this, {{ p.id }})">{{ p.name }}</a>
+			<option class="list-group-item project-choice" value="{{ p.id }}">{{ p.name }}</option>
 		{% endfor %}
+		</select>
 	</div>
 	<input type="hidden" id="project_id">
 {% endif %}

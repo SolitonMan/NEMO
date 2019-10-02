@@ -14,12 +14,13 @@ def get_projects(request):
 	user = get_object_or_404(User, id=request.GET.get('user_id', None))
 	projects = user.active_projects()
 	source_template = request.GET.get('source_template')
+	ad_hoc = request.GET.get('ad_hoc')
 	if source_template == 'training':
 		entry_number = int(request.GET['entry_number'])
 		return render(request, 'training/get_projects.html', {'projects': projects, 'entry_number': entry_number})
 	elif source_template == 'staff_charges':
 		entry_number = int(request.GET['entry_number'])
-		return render(request, 'staff_charges/get_projects.html', {'projects': projects, 'entry_number': entry_number})
+		return render(request, 'staff_charges/get_projects.html', {'projects': projects, 'entry_number': entry_number, 'ad_hoc': ad_hoc})
 	return JsonResponse(dict(projects=list(projects.values('id', 'name'))))
 
 

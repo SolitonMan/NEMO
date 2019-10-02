@@ -105,6 +105,10 @@
 
 		function select_project(element, project_id)
 		{
+			if (project_id == 0) {
+				alert("Please select a project to charge for the use of this tool.");
+				return false;
+			}
 			$(".project-choice").removeClass('active');
 			$(element).addClass('active');
 			$("#project_id").val(project_id);
@@ -151,7 +155,8 @@
 			let contents = serialize("#tool_control");
 			let failure_dialog = ajax_failure_callback("Couldn't change tool status");
 			let enable_stop_button = function() { $("#stop").prop("disabled", false); };
-			ajax_post(url, contents, ajax_success_callback, failure_dialog, refresh_tool_status, enable_stop_button);
+			//ajax_post(url, contents, ajax_success_callback, failure_dialog, refresh_tool_status, enable_stop_button);
+			ajax_post(url, contents, undefined, undefined, refresh_tool_status, enable_stop_button);
 		}
 
 		{% if user.is_staff %}
@@ -303,9 +308,15 @@
 				var report_error = ajax_complete_callback("Could not fetch projects for user", "There was a problem obtaining the list of projects for the user.");
 				$(target_element).load(url, undefined, function(responseTxt, statusTxt, xhr) {
 					if(statusTxt == "success") {
-						$("#chosen_project__" + row).change(function() {
+						var el =  $("#chosen_project__" + row);
+
+						if (el.tagName == "SELECT") {
+							$("#chosen_project__" + row).change(function() {
+								$("#start").show();
+							});
+						} else {
 							$("#start").show();
-						});
+						}
 					} else {
 						ajax_complete_callback("Could not fetch projects for user", "There was a problem obtaining the list of projects for the user.");
 					}
