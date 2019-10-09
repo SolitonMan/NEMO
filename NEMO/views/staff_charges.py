@@ -1,6 +1,8 @@
 from re import search
 
 import requests
+import string
+from decimal import Decimal
 
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.exceptions import ObjectDoesNotExist
@@ -110,7 +112,7 @@ def begin_staff_charge(request):
 
 
 def is_valid_field(field):
-	return search("^(chosen_user|chosen_project|project_percent)__[0-9]+$", field) is not None
+	return search("^(chosen_user|chosen_project|project_percent|overlap_choice)__[0-9]+$", field) is not None
 
 
 @staff_member_required(login_url=None)
@@ -182,17 +184,28 @@ def ad_hoc_staff_charge(request):
 				'staff_charges_end': staff_charges_end,
 				'staff_charges_middle': staff_charges_middle,
 				'staff_charges_over': staff_charges_over,
-				'ad_hoc_start': ad_hoc_start,
-				'ad_hoc_end': ad_hoc_end,
+				'ad_hoc_start': request.POST.get('ad_hoc_start'),
+				'ad_hoc_end': request.POST.get('ad_hoc_end'),
 			}
 
 
+			pc = {}
 			project_ids = []
 			customer_ids = []
+
 			for key, value in request.POST.items():
 				if is_valid_field(key):
 					attribute, separator, index = key.partition("__")
 					index = int(index)
+
+					if index not in pc:
+						key1 = "chosen_user__" + str(index)
+						key2 = "chosen_project__" + str(index)
+						key3 = "project_percent__" + str(index)
+						cust = request.POST.get(key1)
+						proj = request.POST.get(key2)
+						perc = request.POST.get(key3)
+						pc[index] = [cust, proj, perc]
 
 					if attribute == "chosen_user":
 						customer_ids.append(value)
@@ -204,31 +217,11 @@ def ad_hoc_staff_charge(request):
 			customers = User.objects.filter(id__in=customer_ids)
 			params['ad_hoc_projects'] = projects
 			params['ad_hoc_customers'] = customers
-
-			strSC = ""
-
-#			if staff_charges_start is not None:
-#				for s in staff_charges_start:
-#					flds = s._meta.get_fields(True, True)
-#					for f in flds:
-#						strSC += f.name + "=" + f.value_to_string(s) + "&"
-#
-#			if staff_charges_end is not None:
-#				for s in staff_charges_end:
-#					flds = s._meta.get_fields(True, True)
-#					for f in flds:
-#						strSC += f.name + "=" + f.value_to_string(s) + "&"
-#
-#			if staff_charges_middle is not None:
-#				for s in staff_charges_middle:
-#					flds = s._meta.get_fields(True, True)
-#					for f in flds:
-#						strSC += f.name + "=" + f.value_to_string(s) + "&"
-#
-#			params['allfields'] = strSC
+			params['pc'] = pc
 
 			return render(request, 'staff_charges/ad_hoc_overlap.html', params)
 
+		# dates are legitimate and no overlapping conflicts so save ad hoc charge
 		charge = StaffCharge()
 		charge.staff_member = request.user
 		charge.start = ad_hoc_start
@@ -291,6 +284,202 @@ def ad_hoc_staff_charge(request):
 		return HttpResponseBadRequest(inst)
 
 	return redirect(reverse('staff_charges'))
+
+
+@staff_member_required(login_url=None)
+@require_POST
+def ad_hoc_overlap_resolution(request):
+
+	output = ''
+	msg = ''
+
+	for key, value in request.POST.items():
+		output += key + ' = ' + value + '<br/>'
+
+	# assess the conflicted staff charge(s)
+	conflicted_charges = {}
+	ad_hoc_cp = {}
+	overlap_ids = []
+	sc_changed = []
+
+	for key, value in request.POST.items():
+		if is_valid_field(key):
+			attribute, separator, index = key.partition("__")
+			index = int(index)
+			
+			if attribute == "overlap_choice" and index not in conflicted_charges:
+				conflicted_charges[index] = [index, value]
+				overlap_ids.append(index)
+
+			if attribute == "chosen_user" and index not in ad_hoc_cp:
+				ad_hoc_cp[index] = [value,0,0]
+			if attribute == "chosen_user" and index in ad_hoc_cp:
+				ad_hoc_cp[index][0] = value
+			if attribute == "chosen_project" and index not in ad_hoc_cp:
+				ad_hoc_cp[index] = [0, value, 0]
+			if attribute == "chosen_project" and index in ad_hoc_cp:
+				ad_hoc_cp[index][1] = value
+			if attribute == "project_percent" and index not in ad_hoc_cp:
+				ad_hoc_cp[index] = [0, 0, value]
+			if attribute == "project_percent" and index in ad_hoc_cp:
+				ad_hoc_cp[index][2] = value
+
+
+	# create initial ad hoc staff charge
+	ahc = StaffCharge()
+	ahc.start = request.POST.get("ad_hoc_start")
+	ahc.end = request.POST.get("ad_hoc_end")
+	ahc.staff_member = request.user
+	ahc.save()
+
+	ad_hoc_id = int(ahc.id)
+	ad_hoc_charge = StaffCharge.objects.get(id=ad_hoc_id)
+
+	#ad_hoc_start = parse_datetime(ad_hoc_charge.start)
+	#ad_hoc_end = parse_datetime(ad_hoc_charge.end) 
+
+	for i, a in ad_hoc_cp.items():
+		scp = StaffChargeProject()
+		scp.staff_charge = ad_hoc_charge
+		a0 = a[0]
+		a0 = int(a0)
+		scp.customer = User.objects.get(id=a0)
+		a1 = a[1]
+		a1 = int(a1)
+		scp.project = Project.objects.get(id=a1)
+		a2 = a[2]
+		scp.project_percent = Decimal(a2)
+		scp.save()
+
+	# get the StaffCharges that overlap the ad hoc charge
+	overlaps = StaffCharge.objects.filter(id__in=overlap_ids).order_by("start")
+
+	# resolve the difference based on the choice to keep existing or new
+	for o in overlaps:
+		choice_object = conflicted_charges[o.id]
+		choice = int(choice_object[1])
+		case = 0
+
+		#o_start = parse_datetime(str(o.start.replace(tzinfo=None)))
+		#o_end = parse_datetime(str(o.end.replace(tzinfo=None)))
+
+		if ad_hoc_charge.start < o.start and ad_hoc_charge.end < o.end:
+			case = 1
+
+		if ad_hoc_charge.start > o.start and ad_hoc_charge.end < o.end:
+			case = 2
+
+		if ad_hoc_charge.start > o.start and ad_hoc_charge.end > o.end:
+			case = 3
+
+		if ad_hoc_charge.start < o.start and ad_hoc_charge.end > o_end:
+			case = 4
+
+		if choice == 0:
+			if case == 1:
+				ad_hoc_charge.end = o.start
+				ad_hoc_charge.save()
+				sc_changed.append(ad_hoc_charge.id)
+
+			if case == 2:
+				ad_hoc_charge.delete()
+				msg = 'The ad hoc staff charge you requested was completely overridden by the existing staff charge to which you gave priority.  No new staff charges have been added to the database at this time.'
+
+			if case == 3:
+				ad_hoc_charge.start = o.end
+				ad_hoc_charge.save()
+				sc_changed.append(ad_hoc_charge.id)
+
+			if case == 4:
+				# clone ad hoc charge record to new records with (ad_hoc_charge.start, o.start) and (o.end, ad_hoc_end)
+				c1 = sc_clone(request, ad_hoc_charge, ad_hoc_charge.start, o.start)
+				c2 = sc_clone(request, ad_hoc_charge, o.end, ad_hoc_charge.end)
+
+				replaced = '|' + str(ad_hoc_charge.id) + '|'
+				if StaffCharge.objects.filter(ad_hoc_replaced=True, ad_hoc_related__contains=replaced, start__range=(ad_hoc_charge.start, ad_hoc_charge.end)).count() > 0:
+					# update necessary records to new replaced ids - should be c1 since the processing is happening from earliest to latest
+					replacements = StaffCharge.objects.filter(ad_hoc_replaced=True, ad_hoc_related__contains=replaced, start__range=(ad_hoc_charge.start, ad_hoc_charge.end))
+					for r in replacements:
+						to_replace = r.ad_hoc_related
+						new_replace = '|' + str(c1.id) + '|'
+						to_replace.replace(replaced, new_replace)
+						r.ad_hoc_related = to_replace
+						r.save()
+
+				ad_hoc_charge.delete()
+				ad_hoc_charge = c2
+				sc_changed.append(c1.id)
+				
+
+		else:
+			if case == 1:
+				c1 = sc_clone(request, o, ad_hoc_charge.end, o.end)
+				o.ad_hoc_replaced = True
+				o.ad_hoc_related = '|' + str(c1.id) + '|'
+				o.save()
+				sc_changed.append(c1.id)
+
+			if case == 2:
+				c1 = sc_clone(request, o, o.start, ad_hoc_charge.start)
+				c2 = sc_clone(request, o, ad_hoc_charge.end, o.end)
+				o.ad_hoc_replaced = True
+				o.ad_hoc_related = '|' + str(c1.id) + '|' + str(c2.id) + '|'
+				o.save()
+				sc_changed.append(c1.id)
+				sc_changed.append(c2.id)
+
+			if case == 3:
+				c1 = sc_clone(request, o, o.start, ad_hoc_charge.start)
+				o.ad_hoc_replaced = True
+				o.ad_hoc_related = '|' + str(c1.id) + '|'
+				o.save()
+				sc_changed.append(c1.id)
+
+			if case == 4:
+				o.ad_hoc_replaced = True
+				o.ad_hoc_related = '|' + str(ad_hoc_charge.id) + '|'
+
+
+	sc_changed.append(ad_hoc_charge.id)
+
+	sc_output = StaffCharge.objects.filter(id__in=sc_changed)
+
+	params = {
+		'output': output,
+		'staff_charges': sc_output,
+		'conflicted_charges': conflicted_charges,
+		'ad_hoc_cp': ad_hoc_cp,
+		'overlap_ids': overlap_ids,
+	}	
+
+	return render(request, 'staff_charges/ad_hoc_confirmation.html', params)
+	#return redirect(reverse('staff_charges'))
+
+
+
+def sc_clone(request, charge_to_clone, new_charge_start, new_charge_end):
+	new_charge = StaffCharge()
+	new_charge.staff_member = request.user
+	new_charge.start = new_charge_start
+	new_charge.end = new_charge_end
+	new_charge.save()
+
+	new_charge_id = int(new_charge.id)
+	nc = StaffCharge.objects.get(id=new_charge_id)
+
+	scp = StaffChargeProject.objects.filter(staff_charge=charge_to_clone)
+
+	if scp.count() > 0:
+		for s in scp:
+			new_scp = StaffChargeProject()
+			new_scp.staff_charge = nc
+			new_scp.project = s.project
+			new_scp.customer = s.customer
+			new_scp.project_percent = s.project_percent
+			new_scp.save()
+
+	return nc
+
 
 
 @staff_member_required(login_url=None)

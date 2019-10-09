@@ -485,7 +485,11 @@
 				setInterval(refresh_sidebar_icons, 30000);
 			{% endif %}
 			refresh_tool_status();
+			{% if user.is_superuser %}
 			collapse_all_categories();
+			{% else %}
+			expand_all_categories();
+			{% endif %}
 		}
 
 		$(on_load);

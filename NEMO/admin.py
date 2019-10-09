@@ -182,8 +182,8 @@ class TrainingSessionAdmin(admin.ModelAdmin):
 
 @register(StaffCharge)
 class StaffChargeAdmin(admin.ModelAdmin):
-	list_display = ('id', 'staff_member', 'customer', 'start', 'end', 'charge_end_override', 'override_confirmed', 'related_override_charge')
-	list_filter = ('start',)
+	list_display = ('id', 'staff_member', 'customer', 'start', 'end', 'charge_end_override', 'override_confirmed', 'related_override_charge', 'ad_hoc_replaced', 'ad_hoc_related')
+	list_filter = ('-id',)
 	date_hierarchy = 'start'
 
 @register(StaffChargeProject)

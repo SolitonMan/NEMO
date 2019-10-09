@@ -469,7 +469,11 @@ function on_load()
 		$("#user_search").autocomplete('users', get_specific_user_activity, {{ users|json_search_base }});
 	{% endif %}
 	$('[data-toggle~="tooltip"]').tooltip({ container: 'body' });
+	{% if user.is_superuser %}
+	collapse_all_categories();
+	{% else %}
 	expand_all_categories();
+	{% endif %}
 }
 
 $(on_load);

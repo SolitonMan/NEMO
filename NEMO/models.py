@@ -448,6 +448,8 @@ class StaffCharge(CalendarDisplay):
 	charge_end_override = models.BooleanField(default=False, blank=True)
 	override_confirmed = models.BooleanField(default=False, blank=True)
 	related_override_charge = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True)
+	ad_hoc_replaced = models.BooleanField(default=False, blank=True)
+	ad_hoc_related = models.CharField(max_length=500, blank=True, null=True)
 	projects = models.ManyToManyField('Project', through='StaffChargeProject')
 	customers = models.ManyToManyField('User', through='StaffChargeProject')
 

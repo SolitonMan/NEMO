@@ -36,8 +36,9 @@
 	<h1>Ad hoc staff charges</h1>
 	<p>Use the form below to save a record for a staff time charge that was not captured in real time.  You can see existing charges you have made by clicking the "Show Charges" button.</p>
 	<div>
-		<input type="button" value="Show Charges" onclick="show_user_charges();" />
-		<input type="button" value="Hide Charges" onclick="hide_user_charges();" />
+		<input class="btn btn-default" type="button" value="Show Charges" onclick="show_user_charges();" />
+		<input class="btn btn-default" type="button" value="Hide Charges" onclick="hide_user_charges();" />
+		<br/>
 		<table id="existing_charges" class="table">
 			<tr>
 				<th>Start</th>
@@ -323,6 +324,7 @@
 			enable_ad_hoc_autocompletion(0);
 			$("#ad_hoc_start").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss'});
 			$("#ad_hoc_end").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss'});
+			$(document).scrollTop(0);
 		}
 		$(on_load);
 

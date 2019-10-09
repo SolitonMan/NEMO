@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% load custom_tags_and_filters %}
+{% block title %}Ad Hoc Staff Charge Confirmation{% endblock %}
+
+{% block content %}
+        <h1>Ad Hoc Staff Charge Confirmation</h1>
+
+
+	<p>{{ output|safe }}</p>
+
+
+	<p>
+	{% if ad_hoc_cp %}
+		{% for k, v in ad_hoc_cp.items %}
+			{{ k }}={{ v }}<br/>
+		{% endfor %}
+	{% endif %}
+	</p>
+
+	<p>
+	{% if conflicted_charges %}
+		{% for k, v in conflicted_charges.items %}
+			{{ k }}={{ v }}<br/>
+		{% endfor %}
+	{% endif %}
+	</p>
+
+	<p>
+	{% if overlap_ids %}
+		{{ overlap_ids }}
+	{% endif %}
+	</p>
+
+
+	<p>You've made an ad hoc staff charge for the following time period(s):</p>
+	<table class="table">
+		<tr>
+			<th>Start</th>
+			<th>End</th>
+			<th>Customers</th>
+			<th>Projects</th>
+		</tr>
+		{% if staff_charges %}
+			{% for s in staff_charges %}
+			<tr>
+				<td>{{ s.start }}</td>
+				<td>{{ s.end }}</td>
+				<td>
+				{% for c in s.customers.all %}
+					{{ c.first_name }}&nbsp;{{ c.last_name }}<br/>
+				{% endfor %}
+				</td>
+				<td>
+				{% for p in s.projects.all %}
+					{{ p.name }}<br/>
+				{% endfor %}
+				</td>
+			</tr>
+			{% endfor %}
+		{% endif %}
+	</table>
+	<input type="button" onclick="go_back();" value="Return to Staff Charges" class="btn btn-default" />
+
+	<script type="text/javascript">
+	function go_back() 
+	{ 
+		window.location='{% url 'staff_charges' %}'  
+	}
+	</script>
+{% endblock %}
