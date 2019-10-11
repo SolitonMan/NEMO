@@ -85,10 +85,16 @@
 				content += "</div>";
 				$("#content").html(content);
 			}
+			{% if user.is_staff %}
 			if (current_entry_number == 1) 
 			{
 				enable_autocompletion(0)
 			}
+			{% endif %}
+			{% if not user.is_staff and not user.is_superuser %}
+			$("#start").unbind("click");
+			$("#start").click(enable_tool);
+			{% endif %}
 			$("#project_choice_multi").hide();
 		}
 
@@ -109,6 +115,10 @@
 				alert("Please select a project to charge for the use of this tool.");
 				return false;
 			}
+			{% if not user.is_staff and not user.is_superuser %}
+			$("#start").unbind("click");
+			$("#start").click(enable_tool);
+			{% endif %}
 			$(".project-choice").removeClass('active');
 			$(element).addClass('active');
 			$("#project_id").val(project_id);
@@ -330,10 +340,6 @@
 			}
 			function on_submit()
 			{
-				//if ($("#override_staff_charge")) {
-				//	alert($("#override_staff_charge").val());
-				//}
-
 				// check for all project fields having selected values
 				var s;
 				var o;
@@ -466,15 +472,6 @@
 				set_tool_link_callback(refresh_tool_status);
 				enable_tool_tree_toggling();
 				$('#tool_search').autocomplete('tools', on_tool_search_selection, {{ cat_tools }});
-
-				/*
-				* This is a test of the simple tag calling functionality for tools
-				* {% json_search_base_with_extra_fields tools "category" "location" "interlock" "primary_owner" as toolcat %}
-
-					{{ toolcat }}
-
-				*/
-
 				$("#tool_search").focus();
 				load_sidebar_state();
 				$("#tool_tree").show();

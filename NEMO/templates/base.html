@@ -65,8 +65,24 @@
 		</div>
 		<div class="navbar-collapse collapse" id="nemo-navigation">
 			<ul class="nav navbar-nav">
+				{% if user.is_superuser %}
 				<li><a href="{% url 'calendar' %}">Calendar</a></li>
+				{% endif %}
+				{% if user.is_staff and not user.is_superuser %}
+				<li><a href="{% url 'calendar' 0 0 1 %}">Calendar</a></li>
+				{% endif %}
+				{% if not user.is_staff and not user.is_superuser %}
+				<li><a href="{% url 'calendar' 0 1 0 %}">Calendar</a></li>
+				{% endif %}
+				{% if user.is_superuser %}
 				<li><a href="{% url 'tool_control' %}">Tool control</a></li>
+				{% endif %}
+				{% if user.is_staff and not user.is_superuser %}
+				<li><a href="{% url 'tool_control' 0 0 1 %}">Tool control</a></li>
+				{% endif %}
+				{% if not user.is_staff and not user.is_superuser %}
+				<li><a href="{% url 'tool_control' 0 1 0 %}">Tool control</a></li>
+				{% endif %}
 				<li><a href="{% url 'status_dashboard' %}">Status dashboard</a></li>
 				{% if user.is_staff %}
 					<li class="dropdown">

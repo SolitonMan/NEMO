@@ -48,20 +48,22 @@
 			</tr>
 			{% if current_user_charges %}
 				{% for s in current_user_charges %}
-				<tr>
-					<td>{{ s.start }}</td>
-					<td>{{ s.end }}</td>
-					<td>
-					{% for c in s.customers.all %}
-						{{ c.first_name }}&nbsp;{{ c.last_name }}<br/>
-					{% endfor %}
-					</td>
-					<td>
-					{% for p in s.projects.all %}
-						{{ p.name }}<br/>
-					{% endfor %}
-					</td>
-				</tr>
+					{% if not s.ad_hoc_replaced %}
+					<tr>
+						<td>{{ s.start }}</td>
+						<td>{{ s.end }}</td>
+						<td>
+						{% for c in s.customers.all %}
+							{{ c.first_name }}&nbsp;{{ c.last_name }}<br/>
+						{% endfor %}
+						</td>
+						<td>
+						{% for p in s.projects.all %}
+							{{ p.name }}<br/>
+						{% endfor %}
+						</td>
+					</tr>
+					{% endif %}
 				{% endfor %}
 			{% else %}
 			<tr>
@@ -79,7 +81,7 @@
 				<th>Start</th>
 				<td>
 					<div class="datetimepicker-container">
-						<input type="text" name="ad_hoc_start" id="ad_hoc_start" value="" />
+						<input type="text" name="ad_hoc_start" id="ad_hoc_start" value="{% if ad_hoc_start %}{{ ad_hoc_start }}{% endif %}" />
 					</div>
 				</td>
 				<th>&nbsp;</th>
@@ -89,7 +91,7 @@
 				<th>End</th>
 				<td>
 					<div class="datetimepicker-container">
-						<input type="text" name="ad_hoc_end" id="ad_hoc_end" value="" />
+						<input type="text" name="ad_hoc_end" id="ad_hoc_end" value="{% if ad_hoc_end %}{{ ad_hoc_end }}{% endif %}" />
 					</div>
 				</td>
 				<th>&nbsp;</th>
@@ -100,7 +102,17 @@
                                 <th style="min-width:200px">Project</th>
 				<th style="min-width:100px">Percent</th>
                         </tr>
-			{% include 'staff_charges/ad_hoc_staff_charge_entry.html' with entry_number=0 %}
+			{% if ad_hoc_entries|length > 0 %}
+				{% for a in ad_hoc_entries %}
+					{% if a.0 == None %}
+						{% include 'staff_charges/ad_hoc_staff_charge_entry.html' with entry_number=forloop.counter %}
+					{% else %}
+						{% include 'staff_charges/ad_hoc_staff_charge_entry_loaded.html' with entry_number=forloop.counter chosen_user=a.0 chosen_project=a.1 project_percent=a.2 %}
+					{% endif %}
+				{% endfor %}
+			{% else %}
+				{% include 'staff_charges/ad_hoc_staff_charge_entry.html' with entry_number=0 %}
+			{% endif %}
 			<tr>
 				<td colspan="4" style="text-align:center"><a href="javascript:void(0)" onclick="add_ad_hoc_customer()">Add another customer</a></td>
 			</tr>
@@ -154,9 +166,19 @@
 	{% endfor %}
 	</div>
 	{% endif %}
+
+	<div style="display:none;" id="fragment-collector"></div>
+
 	<script>
 		var current_entry_number = 1;
 		var ad_hoc_entry_number = 1;
+
+		{% if ad_hoc_entries %}
+			{% for a in ad_hoc_entries %}
+		ad_hoc_entry_number++;
+		enable_ad_hoc_autocompletion({{ forloop.counter }});
+			{% endfor %}
+		{% endif %}
 
 		function show_user_charges()
 		{
@@ -270,7 +292,7 @@
                 {
                         $("#ad_hoc_user_button__" + row).hide();
                         $("#ad_hoc_project__" + row).html("");
-                        $("#ad_hoc_user_textbox__" + row).typeahead('val', '').show().focus();
+                        $("#ad_hoc_user_textbox__" + row).typeahead('val', '').css("display","inline").focus();
                 }
 
 		function on_submit()
@@ -291,11 +313,9 @@
 		{
 			if (response)
 			{
-				if (response.redirectURL === undefined) {
-					$("div.body-container").find("div.container").html(response);
-				} else {
-					location.href = "{% url 'staff_charges' %}";
-				}
+				var strHTML = response;
+				strHTML = strHTML.replace(/[\n\r]/g, '');
+				$("html").html(strHTML);
 			}
 		}
 
@@ -322,8 +342,8 @@
 			hide_user_charges();
 			enable_autocompletion(0);
 			enable_ad_hoc_autocompletion(0);
-			$("#ad_hoc_start").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss'});
-			$("#ad_hoc_end").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss'});
+			$("#ad_hoc_start").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss', minDate: moment().add(-5, 'days'), maxDate: moment().add(0, 'days')});
+			$("#ad_hoc_end").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss', minDate: moment().add(-5, 'days'), maxDate: moment().add(0, 'days')});
 			$(document).scrollTop(0);
 		}
 		$(on_load);
