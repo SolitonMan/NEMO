@@ -345,18 +345,27 @@ def enable_tool_multi(request):
 			p.full_clean(exclude='project_percent')
 			p.save()
 		 
-#	if tool.requires_area_access and AreaAccessRecord.objects.filter(area=tool.requires_area_access,customer=operator,end=None).count() == 0:
-#		aar = AreaAccessRecord()
-#		aar.area = tool.requires_area_access
+	if tool.requires_area_access and AreaAccessRecord.objects.filter(area=tool.requires_area_access,customer=operator,end=None).count() == 0:
+		aar = AreaAccessRecord()
+		aar.area = tool.requires_area_access
 #		aar.customer = operator
 #		aar.project = project
-#		aar.start = timezone.now()
+		aar.start = timezone.now()
 
-#		if staff_charge:
-#			aar.staff_charge = new_staff_charge
+		if staff_charge:
+			aar.staff_charge = new_staff_charge
 
-#		aar.save()
+		aar.save()
 
+		if staff_charge:
+			scp = StaffChargeProject.objects.filter(staff_charge=new_staff_charge)
+
+			for s in scp:
+				aarp = AreaAccessRecordProject()
+				aarp.area_access_record = aar
+				aarp.project = s.project
+				aarp.customer = s.customer
+				aarp.save()
 
 	return response
 

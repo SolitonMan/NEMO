@@ -718,6 +718,17 @@ def staff_charge_projects_save(request):
 
 			charge = old_charge
 
+		# check for area access records related to this staff charge and assign percentages
+		if AreaAccessRecord.objects.filter(staff_charge=charge).exists():
+			area_access =  AreaAccessRecord.objects.get(staff_charge=charge)
+			aarp = AreaAccessRecordProject.objects.filter(area_access_record=area_access)
+
+			for a in aarp:
+				scp = StaffChargeProject.objects.get(staff_charge=charge, project=a.project, customer=a.customer)
+				if scp:
+					a.project_percent = scp.project_percent
+					a.save()
+
 	except ObjectDoesNotExist:
 		return HttpResponseBadRequest("No entry found related to StaffCharge with id {0}".format(str(charge.id)))
 
@@ -816,9 +827,19 @@ def begin_staff_area_charge(request):
 	area_access = AreaAccessRecord()
 	area_access.area = area
 	area_access.staff_charge = charge
-	area_access.customer = charge.customer
-	area_access.project = charge.project
+	#area_access.customer = charge.customer
+	#area_access.project = charge.project
 	area_access.save()
+
+	scp = StaffChargeProject.objects.filter(staff_charge=charge)
+
+	for s in scp:
+		aarp = AreaAccessRecordProject()
+		aarp.area_access_record = area_access
+		aarp.project = s.project
+		aarp.customer = s.customer
+		aarp.save()
+
 	return redirect(reverse('staff_charges'))
 
 

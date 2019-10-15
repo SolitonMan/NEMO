@@ -81,7 +81,7 @@
 				<th>Start</th>
 				<td>
 					<div class="datetimepicker-container">
-						<input type="text" name="ad_hoc_start" id="ad_hoc_start" value="{% if ad_hoc_start %}{{ ad_hoc_start }}{% endif %}" />
+						<input type="text" name="ad_hoc_start" id="ad_hoc_start" />
 					</div>
 				</td>
 				<th>&nbsp;</th>
@@ -91,7 +91,7 @@
 				<th>End</th>
 				<td>
 					<div class="datetimepicker-container">
-						<input type="text" name="ad_hoc_end" id="ad_hoc_end" value="{% if ad_hoc_end %}{{ ad_hoc_end }}{% endif %}" />
+						<input type="text" name="ad_hoc_end" id="ad_hoc_end" />
 					</div>
 				</td>
 				<th>&nbsp;</th>
@@ -343,7 +343,9 @@
 			enable_autocompletion(0);
 			enable_ad_hoc_autocompletion(0);
 			$("#ad_hoc_start").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss', minDate: moment().add(-5, 'days'), maxDate: moment().add(0, 'days')});
+			$("#ad_hoc_start").val({% if ad_hoc_start %}{{ ad_hoc_start }}{% endif %});
 			$("#ad_hoc_end").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss', minDate: moment().add(-5, 'days'), maxDate: moment().add(0, 'days')});
+			$("#ad_hoc_end").val({% if ad_hoc_end %}{{ ad_hoc_end }}{% endif %});
 			$(document).scrollTop(0);
 		}
 		$(on_load);
