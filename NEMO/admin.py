@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib import admin
-from django.contrib.admin import register
+from django.contrib.admin import register, widgets
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.contrib.auth.models import Permission
 
@@ -172,6 +172,12 @@ class ToolAdmin(admin.ModelAdmin):
 		if 'nonrequired_resources' in form.changed_data:
 			obj.nonrequired_resource_set = form.cleaned_data['nonrequired_resources']
 
+	def get_queryset(self, request):
+		qs = super(ToolAdmin, self).get_queryset(request)
+		if request.user.is_superuser:
+			return qs
+		return qs.filter(core_id__in=request.user.core_ids.all())
+
 
 @register(TrainingSession)
 class TrainingSessionAdmin(admin.ModelAdmin):
@@ -209,6 +215,23 @@ class AreaAccessRecordProjectAdmin(admin.ModelAdmin):
 class ConfigurationAdmin(admin.ModelAdmin):
 	list_display = ('id', 'tool', 'name', 'qualified_users_are_maintainers', 'display_priority', 'exclude_from_configuration_agenda')
 	filter_horizontal = ('maintainers',)
+
+	def formfield_for_foreignkey(self, db_field, request, **kwargs):
+		if db_field.name == "tool":
+			if not request.user.is_superuser:
+				kwargs["queryset"] = Tool.objects.filter(core_id__in=request.user.core_ids.all())
+		return super(ConfigurationAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
+	def formfield_for_manytomany(self, db_field, request, **kwargs):
+		if db_field.name == "consumable":
+			vertical = False
+			kwargs['widget'] = widgets.FilteredSelectMultiple(
+				db_field.verbose_name,
+				vertical,
+			)
+			if not request.user.is_superuser:
+				kwargs["queryset"] = Consumable.objects.filter(core_id__in=request.user.core_ids.all())
+		return super(ConfigurationAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
 
 
 @register(ConfigurationHistory)

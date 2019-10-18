@@ -219,10 +219,17 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge):
 	# Create a new usage event to track how long the user uses the tool.
 	new_usage_event = UsageEvent()
 	new_usage_event.operator = operator
-	new_usage_event.user = user
-	new_usage_event.project = project
+	#new_usage_event.user = user
+	#new_usage_event.project = project
 	new_usage_event.tool = tool
 	new_usage_event.save()
+
+	# create a usage event project record for consistency with other usage event charges
+	uep = UsageEventProject()
+	uep.usage_event = new_usage_event
+	uep.customer = user
+	uep.project = project
+	uep.save()
 
 	if staff_charge:
 		new_staff_charge = StaffCharge()
@@ -230,6 +237,13 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge):
 		new_staff_charge.customer = user
 		new_staff_charge.project = project
 		new_staff_charge.save()
+
+		# create a staff_charge_project record
+		scp = StaffChargeProject()
+		scp.staff_charge = new_staff_charge
+		scp.customer = user
+		scp.project = project
+		scp.save
 
 	if tool.requires_area_access and AreaAccessRecord.objects.filter(area=tool.requires_area_access,customer=operator,end=None).count() == 0:
 		aar = AreaAccessRecord()
@@ -242,6 +256,13 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge):
 			aar.staff_charge = new_staff_charge
 
 		aar.save()
+
+		# create area access record project
+		aarp = AreaAccessRecordProject()
+		aarp.area_access_record = aar
+		aarp.project = project
+		aarp.customer = user
+		aarp.save()
 
 	return response
 

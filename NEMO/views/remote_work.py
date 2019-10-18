@@ -20,11 +20,12 @@ def remote_work(request):
 			operator = get_object_or_404(User, id=operator)
 	else:
 		operator = request.user
-	usage_events = UsageEvent.objects.filter(operator__is_staff=True, start__gte=first_of_the_month, start__lte=last_of_the_month).exclude(operator=F('user'))
+	usage_events = UsageEvent.objects.filter(operator__is_staff=True, start__gte=first_of_the_month, start__lte=last_of_the_month)
 	staff_charges = StaffCharge.objects.filter(start__gte=first_of_the_month, start__lte=last_of_the_month)
 	if operator:
 		usage_events = usage_events.exclude(~Q(operator_id=operator.id))
 		staff_charges = staff_charges.exclude(~Q(staff_member_id=operator.id))
+
 	dictionary = {
 		'usage': usage_events,
 		'staff_charges': staff_charges,
@@ -50,5 +51,23 @@ def validate_staff_charge(request, staff_charge_id):
 def validate_usage_event(request, usage_event_id):
 	usage_event = get_object_or_404(UsageEvent, id=usage_event_id)
 	usage_event.validated = True
+	usage_event.save()
+	return HttpResponse()
+
+@staff_member_required(login_url=None)
+@require_POST
+def contest_staff_charge(request, staff_charge_id):
+	staff_charge = get_object_or_404(StaffCharge, id=staff_charge_id)
+	staff_charge.contested = True
+	staff_charge.contest_description = request.POST.get("description")
+	staff_charge.save()
+	return HttpResponse()
+
+@staff_member_required(login_url=None)
+@require_POST
+def contest_usage_event(request, usage_event_id):
+	usage_event = get_object_or_404(UsageEvent, id=usage_event_id)
+	usage_event.contested = True
+	usage_event.contest_description = request.POST.get("description")
 	usage_event.save()
 	return HttpResponse()

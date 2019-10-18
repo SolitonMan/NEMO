@@ -10,6 +10,8 @@
 	be made to it. Press the green 'Validate' button on an individual row to validate a charge. Charges that have already been validated are
 	highlighted in <span class="success-highlight">green</span>.</p>
 
+	<p>Each charge can also be contested, which means that an adjustment is needed.  Press the yellow 'Contest' button on an individual row to contest the charge.  Charges that are already being contested are highlighted in <span class="warning-highlight">yellow</span>.</p>
+
 	<p>Do not validate a charge if part or all of it is incorrect. Instead, visit the user office so an adjustment can be entered
 	into the billing system. Furthermore, please visit the user office if there is a charge that you forgot to enter.</p>
 
@@ -49,18 +51,28 @@
 			<th>Start</th>
 			<th>End</th>
 			<th>Validate</th>
+			<th>Contest</th>
 		</tr>
 		</thead>
 		<tbody>
 		{% for c in staff_charges %}
-			<tr {% if c.validated %}class="success-highlight"{% endif %} id="staff_charge_row_{{ forloop.counter }}">
+			<tr {% if c.contested %}class="warning-highlight"{% endif %} {% if c.validated %}class="success-highlight"{% endif %} id="staff_charge_row_{{ forloop.counter }}">
 				<td>{{ c.id }}</td>
 				<td>{{ c.staff_member }}</td>
-				<td>{{ c.customer }}</td>
-				<td>{{ c.project }}</td>
+				<td>
+				{% for s in c.customers.all %}
+					{{ s.first_name }}&nbsp;{{ s.last_name }}<br/>
+				{% endfor %}
+				</td>
+				<td>
+				{% for p in c.projects.all %}
+					{{ p.name }}<br/>
+				{% endfor %}
+				</td>
 				<td>{{ c.start }}</td>
 				<td>{{ c.end }}</td>
-				<td>{% if not c.validated %}<button class="btn btn-success" onclick="validate_charge('{% url 'validate_staff_charge' c.id %}', this, '#staff_charge_row_{{ forloop.counter }}')">Validate</button>{% endif %}</td>
+				<td>{% if not c.validated %}<button {% if c.contested %}disabled{% endif %} class="btn btn-success" onclick="validate_charge('{% url 'validate_staff_charge' c.id %}', this, '#staff_charge_row_{{ forloop.counter }}')">Validate</button>{% endif %}</td>
+				<td>{% if not c.validated %}<button {% if c.contested %}disabled{% endif %} class="btn btn-warning" onclick="contest_charge('{% url 'contest_staff_charge' c.id %}', this, '#staff_charge_row_{{ forloop.counter }}')">Contest</button>{% endif %}</td>
 			</tr>
 		{% endfor %}
 		</tbody>
@@ -78,19 +90,37 @@
 			<th>End</th>
 			<th>Tool</th>
 			<th>Validate</th>
+			<th>Contest</th>
 		</tr>
 		</thead>
 		<tbody>
 		{% for u in usage %}
-			<tr {% if u.validated %}class="success-highlight"{% endif %} id="usage_event_row_{{ forloop.counter }}">
+			<tr {% if u.contested %}class="warning-highlight"{% endif %} {% if u.validated %}class="success-highlight"{% endif %} id="usage_event_row_{{ forloop.counter }}">
 				<td>{{ u.id }}</td>
 				<td>{{ u.operator }}</td>
-				<td>{{ u.user }}</td>
-				<td>{{ u.project }}</td>
+				<td>
+				{% if u.customers %}
+					{% for c in u.customers.all %}
+						{{ c.first_name }}&nbsp;{{ c.last_name }}<br/>
+					{% endfor %}
+				{% else %}
+					{{ u.user }}
+				{% endif %}
+				</td>
+				<td>
+				{% if u.projects %}
+					{% for p in u.projects.all %}
+						{{ p.name }}<br/>
+					{% endfor %}
+				{% else %}
+					{{ u.project }}
+				{% endif %}
+				</td>
 				<td>{{ u.start }}</td>
 				<td>{{ u.end }}</td>
 				<td>{{ u.tool }}</td>
-				<td>{% if not u.validated %}<button class="btn btn-success" onclick="validate_charge('{% url 'validate_usage_event' u.id %}', this, '#usage_event_row_{{ forloop.counter }}')">Validate</button>{% endif %}</td>
+				<td>{% if not u.validated %}<button {% if u.contested%}disabled{% endif %} class="btn btn-success" onclick="validate_charge('{% url 'validate_usage_event' u.id %}', this, '#usage_event_row_{{ forloop.counter }}')">Validate</button>{% endif %}</td>
+				<td>{% if not u.validated %}<button {% if u.contested%}disabled{% endif %} class="btn btn-warning" onclick="contest_charge('{% url 'contest_usage_event' u.id %}', this, '#usage_event_row_{{ forloop.counter }}')">Contest</button>{% endif %}</td>
 			</tr>
 		{% endfor %}
 		</tbody>
@@ -100,9 +130,22 @@
 		function validate_charge(url, button, row)
 		{
 			$(button).hide();
+			$(button).parent().next().children().first().hide();
 			$(row).addClass('success-highlight');
 			var failure_dialog = ajax_failure_callback("Unable to validate charge");
 			ajax_post(url, undefined, undefined, failure_dialog);
+		}
+
+		function contest_charge(url, button, row)
+		{
+			var description = prompt("What is the reason you're contesting this charge?  Please enter your reason below and click OK, or click Cancel to cancel the contest.");
+			if (description != null) {
+				$(button).hide();
+				$(button).parent().prev().children().first().prop("disabled", true);
+				$(row).addClass('warning-highlight');
+				var failure_dialog = ajax_failure_callback("Unable to contest charge");
+				ajax_post(url, {"description": description}, undefined, failure_dialog);
+			}
 		}
 	</script>
 
