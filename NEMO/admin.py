@@ -5,7 +5,7 @@ from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.contrib.auth.models import Permission
 
 from NEMO.actions import lock_selected_interlocks, synchronize_with_tool_usage, unlock_selected_interlocks
-from NEMO.models import Account, ActivityHistory, Alert, Area, AreaAccessRecord, AreaAccessRecordProject, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableCategory, ConsumableWithdraw, ContactInformation, ContactInformationCategory, Core, Customization, Door, Interlock, InterlockCard, LandingPageChoice, MembershipHistory, News, Notification, PhysicalAccessLevel, PhysicalAccessLog, Project, Reservation, Resource, ResourceCategory, SafetyIssue, ScheduledOutage, ScheduledOutageCategory, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskHistory, TaskStatus, Tool, TrainingSession, UsageEvent, UsageEventProject, User, UserType
+from NEMO.models import Account, ActivityHistory, Alert, Area, AreaAccessRecord, AreaAccessRecordProject, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableUnit, ConsumableCategory, ConsumableWithdraw, ContactInformation, ContactInformationCategory, Core, Customization, Door, Interlock, InterlockCard, LandingPageChoice, MembershipHistory, News, Notification, PhysicalAccessLevel, PhysicalAccessLog, Project, Reservation, Resource, ResourceCategory, SafetyIssue, ScheduledOutage, ScheduledOutageCategory, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskHistory, TaskStatus, Tool, TrainingSession, UsageEvent, UsageEventProject, User, UserType
 
 admin.site.site_header = "LEO"
 admin.site.site_title = "LEO"
@@ -329,9 +329,12 @@ class UsageEventProjectAdmin(admin.ModelAdmin):
 
 @register(Consumable)
 class ConsumableAdmin(admin.ModelAdmin):
-	list_display = ('name', 'quantity', 'category', 'visible', 'reminder_threshold', 'reminder_email', 'core_id')
+	list_display = ('id', 'name', 'quantity', 'category', 'visible', 'reminder_threshold', 'reminder_email', 'core_id')
 	list_filter = ('visible', 'category')
 
+@register(ConsumableUnit)
+class ConsumableUnitAdmin(admin.ModelAdmin):
+	list_display = ('name', 'abbreviation')
 
 @register(ConsumableCategory)
 class ConsumableCategoryAdmin(admin.ModelAdmin):

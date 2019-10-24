@@ -34,7 +34,7 @@ class DynamicForm:
 					result += f'<div class="input-group" style="max-width:{question["max-width"]}px">'
 				if 'prefix' in question:
 					result += f'<span class="input-group-addon">{question["prefix"]}</span>'
-				required = 'required' if question['required'] is True else ''
+				required = 'required' if question['required'] is True or question['required'] == "true" else ''
 				result += f'<input type="text" class="form-control" name="{question["name"]}" id="{question["name"]}" placeholder="{question["placeholder"]}" {required} style="max-width:{question["max-width"]}px" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off">'
 				if 'suffix' in question:
 					result += f'<span class="input-group-addon">{question["suffix"]}</span>'
@@ -52,26 +52,25 @@ class DynamicForm:
 		for question in self.questions:
 			# Only record the answer when the question was answered. Discard questions that were left blank
 			if request.POST.get(question['name']):
-				results[question['name']] = request.POST[question['name']]
+				results[question['consumable_id']] = request.POST[question['name']]
 		return dumps(results, indent='\t', sort_keys=True) if len(results) else ''
 
-	def charge_for_consumable(self, customer, merchant, project, run_data):
+	def charge_for_consumable(self, customer, merchant, project, run_data, project_percent=None):
 		try:
 			run_data = loads(run_data)
 		except:
 			return
 		for question in self.questions:
-			if 'consumable' in question:
-				try:
-					consumable = Consumable.objects.get(name=question['consumable'])
-					quantity = 0
-					if question['type'] == 'textbox':
-						if question['name'] in run_data:
-							quantity = quiet_int(run_data[question['name']])
-					elif question['type'] == 'radio':
-						quantity = 1
+			try:
+				c_id = int(question['consumable_id'])
+				consumable = Consumable.objects.get(id=c_id)
+				quantity = 0
+				if question['type'] == 'textbox':
+					quantity = quiet_int(run_data[question['consumable_id']])
+				elif question['type'] == 'radio':
+					quantity = 1
 
-					if quantity > 0:
-						ConsumableWithdraw.objects.create(customer=customer, merchant=merchant, consumable=consumable, quantity=quantity, project=project, date=timezone.now())
-				except:
-					pass
+				if quantity > 0:
+					ConsumableWithdraw.objects.create(customer=customer, merchant=merchant, consumable=consumable, quantity=quantity, project=project, project_percent=project_percent, date=timezone.now())
+			except:
+				pass

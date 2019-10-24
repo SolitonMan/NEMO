@@ -1,4 +1,5 @@
 import datetime
+import json
 import socket
 import struct
 import requests
@@ -192,7 +193,10 @@ class User(models.Model):
 		if access_record is None:
 			return None
 		else:
-			return access_record.project
+			if access_record.project is None:
+				return access_record.projects.all()[0]
+			else:
+				return access_record.project
 
 	def active_project_count(self):
 		return self.projects.filter(active=True, account__active=True).count()
@@ -359,6 +363,27 @@ class Tool(models.Model):
 		except UsageEvent.DoesNotExist:
 			return None
 
+	def update_post_usage_questions(self):
+		post_usage_questions = []
+		for c in self.configuration_set.all():
+			if c.available_settings is None or c.available_settings == '':
+				conf = {}
+				consumable_id = int(c.current_settings)
+				conf["type"] = "textbox"
+				conf["title"] = "How much " + c.get_current_setting(0) + " was used?"
+				conf["max-width"] = "250"
+				conf["suffix"] = str(Consumable.objects.get(id=consumable_id).unit.abbreviation)
+				conf["required"] = "true"
+				conf["default_choice"] = "null"
+				conf["placeholder"] = "0"
+				conf["name"] = str(Consumable.objects.get(id=consumable_id).name)
+				conf["consumable"] = str(Consumable.objects.get(id=consumable_id).name)
+				conf["consumable_id"] = str(consumable_id)
+				post_usage_questions.append(conf)
+		self.post_usage_questions = json.dumps(post_usage_questions)
+		self.save()
+		return
+
 
 class Configuration(models.Model):
 	tool = models.ForeignKey(Tool, help_text="The tool that this configuration option applies to.")
@@ -378,6 +403,10 @@ class Configuration(models.Model):
 	def get_current_setting(self, slot):
 		if slot < 0:
 			raise IndexError("Slot index of " + str(slot) + " is out of bounds for configuration \"" + self.name + "\" (id = " + str(self.id) + ").")
+
+		if self.available_settings is None or self.available_settings == '':
+			id = int(self.current_settings_as_list()[slot])
+			return Consumable.objects.get(id=id).name
 		return self.current_settings_as_list()[slot]
 
 	def current_settings_as_list(self):
@@ -388,13 +417,20 @@ class Configuration(models.Model):
 
 	def get_available_setting(self, choice):
 		choice = int(choice)
-		available_settings = self.available_settings_as_list()
-		return available_settings[choice]
+		if self.available_settings is None or self.available_settings == '':
+			# return selected consumable name
+			return Consumable.objects.get(id=choice).name
+		else:
+			available_settings = self.available_settings_as_list()
+			return available_settings[choice]
 
 	def replace_current_setting(self, slot, choice):
 		slot = int(slot)
 		current_settings = self.current_settings_as_list()
-		current_settings[slot] = self.get_available_setting(choice)
+		if self.available_settings is None or self.available_settings == '':
+			current_settings[slot] = str(choice)
+		else:
+			current_settings[slot] = self.get_available_setting(choice)
 		self.current_settings = ', '.join(current_settings)
 
 	def range_of_configurable_items(self):
@@ -632,6 +668,7 @@ class UsageEventProject(models.Model):
 class Consumable(models.Model):
 	name = models.CharField(max_length=100)
 	category = models.ForeignKey('ConsumableCategory', blank=True, null=True)
+	unit = models.ForeignKey('ConsumableUnit', blank=True, null=True)
 	quantity = models.IntegerField(help_text="The number of items currently in stock.")
 	visible = models.BooleanField(default=True)
 	reminder_threshold = models.IntegerField(help_text="More of this item should be ordered when the quantity falls below this threshold.")
@@ -646,6 +683,15 @@ class Consumable(models.Model):
 	def __str__(self):
 		return self.name
 
+class ConsumableUnit(models.Model):
+	name = models.CharField(max_length=100)
+	abbreviation = models.CharField(max_length=20)
+
+	class Meta:
+		ordering = ['name']
+
+	def __str__(self):
+		return self.name
 
 class ConsumableCategory(models.Model):
 	name = models.CharField(max_length=100)
@@ -664,6 +710,7 @@ class ConsumableWithdraw(models.Model):
 	consumable = models.ForeignKey(Consumable)
 	quantity = models.PositiveIntegerField()
 	project = models.ForeignKey(Project, help_text="The withdraw will be billed to this project.")
+	project_percent = models.DecimalField(max_digits=4, decimal_places=2, null=True, blank=True)
 	date = models.DateTimeField(default=timezone.now, help_text="The date and time when the user withdrew the consumable.")
 
 

@@ -156,6 +156,7 @@ def tool_configuration(request):
 	history.user = request.user
 	history.setting = configuration.get_current_setting(slot)
 	history.save()
+	configuration.tool.update_post_usage_questions()
 	return HttpResponse()
 
 
@@ -219,8 +220,8 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge):
 	# Create a new usage event to track how long the user uses the tool.
 	new_usage_event = UsageEvent()
 	new_usage_event.operator = operator
-	#new_usage_event.user = user
-	#new_usage_event.project = project
+	new_usage_event.user = user
+	new_usage_event.project = project
 	new_usage_event.tool = tool
 	new_usage_event.save()
 
@@ -282,6 +283,8 @@ def enable_tool_multi(request):
 	new_usage_event = UsageEvent()
 	new_usage_event.operator = operator
 	new_usage_event.tool = tool
+	new_usage_event.project = None
+	new_usage_event.user = None
 	new_usage_event.save()	
 
 	project_events = {}
@@ -369,8 +372,6 @@ def enable_tool_multi(request):
 	if tool.requires_area_access and AreaAccessRecord.objects.filter(area=tool.requires_area_access,customer=operator,end=None).count() == 0:
 		aar = AreaAccessRecord()
 		aar.area = tool.requires_area_access
-#		aar.customer = operator
-#		aar.project = project
 		aar.start = timezone.now()
 
 		if staff_charge:
@@ -403,7 +404,6 @@ def usage_event_entry(request):
 
 
 @login_required
-@require_POST
 def disable_tool(request, tool_id):
 
 	if not settings.ALLOW_CONDITIONAL_URLS:
@@ -442,16 +442,19 @@ def disable_tool(request, tool_id):
 	current_usage_event = tool.get_current_usage_event()
 	current_usage_event.end = timezone.now() + downtime
 
+	# Collect post-usage questions
+	dynamic_form = DynamicForm(tool.post_usage_questions)
+	current_usage_event.run_data = dynamic_form.extract(request)
+
+
 	if current_usage_event.project is None and current_usage_event.user is None:
 		# multi user event possibility, check
 		current_usage_event.save()
 		if UsageEventProject.objects.filter(usage_event=current_usage_event).exists():
-			return disable_tool_multi(request, tool_id, current_usage_event)
+			return disable_tool_multi(request, tool_id, current_usage_event, dynamic_form)
 
 
-	# Collect post-usage questions
-	dynamic_form = DynamicForm(tool.post_usage_questions)
-	current_usage_event.run_data = dynamic_form.extract(request)
+	# Charge for consumables
 	dynamic_form.charge_for_consumable(current_usage_event.user, current_usage_event.operator, current_usage_event.project, current_usage_event.run_data)
 
 	current_usage_event.save()
@@ -465,7 +468,7 @@ def disable_tool(request, tool_id):
 
 
 @staff_member_required(login_url=None)
-def disable_tool_multi(request, tool_id, usage_event):
+def disable_tool_multi(request, tool_id, usage_event, dynamic_form):
 	# process request for multiple users and staff charges
 	if not UsageEventProject.objects.filter(usage_event=usage_event).exists():
 		tool = Tool.objects.get(id=tool_id)
@@ -479,6 +482,12 @@ def disable_tool_multi(request, tool_id, usage_event):
 		if uep.count() == 1:
 			# set project_percent to 100
 			uep.update(project_percent=100.0)
+
+			uep = UsageEventProject.objects.get(usage_event=usage_event)
+
+			# run dynamic form processing
+			dynamic_form.charge_for_consumable(uep.customer, uep.usage_event.operator, uep.project, uep.usage_event.run_data, 100.0)
+
 			if request.user.charging_staff_time():
 				existing_staff_charge = request.user.get_staff_charge()
 				if existing_staff_charge.customer == usage_event.user and existing_staff_charge.project == usage_event.project:
@@ -518,6 +527,7 @@ def usage_event_projects_save(request):
 		prc = 0.0
 		usage_event_id = int(request.POST.get('usage_event_id'))
 		event = UsageEvent.objects.get(id=usage_event_id)
+		tool = event.tool
 		downtime = timedelta(minutes=quiet_int(request.POST.get('downtime')))
 
 		for key, value in request.POST.items():
@@ -527,6 +537,7 @@ def usage_event_projects_save(request):
 				if not event.id:
 					u = UsageEventProject.objects.filter(id=uepid)
 					event = u[0].usage_event
+					tool = event.tool
 
 				if attribute == "project_percent":
 					if value == '':
@@ -543,12 +554,16 @@ def usage_event_projects_save(request):
 			event.save()
 			raise Exception()
 
+		dynamic_form = DynamicForm(tool.post_usage_questions)
+
 		for key, value in request.POST.items():
 			if is_valid_field(key):
 				attribute, separator, uepid = key.partition("__")
 				uepid = int(uepid)
 				if attribute == "project_percent":
+					uep = UsageEventProject.objects.get(id=uepid)
 					UsageEventProject.objects.filter(id=uepid).update(project_percent=value)
+					dynamic_form.charge_for_consumable(uep.customer, event.operator, uep.project, event.run_data, value)
 
 		event.end = timezone.now() + downtime
 		event.save()

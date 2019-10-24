@@ -74,6 +74,7 @@ function set_selected_item(element)
 {
 	$("#sidebar a").removeClass('selected');
 	$(element).addClass('selected');
+	$("#current_tool_selection").html($(element).html());
 	save_sidebar_state();
 }
 

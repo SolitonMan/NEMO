@@ -31,10 +31,10 @@
 						{% else %}
 							{{ current_usage_event.operator }} is using this tool
 						{% endif %}
-						{% if current_usage_event.operator.id != current_usage_event.user.id %}
-							on behalf of {{ current_usage_event.user }}
+						{% if current_usage_event.operator.id != current_usage_event.customers.all.0.id %}
+							on behalf of {{ current_usage_event.customers.all.0 }}
 						{% endif %}
-						for the project named {{ current_usage_event.project.name }} since {{ current_usage_event.start|date:"l @ g:i A" }}.
+						for the project named {{ current_usage_event.projects.all.0.name }} since {{ current_usage_event.start|date:"l @ g:i A" }}.
 					</h3>
 				{% endwith %}
 			</div>
@@ -180,7 +180,7 @@
 			<input type="hidden" id="tool_id" name="tool_id" value="{{ tool.id }}" />
 			{% csrf_token %}
 			{% if tool.in_use %}
-				{% if tool.get_current_usage_event.operator.id == user.id or tool.get_current_usage_event.user.id == user.id %}
+				{% if tool.get_current_usage_event.operator.id == user.id or tool.get_current_usage_event.customer.all.0.id == user.id %}
 					{{ post_usage_questions }}
 					{% if tool.allow_delayed_logoff and not tool.delayed_logoff_in_progress %}
 						<div class="form-group">

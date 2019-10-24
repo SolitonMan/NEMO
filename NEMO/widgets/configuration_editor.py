@@ -2,17 +2,38 @@ from django.forms import Widget
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 
-
 class ConfigurationEditor(Widget):
 	def render(self, name, value, attrs=None):
 		result = ""
 		for config in value["configurations"]:
-			current_settings = config.current_settings_as_list()
-			if len(current_settings) == 1:
-				result += self.__render_for_one(config, value["user"])
+			if config.consumable.all().count() > 0:
+				# create the configuration choice for the consumable list
+				result += self.__render_consumable(config, value["user"])
 			else:
-				result += self.__render_for_multiple(config, value["user"])
+				current_settings = config.current_settings_as_list()
+				if len(current_settings) == 1:
+					result += self.__render_for_one(config, value["user"])
+				else:
+					result += self.__render_for_multiple(config, value["user"])
 		return mark_safe(result)
+
+	def __render_consumable(self, config, user):
+		current_setting = int(config.current_settings)
+		result = "<p><label class='form-inline'>" + escape(config.name) + ": "
+		if not config.tool.in_use():
+			result += "<select class='form-control' style='width:300px; max-width:100%' onchange=\"on_change_configuration(" + str(config.id) + ", 0, this.value)\">"
+			for c in config.consumable.all():
+				result += "<option value=" + str(c.id)
+				if c.id == current_setting:
+					result += " selected"
+				result += ">" + escape(c.name) + "</option>"
+			result += "</select>"
+		else:
+			for c in config.consumable.all():
+				if c.id == current_setting:
+					result += escape(c.name)
+		result += "</label></p>"
+		return result
 
 	def __render_for_one(self, config, user):
 		current_setting = config.current_settings_as_list()[0]

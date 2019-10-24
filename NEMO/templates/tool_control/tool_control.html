@@ -165,8 +165,8 @@
 			let contents = serialize("#tool_control");
 			let failure_dialog = ajax_failure_callback("Couldn't change tool status");
 			let enable_stop_button = function() { $("#stop").prop("disabled", false); };
-			//ajax_post(url, contents, ajax_success_callback, failure_dialog, refresh_tool_status, enable_stop_button);
-			ajax_post(url, contents, undefined, undefined, refresh_tool_status, enable_stop_button);
+			ajax_post(url, contents, ajax_success_callback, failure_dialog, refresh_tool_status, enable_stop_button);
+			//ajax_post(url, contents, undefined, undefined, refresh_tool_status, enable_stop_button);
 		}
 
 		{% if user.is_staff %}
@@ -192,23 +192,26 @@
 					var table_row;
 
 					for (s in scp) {
-						//console.log(scp[s]);
-						//alert(scp[s]["project"] + "  -  " + scp[s]["customer"]);
-
 						// for each record add a row to the table
-						table_row = "<tr id=\"row_" + current_entry_number + "\"><td style=\"vertical-align: middle\"><span class=\"glyphicon glyphicon-remove-circle grey pointer\" onclick=\"remove_row(" + current_entry_number + ");{% if staff_charge_projects%}update_override(true);{% endif %}\"></span></td><td>" + scp[s]["customer"] + "<input type=\"hidden\" value=\"" + scp[s]["user_id"] + "\" id=\"user_textbox__" + current_entry_number + "\" name=\"chosen_user__" + current_entry_number + "\" data-row=\"" + current_entry_number + "\"></td><td id=\"project__" + current_entry_number + "\" style=\"vertical-align: middle\">" + scp[s]["project"] + "<input type=\"hidden\" value=\"" + scp[s]["project_id"] + "\" name=\"chosen_project__" + current_entry_number + "\" id=\"chosen_project__" + current_entry_number + "\"></td></tr>";
+						table_row = "<tr id=\"row_" + current_entry_number + "\"><td style=\"vertical-align: middle\"><span class=\"glyphicon glyphicon-remove-circle grey pointer\" onclick=\"remove_row(" + current_entry_number + ");{% if staff_charge_projects %}update_override(true);{% endif %}\"></span></td><td>" + scp[s]["customer"] + "<input type=\"hidden\" value=\"" + scp[s]["user_id"] + "\" id=\"user_textbox__" + current_entry_number + "\" name=\"chosen_user__" + current_entry_number + "\" data-row=\"" + current_entry_number + "\"></td><td id=\"project__" + current_entry_number + "\" style=\"vertical-align: middle\">" + scp[s]["project"] + "<input type=\"hidden\" value=\"" + scp[s]["project_id"] + "\" name=\"chosen_project__" + current_entry_number + "\" id=\"chosen_project__" + current_entry_number + "\"></td></tr>";
 						$("#usage_event_entries tr:last").before(table_row);
 						current_entry_number++;
 					}
 
-					// remove option to add new customers
-					//$("#usage_event_entries tr:last").remove();
 					$("#usage_event_entries").after("<div>You are currently applying staff charges to the listed customer(s).  To end this charge before using the tool please proceed to the <a href=\"{% url 'staff_charges' %}\">staff charges</a> page and end the current charges.  To proceed with charging tool time to the current customer(s) click the Start button.  You may also alter the selection of customer(s) by adding new ones or removing currently selected individuals.</div>");
 
 					$("#project_choice_multi").show();
 					$("#start").unbind("click");
-					$("#start").click(on_submit);
-					$("#start").show();
+					if (scp.length == 1) {
+						$("#start").click(enable_tool);
+					} else {
+						$("#start").click(on_submit);
+					}
+					if ( $("#usage_event_entries tr").length > 2) {
+						$("#start").show();
+					} else {
+						$("#start").hide();
+					}
 
 				{% else %}
 
@@ -220,8 +223,8 @@
 				
 						$("#project_choice_multi").show();
 						// change default onclick event for start button
-						$("#start").unbind("click");
-						$("#start").click(on_submit);
+						//$("#start").unbind("click");
+						//$("#start").click(on_submit);
 					}
 
 				{% endif %}
@@ -322,9 +325,25 @@
 
 						if (el.tagName == "SELECT") {
 							$("#chosen_project__" + row).change(function() {
+								if ($("#usage_event_entries tr").length == 3) {
+									$("#start").unbind("click");
+									$("#start").click(enable_tool);
+								}
+								if ($("#usage_event_entries tr").length > 3) {
+									$("#start").unbind("click");
+									$("#start").click(on_submit);
+								}
 								$("#start").show();
 							});
 						} else {
+							if ($("#usage_event_entries tr").length == 2) {
+								$("#start").unbind("click");
+								$("#start").click(enable_tool);
+							}
+							if ($("#usage_event_entries tr").length >= 3) {
+								$("#start").unbind("click");
+								$("#start").click(on_submit);
+							}
 							$("#start").show();
 						}
 					} else {
@@ -487,6 +506,11 @@
 			{% else %}
 			expand_all_categories();
 			{% endif %}
+			var int_selected = get_selected_item();
+			if (int_selected) {
+				var selector = "a[data-tool-id='" + int_selected + "']";
+				$("#current_tool_selection").html($(selector).html());
+			}
 		}
 
 		$(on_load);

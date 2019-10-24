@@ -474,6 +474,11 @@ function on_load()
 	{% else %}
 	expand_all_categories();
 	{% endif %}
+	int_selected = get_selected_item();
+	if (int_selected) {
+		var selector = "a[data-tool-id='" + int_selected + "']";
+		$("#current_tool_selection").html($(selector).html());
+	}
 }
 
 $(on_load);
