@@ -92,11 +92,14 @@ def make_reservation(request):
 		if not request.user.is_staff:
 			return render(request, 'mobile/error.html', {'message': 'You must specify a project for your reservation'})
 
-	reservation.additional_information, reservation.self_configuration = extract_configuration(request)
+	reservation.additional_information, reservation.self_configuration, res_conf = extract_configuration(request)
 	# Reservation can't be short notice if the user is configuring the tool themselves.
 	if reservation.self_configuration:
 		reservation.short_notice = False
 	reservation.save()
+	for rc in res_conf:
+		rc.reservation = reservation
+		rc.save()
 	return render(request, 'mobile/reservation_success.html', {'new_reservation': reservation})
 
 

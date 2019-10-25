@@ -15,7 +15,7 @@ from django.utils.html import escape
 from django.utils.safestring import mark_safe
 
 from NEMO.decorators import disable_session_expiry_refresh
-from NEMO.models import Tool, Reservation, Configuration, UsageEvent, AreaAccessRecord, StaffCharge, User, Project, ScheduledOutage, ScheduledOutageCategory
+from NEMO.models import Tool, Reservation, Configuration, ReservationConfiguration, Consumable, UsageEvent, AreaAccessRecord, StaffCharge, User, Project, ScheduledOutage, ScheduledOutageCategory
 from NEMO.utilities import bootstrap_primary_color, extract_times, extract_dates, format_datetime, parse_parameter_string
 from NEMO.views.constants import ADDITIONAL_INFORMATION_MAXIMUM_LENGTH
 from NEMO.views.customization import get_customization, get_media_file_contents
@@ -270,11 +270,15 @@ def create_reservation(request):
 
 	# If a reservation is requested and configuration information is present also...
 	elif tool.is_configurable() and configured:
-		new_reservation.additional_information, new_reservation.self_configuration = extract_configuration(request)
+		new_reservation.additional_information, new_reservation.self_configuration, res_conf = extract_configuration(request)
 		# Reservation can't be short notice if the user is configuring the tool themselves.
 		if new_reservation.self_configuration:
 			new_reservation.short_notice = False
 		new_reservation.save()
+		for rc in res_conf:
+			if rc is not None:
+				rc.reservation = new_reservation
+				rc.save()
 		return HttpResponse()
 
 	return HttpResponseBadRequest("Reservation creation failed because invalid parameters were sent to the server.")
@@ -282,6 +286,7 @@ def create_reservation(request):
 
 def extract_configuration(request):
 	cleaned_configuration = []
+	conf = []
 	for key, value in request.POST.items():
 		entry = parse_configuration_entry(key, value)
 		if entry:
@@ -289,11 +294,12 @@ def extract_configuration(request):
 	# Sort by configuration display priority and join the results:
 	result = ''
 	for config in sorted(cleaned_configuration):
+		conf.append(config[2])
 		result += config[1] + '\n'
 	if 'additional_information' in request.POST:
 		result += request.POST['additional_information'][:ADDITIONAL_INFORMATION_MAXIMUM_LENGTH].strip()
 	self_configuration = True if request.POST.get('self_configuration') == 'on' else False
-	return result, self_configuration
+	return result, self_configuration, conf
 
 
 def parse_configuration_entry(key, value):
@@ -302,10 +308,17 @@ def parse_configuration_entry(key, value):
 	config_id, slot, display_priority = [int(s) for s in key.split('_') if s.isdigit()]
 	configuration = Configuration.objects.get(pk=config_id)
 	available_setting = configuration.get_available_setting(value)
+	res_conf = ReservationConfiguration()
+	if configuration.available_settings is None or configuration.available_settings == '':
+		res_conf.configuration = configuration
+		consumable_id = int(value)
+		res_conf.consumable = Consumable.objects.get(id=consumable_id)
+	if res_conf.configuration is None:
+		res_conf = None
 	if len(configuration.current_settings_as_list()) == 1:
-		return display_priority, configuration.name + " needs to be set to " + available_setting + "."
+		return display_priority, configuration.name + " needs to be set to " + available_setting + ".", res_conf
 	else:
-		return display_priority, configuration.configurable_item_name + " #" + str(slot + 1) + " needs to be set to " + available_setting + "."
+		return display_priority, configuration.configurable_item_name + " #" + str(slot + 1) + " needs to be set to " + available_setting + ".", res_conf
 
 
 @staff_member_required(login_url=None)
@@ -434,6 +447,14 @@ def modify_reservation(request, start_delta, end_delta):
 	else:
 		# All policy checks passed, so save the reservation.
 		new_reservation.save()
+		if ReservationConfiguration.objects.filter(reservation=reservation_to_cancel).exists:
+			for rc in ReservationConfiguration.objects.filter(reservation=reservation_to_cancel):
+				res_conf = ReservationConfiguration()
+				res_conf.reservation = new_reservation
+				res_conf.configuration = rc.configuration
+				res_conf.consumable = rc.consumable
+				res_conf.save()
+
 		reservation_to_cancel.descendant = new_reservation
 		reservation_to_cancel.save()
 	return response

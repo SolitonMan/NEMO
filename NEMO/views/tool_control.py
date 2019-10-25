@@ -19,7 +19,7 @@ from django.utils.safestring import mark_safe
 from django.urls import reverse
 
 from NEMO.forms import CommentForm, nice_errors
-from NEMO.models import AreaAccessRecord, AreaAccessRecordProject, Comment, Configuration, ConfigurationHistory, Project, Reservation, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskStatus, Tool, UsageEvent, UsageEventProject, User
+from NEMO.models import AreaAccessRecord, AreaAccessRecordProject, Comment, Configuration, ConfigurationHistory, Project, Reservation, ReservationConfiguration, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskStatus, Tool, UsageEvent, UsageEventProject, User
 from NEMO.utilities import extract_times, quiet_int
 from NEMO.views.policy import check_policy_to_disable_tool, check_policy_to_enable_tool, check_policy_to_enable_tool_for_multi
 from NEMO.widgets.dynamic_form import DynamicForm
@@ -86,6 +86,7 @@ def tool_control(request, tool_id=None, qualified_only=None, core_only=None):
 	# The tool-choice sidebar only needs to be rendered for desktop devices, not mobile devices.
 	if request.device == 'desktop':
 		dictionary['rendered_tool_tree_html'] = ToolTree().render(None, {'tools': tools})
+
 	return render(request, 'tool_control/tool_control.html', dictionary)
 
 
@@ -217,6 +218,28 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge):
 	if tool.interlock and not tool.interlock.unlock():
 		raise Exception("The interlock command for this tool failed. The error message returned: " + str(tool.interlock.most_recent_reply))
 
+
+	# check for reservation and configuration and configure for tool appropriately
+	try:
+		current_reservation = Reservation.objects.get(start__lte=timezone.now(), end__gt=timezone.now(), user=request.user, tool=tool, cancelled=False, missed=False)
+
+		# update project
+		project = current_reservation.project
+
+		# adjust configuration if any
+		res_conf = ReservationConfiguration.objects.filter(reservation=current_reservation)
+
+		for rc in res_conf:
+			config = Configuration.objects.get(id=rc.configuration.id)
+			if rc.setting is None or rc.setting == '':
+				config.current_settings = str(rc.consumable.id)
+			else:
+				config.current_settings = str(rc.setting)
+			config.save()
+		tool.update_post_usage_questions()
+	except Reservation.DoesNotExist:
+		pass
+
 	# Create a new usage event to track how long the user uses the tool.
 	new_usage_event = UsageEvent()
 	new_usage_event.operator = operator
@@ -230,6 +253,7 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge):
 	uep.usage_event = new_usage_event
 	uep.customer = user
 	uep.project = project
+	uep.project_percent = 100.0	# no reason to ask after the fact when only one customer
 	uep.save()
 
 	if staff_charge:
@@ -279,6 +303,20 @@ def enable_tool_multi(request):
 	tool = get_object_or_404(Tool, id=id)
 	operator = request.user
 
+	# check for an existing reservation
+	try:
+		current_reservation = Reservation.objects.get(start__lte=timezone.now(), end__gt=timezone.now(), cancelled=False, missed=False, user=operator, tool=tool)
+		res_conf = ReservationConfiguration.objects.filter(reservation=current_reservation)
+		for rc in res_conf:
+			config = Configuration.objects.get(id=rc.configuration.id)
+			if rc.setting is None or rc.setting == '':
+				config.current_settings = str(rc.consumable.id)
+			else:
+				config.current_settings = str(rc.setting)
+			config.save()
+		tool.update_post_usage_questions()
+	except Reservation.DoesNotExist:
+		pass
 	# initiate a UsageEvent
 	new_usage_event = UsageEvent()
 	new_usage_event.operator = operator
@@ -464,7 +502,8 @@ def disable_tool(request, tool_id):
 		if existing_staff_charge.customer == current_usage_event.user and existing_staff_charge.project == current_usage_event.project:
 			return render(request, 'staff_charges/reminder.html', {'tool': tool})
 
-	return redirect(reverse('tool_control'))
+	#return redirect(reverse('tool_control'))
+	return render(request, 'tool_control/disable_confirmation.html', {'tool': tool})
 
 
 @staff_member_required(login_url=None)

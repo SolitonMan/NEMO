@@ -34,7 +34,7 @@
 						{% if current_usage_event.operator.id != current_usage_event.customers.all.0.id %}
 							on behalf of {{ current_usage_event.customers.all.0 }}
 						{% endif %}
-						for the project named {{ current_usage_event.projects.all.0.name }} since {{ current_usage_event.start|date:"l @ g:i A" }}.
+						for the project named {{ current_usage_event.projects.all.0.application_identifier }} since {{ current_usage_event.start|date:"l @ g:i A" }}.
 					</h3>
 				{% endwith %}
 			</div>

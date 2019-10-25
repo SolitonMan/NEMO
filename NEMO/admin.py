@@ -5,7 +5,7 @@ from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.contrib.auth.models import Permission
 
 from NEMO.actions import lock_selected_interlocks, synchronize_with_tool_usage, unlock_selected_interlocks
-from NEMO.models import Account, ActivityHistory, Alert, Area, AreaAccessRecord, AreaAccessRecordProject, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableUnit, ConsumableCategory, ConsumableWithdraw, ContactInformation, ContactInformationCategory, Core, Customization, Door, Interlock, InterlockCard, LandingPageChoice, MembershipHistory, News, Notification, PhysicalAccessLevel, PhysicalAccessLog, Project, Reservation, Resource, ResourceCategory, SafetyIssue, ScheduledOutage, ScheduledOutageCategory, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskHistory, TaskStatus, Tool, TrainingSession, UsageEvent, UsageEventProject, User, UserType
+from NEMO.models import Account, ActivityHistory, Alert, Area, AreaAccessRecord, AreaAccessRecordProject, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableUnit, ConsumableCategory, ConsumableWithdraw, ContactInformation, ContactInformationCategory, Core, Customization, Door, Interlock, InterlockCard, LandingPageChoice, MembershipHistory, News, Notification, PhysicalAccessLevel, PhysicalAccessLog, Project, Reservation, ReservationConfiguration, Resource, ResourceCategory, SafetyIssue, ScheduledOutage, ScheduledOutageCategory, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskHistory, TaskStatus, Tool, TrainingSession, UsageEvent, UsageEventProject, User, UserType
 
 admin.site.site_header = "LEO"
 admin.site.site_title = "LEO"
@@ -230,7 +230,7 @@ class ConfigurationAdmin(admin.ModelAdmin):
 				vertical,
 			)
 			if not request.user.is_superuser:
-				kwargs["queryset"] = Consumable.objects.filter(core_id__in=request.user.core_ids.all())
+				kwargs["queryset"] = Consumable.objects.filter(core_id__in=request.user.core_ids.all(), category='Consumables')
 		return super(ConfigurationAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
 
 
@@ -313,6 +313,10 @@ class ReservationAdmin(admin.ModelAdmin):
 	list_display = ('id', 'user', 'creator', 'tool', 'project', 'additional_information', 'start', 'end', 'duration', 'cancelled', 'missed')
 	list_filter = ('cancelled', 'missed', 'tool')
 	date_hierarchy = 'start'
+
+@register(ReservationConfiguration)
+class ReservationConfigurationAdmin(admin.ModelAdmin):
+	list_display = ('id', 'reservation', 'configuration', 'consumable')
 
 
 @register(UsageEvent)

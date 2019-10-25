@@ -633,6 +633,13 @@ class Reservation(CalendarDisplay):
 		return str(self.id)
 
 
+class ReservationConfiguration(models.Model):
+	reservation = models.ForeignKey('Reservation', null=True, blank=True)
+	configuration = models.ForeignKey('Configuration', null=True, blank=True)
+	consumable = models.ForeignKey('Consumable', null=True, blank=True)
+	setting = models.TextField(null=True, blank=True)
+
+
 class UsageEvent(CalendarDisplay):
 	user = models.ForeignKey(User, related_name="usage_event_user", null=True, blank=True)
 	operator = models.ForeignKey(User, related_name="usage_event_operator")
