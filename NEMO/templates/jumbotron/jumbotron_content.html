@@ -1,7 +1,7 @@
 <div class="row" style="background:transparent">
 	<div class="{% if alerts or disabled_resources %}col-lg-4{% else %}col-lg-6{% endif %}" style="text-align:center; background:transparent">
 		{% if not nanofab_occupants %}
-			<h2>Nobody is in an access controlled<br>NanoFab area</h2>
+			<h2>Nobody is in an access controlled<br>laboratory area</h2>
 		{% else %}
 			{% regroup nanofab_occupants by area as area_occupants %}
 			<h2>Area occupancy</h2>
@@ -65,7 +65,7 @@
 				</table>
 			</div>
 		{% else %}
-			<h2>No interlocked NanoFab tools are in use</h2>
+			<h2>No interlocked laboratory tools are in use</h2>
 		{% endif %}
 	</div>
 	<div class="col-lg-4" style="text-align:center">

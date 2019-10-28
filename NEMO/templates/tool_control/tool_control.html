@@ -103,7 +103,7 @@
 			$("#override_staff_charge").remove();
 			$("#start").unbind("click");
 			$("#start").click(enable_tool);
-			$("#project_choice").html("Fetching project list...").show().load("{% url 'get_projects_for_self' %}", undefined, load_projects_completion_callback);
+			$("#project_choice").html("Fetching project list...").show().load("/get_projects_for_self/" + tool_id, undefined, load_projects_completion_callback);
 			$("#project_choice_multi").hide();
 			$("#project_choice_multi").html("");
 			current_entry_number = 0;

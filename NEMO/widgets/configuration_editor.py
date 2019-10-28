@@ -19,6 +19,13 @@ class ConfigurationEditor(Widget):
 
 	def __render_consumable(self, config, user):
 		current_setting = int(config.current_settings)
+		tool = config.tool
+		try:
+			current_reservation = user.current_reservation_for_tool(tool)
+			res_conf = current_reservation.reservationconfiguration_set.get(configuration=config)
+			current_setting = int(res_conf.consumable.id)
+		except:
+			pass
 		result = "<p><label class='form-inline'>" + escape(config.name) + ": "
 		if not config.tool.in_use():
 			result += "<select class='form-control' style='width:300px; max-width:100%' onchange=\"on_change_configuration(" + str(config.id) + ", 0, this.value)\">"
@@ -37,6 +44,13 @@ class ConfigurationEditor(Widget):
 
 	def __render_for_one(self, config, user):
 		current_setting = config.current_settings_as_list()[0]
+		tool = config.tool
+		try:
+			current_reservation = user.current_reservation_for_tool(tool)
+			res_conf = current_reservation.reservationconfiguration_set.get(configuration=config)
+			current_setting = str(res_conf.setting)
+		except:
+			pass
 		result = "<p><label class='form-inline'>" + escape(config.name) + ": "
 		if not config.tool.in_use() and config.user_is_maintainer(user):
 			result += "<select class='form-control' style='width:300px; max-width:100%' onchange=\"on_change_configuration(" + str(config.id) + ", 0, this.value)\">"
@@ -54,6 +68,14 @@ class ConfigurationEditor(Widget):
 	def __render_for_multiple(self, config, user):
 		result = "<p>" + escape(config.name) + ":<ul>"
 		for setting_index, current_setting in enumerate(config.current_settings_as_list()):
+			tool = config.tool
+			try:
+				current_reservation = user.current_reservation_for_tool(tool)
+				res_conf = current_reservation.reservationconfiguration_set.get(configuration=config)
+				current_setting = str(res_conf.setting)
+			except:
+				pass
+
 			result += "<li>"
 			if not config.tool.in_use() and config.user_is_maintainer(user):
 				result += "<label class='form-inline'>" + escape(config.configurable_item_name) + " #" + str(setting_index + 1) + ": "

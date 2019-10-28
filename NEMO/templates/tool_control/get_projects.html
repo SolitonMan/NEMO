@@ -13,7 +13,7 @@
 		<select class="form-control" name="user_projects" id="user_projects" onchange="select_project(this, this.options[this.selectedIndex].value);">
 			<option value="0">Please select a project to use for this tool</option>
 		{% for p in active_projects %}
-			<option class="list-group-item project-choice" value="{{ p.id }}">{{ p.application_identifier }}</option>
+			<option class="list-group-item project-choice" value="{{ p.id }}" {% if my_reservation %}{% if p == my_reservation.project %}selected{% endif %}{% endif %}>{{ p.application_identifier }}</option>
 		{% endfor %}
 		</select>
 	</div>

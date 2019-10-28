@@ -158,7 +158,7 @@
 		{% if customer.is_staff or tool.operational and not tool.required_resource_is_unavailable and not tool.delayed_logoff_in_progress and tool in customer.qualifications.all %}
 			{% with customer.active_projects as active_projects %}
 				{% if active_projects|length == 0 %}
-					<h2>You cannot use any tools because you are not a member of an active project. Please visit the NanoFab User Office to begin a project.</h2>
+					<h2>You cannot use any tools because you are not a member of an active project. Please visit the laboratory User Office to begin a project.</h2>
 				{% elif active_projects|length == 1 %}
 					<h2>Tool usage will be billed to the project named &quot;{{ active_projects.0 }}&quot;.</h2>
 					<input type="hidden" name="project_id" value="{{ active_projects.0.id }}">

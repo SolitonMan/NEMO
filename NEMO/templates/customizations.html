@@ -43,7 +43,7 @@
 							<input type="email" id="user_office_email_address" name="user_office_email_address" class="form-control" value="{{ user_office_email_address }}" placeholder="information@example.org">
 						</div>
 						<div class="col-md-7 form-control-static light-grey">
-							The main point of contact for users to obtain NanoFab information. Automated emails sent from NEMO are typically 'from' this address.
+							The main point of contact for users to obtain laboratory information. Automated emails sent from NEMO are typically 'from' this address.
 						</div>
 					</div>
 					<div class="form-group">
@@ -122,8 +122,8 @@
 
 		<div class="panel panel-default">
 			<div class="panel-body">
-				<h3>&quot;<a href="{% url 'nanofab_rules' %}" target="_blank">NanoFab rules tutorial</a>&quot; page</h3>
-				<p>The NanoFab rules tutorial is an opportunity to provide new users with a tutorial to your lab operating procedures and rules. The HTML you upload is rendered with the Django template engine. You can use JavaScript (including jQuery) within the page. Completion of the HTML form should be POSTed to the 'nanofab_rules' URL. Upon completion, the user's "training required" attribute is set to false, and they are able to make reservations and control tools.</p>
+				<h3>&quot;<a href="{% url 'nanofab_rules' %}" target="_blank">Laboratory rules tutorial</a>&quot; page</h3>
+				<p>The laboratory rules tutorial is an opportunity to provide new users with a tutorial to your lab operating procedures and rules. The HTML you upload is rendered with the Django template engine. You can use JavaScript (including jQuery) within the page. Completion of the HTML form should be POSTed to the 'nanofab_rules' URL. Upon completion, the user's "training required" attribute is set to false, and they are able to make reservations and control tools.</p>
 				<form method="POST" action="{% url 'customize' 'nanofab_rules_tutorial' %}" enctype="multipart/form-data">
 					{% csrf_token %}
 					<div class="form-group">
@@ -131,7 +131,7 @@
 						{% if nanofab_rules_tutorial %}<span id="nanofab_rules_tutorial_span">nanofab_rules_tutorial.html</span>{% endif %}
 					</div>
 					<div class="form-group">
-						<input type="submit" value="Upload NanoFab rules tutorial" class="btn btn-success">
+						<input type="submit" value="Upload laboratory rules tutorial" class="btn btn-success">
 					</div>
 				</form>
 				{% if nanofab_rules_tutorial %}
@@ -257,15 +257,15 @@
 
 		<div class="panel panel-default">
 			<div class="panel-body">
-				<h3>NanoFab rules tutorial email</h3>
+				<h3>Laboratory rules tutorial email</h3>
 				<p>
-					This email is sent when a user completes the NanoFab rules tutorial. It can contain a free-response answer (quiz question).
+					This email is sent when a user completes the laboratory rules tutorial. It can contain a free-response answer (quiz question).
 					If you do not upload a template then no notification email is sent to staff when a user completes the training tutorial.
 					The following context variables are provided when the email is rendered:
 				</p>
 				<ul>
 					<li><b>user</b> - the user's model instance</li>
-					<li><b>making_reservations_rule_summary</b> - a free-response answer provided by the user. Normally, this is provided by the user to summarize their understanding of the NanoFab rules and proceedures.</li>
+					<li><b>making_reservations_rule_summary</b> - a free-response answer provided by the user. Normally, this is provided by the user to summarize their understanding of the laboratory rules and proceedures.</li>
 				</ul>
 				<form method="POST" action="{% url 'customize' 'nanofab_rules_tutorial_email' %}" enctype="multipart/form-data">
 					{% csrf_token %}
@@ -274,7 +274,7 @@
 						{% if nanofab_rules_tutorial_email %}<span id="nanofab_rules_tutorial_email_span">nanofab_rules_tutorial_email.html</span>{% endif %}
 					</div>
 					<div class="form-group">
-						<input type="submit" value="Upload NanoFab rules tutorial email" class="btn btn-success">
+						<input type="submit" value="Upload laboratory rules tutorial email" class="btn btn-success">
 					</div>
 				</form>
 				{% if nanofab_rules_tutorial_email %}

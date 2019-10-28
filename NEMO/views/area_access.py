@@ -18,7 +18,7 @@ from NEMO.views.customization import get_customization
 @staff_member_required(login_url=None)
 @require_GET
 def area_access(request):
-	""" Presents a page that displays audit records for all NanoFab areas. """
+	""" Presents a page that displays audit records for all laboratory areas. """
 	today = timezone.now().strftime('%m/%d/%Y')
 	yesterday = (timezone.now() - timedelta(days=1)).strftime('%m/%d/%Y')
 	dictionary = {
@@ -100,21 +100,21 @@ def login_to_area(request, door_id=None, area_id=None):
 	if not user.physical_access_levels.all().exists():
 		log.details = "This user does not belong to ANY physical access levels."
 		log.save()
-		message = "You have not been granted physical access to any NanoFab area. Please visit the User Office if you believe this is an error."
+		message = "You have not been granted physical access to any laboratory area. Please visit the User Office if you believe this is an error."
 		return render(request, 'area_access/physical_access_denied.html', {'message': message})
 
 	# Check if the user normally has access to this door at the current time
 	if not any([access_level.accessible() for access_level in user.physical_access_levels.filter(area=area)]):
 		log.details = "This user is not assigned to a physical access level that allows access to this door at this time."
 		log.save()
-		message = "You do not have access to this area of the NanoFab at this time. Please visit the User Office if you believe this is an error."
+		message = "You do not have access to this area of the laboratory at this time. Please visit the User Office if you believe this is an error."
 		return render(request, 'area_access/physical_access_denied.html', {'message': message})
 
 	# Check that the user's physical access has not expired
 	if user.access_expiration is not None and user.access_expiration < date.today():
 		log.details = "This user was blocked from this physical access level because their physical access has expired."
 		log.save()
-		message = "Your physical access to the NanoFab has expired. Have you completed your safety training within the last year? Please visit the User Office to renew your access."
+		message = "Your physical access to the laboratory has expired. Have you completed your safety training within the last year? Please visit the User Office to renew your access."
 		return render(request, 'area_access/physical_access_denied.html', {'message': message})
 
 	# Users may not access an area if a required resource is unavailable.
@@ -298,7 +298,7 @@ def new_area_access_record(request):
 				dictionary['error_message'] = '{} does not have any active projects to bill area access'.format(customer)
 				return render(request, 'area_access/new_area_access_record.html', dictionary)
 			if not dictionary['areas']:
-				dictionary['error_message'] = '{} does not have access to any billable NanoFab areas'.format(customer)
+				dictionary['error_message'] = '{} does not have access to any billable laboratory areas'.format(customer)
 				return render(request, 'area_access/new_area_access_record.html', dictionary)
 			return render(request, 'area_access/new_area_access_record_details.html', dictionary)
 		except:

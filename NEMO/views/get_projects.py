@@ -4,7 +4,7 @@ from django.http import JsonResponse, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.http import require_GET
 
-from NEMO.models import User
+from NEMO.models import User, Tool
 
 
 @staff_member_required(login_url=None)
@@ -29,11 +29,12 @@ def get_projects(request):
 def get_projects_for_tool_control(request):
 	user_id = request.GET.get('user_id')
 	user = get_object_or_404(User, id=user_id)
-	return render(request, 'tool_control/get_projects.html', {'active_projects': user.active_projects(), 'user_id': user_id})
+	return render(request, 'tool_control/get_projects.html', {'active_projects': user.active_projects(), 'user_id': user_id, 'my_reservation': None})
 
 
 @login_required
 @require_GET
-def get_projects_for_self(request):
+def get_projects_for_self(request, tool_id=None):
 	""" Gets a list of all active projects for the current user. """
-	return render(request, 'tool_control/get_projects.html', {'active_projects': request.user.active_projects(), 'user_id': request.user.id})
+	tool = get_object_or_404(Tool, id=tool_id)
+	return render(request, 'tool_control/get_projects.html', {'active_projects': request.user.active_projects(), 'user_id': request.user.id, 'my_reservation': request.user.current_reservation_for_tool(tool)})

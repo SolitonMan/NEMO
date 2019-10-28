@@ -34,7 +34,7 @@ urlpatterns = [
 	# Get a list of projects for a user:
 	url(r'^get_projects/$', get_projects.get_projects, name='get_projects'),
 	url(r'^get_projects_for_tool_control/$', get_projects.get_projects_for_tool_control, name='get_projects_for_tool_control'),
-	url(r'^get_projects_for_self/$', get_projects.get_projects_for_self, name='get_projects_for_self'),
+	url(r'^get_projects_for_self/(?P<tool_id>\d+)/$', get_projects.get_projects_for_self, name='get_projects_for_self'),
 
 	# Tool control:
 	url(r'^tool_control/(?P<tool_id>\d+)/$', tool_control.tool_control, name='tool_control'),
@@ -107,10 +107,10 @@ urlpatterns = [
 	# Utility functions:
 	url(r'^refresh_sidebar_icons/$', sidebar.refresh_sidebar_icons, name='refresh_sidebar_icons'),
 
-	# NanoFab feedback
+	# Laboratory feedback
 	url(r'^feedback/$', feedback.feedback, name='feedback'),
 
-	# NanoFab rules tutorial
+	# Laboratory rules tutorial
 	# TODO: this should be removed, since this is really a job for a Learning Management System...
 	url(r'^nanofab_rules_tutorial/$', tutorials.nanofab_rules, name='nanofab_rules'),
 
@@ -168,7 +168,7 @@ urlpatterns = [
 	url(r'^force_area_logout/(?P<user_id>\d+)/$', area_access.force_area_logout, name='force_area_logout'),
 	url(r'^self_log_in/$', area_access.self_log_in, name='self_log_in'),
 
-	# NanoFab usage:
+	# Laboratory usage:
 	url(r'^usage/$', usage.usage, name='usage'),
 	url(r'^billing_information/(?P<timeframe>((January|February|March|April|May|June|July|August|September|October|November|December), 20\d\d))/$', usage.billing_information, name='billing_information'),
 

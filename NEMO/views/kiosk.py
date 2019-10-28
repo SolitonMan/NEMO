@@ -106,7 +106,7 @@ def choices(request):
 	try:
 		customer = User.objects.get(badge_number=request.GET['badge_number'])
 	except:
-		dictionary = {'message': "Your badge wasn't recognized. If you got a new one recently then we'll need to update your account. Please visit the NanoFab user office to resolve the problem."}
+		dictionary = {'message': "Your badge wasn't recognized. If you got a new one recently then we'll need to update your account. Please visit the laboratory user office to resolve the problem."}
 		return render(request, 'kiosk/acknowledgement.html', dictionary)
 	dictionary = {
 		'customer': customer,
@@ -125,7 +125,7 @@ def category_choices(request, category, user_id):
 	try:
 		customer = User.objects.get(id=user_id)
 	except:
-		dictionary = {'message': "Your badge wasn't recognized. If you got a new one recently then we'll need to update your account. Please visit the NanoFab user office to resolve the problem."}
+		dictionary = {'message': "Your badge wasn't recognized. If you got a new one recently then we'll need to update your account. Please visit the laboratory user office to resolve the problem."}
 		return render(request, 'kiosk/acknowledgement.html', dictionary)
 	tools = Tool.objects.filter(visible=True, category=category)
 	dictionary = {

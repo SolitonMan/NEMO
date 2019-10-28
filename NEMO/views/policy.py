@@ -64,7 +64,7 @@ def check_policy_to_enable_tool(tool, operator, user, project, staff_charge, req
 
 	# The tool operator must not have a lock on usage
 	if operator.training_required:
-		return HttpResponseBadRequest("You are blocked from using all tools in the NanoFab. Please complete the NanoFab rules tutorial in order to use tools.")
+		return HttpResponseBadRequest("You are blocked from using all tools in the laboratory. Please complete the laboratory rules tutorial in order to use tools.")
 
 	# Users may only use a tool when delayed logoff is not in effect. Staff are exempt from this rule.
 	if tool.delayed_logoff_in_progress() and not operator.is_staff:
@@ -131,7 +131,7 @@ def check_policy_to_enable_tool_for_multi(tool, operator, user, project, request
 
 	# The tool operator must not have a lock on usage
 	if operator.training_required:
-		return HttpResponseBadRequest("You are blocked from using all tools in the NanoFab. Please complete the NanoFab rules tutorial in order to use tools.")
+		return HttpResponseBadRequest("You are blocked from using all tools in the laboratory. Please complete the laboratory rules tutorial in order to use tools.")
 
 	# Users may only use a tool when delayed logoff is not in effect. Staff are exempt from this rule.
 	if tool.delayed_logoff_in_progress() and not operator.is_staff:
@@ -256,7 +256,7 @@ def check_policy_to_save_reservation(request, cancelled_reservation, new_reserva
 	# Staff may break this rule.
 	# An explicit policy override allows this rule to be broken.
 	if user.training_required:
-		policy_problems.append("You are blocked from making reservations for all tools in the NanoFab. Please complete the NanoFab rules tutorial in order to create new reservations.")
+		policy_problems.append("You are blocked from making reservations for all tools in the laboratory. Please complete the laboratory rules tutorial in order to create new reservations.")
 
 	# Users may only change their own reservations.
 	# Staff may break this rule.

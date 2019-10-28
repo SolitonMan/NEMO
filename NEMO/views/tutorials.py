@@ -31,9 +31,9 @@ def nanofab_rules(request):
 		email_contents = get_media_file_contents('nanofab_rules_tutorial_email.html')
 		if abuse_email and email_contents:
 			message = Template(email_contents, dictionary).render(Context(dictionary))
-			send_mail('NanoFab rules tutorial', '', abuse_email, [abuse_email], html_message=message)
+			send_mail('Laboratory rules tutorial', '', abuse_email, [abuse_email], html_message=message)
 		dictionary = {
-			'title': 'NanoFab rules tutorial',
+			'title': 'Laboratory rules tutorial',
 			'heading': 'Tutorial complete!',
 			'content': 'Tool usage and reservation privileges have been enabled on your user account.',
 		}

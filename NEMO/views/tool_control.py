@@ -109,6 +109,16 @@ def tool_status(request, tool_id):
 		current_reservation = Reservation.objects.get(start__lt=timezone.now(), end__gt=timezone.now(), cancelled=False, missed=False, shortened=False, user=request.user, tool=tool)
 		if request.user == current_reservation.user:
 			dictionary['time_left'] = current_reservation.end
+			dictionary['my_reservation'] = current_reservation
+			# set configuration to reservation
+			for rc in current_reservation.reservationconfiguration_set.all():
+				if rc.configuration.available_settings is None or rc.configuration.available_settings == '':
+					rc.configuration.replace_current_setting(0, rc.consumable.id)
+				else:
+					setting_id = rc.configuration.get_setting_id(rc.setting)
+					if setting_id is not None:
+						rc.configuration.replace_current_setting(0, setting_id)
+			tool.update_post_usage_questions()
 	except Reservation.DoesNotExist:
 		pass
 
@@ -220,6 +230,7 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge):
 
 
 	# check for reservation and configuration and configure for tool appropriately
+	"""
 	try:
 		current_reservation = Reservation.objects.get(start__lte=timezone.now(), end__gt=timezone.now(), user=request.user, tool=tool, cancelled=False, missed=False)
 
@@ -239,6 +250,8 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge):
 		tool.update_post_usage_questions()
 	except Reservation.DoesNotExist:
 		pass
+	"""
+
 
 	# Create a new usage event to track how long the user uses the tool.
 	new_usage_event = UsageEvent()

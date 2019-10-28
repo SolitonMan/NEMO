@@ -172,6 +172,9 @@
 		{% endfor %}
 
 		<div style="margin-top:10px">
+			{% if my_reservation %}
+			You are accessing the {{ my_reservation.tool.name }} during a scheduled reservation.  The configuration parameters below have been set to those selected during the reservation process.  While the tool should be configured to use those options, you are still able to make changes prior to starting your run.
+			{% endif %}
 			{{ rendered_configuration_html }}
 		</div>
 
@@ -216,7 +219,7 @@
 					<div id="project_choice"></div>
 					<div id="project_choice_multi"></div>
 				{% elif tool.operational and not tool.required_resource_is_unavailable and not tool.delayed_logoff_in_progress and not tool.scheduled_outage_in_progress %}
-					{% include 'tool_control/get_projects.html' with active_projects=user.active_projects user_id=user.id %}
+					{% include 'tool_control/get_projects.html' with active_projects=user.active_projects user_id=user.id my_reservation=my_reservation%}
 				{% endif %}
 				{% if user.is_staff or tool.operational and not tool.required_resource_is_unavailable and not tool.delayed_logoff_in_progress and not tool.scheduled_outage_in_progress %}
 					<button id="start" class="btn btn-default" style="display:none"><span class="glyphicon glyphicon-play"></span> Start using the {{ tool.name }}</button>
@@ -345,7 +348,7 @@
 			{% csrf_token %}
 			<input type="hidden" name="action" value="create">
 			<input type="hidden" name="tool" value="{{ tool.id }}">
-			<p>Use this form to report a problem relating to the currently selected tool. The NanoFab staff will be notified of the problem by email and the details of the problem will be visible to everyone on the website.</p>
+			<p>Use this form to report a problem relating to the currently selected tool. The laboratory staff will be notified of the problem by email and the details of the problem will be visible to everyone on the website.</p>
 
 			{% if task_categories %}
 				<div class="form-group">
@@ -372,7 +375,7 @@
 			{% endif %}
 
 			<div class="form-group">
-				<label for="description">Please provide a <strong>detailed</strong> description of the problem so that the NanoFab staff have enough information to resolve the problem efficiently.</label>
+				<label for="description">Please provide a <strong>detailed</strong> description of the problem so that the laboratory staff have enough information to resolve the problem efficiently.</label>
 				<textarea id="description" name="description" class="form-control" rows="7" required></textarea>
 			</div>
 			{% if user.is_staff %}
@@ -391,7 +394,7 @@
 				</div>
 			{% endif %}
 			<div class="form-group">
-				<div class="checkbox"><label><input name="safety_hazard" type="checkbox"/>This problem represents a safety hazard to the NanoFab and should be regarded as urgent. Notify the NanoFab safety officer of this issue.</label></div>
+				<div class="checkbox"><label><input name="safety_hazard" type="checkbox"/>This problem represents a safety hazard to the laboratory and should be regarded as urgent. Notify the laboratory safety officer of this issue.</label></div>
 				<div class="checkbox"><label><input name="force_shutdown" type="checkbox"/>Shut down the tool so that it may not be used until this problem is resolved.</label></div>
 			</div>
 			<div class="form-group">
@@ -473,5 +476,4 @@
 
 	update_stop_button();
 	$('#tool_control input[required]').on('change keyup', update_stop_button);
-
 </script>

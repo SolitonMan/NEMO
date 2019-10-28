@@ -313,6 +313,10 @@ def parse_configuration_entry(key, value):
 		res_conf.configuration = configuration
 		consumable_id = int(value)
 		res_conf.consumable = Consumable.objects.get(id=consumable_id)
+	else:
+		res_conf.configuration = configuration
+		setting = str(configuration.get_available_setting(value))
+		res_conf.setting = setting
 	if res_conf.configuration is None:
 		res_conf = None
 	if len(configuration.current_settings_as_list()) == 1:
@@ -479,7 +483,7 @@ def modify_outage(request, start_delta, end_delta):
 
 def determine_insufficient_notice(tool, start):
 	""" Determines if a reservation is created that does not give the
-	NanoFab staff sufficient advance notice to configure a tool. """
+	Laboratory staff sufficient advance notice to configure a tool. """
 	for config in tool.configuration_set.all():
 		advance_notice = start - timezone.now()
 		if advance_notice < timedelta(hours=config.advance_notice_limit):
@@ -615,7 +619,7 @@ def email_usage_reminders(request):
 
 	message = get_media_file_contents('usage_reminder_email.html')
 	if message:
-		subject = "NanoFab usage"
+		subject = "Laboratory usage"
 		for user in aggregate.values():
 			rendered_message = Template(message).render(Context({'user': user}))
 			send_mail(subject, '', user_office_email, [user['email']], html_message=rendered_message)
@@ -687,7 +691,7 @@ def cancel_unused_reservations(request):
 				continue
 			# If there was no tool enable or disable event since the threshold timestamp then we assume the reservation has been missed.
 			if not (UsageEvent.objects.filter(tool=tool, start__gte=threshold).exists() or UsageEvent.objects.filter(tool=tool, end__gte=threshold).exists()):
-				# Mark the reservation as missed and notify the user & NanoFab staff.
+				# Mark the reservation as missed and notify the user & laboratory staff.
 				r.missed = True
 				r.save()
 				missed_reservations.append(r)

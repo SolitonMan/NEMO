@@ -78,7 +78,7 @@ def send_new_task_emails(request, task):
 			'tool': task.tool,
 			'tool_control_absolute_url': request.build_absolute_uri(task.tool.get_absolute_url())
 		}
-		# Send an email to the appropriate NanoFab staff that a new task has been created:
+		# Send an email to the appropriate laboratory staff that a new task has been created:
 		subject = ('SAFETY HAZARD: ' if task.safety_hazard else '') + task.tool.name + (' shutdown' if task.force_shutdown else ' problem')
 		message = Template(message).render(Context(dictionary))
 		recipients = tuple([r for r in [task.tool.primary_owner.email, *task.tool.backup_owners.all().values_list('email', flat=True), task.tool.notification_email_address] if r])
@@ -235,7 +235,7 @@ def set_task_status(request, task, status_name, user):
 		'task': task,
 		'tool_control_absolute_url': request.build_absolute_uri(task.tool.get_absolute_url())
 	}
-	# Send an email to the appropriate NanoFab staff that a new task has been created:
+	# Send an email to the appropriate laboratory staff that a new task has been created:
 	subject = f'{task.tool} task notification'
 	message = Template(message).render(Context(dictionary))
 	recipients = [

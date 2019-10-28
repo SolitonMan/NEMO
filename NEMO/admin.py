@@ -161,6 +161,7 @@ class ToolAdmin(admin.ModelAdmin):
 		('Usage policy', {'fields': ('reservation_horizon', 'minimum_usage_block_time', 'maximum_usage_block_time', 'maximum_reservations_per_day', 'minimum_time_between_reservations', 'maximum_future_reservation_time', 'missed_reservation_threshold', 'requires_area_access', 'grant_physical_access_level_upon_qualification', 'grant_badge_reader_access_upon_qualification', 'interlock', 'allow_delayed_logoff', 'reservation_required'),}),
 		('Dependencies', {'fields': ('required_resources', 'nonrequired_resources'),}),
 	)
+	search_fields = ('name', 'category')
 
 	def save_model(self, request, obj, form, change):
 		"""
@@ -230,7 +231,9 @@ class ConfigurationAdmin(admin.ModelAdmin):
 				vertical,
 			)
 			if not request.user.is_superuser:
-				kwargs["queryset"] = Consumable.objects.filter(core_id__in=request.user.core_ids.all(), category='Consumables')
+				kwargs["queryset"] = Consumable.objects.filter(core_id__in=request.user.core_ids.all(), category__name='Consumables')
+			else:
+				kwargs["queryset"] = Consumable.objects.filter(category__name='Consumables')
 		return super(ConfigurationAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
 
 
@@ -335,6 +338,7 @@ class UsageEventProjectAdmin(admin.ModelAdmin):
 class ConsumableAdmin(admin.ModelAdmin):
 	list_display = ('id', 'name', 'quantity', 'category', 'visible', 'reminder_threshold', 'reminder_email', 'core_id')
 	list_filter = ('visible', 'category')
+	search_fields = ('name', 'category')
 
 @register(ConsumableUnit)
 class ConsumableUnitAdmin(admin.ModelAdmin):
@@ -427,7 +431,7 @@ class UserAdmin(admin.ModelAdmin):
 		('Personal information', {'fields': ('first_name', 'last_name', 'username', 'email', 'badge_number', 'type', 'domain', 'core_ids')}),
 		('Permissions', {'fields': ('is_active', 'is_staff', 'is_technician', 'is_superuser', 'training_required', 'groups', 'user_permissions', 'physical_access_levels')}),
 		('Important dates', {'fields': ('date_joined', 'last_login', 'access_expiration')}),
-		('NanoFab information', {'fields': ('qualifications', 'projects')}),
+		('Laboratory information', {'fields': ('qualifications', 'projects')}),
 	)
 	search_fields = ('first_name', 'last_name', 'username', 'email')
 	list_display = ('first_name', 'last_name', 'username', 'email', 'is_active', 'domain', 'is_staff', 'is_technician', 'is_superuser', 'date_joined', 'last_login')
