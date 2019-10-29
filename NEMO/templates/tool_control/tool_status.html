@@ -196,8 +196,8 @@
 			{% else %}
 				{% if user.is_staff %}
 					<h4>What would you like to do?</h4>
-					<div class="radio"><label><input type="radio" onchange="use_tool_for_self({{ tool.id }})" name="staff_charge" value="false">Use this tool for my own project</label></div>
-					<div class="radio"><label><input type="radio" onchange="use_tool_for_other({{ tool.id }})" name="staff_charge" value="false">Use this tool on behalf of another user</label></div>
+					<div class="radio"><label><input type="radio" onchange="use_tool_for_self({{ tool.id }}){% if my_reservation %};set_start_button(0);{% endif %}" name="staff_charge" value="false">Use this tool for my own project</label></div>
+					<div class="radio"><label><input type="radio" onchange="use_tool_for_other({{ tool.id }}){% if my_reservation %};set_start_button(1);{% endif %}" name="staff_charge" value="false">Use this tool on behalf of another user</label></div>
 					<!--
 					This section is being commented out since it shouldn't be necessary, as the "use tool for other" option automatically charges staff time.
 					{% if user.charging_staff_time %}

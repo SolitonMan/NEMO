@@ -24,6 +24,8 @@ class ConfigurationEditor(Widget):
 			current_reservation = user.current_reservation_for_tool(tool)
 			res_conf = current_reservation.reservationconfiguration_set.get(configuration=config)
 			current_setting = int(res_conf.consumable.id)
+			config.replace_current_setting(0, current_setting)
+			config.save()
 		except:
 			pass
 		result = "<p><label class='form-inline'>" + escape(config.name) + ": "
@@ -49,6 +51,8 @@ class ConfigurationEditor(Widget):
 			current_reservation = user.current_reservation_for_tool(tool)
 			res_conf = current_reservation.reservationconfiguration_set.get(configuration=config)
 			current_setting = str(res_conf.setting)
+			config.replace_current_setting(0, config.get_setting_id(current_setting))
+			config.save()
 		except:
 			pass
 		result = "<p><label class='form-inline'>" + escape(config.name) + ": "

@@ -99,28 +99,31 @@ def tool_status(request, tool_id):
 	dictionary = {
 		'tool': tool,
 		'task_categories': TaskCategory.objects.filter(stage=TaskCategory.Stage.INITIAL_ASSESSMENT),
-		'rendered_configuration_html': tool.configuration_widget(request.user),
 		'mobile': request.device == 'mobile',
 		'task_statuses': TaskStatus.objects.all(),
 		'post_usage_questions': DynamicForm(tool.post_usage_questions).render(),
 	}
 
 	try:
-		current_reservation = Reservation.objects.get(start__lt=timezone.now(), end__gt=timezone.now(), cancelled=False, missed=False, shortened=False, user=request.user, tool=tool)
-		if request.user == current_reservation.user:
+		#current_reservation = Reservation.objects.get(start__lt=timezone.now(), end__gt=timezone.now(), cancelled=False, missed=False, shortened=False, user=request.user, tool=tool)
+		current_reservation = request.user.current_reservation_for_tool(tool)
+		if current_reservation is not None:
 			dictionary['time_left'] = current_reservation.end
 			dictionary['my_reservation'] = current_reservation
 			# set configuration to reservation
-			for rc in current_reservation.reservationconfiguration_set.all():
-				if rc.configuration.available_settings is None or rc.configuration.available_settings == '':
-					rc.configuration.replace_current_setting(0, rc.consumable.id)
-				else:
-					setting_id = rc.configuration.get_setting_id(rc.setting)
-					if setting_id is not None:
-						rc.configuration.replace_current_setting(0, setting_id)
-			tool.update_post_usage_questions()
+			#for rc in current_reservation.reservationconfiguration_set.all():
+			#	if rc.configuration.available_settings is None or rc.configuration.available_settings == '':
+			#		rc.configuration.replace_current_setting(0, rc.consumable.id)
+			#	else:
+			#		setting_id = rc.configuration.get_setting_id(rc.setting)
+			#		if setting_id is not None:
+			#			rc.configuration.replace_current_setting(0, setting_id)
+			#tool.update_post_usage_questions()
 	except Reservation.DoesNotExist:
 		pass
+
+	dictionary['rendered_configuration_html'] = tool.configuration_widget(request.user)
+	tool.update_post_usage_questions()
 
 	# Staff need the user list to be able to qualify users for the tool.
 	if request.user.is_staff:
