@@ -375,22 +375,23 @@ class Tool(models.Model):
 		post_usage_questions = []
 		for c in self.configuration_set.all():
 			if c.available_settings is None or c.available_settings == '':
-				conf = {}
-				consumable_id = int(c.current_settings)
-				conf["type"] = "textbox"
-				conf["title"] = "How much " + c.get_current_setting(0) + " was used?"
-				conf["max-width"] = "250"
-				if Consumable.objects.get(id=consumable_id).unit:
-					conf["suffix"] = str(Consumable.objects.get(id=consumable_id).unit.abbreviation)
-				else:
-					conf["suffix"] = "each"
-				conf["required"] = "true"
-				conf["default_choice"] = "null"
-				conf["placeholder"] = "0"
-				conf["name"] = str(Consumable.objects.get(id=consumable_id).name)
-				conf["consumable"] = str(Consumable.objects.get(id=consumable_id).name)
-				conf["consumable_id"] = str(consumable_id)
-				post_usage_questions.append(conf)
+				if c.current_settings is not None and c.current_settings != '':
+					conf = {}
+					consumable_id = int(c.current_settings)
+					conf["type"] = "textbox"
+					conf["title"] = "How much " + c.get_current_setting(0) + " was used?"
+					conf["max-width"] = "250"
+					if Consumable.objects.get(id=consumable_id).unit:
+						conf["suffix"] = str(Consumable.objects.get(id=consumable_id).unit.abbreviation)
+					else:
+						conf["suffix"] = "each"
+					conf["required"] = "true"
+					conf["default_choice"] = "null"
+					conf["placeholder"] = "0"
+					conf["name"] = str(Consumable.objects.get(id=consumable_id).name)
+					conf["consumable"] = str(Consumable.objects.get(id=consumable_id).name)
+					conf["consumable_id"] = str(consumable_id)
+					post_usage_questions.append(conf)
 		self.post_usage_questions = json.dumps(post_usage_questions)
 		self.save()
 		return

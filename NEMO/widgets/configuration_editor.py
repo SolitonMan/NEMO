@@ -18,7 +18,10 @@ class ConfigurationEditor(Widget):
 		return mark_safe(result)
 
 	def __render_consumable(self, config, user):
-		current_setting = int(config.current_settings)
+		current_setting = config.current_settings
+		if current_setting is None or current_setting == '':
+			current_setting = 0
+		current_setting = int(current_setting)
 		tool = config.tool
 		try:
 			current_reservation = user.current_reservation_for_tool(tool)

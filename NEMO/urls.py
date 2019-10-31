@@ -50,7 +50,9 @@ urlpatterns = [
 	url(r'^disable_tool/(?P<tool_id>\d+)/$', tool_control.disable_tool, name='disable_tool'),
 	url(r'^past_comments_and_tasks/$', tool_control.past_comments_and_tasks, name='past_comments_and_tasks'),
 	url(r'^ten_most_recent_past_comments_and_tasks/(?P<tool_id>\d+)/$', tool_control.ten_most_recent_past_comments_and_tasks, name='ten_most_recent_past_comments_and_tasks'),
-	 url(r'^usage_event_projects_save/$', tool_control.usage_event_projects_save, name='usage_event_projects_save'),
+	url(r'^usage_event_projects_save/$', tool_control.usage_event_projects_save, name='usage_event_projects_save'),
+	url(r'^create_usage_event/$', tool_control.create_usage_event, name='create_usage_event'),
+	url(r'^save_usage_event/$', tool_control.save_usage_event, name='save_usage_event'),
 
 	# Tasks:
 	url(r'^create_task/$', tasks.create, name='create_task'),

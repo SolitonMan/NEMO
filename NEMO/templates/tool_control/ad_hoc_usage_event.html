@@ -1,0 +1,407 @@
+{% extends 'base.html' %}
+{% load custom_tags_and_filters %}
+{% block title %}Create Ad Hoc Usage Event{% endblock %}
+{% block extrahead %}
+	{% load static %}
+	<script type="text/javascript" src="{% static "datetimepicker/bootstrap-datetimepicker.js" %}"></script>
+	<link rel="stylesheet" type="text/css" href="{% static "datetimepicker/bootstrap-datetimepicker.css" %}"/>
+{% endblock %}
+
+{% block content %}
+	<h1>Usage Event Creation (Ad Hoc)</h1>
+	<p>Use this form to add a usage event for a tool used for yourself or on behalf of one or more customers.  Note that the created event cannot overlap any existing events for the selected tool.</p>
+
+	{% if error %}
+		<div class="alert alert-danger">
+			{{ error }}
+		</div>
+	{% endif %}
+	{% if usage_start_conflict is not None %}
+		{% for u in usage_start_conflict %}
+	<table class="table">
+		<tr>
+                        <th>Tool</th>
+			<td>{{ u.tool }}</td>
+		</tr>
+		<tr>
+			<th>Start</th>
+			<td>{{ u.start }}</td>
+		</tr>
+		<tr>
+			<th>End</th>
+			<td>{{ u.end }}</td>
+		</tr>
+		<tr>
+			<th>Operator</th>
+			<td>{{ u.operator }}</td>
+		</tr>
+		<tr>
+			<th>Project</th>
+			<td>{{ u.project }}</td>
+		</tr>
+		<tr>
+			<th>User/Customer</th>
+			<td>{{ u.user }}</td>
+		</tr>
+	</table>
+		{% endfor %}
+	{% endif %}
+	{% if usage_end_conflict is not None %}
+		{% for u in usage_end_conflict %}
+	<table class="table">
+		<tr>
+			<th>Tool</th>
+			<td>{{ u.tool }}</td>
+		</tr>
+		<tr>
+			<th>Start</th>
+			<td>{{ u.start }}</td>
+		</tr>
+		<tr>
+			<th>End</th>
+			<td>{{ u.end }}</td>
+		</tr>
+		<tr>
+			<th>Operator</th>
+			<td>{{ u.operator }}</td>
+		</tr>
+		<tr>
+			<th>Project</th>
+			<td>{{ u.project }}</td>
+		</tr>
+		<tr>
+			<th>User/Customer</th>
+			<td>{{ u.user }}</td>
+		</tr>
+	</table>
+		{% endfor %}
+	{% endif %}
+	{% if usage_whole_conflict is not None %}
+		{% for u in usage_whole_conflict %}
+	<table class="table">
+		<tr>
+			<th>Tool</th>
+			<td>{{ u.tool }}</td>
+		</tr>
+		<tr>
+			<th>Start</th>
+			<td>{{ u.start }}</td>
+		</tr>
+		<tr>
+			<th>End</th>
+			<td>{{ u.end }}</td>
+		</tr>
+		<tr>
+			<th>Operator</th>
+			<td>{{ u.operator }}</td>
+		</tr>
+		<tr>
+			<th>Project</th>
+			<td>{{ u.project }}</td>
+		</tr>
+		<tr>
+			<th>User/Customer</th>
+			<td>{{ u.user }}</td>
+		</tr>
+	</table>
+		{% endfor %}
+	{% endif %}
+	<form id="ad_hoc_usage" onsubmit="return on_submit()" method="POST" action="{% url 'save_usage_event' %}">
+		{% csrf_token %}
+		<table id="event_details" class="table">
+			<tr>
+				<th>Start</th>
+				<td>
+					<div class="datetimepicker-container">
+						<input type="text" name="ad_hoc_start" id="ad_hoc_start" />
+					</div>
+				</td>
+			</tr>
+			<tr>
+				<th>End</th>
+				<td>
+					<div class="datetimepicker-container">
+						<input type="text" name="ad_hoc_end" id="ad_hoc_end" />
+					</div>
+				</td>
+			</tr>
+			<tr>
+				<th>Tool</th>
+				<td>
+					<select id="tool_select" name="tool_select" class="form-control">
+						<option value="">Please select a tool</option>
+					{% for t in tools %}
+						<option value="{{ t.id }}"{% if t.id == tool_id %} selected{% endif %}>{{ t.name }}</option>
+					{% endfor %}
+					</select>
+				</td>
+			</tr>
+			{% if request.user.is_superuser %}
+			<tr>
+				<th>Operator</th>
+				<td>
+					<select id="operator" name="operator" class="form-control" onchange="set_radio(this.options[this.selectedIndex].value);">
+						<option value="">Please select the operator</option>
+					{% for o in operators %}
+						<option value="{{ o.id }}"{% if o.id == operator_id %} selected{% endif %}>{{ o.last_name }}, {{ o.first_name }} ({{ o.username }})</option>
+					{% endfor %}
+					</select>
+				</td>
+			</tr>
+			{% else %}
+			<tr>
+				<th>Operator</th>
+				<td>
+					{{ request.user.first_name }} {{ request.user.last_name }}
+					<input type="hidden" name="operator" id="operator" value="{{ request.user.id }}" />
+				</td>
+			</tr>
+			{% endif %}
+			<tr id="radio_options" style="display: none;">
+				<td colspan="2">
+					<div class="radio"><label><input type="radio" id="use_mode" name="use_mode" value="0" onchange="set_mode(0);">
+					{% if request.user.is_superuser %}
+					The tool was used by the operator
+					{% else %}
+					I used the tool for myself
+					{% endif %}
+					</label></div>
+					<div class="radio"><label><input type="radio" id="use_mode" name="use_mode" value="1" onchange="set_mode(1);">
+					{% if request.user.is_superuser %}
+					The tool was used for others
+					{% else %}
+					I used the tool for others
+					{% endif %}
+					</label></div>
+				</td>
+			</tr>
+		</table>
+		<input type="submit" value="Save Usage Event" class="btn btn-default" />
+	</form>
+
+<table id="operator_customer" style="display: none">
+	<tr>
+		<th>Customer</th>
+		<td>
+			<span id="selected_operator"></span>
+			<input type="hidden" name="chosen_user__0" id="ad_hoc_user_textbox__0" value="" />
+			<input type="hidden" name="project_percent__0" id="ad_hoc_project_percent__0" value="100" />
+		</td>
+	</tr>
+	<tr>
+		<th>Project</th>
+		<td id="ad_hoc_project__0" style="vertical-align: middle">
+			
+		</td>
+	</tr>
+</table>
+
+<table id="other_customer" style="display: none">
+	<tr>
+		<td colspan=2>
+			<table id="event_charge_entries" class="table">
+				<tr>
+					<th>&nbsp;</th>
+					<th style="min-width:200px">Customer</th>
+					<th style="min-width:200px">Project</th>
+					<th>Percent</th>
+				</tr>
+
+				<tr>
+					<td colspan="4" style="text-align:center"><a href="javascript:void(0)" onclick="add_customer()">Add another customer</a></td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
+
+<script type="text/javascript">
+var current_entry_number = 0;
+
+function set_radio(sOption)
+{
+	if (sOption == "") {
+		$("#radio_options").hide();
+	} else {
+		if ($("#radio_options").is(":visible")) {
+			// no need to show again but should update selected customer if relevant
+			if ($("input[name='use_mode']:checked").val() == 0) {
+				// reset selected operator and projects
+				set_mode(0);
+			}
+		} else {
+			$("#radio_options").show();
+		}
+	}
+}
+
+function set_mode(iMode)
+{
+	while ($("#event_details tr:last").find(".radio").length == 0) {
+		$("#event_details tr:last").remove();
+	}
+	if (iMode) {
+		$("#event_details").append($("#other_customer").html());
+	} else {
+		$("#event_details").append($("#operator_customer").html());
+		$("#ad_hoc_user_textbox__0").val($("#operator").val());
+		fetch_projects(0, $("#operator").val());
+		{% if request.user.is_superuser %}
+		$("#selected_operator").html($("#operator option:selected").text());
+		{% else %}
+		$("#selected_operator").html("{{ request.user.first_name }} {{ request.user.last_name }}");
+		{% endif %}
+	}
+}
+
+function add_customer() 
+{
+	var failure_dialog = ajax_failure_callback("Cannot add new entry", "The web browser was not able to communicate with the server.");
+	ajax_get("{% url 'ad_hoc_staff_charge_entry' %}", { "entry_number": current_entry_number }, add_entry_success_callback, failure_dialog);
+	function add_entry_success_callback(response, status, xml_http_request)
+	{
+		$("#event_details tr:last").before(response);
+		enable_autocompletion(current_entry_number);
+		current_entry_number++;
+	}
+}
+
+function enable_autocompletion(entry_number)
+{
+	var id = "#ad_hoc_user_textbox__" + entry_number;
+	$(id).autocomplete('user', on_autocomplete_selection, {{ users|json_search_base }}).focus();
+}
+
+function remove_ad_hoc_row(number)
+{
+	$("#ad_hoc_row_" + number).remove();
+}
+
+function on_autocomplete_selection(jquery_event, search_selection, dataset_name)
+{
+	$(this).typeahead('val', search_selection.id).hide();
+	var row = $(this).data('row');
+	var button_id = "#ad_hoc_" + dataset_name + "_button__" + row;
+	$(button_id).val(search_selection.name).show();
+	if(dataset_name == "user")
+		fetch_projects(row, search_selection.id);
+}
+
+function fetch_projects(row, user_id)
+{
+	var parameters =
+	{
+		"source_template": "staff_charges",
+		"user_id": user_id,
+		"entry_number": row,
+		"ad_hoc": true,
+	};
+	var target_element = "#ad_hoc_project__" + row;
+	var url = "{% url 'get_projects' %}?" + jQuery.param(parameters);
+	var report_error = ajax_complete_callback("Could not fetch projects for user", "There was a problem obtaining the list of projects for the user.");
+	$(target_element).load(url, undefined, function(responseTxt, statusTxt, xhr) {
+		if(statusTxt != "success") {
+			ajax_complete_callback("Could not fetch projects for user", "There was a problem obtaining the list of projects for the user.");
+		}
+	});
+}
+
+function purge_ad_hoc_customer(row)
+{
+	$("#ad_hoc_user_button__" + row).hide();
+	$("#ad_hoc_project__" + row).html("");
+	$("#ad_hoc_user_textbox__" + row).typeahead('val', '').show().focus();
+}
+
+function on_submit()
+{
+	// check for all project fields having selected values
+	var s;
+	var o;
+	var u;
+	var b;
+	var total_entry_count = 0;
+
+	if ($("#ad_hoc_start").val() == "") {
+		alert("Please select a start time.");
+		$("#ad_hoc_start").focus();
+		return false;
+	}
+
+	if ($("#ad_hoc_end").val() == "") {
+		alert("Please select an end time.");
+		$("#ad_hoc_end").focus();
+		return false;
+	}
+
+	if ($("#tool_select").val() == "") {
+		alert("Please select a tool.");
+		$("#tool_select").focus();
+		return false;
+	}
+
+	if ($("#operator").val() == "") {
+		alert("Please select an operator");
+		$("#operator").focus();
+		return false;
+	}
+
+	for (var i=0; i<=current_entry_number; i++) {
+		b = false;
+		s = "form #ad_hoc_user_textbox__" + i;
+		if ($(s).length) {
+			if ($(s).css("display") != "none") {
+				alert("Please select a user for each row, or else delete the row.");
+				$(s).focus();
+				return false;
+			} else {
+				b = true;
+			}
+			total_entry_count++;
+		}
+		if (b) {
+			s = "#chosen_project__" + i;
+			if ($(s).length) {
+				if ($(s).prop("type") != "hidden") {
+					o = $(s).find(":selected").val();
+					if (o == "-1") {
+						alert("Please select a value for each project field for each customer, or else delete the row.");
+						$(s).focus();
+						return false;
+					}
+				}
+			} else {
+				alert("Please choose a customer with at least one active project.");
+				return false;
+			}
+
+			s = "form #ad_hoc_project_percent__" + i;
+			if ($(s).length) {
+				if ($(s).val() == "") {
+					alert("Please enter a value for the percent of the usage event dedicated to each customer.");
+					return false;
+				}
+			}
+		}
+	}
+	if (total_entry_count == 0) {
+		alert("You must add at least one customer in order to use this tool for a customer.");
+		return false;
+	}
+	//var failure_dialog = ajax_failure_callback("Could not create ad hoc usage event");
+	//var success_callbacks = [ajax_success_callback]; 
+	//ajax_post("{% url 'save_usage_event' %}", serialize("#ad_hoc_usage"), success_callbacks, failure_dialog);
+	return true;
+}
+
+function on_load()
+{
+	$("#ad_hoc_start").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss'});
+	$("#ad_hoc_start").val({% if ad_hoc_start %}"{{ ad_hoc_start }}"{% else %}""{% endif %});
+	$("#ad_hoc_end").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss'});
+	$("#ad_hoc_end").val({% if ad_hoc_end %}"{{ ad_hoc_end }}"{% else %}""{% endif %});
+}
+
+$(on_load);
+</script>
+{% endblock %}

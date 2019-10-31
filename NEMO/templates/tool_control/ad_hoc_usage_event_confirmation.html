@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% load custom_tags_and_filters %}
+{% block title %}Ad Hoc Usage Event Confirmation{% endblock %}
+
+{% block content %}
+	<h1>Ad Hoc Usage Event Confirmation</h1>
+
+	<p>You've made an ad hoc usage event for the following time and tool:</p>
+	{% if new_usage_event %}
+	<table class="table">
+		<tr>
+			<th>Tool</th>
+			<td>{{ new_usage_event.tool }}</td>
+		</tr>
+		<tr>
+			<th>Start</th>
+			<td>{{ new_usage_event.start }}</td>
+		</tr>
+		<tr>
+			<th>End</th>
+			<td>{{ new_usage_event.end }}</td>
+		</tr>
+		<tr>
+			<th>Operator</th>
+			<td>{{ new_usage_event.operator }}</td>
+		</tr>
+		<tr>
+			<th>Project</th>
+			<td>{{ new_usage_event.project }}</td>
+		</tr>
+		<tr>
+			<th>User/Customer</th>
+			<td>{{ new_usage_event.user }}</td>
+		</tr>
+	</table>
+	{% else %}
+	No data was found for this submission.  Please check with your administrator.
+	{% endif %}
+	<br/><br/>
+	<button class="btn btn-default" onclick="location.href='{% url 'create_usage_event' %}';">Ad Hoc Usage Events</button>
+	<button class="btn btn-default" onclick="location.href='{% url 'landing' %}';">Return to Landing Page</button>
+{% endblock %}

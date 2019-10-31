@@ -343,9 +343,9 @@
 			enable_autocompletion(0);
 			enable_ad_hoc_autocompletion(0);
 			$("#ad_hoc_start").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss', minDate: moment().add(-5, 'days'), maxDate: moment().add(0, 'days')});
-			$("#ad_hoc_start").val({% if ad_hoc_start %}{{ ad_hoc_start }}{% endif %});
+			$("#ad_hoc_start").val({% if ad_hoc_start %}"{{ ad_hoc_start }}"{% else %}""{% endif %});
 			$("#ad_hoc_end").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss', minDate: moment().add(-5, 'days'), maxDate: moment().add(0, 'days')});
-			$("#ad_hoc_end").val({% if ad_hoc_end %}{{ ad_hoc_end }}{% endif %});
+			$("#ad_hoc_end").val({% if ad_hoc_end %}"{{ ad_hoc_end }}"{% else %}""{% endif %});
 			$(document).scrollTop(0);
 		}
 		$(on_load);

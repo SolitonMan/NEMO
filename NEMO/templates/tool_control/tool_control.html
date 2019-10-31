@@ -215,16 +215,16 @@
 
 					$("#project_choice_multi").show();
 					$("#start").unbind("click");
-					if (scp.length == 1) {
-						$("#start").click(enable_tool);
-					} else {
+					//if (scp.length == 1) {
+					//	$("#start").click(enable_tool);
+					//} else {
 						$("#start").click(on_submit);
-					}
-					if ( $("#usage_event_entries tr").length > 2) {
+					//}
+					//if ( $("#usage_event_entries tr").length > 2) {
 						$("#start").show();
-					} else {
-						$("#start").hide();
-					}
+					//} else {
+					//	$("#start").hide();
+					//}
 
 				{% else %}
 
@@ -379,7 +379,7 @@
 				var b;
 				var total_entry_count = 0;
 
-				for (var i=0; i<current_entry_number; i++) {
+				for (var i=0; i<=current_entry_number; i++) {
 					b = false;
 					s = "#user_textbox__" + i;
 

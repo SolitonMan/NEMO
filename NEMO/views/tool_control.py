@@ -14,6 +14,7 @@ from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotFou
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import logger, require_GET, require_POST
+from django.utils.dateparse import parse_time, parse_date, parse_datetime
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from django.urls import reverse
@@ -545,7 +546,7 @@ def disable_tool_multi(request, tool_id, usage_event, dynamic_form):
 
 			if request.user.charging_staff_time():
 				existing_staff_charge = request.user.get_staff_charge()
-				if existing_staff_charge.customer == usage_event.user and existing_staff_charge.project == usage_event.project:
+				if existing_staff_charge.customers.all()[0] == usage_event.user and existing_staff_charge.projects.all()[0] == usage_event.project:
 					response = render(request, 'staff_charges/reminder.html', {'tool': tool})
 				elif existing_staff_charge.customer is None and existing_staff_charge.project is None:
 					scp = StaffChargeProject.objects.get(staff_charge=existing_staff_charge, project=uep.project, customer=uep.customer)
@@ -557,7 +558,7 @@ def disable_tool_multi(request, tool_id, usage_event, dynamic_form):
 				return response
 
 			else:
-				return tool_control(request, tool_id, None, None)
+				return render(request, 'tool_control/disable_confirmation.html', {'tool': tool})
 	
 		else:
 			# gather records and send to form for editing
@@ -637,7 +638,6 @@ def usage_event_projects_save(request):
 	return redirect(reverse('tool_control'))
 
 
-
 @login_required
 @require_GET
 def past_comments_and_tasks(request):
@@ -673,3 +673,163 @@ def ten_most_recent_past_comments_and_tasks(request, tool_id):
 		'past': past,
 	}
 	return render(request, 'tool_control/past_tasks_and_comments.html', dictionary)
+
+
+@login_required
+@staff_member_required(login_url=None)
+def create_usage_event(request):
+	if request.user.core_ids.all().count() > 0:
+		tools = Tool.objects.filter(core_id__in=request.user.core_ids.all())
+	else:
+		tools = Tool.objects.all()
+
+	dictionary = {
+		'tools': tools,
+		'users': User.objects.filter(is_active=True).exclude(id=request.user.id),
+	}
+
+	if request.user.is_superuser:
+		operators = User.objects.filter(is_staff=True).order_by('last_name', 'first_name')
+		dictionary['operators'] = operators
+
+	return render(request, 'tool_control/ad_hoc_usage_event.html', dictionary)
+
+
+@login_required
+@require_POST
+def save_usage_event(request):
+	params = {}
+	error_params = {}
+
+	try:
+		ad_hoc_start = request.POST.get('ad_hoc_start', None)
+		if ad_hoc_start == '':
+			ad_hoc_start = None
+		else:
+			error_params['ad_hoc_start'] = ad_hoc_start
+
+		ad_hoc_end = request.POST.get('ad_hoc_end', None)
+		if ad_hoc_end == '':
+			ad_hoc_end = None
+		else:
+			error_params['ad_hoc_end'] = ad_hoc_end
+
+		msg = ''
+
+		if ad_hoc_start is None or ad_hoc_end is None:
+			msg = 'The start date and end date are required to save an ad hoc usage event.'
+			raise Exception(msg)
+
+		ad_hoc_start = parse_datetime(ad_hoc_start)
+		ad_hoc_end = parse_datetime(ad_hoc_end)
+
+		if ad_hoc_start is None or ad_hoc_end is None:
+			msg = 'The start date and end date are required to save an ad hoc usage event. The values must be valid datetimes.'
+			raise Exception(msg)
+
+
+		tool_id = request.POST.get('tool_select', None)
+		if tool_id is None or tool_id == '':
+			msg = 'A tool must be selected to create an ad hoc usage event.'
+			raise Exception(msg)
+		else:
+			tool_id = int(tool_id)
+			error_params['tool_id'] = tool_id
+
+		tool = Tool.objects.get(id=tool_id)
+
+		if request.user.is_superuser:
+			operator_id = request.POST.get('operator', None)
+			if operator_id is None or operator_id == '':
+				msg = 'An operator must be selected for creating an ad hoc usage event.'
+				raise Exception(msg)
+			else:
+				operator_id = int(operator_id)
+				error_params['operator_id'] = operator_id
+
+			operator = User.objects.get(id=operator_id)
+		else:
+			operator = request.user
+
+		if UsageEvent.objects.filter(tool=tool, start__range=(ad_hoc_start, ad_hoc_end)).exists() or UsageEvent.objects.filter(tool=tool, end__range=(ad_hoc_start, ad_hoc_end)).exists() or UsageEvent.objects.filter(tool=tool, start__lte=ad_hoc_start, end__gte=ad_hoc_end).exists():
+			msg = 'A usage event already exists that overlaps start = ' + str(ad_hoc_start) + ' and end = ' + str(ad_hoc_end) + ' for the ' + tool.name + '.  Please review your entries and either select new start and/or end times, or else speak with an administrator to help resolve the conflict.'
+			error_params['usage_start_conflict'] = UsageEvent.objects.filter(tool=tool, start__range=(ad_hoc_start, ad_hoc_end))
+			error_params['usage_end_conflict'] = UsageEvent.objects.filter(tool=tool, end__range=(ad_hoc_start, ad_hoc_end))
+			error_params['usage_whole_conflict'] = UsageEvent.objects.filter(tool=tool, start__lte=ad_hoc_start, end__gte=ad_hoc_end)
+			raise Exception(msg)
+
+		new_usage_event = UsageEvent()
+		new_usage_event.operator = operator
+		new_usage_event.tool = tool
+		new_usage_event.start = ad_hoc_start
+		new_usage_event.end = ad_hoc_end
+		project_id = request.POST.get("chosen_project__0", None)
+		if project_id is not None and project_id != "":
+			project_id = int(project_id)
+			new_usage_event.project = Project.objects.get(id=project_id)
+		user_id = request.POST.get("chosen_user__0", None)
+		if user_id is not None and user_id != "":
+			user_id = int(user_id)
+			new_usage_event.user = User.objects.get(id=user_id)
+		new_usage_event.save()
+
+		project_events = {}
+
+		for key, value in request.POST.items():
+			if is_valid_field(key):
+				attribute, separator, index = key.partition("__")
+				index = int(index)
+				if index not in project_events:
+					project_events[index] = UsageEventProject()
+					project_events[index].usage_event = new_usage_event
+				if attribute == "chosen_user":
+					if value is not None and value != "":
+						project_events[index].customer = User.objects.get(id=value)
+					else:
+						new_usage_event.delete()
+						return HttpResponseBadRequest('Please choose a user for whom the tool will be run.')
+				if attribute == "chosen_project":
+					if value is not None and value != "" and value != "-1":
+						project_events[index].project = Project.objects.get(id=value)
+					else:
+						new_usage_event.delete()
+						return HttpResponseBadRequest('Please choose a project for charges made during this run.')
+				if attribute == "project_percent":
+					if value is not None and value != "":
+						project_events[index].project_percent = value
+					else:
+						new_usage_event.delete()
+						return HttpResponseBadRequest('Please enter a project percent value')
+
+		for p in project_events.values():
+			p.full_clean()
+			p.save()
+
+		params['new_usage_event'] = new_usage_event
+		params['uep'] = UsageEventProject.objects.filter(usage_event=new_usage_event)
+
+
+	except Exception as inst:
+		if request.user.core_ids.all().count() > 0:
+			tools = Tool.objects.filter(core_id__in=request.user.core_ids.all())
+		else:
+			tools = Tool.objects.all()
+		params['tools'] = tools
+
+		if request.user.is_superuser:
+			operators = User.objects.filter(is_staff=True).order_by('last_name', 'first_name')
+			params['operators'] = operators
+		params['users'] = User.objects.filter(is_active=True).exclude(id=request.user.id)
+
+		if msg == '':
+			params['error'] = inst
+		else:
+			params['error'] = msg
+
+		for key, value in error_params.items():
+			params[key] = value
+
+		return render(request, 'tool_control/ad_hoc_usage_event.html', params)
+
+	return render(request, 'tool_control/ad_hoc_usage_event_confirmation.html', params)
+
