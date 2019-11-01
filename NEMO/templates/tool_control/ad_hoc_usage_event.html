@@ -37,11 +37,19 @@
 		</tr>
 		<tr>
 			<th>Project</th>
-			<td>{{ u.project }}</td>
+			<td>
+			{% for p in u.projects.all %}
+				{{ p.application_identifier }}<br/>
+			{% endfor %}
+			</td>
 		</tr>
 		<tr>
 			<th>User/Customer</th>
-			<td>{{ u.user }}</td>
+			<td>
+			{% for c in u.customers.all %}
+				{{ c.first_name }} {{ c.last_name }}<br/>
+			{% endfor %}
+			</td>
 		</tr>
 	</table>
 		{% endfor %}
@@ -67,11 +75,19 @@
 		</tr>
 		<tr>
 			<th>Project</th>
-			<td>{{ u.project }}</td>
+			<td>
+			{% for p in u.projects.all %}
+				{{ p.application_identifier }}<br/>
+			{% endfor %}
+			</td>
 		</tr>
 		<tr>
 			<th>User/Customer</th>
-			<td>{{ u.user }}</td>
+			<td>
+			{% for c in u.customers.all %}
+				{{ c.first_name }} {{ c.last_name }}<br/>
+			{% endfor %}
+			</td>
 		</tr>
 	</table>
 		{% endfor %}
@@ -97,11 +113,19 @@
 		</tr>
 		<tr>
 			<th>Project</th>
-			<td>{{ u.project }}</td>
+			<td>
+			{% for p in u.projects.all %}
+				{{ p.application_identifier }}<br/>
+			{% endfor %}
+			</td>
 		</tr>
 		<tr>
 			<th>User/Customer</th>
-			<td>{{ u.user }}</td>
+			<td>
+			{% for c in u.customers.all %}
+				{{ c.first_name }} {{ c.last_name }}<br/>
+			{% endfor %}
+			</td>
 		</tr>
 	</table>
 		{% endfor %}

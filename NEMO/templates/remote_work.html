@@ -72,7 +72,15 @@
 				<td>{{ c.start }}</td>
 				<td>{{ c.end }}</td>
 				<td>{% if not c.validated %}<button {% if c.contested %}disabled{% endif %} class="btn btn-success" onclick="validate_charge('{% url 'validate_staff_charge' c.id %}', this, '#staff_charge_row_{{ forloop.counter }}')">Validate</button>{% endif %}</td>
-				<td>{% if not c.validated %}<button {% if c.contested %}disabled{% endif %} class="btn btn-warning" onclick="contest_charge('{% url 'contest_staff_charge' c.id %}', this, '#staff_charge_row_{{ forloop.counter }}')">Contest</button>{% endif %}</td>
+				<td>
+				{% if not c.validated %}
+				<form action="{% url 'contest_staff_charge' c.id %}" method="POST">
+					{% csrf_token %}
+					<input type="hidden" name="staff_charge_id" value="{{ c.id }}" />
+					<input type="submit" class="btn btn-warning" value="Contest" {% if c.contested %} disabled{% endif %} />
+				</form>
+				{% endif %}
+				</td>
 			</tr>
 		{% endfor %}
 		</tbody>
@@ -120,7 +128,15 @@
 				<td>{{ u.end }}</td>
 				<td>{{ u.tool }}</td>
 				<td>{% if not u.validated %}<button {% if u.contested%}disabled{% endif %} class="btn btn-success" onclick="validate_charge('{% url 'validate_usage_event' u.id %}', this, '#usage_event_row_{{ forloop.counter }}')">Validate</button>{% endif %}</td>
-				<td>{% if not u.validated %}<button {% if u.contested%}disabled{% endif %} class="btn btn-warning" onclick="contest_charge('{% url 'contest_usage_event' u.id %}', this, '#usage_event_row_{{ forloop.counter }}')">Contest</button>{% endif %}</td>
+				<td>
+				{% if not u.validated %}
+					<form action="{% url 'contest_usage_event' u.id %}" method="POST">
+					{% csrf_token %}
+					<input type="hidden" name="usage_event_id" value="{{ u.id }}" />
+					<input type="submit" class="btn btn-warning" value="Contest" {% if u.contested %} disabled{% endif %} />
+					</form>
+				{% endif %}
+				</td>
 			</tr>
 		{% endfor %}
 		</tbody>

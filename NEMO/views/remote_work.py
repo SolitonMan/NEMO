@@ -57,17 +57,52 @@ def validate_usage_event(request, usage_event_id):
 @staff_member_required(login_url=None)
 @require_POST
 def contest_staff_charge(request, staff_charge_id):
+	dictionary = {
+		'contest_type': 'Staff Charge',
+		'usage_event': None,
+	}
 	staff_charge = get_object_or_404(StaffCharge, id=staff_charge_id)
-	staff_charge.contested = True
-	staff_charge.contest_description = request.POST.get("description")
-	staff_charge.save()
-	return HttpResponse()
+	dictionary['staff_charge'] = staff_charge
+	return render(request, 'remote_work_contest.html', dictionary)
+
 
 @staff_member_required(login_url=None)
 @require_POST
 def contest_usage_event(request, usage_event_id):
+	dictionary = {
+		'contest_type': 'Usage Event',
+		'staff_charge': None,
+	}
 	usage_event = get_object_or_404(UsageEvent, id=usage_event_id)
-	usage_event.contested = True
-	usage_event.contest_description = request.POST.get("description")
-	usage_event.save()
-	return HttpResponse()
+	dictionary['usage_event'] = usage_event
+	return render(request, 'remote_work_contest.html', dictionary)
+
+
+@staff_member_required(login_url=None)
+@require_POST
+def save_contest(request):
+	contest_type = request.POST.get("contest_type")
+	
+	if contest_type == "Staff Charge":
+		staff_charge_id = request.POST.get("staff_charge_id")
+		staff_charge = get_object_or_404(StaffCharge, id=staff_charge_id)
+		staff_charge.contested = True
+		description = request.POST.get("contest_reason")
+		if description == "Other":
+			description = request.POST.get("other_reason")
+		description += " DESCRIPTION:" + request.POST.get("contest_description")
+		staff_charge.contest_description = description
+		staff_charge.save()
+
+	if contest_type == "Usage Event":
+		usage_event_id = request.POST.get("usage_event_id")
+		usage_event = get_object_or_404(UsageEvent, id=usage_event_id)
+		usage_event.contested = True
+		description = request.POST.get("contest_reason")
+		if description == "Other":
+			description = request.POST.get("other_reason")
+		description += " DESCRIPTION:" + request.POST.get("contest_description")
+		usage_event.contest_description = description
+		usage_event.save()
+
+	return HttpResponseRedirect('/remote_work/')

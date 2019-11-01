@@ -562,6 +562,10 @@ def disable_tool_multi(request, tool_id, usage_event, dynamic_form):
 	
 		else:
 			# gather records and send to form for editing
+			# first return event to active state to ensure proper completion of the details
+			usage_event.end = None
+			usage_event.save()
+
 			params = {
 				'usage_event': usage_event,
 				'uep': uep,
@@ -569,6 +573,7 @@ def disable_tool_multi(request, tool_id, usage_event, dynamic_form):
 				'downtime': request.POST.get('downtime')
 			}
 			return render(request, 'tool_control/multiple_projects_finish.html', params)
+
 	except StaffChargeProject.DoesNotExist:
 		existing_staff_charge = request.user.get_staff_charge()
 		return render(request, 'staff_charges/general_reminder.html', { 'staff_charge': existing_staff_charge})
