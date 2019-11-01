@@ -157,7 +157,7 @@
 				</td>
 			</tr>
 			{% endif %}
-			<tr id="radio_options" style="display: none;">
+			<tr id="radio_options" style="{% if request.user.is_superuser %}display: none;{% else %}display: table-row;{% endif %}">
 				<td colspan="2">
 					<div class="radio"><label><input type="radio" id="use_mode" name="use_mode" value="0" onchange="set_mode(0);">
 					{% if request.user.is_superuser %}
