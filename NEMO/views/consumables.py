@@ -1,10 +1,10 @@
 from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import render
-from django.views.decorators.http import require_http_methods
-from django.http import HttpResponseRedirect
+from django.views.decorators.http import require_http_methods, require_GET
+from django.http import JsonResponse, HttpResponseRedirect
 
 from NEMO.forms import ConsumableWithdrawForm
-from NEMO.models import Consumable, User
+from NEMO.models import Consumable, Core, User
 
 
 @staff_member_required(login_url=None)
@@ -14,8 +14,14 @@ def consumables(request):
 
 	dictionary = {
 		'users': User.objects.filter(is_active=True),
-		'consumables': Consumable.objects.filter(visible=True).order_by('category', 'name'),
 	}
+
+	if request.user.is_superuser:
+		dictionary['cores'] = Core.objects.all()
+		dictionary['consumables'] = Consumable.objects.filter(visible=True).order_by('category', 'name')
+	else:
+		dictionary['active_core'] = request.session.get('active_core')
+		dictionary['consumables'] = Consumable.objects.filter(visible=True, core_id=request.session.get('active_core_id')).order_by('category', 'name')
 
 	if form.is_valid():
 		withdraw = form.save(commit=False)
@@ -31,3 +37,16 @@ def consumables(request):
 
 	dictionary['form'] = form
 	return render(request, 'consumables.html', dictionary)
+
+
+@staff_member_required(login_url=None)
+@require_GET
+def get_consumables(request):
+	core_id = request.GET.get('core_id')
+
+	if core_id is not None and core_id != '':
+		consumables = Consumable.objects.filter(visible=True, core_id=core_id).order_by('category', 'name')
+	else:
+		consumables = Consumable.objects.filter(visible=True).order_by('category', 'name')
+
+	return JsonResponse(dict(consumables=list(consumables.values('id', 'category__name', 'name'))))

@@ -21,7 +21,7 @@ def get_projects(request):
 	elif source_template == 'staff_charges':
 		entry_number = int(request.GET['entry_number'])
 		return render(request, 'staff_charges/get_projects.html', {'projects': projects, 'entry_number': entry_number, 'ad_hoc': ad_hoc})
-	return JsonResponse(dict(projects=list(projects.values('id', 'name'))))
+	return JsonResponse(dict(projects=list(projects.values('id', 'name', 'application_identifier'))))
 
 
 @staff_member_required(login_url=None)

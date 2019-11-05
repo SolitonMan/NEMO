@@ -17,6 +17,22 @@
 		{% csrf_token %}
 
 		<div class="form-group">
+			<label class="control-label col-sm-2" for="core_select">Core</label>
+			<div class="col-sm-4">
+				{% if request.user.is_superuser %}
+				<select name="core_select" id="core_select" class="form-control" onchange="update_consumables(this.options[this.selectedIndex].value);">
+					<option value="">Select a core to filter consumables</option>
+					{% for core in cores %}
+						<option value="{{ core.id }}">{{ core.name }}</option>
+					{% endfor %}
+				</select>
+				{% else %}
+					{{ active_core }}
+				{% endif %}
+			</div>
+		</div>
+
+		<div class="form-group">
 			<label class="control-label col-sm-2" for="customer_search">Customer</label>
 			<div class="col-sm-4">
 				{% if form.cleaned_data.customer %}
@@ -43,11 +59,11 @@
 					{% if projects|length == 0 %}
 						<option>{% if form.cleaned_data.customer %}No active projects!{% endif %}</option>
 					{% elif projects|length == 1 %}
-						<option value="{{ projects.0.id }}">{{ projects.0 }}</option>
+						<option value="{{ projects.0.id }}">{{ projects.0.application_identifier }}</option>
 					{% elif projects %}
 						<option disabled selected>Choose a project to bill</option>
 						{% for p in projects %}
-							<option value="{{ p.id }}" {% if form.cleaned_data.project.id == p.id %}selected{% endif %}>{{ p }}</option>
+							<option value="{{ p.id }}" {% if form.cleaned_data.project.id == p.id %}selected{% endif %}>{{ p.application_identifier }}</option>
 						{% endfor %}
 					{% endif %}
 				</select>
@@ -97,6 +113,44 @@
 	</form>
 
 	<script type="text/javascript">
+		function update_consumables(core_id)
+		{
+			if (core_id != "") {
+				$("#consumable").empty();
+				ajax_get("{% url 'get_consumables' %}", {'core_id': core_id}, function(response, status, xml_http_request)
+					{
+						var consumables = response['consumables'];
+
+						if (response.consumables.length === 0) 
+							$("#consumable").append($('<option/>', {text: "No consumables retrieved!"})).attr('disabled', 'disabled');
+						else if (response.consumables.length === 1)
+							$("#consumable").append($('<option/>', {value: response['consumables'][0].id, text: response['consumables'][0].name}));
+						else 
+						{
+							var selector = "";
+
+							$("#consumable").append($('<option/>'));
+
+							var category = response['consumables'][0].category__name;
+
+							$("#consumable").append($('<optgroup/>', {label: category}));
+
+							for (i=0; i<response['consumables'].length; i++) {
+								if (response['consumables'][i].category__name != category) {
+									// create a new optgroup
+									$("#consumable").append($('<option/>'));
+									category = response['consumables'][i].category__name;
+									$("#consumable").append($('<optgroup/>', {label: category}));
+								}
+								selector = "#consumable optgroup[label='" + category + "']";
+								$(selector).append($('<option/>', {value: response['consumables'][i].id, text: response['consumables'][i].name}));
+							}
+
+						}
+					});
+			}
+			
+		}
 		function clear_selected_customer()
 		{
 			$("#chosen_customer").val('').hide();
@@ -121,7 +175,7 @@
 			if(response.projects.length === 0)
 				$('#project').append($('<option/>', {text: "No active projects!"})).attr('disabled', 'disabled');
 			else if(response.projects.length === 1)
-				$('#project').append($('<option/>', {value: response['projects'][0].id, text: response['projects'][0].name}));
+				$('#project').append($('<option/>', {value: response['projects'][0].id, text: response['projects'][0].application_identifier}));
 			else
 			{
 				$('#project').append($('<option/>', {
@@ -131,7 +185,7 @@
 				}));
 				$.each(response['projects'], function(count, project)
 				{
-					$('#project').append($('<option/>', {value: project.id, text: project.name}));
+					$('#project').append($('<option/>', {value: project.id, text: project.application_identifier}));
 				});
 			}
 		}

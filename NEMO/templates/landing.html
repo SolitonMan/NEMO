@@ -72,7 +72,7 @@
 				{% for usage in usage_events %}
 					<a href="{% url 'tool_control' usage.tool.id %}" style="text-decoration: none">
 						<div class="alert alert-info">
-							You are using the <b>{{ usage.tool }}</b> for the project named {{ usage.projects.all.0 }} since {{ usage.start }}.
+							You are using the <b>{{ usage.tool }}</b> for the project named {{ usage.projects.all.0.application_identifier }} since {{ usage.start }}.
 						</div>
 					</a>
 				{% endfor %}

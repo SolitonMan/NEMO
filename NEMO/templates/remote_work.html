@@ -66,7 +66,7 @@
 				</td>
 				<td>
 				{% for p in c.projects.all %}
-					{{ p.name }}<br/>
+					{{ p.application_identifier }}<br/>
 				{% endfor %}
 				</td>
 				<td>{{ c.start }}</td>
@@ -77,7 +77,7 @@
 				<form action="{% url 'contest_staff_charge' c.id %}" method="POST">
 					{% csrf_token %}
 					<input type="hidden" name="staff_charge_id" value="{{ c.id }}" />
-					<input type="submit" class="btn btn-warning" value="Contest" {% if c.contested %} disabled{% endif %} />
+					<input type="submit" class="btn btn-warning" value="Contest" {% if c.contested %} style="pointer-events:auto;" disabled title="{{ c.contest_description }}"{% endif %} />
 				</form>
 				{% endif %}
 				</td>
@@ -118,7 +118,7 @@
 				<td>
 				{% if u.projects %}
 					{% for p in u.projects.all %}
-						{{ p.name }}<br/>
+						{{ p.application_identifier }}<br/>
 					{% endfor %}
 				{% else %}
 					{{ u.project }}
@@ -133,7 +133,7 @@
 					<form action="{% url 'contest_usage_event' u.id %}" method="POST">
 					{% csrf_token %}
 					<input type="hidden" name="usage_event_id" value="{{ u.id }}" />
-					<input type="submit" class="btn btn-warning" value="Contest" {% if u.contested %} disabled{% endif %} />
+					<input type="submit" class="btn btn-warning" value="Contest" {% if u.contested %} style="pointer-events:auto;" disabled title="{{ u.contest_description }}"{% endif %} />
 					</form>
 				{% endif %}
 				</td>

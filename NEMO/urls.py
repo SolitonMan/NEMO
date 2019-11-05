@@ -142,6 +142,7 @@ urlpatterns = [
 
 	# Consumables:
 	url(r'^consumables/$', consumables.consumables, name='consumables'),
+	url(r'^get_consumables/$', consumables.get_consumables, name='get_consumables'),
 
 	# Training:
 	url(r'^training/$', training.training, name='training'),
