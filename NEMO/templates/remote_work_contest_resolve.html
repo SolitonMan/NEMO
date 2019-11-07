@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if usage_event %}Usage Event{% else %}Staff Charge{% endif %} Contest Resolution{% endblock %}
+
+{% block content %}
+	{% if usage_event %}
+	<h1>Usage Event Contest Resolution</h1>
+
+	<p>Please make any desired changes to the entry below and click Resolve Contest to save those changes.  The usage event will be returned to the submitter for validation.</p>
+
+	<form action="" method="POST">
+		{% csrf_token %}
+		<input type="hidden" value="{{ usage_event.id }}" name="usage_event_id" />
+	<table class="table">
+		<tr>
+			<th>Contest Description</th>
+			<td>{{ usage_event.contest_description }}</td>
+		<tr>
+			<th>Operator</th>
+			<td>{{ usage_event.operator }}</td>
+		</tr>
+		<tr>
+			<th>Tool</th>
+			<td>{{ usage_event.tool }}</td>
+		</tr>
+		<tr>
+			<th>Customer(s)</th>
+			<td>
+			{% for c in usage_event.customers.all %}
+				{{ c }}<br />
+			{% endfor %}
+			</td>
+		</tr>
+		<tr>
+			<th>Project(s)</th>
+			<td>
+			{% for p in usage_event.projects.all %}
+				{{ p.application_identifier }}<br/>
+			{% endfor %}
+			</td>
+		</tr>
+		<tr>
+			<th>Start</th>
+			<td>{{ usage_event.start }}</td>
+		</tr>
+		<tr>
+			<th>End</th>
+			<td>{{ usage_event.end }}</td>
+		</tr>
+	</table>
+	<input type="button" value="Cancel Resolution" class="btn btn-warning" onclick="location.href='{% url 'review_contested_items' %}';" />
+	</form>
+	{% else %}
+	<h1>Staff Charge Contest Resolution</h1>
+
+	<p>Please make any desired changes to the entry below and click Resolve Contest to save those changes.  The staff charge will be returned to the submitter for validation.</p>
+
+	<form action="" method="POST">
+		{% csrf_token %}
+		<input type="hidden" name="staff_charge_id" value="{{ staff_charge.id }}" />
+	<table class="table">
+		<tr>
+			<th>Contest Description</th>
+			<td>{{ staff_charge.contest_description }}</td>
+		</tr>
+		<tr>
+			<th>Staff Member</th>
+			<td>{{ staff_charge.staff_member }}</td>
+		</tr>
+		<tr>
+			<th>Customer(s)</th>
+			<td>
+			{% for c in staff_charge.customers.all %}
+				{{ c }}<br/>
+			{% endfor %}
+			</td>
+		</tr>
+		<tr>
+			<th>Project(s)</th>
+			<td>
+			{% for p in staff_charge.projects.all %}
+				{{ p.application_identifier }} <br/>
+			{% endfor %}
+			</td>
+		</tr>
+		<tr>
+			<th>Start</th>
+			<td>{{ staff_charge.start }}</td>
+		</tr>
+		<tr>
+			<th>End</th>
+			<td>{{ staff_charge.end }}</td>
+		</tr>
+	</table>
+	<input type="button" value="Cancel Resolution" class="btn btn-warning" onclick="location.href='{% url 'review_contested_items' %}';" />
+	</form>
+	{% endif %}
+{% endblock %}

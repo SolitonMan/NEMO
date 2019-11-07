@@ -3,6 +3,17 @@
 {% block content %}
 	<h1>Staff charges</h1>
 	<div class="col-sm-12">
+		<p>You are currently charging staff time to the following customer(s):</p>
+                <table class="table">
+                {% for s in scp %}
+                <tr>
+                        <td>{{ s.customer }}</td>
+                        <td>{{ s.project }}</td>
+                </tr>
+                {% endfor %}
+                </table>
+                <br/>
+
 		<form action="{% url 'end_staff_area_charge' %}" class="form-horizontal" method="post">
 			{% csrf_token %}
 			<div class="form-group">

@@ -510,6 +510,15 @@ class StaffCharge(CalendarDisplay):
 	ad_hoc_related = models.CharField(max_length=500, blank=True, null=True)
 	projects = models.ManyToManyField('Project', through='StaffChargeProject')
 	customers = models.ManyToManyField('User', through='StaffChargeProject')
+	created = models.DateTimeField(null=True, blank=True)
+	updated = models.DateTimeField(null=True, blank=True)
+	validated_date = models.DateTimeField(null=True, blank=True)
+	contested_date = models.DateTimeField(null=True, blank=True)
+	contest_resolved = models.BooleanField(default=False)
+	contest_resolved_date = models.DateTimeField(null=True, blank=True)
+
+	def duration(self):
+		return calculate_duration(self.start, self.end, "In progress")
 
 	class Meta:
 		ordering = ['-start']
@@ -522,8 +531,8 @@ class StaffChargeProject(models.Model):
 	project = models.ForeignKey('Project', on_delete=models.CASCADE)
 	customer = models.ForeignKey('User', on_delete=models.CASCADE)
 	project_percent = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
-	created = models.DateTimeField(default=timezone.now, null=True)
-	updated = models.DateTimeField(default=timezone.now, null=True)
+	created = models.DateTimeField(null=True, blank=True)
+	updated = models.DateTimeField(null=True, blank=True)
 
 class Area(models.Model):
 	name = models.CharField(max_length=200, help_text='What is the name of this area? The name will be displayed on the tablet login and logout pages.')
@@ -548,6 +557,8 @@ class AreaAccessRecord(CalendarDisplay):
 	staff_charge = models.ForeignKey(StaffCharge, blank=True, null=True)
 	projects = models.ManyToManyField('Project', through='AreaAccessRecordProject')
 	customers = models.ManyToManyField('User', through='AreaAccessRecordProject', related_name='AreaAccessRecordMultipleCustomers')
+	created = models.DateTimeField(null=True, blank=True)
+	updated = models.DateTimeField(null=True, blank=True)
 
 	class Meta:
 		ordering = ['-start']
@@ -560,8 +571,8 @@ class AreaAccessRecordProject(models.Model):
 	project = models.ForeignKey('Project', on_delete=models.CASCADE)
 	customer = models.ForeignKey('User', on_delete=models.CASCADE)
 	project_percent = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
-	created = models.DateTimeField(default=timezone.now, null=True)
-	updated = models.DateTimeField(default=timezone.now, null=True)
+	created = models.DateTimeField(null=True, blank=True)
+	updated = models.DateTimeField(null=True, blank=True)
 
 class ConfigurationHistory(models.Model):
 	configuration = models.ForeignKey(Configuration)
@@ -638,6 +649,8 @@ class Reservation(CalendarDisplay):
 	additional_information = models.TextField(null=True, blank=True)
 	self_configuration = models.BooleanField(default=False, help_text="When checked, indicates that the user will perform their own tool configuration (instead of requesting that the laboratory staff configure it for them).")
 	title = models.TextField(default='', blank=True, max_length=200, help_text="Shows a custom title for this reservation on the calendar. Leave this field blank to display the reservation's user name as the title (which is the default behaviour).")
+	created = models.DateTimeField(null=True, blank=True)
+	updated = models.DateTimeField(null=True, blank=True)
 
 	def duration(self):
 		return self.end - self.start
@@ -657,6 +670,8 @@ class ReservationConfiguration(models.Model):
 	configuration = models.ForeignKey('Configuration', null=True, blank=True)
 	consumable = models.ForeignKey('Consumable', null=True, blank=True)
 	setting = models.TextField(null=True, blank=True)
+	created = models.DateTimeField(null=True, blank=True)
+	updated = models.DateTimeField(null=True, blank=True)
 
 
 class UsageEvent(CalendarDisplay):
@@ -672,6 +687,12 @@ class UsageEvent(CalendarDisplay):
 	run_data = models.TextField(null=True, blank=True)
 	projects = models.ManyToManyField('Project', through='UsageEventProject')
 	customers = models.ManyToManyField('User', through='UsageEventProject')
+	created = models.DateTimeField(null=True, blank=True)
+	updated = models.DateTimeField(null=True, blank=True)
+	validated_date = models.DateTimeField(null=True, blank=True)
+	contested_date = models.DateTimeField(null=True, blank=True)
+	contest_resolved = models.BooleanField(default=False)
+	contest_resolved_date = models.DateTimeField(null=True, blank=True)
 
 	def duration(self):
 		return calculate_duration(self.start, self.end, "In progress")
@@ -687,8 +708,8 @@ class UsageEventProject(models.Model):
 	project = models.ForeignKey('Project', on_delete=models.CASCADE)
 	project_percent = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
 	customer = models.ForeignKey('User', on_delete=models.CASCADE)
-	created = models.DateTimeField(default=timezone.now, null=True)
-	updated = models.DateTimeField(default=timezone.now, null=True)
+	created = models.DateTimeField(null=True, blank=True)
+	updated = models.DateTimeField(null=True, blank=True)
 
 
 class Consumable(models.Model):
@@ -1253,6 +1274,8 @@ class ScheduledOutage(models.Model):
 	category = models.CharField(blank=True, max_length=200, help_text="A categorical reason for why this outage is scheduled. Useful for trend analytics.")
 	tool = models.ForeignKey(Tool, null=True)
 	resource = models.ForeignKey(Resource, null=True)
+	created = models.DateTimeField(null=True, blank=True)
+	updated = models.DateTimeField(null=True, blank=True)
 
 	def __str__(self):
 		return str(self.title)

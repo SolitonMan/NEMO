@@ -18,12 +18,17 @@
 	<form class="form-inline" role="form">
 		<div class="form-group">
 			<label class="control-label">View charges for
+				{% if request.user.is_superuser %}
 				<select name="operator" class="form-control">
 					<option {% if selected_staff == "all staff" %}selected{% endif %}>all staff</option>
 					{% for s in staff_list %}
-						<option value="{{ s.id }}" {% if s.id == selected_staff %}selected{% endif %}>{{ s }}</option>
+						<option value="{{ s.id }}" {% if s.id == selected_staff %}selected{% endif %}>{{ s.last_name }}, {{ s.first_name }} ({{ s.username }})</option>
 					{% endfor %}
 				</select>
+				{% else %}
+				<input type="hidden" name="operator" value="{{ request.user.id}}" />
+				{{ request.user.first_name }} {{ request.user.last_name }}
+				{% endif %}
 			</label>
 		</div>
 		<div class="form-group" style="margin-right:20px">
@@ -48,8 +53,8 @@
 			<th>Staff member</th>
 			<th>Customer</th>
 			<th>Project</th>
-			<th>Start</th>
-			<th>End</th>
+			<th>Start - End</th>
+			<th>Duration</th>
 			<th>Validate</th>
 			<th>Contest</th>
 		</tr>
@@ -69,8 +74,8 @@
 					{{ p.application_identifier }}<br/>
 				{% endfor %}
 				</td>
-				<td>{{ c.start }}</td>
-				<td>{{ c.end }}</td>
+				<td>{{ c.start }} - <br/>{{ c.end }}</td>
+				<td>{{ c.duration }}</td>
 				<td>{% if not c.validated %}<button {% if c.contested %}disabled{% endif %} class="btn btn-success" onclick="validate_charge('{% url 'validate_staff_charge' c.id %}', this, '#staff_charge_row_{{ forloop.counter }}')">Validate</button>{% endif %}</td>
 				<td>
 				{% if not c.validated %}
@@ -94,8 +99,8 @@
 			<th>Operator</th>
 			<th>User</th>
 			<th>Project</th>
-			<th>Start</th>
-			<th>End</th>
+			<th>Start - End</th>
+			<th>Duration</th>
 			<th>Tool</th>
 			<th>Validate</th>
 			<th>Contest</th>
@@ -124,8 +129,8 @@
 					{{ u.project }}
 				{% endif %}
 				</td>
-				<td>{{ u.start }}</td>
-				<td>{{ u.end }}</td>
+				<td>{{ u.start }} - <br/>{{ u.end }}</td>
+				<td>{{ u.duration }}</td>
 				<td>{{ u.tool }}</td>
 				<td>{% if not u.validated %}<button {% if u.contested%}disabled{% endif %} class="btn btn-success" onclick="validate_charge('{% url 'validate_usage_event' u.id %}', this, '#usage_event_row_{{ forloop.counter }}')">Validate</button>{% endif %}</td>
 				<td>

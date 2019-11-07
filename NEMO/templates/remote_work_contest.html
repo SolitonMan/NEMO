@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+{% block title %}Contest {{ contest_type }}{% endblock %}
+
+{% block content %}
+	<h1>Contest {{ contest_type }}</h1>
+
+	<p>You have selected the {{ contest_type }} detailed below to contest.  Please select a general reason this item should be contested and enter a description of the specifics.  Once this form is submitted the {{ contest_type }} will be placed in contested status until an administrator can review the record and address it as needed.</p>
+
+	<form name="contest" id="contest" action="{% url 'save_contest' %}" method="POST" onsubmit="return on_submit();">
+	{% csrf_token %}
+	<input type="hidden" name="contest_type" value="{{ contest_type }}" />
+	{% if usage_event is not None %}
+	<input type="hidden" name="usage_event_id" value="{{ usage_event.id }}" />
+	<table class="table">
+		<tr>
+			<th>Tool</th>
+			<td>{{ usage_event.tool }}</td>
+		</tr>
+		<tr>
+			<th>Start</th>
+			<td>{{ usage_event.start }}</td>
+		</tr>
+		<tr>
+			<th>End</th>
+			<td>{{ usage_event.end }}</td>
+		</tr>
+		<tr>
+			<th>Operator</th>
+			<td>{{ usage_event.operator }}</td>
+		</tr>
+		<tr>
+			<th>Project(s)</th>
+			<td>
+			{% for p in usage_event.projects.all %}
+				{{ p.application_identifier }}<br/>
+			{% endfor %}
+			</td>
+		</tr>
+		<tr>
+			<th>Customer(s)</th>
+			<td>
+			{% for c in usage_event.customers.all %}
+				{{ c.first_name }} {{ c.last_name }}<br/>
+			{% endfor %}
+			</td>
+		</tr>
+	</table>
+	{% endif %}
+
+	{% if staff_charge is not None %}
+	<input type="hidden" name="staff_charge_id" value="{{ staff_charge.id }}" />
+	<table class="table">
+		<tr>
+			<th>Staff Member</th>
+			<td>{{ staff_charge.staff_member }}</td>
+		</tr>
+		<tr>
+			<th>Start</th>
+			<td>{{ staff_charge.start }}</td>
+		</tr>
+		<tr>
+			<th>End</th>
+			<td>{{ staff_charge.end }}</td>
+		</tr>
+		<tr>
+			<th>Project(s)</th>
+			<td>
+			{% for p in staff_charge.projects.all %}
+				{{ p.application_identifier }}<br/>
+			{% endfor %}
+			</td>
+		</tr>
+		<tr>
+			<th>Customer(s)</th>
+			<td>
+			{% for c in staff_charge.customers.all %}
+				{{ c.first_name }} {{ c.last_name }}<br/>
+			{% endfor %}
+			</td>
+		</tr>
+	</table>
+	{% endif %}
+	<table class="table">
+		<tr>
+			<td>
+				<label for="contest_reason">Contest Reason
+				<select class="form-control" name="contest_reason" id="contest_reason" onchange="set_other(this);">
+					<option value="">Please select a contest reason</option>
+					<option value="Equipment error">Equipment error</option>
+					<option value="Sample rework">Sample rework</option>
+					<option value="Forgot to log out">Forgot to log out</option>
+					<option value="Erroneous percentage assignments">Erroneous percentage assignments</option>
+					<option value="Other">Other</option>
+				</select>
+				</label>
+				<input class="form-control" type="text" value="" placeholder="Enter an other reason for contest" name="other_reason" id="other_reason" />
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<label for="contest_description">Contest Description
+				<textarea class="form-control" rows="10" cols="100" name="contest_description" id="contest_description"></textarea>
+				</label>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<input type="submit" class="btn btn-default" value="Contest {{ contest_type }}" />
+			</td>
+		</tr>
+	</table>
+	</form>
+
+	<script type="text/javascript">
+	function set_other(sel)
+	{
+		option = sel.options[sel.selectedIndex].value;
+		if (option == "Other") {
+			$("#other_reason").show();
+		} else {
+			$("#other_reason").hide();
+		}
+	}
+	function on_submit()
+	{
+		if ($("#contest_reason").val() == "") {
+			alert("Please select a reason for contesting this {{ contest_type }}.");
+			$("#contest_reason").focus();
+			return false;
+		}
+		if ($("#contest_reason").val() == "Other" && $("#other_reason").val() == "") {
+			alert("Please enter your other reason for contesting this {{ contest_type }}.");
+			$("#other_reason").focus();
+			return false;
+		}
+		if ($("#contest_description").val() == "") {
+			alert("Please enter a contest description.");
+			$("#contest_description").focus();
+			return false;
+		}
+		return true;
+	}
+	function on_load()
+	{
+		$("#other_reason").hide();
+	}
+	$(on_load);
+	</script>
+{% endblock %}

@@ -11,7 +11,7 @@
 	<p>Charges will assigned 100% for {{ scp.customer.first_name }} {{ scp.customer.last_name }} to project {{ scp.project.name }}</p>
 {% else %}
 	<p>Please assign the desired percent of staff charges to each project included:</p>
-	<form id="staff_charge_projects" action="{% url 'staff_charge_projects_save' %}" method="POST" class="form-horizontal">
+	<form id="staff_charge_projects" method="POST" class="form-horizontal" onsubmit="return on_submit();">
 		{% csrf_token %}
 		<table class="table">
 			<tr>

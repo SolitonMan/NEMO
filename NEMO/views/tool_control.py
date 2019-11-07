@@ -263,6 +263,8 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge):
 	new_usage_event.user = user
 	new_usage_event.project = project
 	new_usage_event.tool = tool
+	new_usage_event.created = timezone.now()
+	new_usage_event.updated = timezone.now()
 	new_usage_event.save()
 
 	# create a usage event project record for consistency with other usage event charges
@@ -271,6 +273,8 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge):
 	uep.customer = user
 	uep.project = project
 	uep.project_percent = 100.0	# no reason to ask after the fact when only one customer
+	uep.created = timezone.now()
+	uep.updated = timezone.now()
 	uep.save()
 
 	if staff_charge:
@@ -278,6 +282,8 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge):
 		new_staff_charge.staff_member = request.user
 		new_staff_charge.customer = user
 		new_staff_charge.project = project
+		new_staff_charge.created = timezone.now()
+		new_staff_charge.updated = timezone.now()
 		new_staff_charge.save()
 
 		# create a staff_charge_project record
@@ -285,7 +291,9 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge):
 		scp.staff_charge = new_staff_charge
 		scp.customer = user
 		scp.project = project
-		scp.save
+		scp.created = timezone.now()
+		scp.updated = timezone.now()
+		scp.save()
 
 	if tool.requires_area_access and AreaAccessRecord.objects.filter(area=tool.requires_area_access,customer=operator,end=None).count() == 0:
 		aar = AreaAccessRecord()
@@ -293,6 +301,8 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge):
 		aar.customer = operator
 		aar.project = project
 		aar.start = timezone.now()
+		aar.created = timezone.now()
+		aar.updated = timezone.now()
 
 		if staff_charge:
 			aar.staff_charge = new_staff_charge
@@ -304,6 +314,8 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge):
 		aarp.area_access_record = aar
 		aarp.project = project
 		aarp.customer = user
+		aarp.created = timezone.now()
+		aarp.updated = timezone.now()
 		aarp.save()
 
 	return response
@@ -340,6 +352,8 @@ def enable_tool_multi(request):
 	new_usage_event.tool = tool
 	new_usage_event.project = None
 	new_usage_event.user = None
+	new_usage_event.created = timezone.now()
+	new_usage_event.updated = timezone.now()
 	new_usage_event.save()	
 
 	project_events = {}
@@ -351,6 +365,8 @@ def enable_tool_multi(request):
 			if index not in project_events:
 				project_events[index] = UsageEventProject()
 				project_events[index].usage_event = new_usage_event
+				project_events[index].created = timezone.now()
+				project_events[index].updated = timezone.now()
 			if attribute == "chosen_user":
 				if value is not None and value != "":
 					project_events[index].customer = User.objects.get(id=value)
@@ -384,15 +400,20 @@ def enable_tool_multi(request):
 			current_staff_charge.charge_end_override = True
 			current_staff_charge.override_confirmed = False
 			current_staff_charge.end = timezone.now()
+			current_staff_charge.updated = timezone.now()
 			current_staff_charge.save()
 			new_staff_charge = StaffCharge()
 			new_staff_charge.staff_member = request.user
+			new_staff_charge.created = timezone.now()
+			new_staff_charge.updated = timezone.now()
 			new_staff_charge.save()
 		else:
 			new_staff_charge = request.user.get_staff_charge()
 	else:
 		new_staff_charge = StaffCharge()
 		new_staff_charge.staff_member = request.user
+		new_staff_charge.created = timezone.now()
+		new_staff_charge.updated = timezone.now()
 		new_staff_charge.save()
 
 	project_charges = {}
@@ -404,6 +425,8 @@ def enable_tool_multi(request):
 			if index not in project_charges:
 				project_charges[index] = StaffChargeProject()
 				project_charges[index].staff_charge = new_staff_charge
+				project_charges[index].created = timezone.now()
+				project_charges[index].updated = timezone.now()
 			if attribute == "chosen_user":
 				if value is not None and value != "":
 					project_charges[index].customer = User.objects.get(id=value)
@@ -428,6 +451,8 @@ def enable_tool_multi(request):
 		aar = AreaAccessRecord()
 		aar.area = tool.requires_area_access
 		aar.start = timezone.now()
+		aar.created = timezone.now()
+		aar.updated = timezone.now()
 
 		if staff_charge:
 			aar.staff_charge = new_staff_charge
@@ -442,6 +467,8 @@ def enable_tool_multi(request):
 				aarp.area_access_record = aar
 				aarp.project = s.project
 				aarp.customer = s.customer
+				aarp.created = timezone.now()
+				aarp.updated = timezone.now()
 				aarp.save()
 
 	return response
@@ -480,8 +507,11 @@ def disable_tool(request, tool_id):
 			new_reservation.id = None
 			new_reservation.pk = None
 			new_reservation.end = timezone.now() + downtime
+			new_reservation.updated = timezone.now()
+			new_reservation.created = timezone.now()
 			new_reservation.save()
 			current_reservation.shortened = True
+			current_reservation.updated = timezone.now()
 			current_reservation.descendant = new_reservation
 			current_reservation.save()
 	except Reservation.DoesNotExist:
@@ -504,6 +534,7 @@ def disable_tool(request, tool_id):
 
 	if current_usage_event.project is None and current_usage_event.user is None:
 		# multi user event possibility, check
+		current_usage_event.updated = timezone.now()
 		current_usage_event.save()
 		if UsageEventProject.objects.filter(usage_event=current_usage_event).exists():
 			return disable_tool_multi(request, tool_id, current_usage_event, dynamic_form)
@@ -512,6 +543,7 @@ def disable_tool(request, tool_id):
 	# Charge for consumables
 	dynamic_form.charge_for_consumable(current_usage_event.user, current_usage_event.operator, current_usage_event.project, current_usage_event.run_data)
 
+	current_usage_event.updated = timezone.now()
 	current_usage_event.save()
 
 	if request.user.charging_staff_time():
@@ -538,6 +570,8 @@ def disable_tool_multi(request, tool_id, usage_event, dynamic_form):
 		if uep.count() == 1:
 			# set project_percent to 100
 			uep.update(project_percent=100.0)
+			uep.updated = timezone.now()
+			uep.save()
 
 			uep = UsageEventProject.objects.get(usage_event=usage_event)
 
@@ -564,6 +598,7 @@ def disable_tool_multi(request, tool_id, usage_event, dynamic_form):
 			# gather records and send to form for editing
 			# first return event to active state to ensure proper completion of the details
 			usage_event.end = None
+			usage_event.updated = timezone.now()
 			usage_event.save()
 
 			params = {
@@ -604,6 +639,7 @@ def usage_event_projects_save(request):
 					if value == '':
 						msg = 'You must enter a numerical value for the percent to charge to a project'
 						event.end=null
+						event.updated = timezone.now()
 						event.save()
 						raise Exception()
 					else:
@@ -612,6 +648,7 @@ def usage_event_projects_save(request):
 		if int(prc) != 100:
 			msg = 'Percent values must total to 100.0'
 			event.end=null
+			event.updated = timezone.now()
 			event.save()
 			raise Exception()
 
@@ -623,10 +660,13 @@ def usage_event_projects_save(request):
 				uepid = int(uepid)
 				if attribute == "project_percent":
 					uep = UsageEventProject.objects.get(id=uepid)
-					UsageEventProject.objects.filter(id=uepid).update(project_percent=value)
+					uep.project_percent = value
+					uep.updated = timezone.now()
+					uep.save()
 					dynamic_form.charge_for_consumable(uep.customer, event.operator, uep.project, event.run_data, value)
 
 		event.end = timezone.now() + downtime
+		event.updated = timezone.now()
 		event.save()
 
 		if request.user.charging_staff_time():
@@ -776,6 +816,8 @@ def save_usage_event(request):
 		if user_id is not None and user_id != "":
 			user_id = int(user_id)
 			new_usage_event.user = User.objects.get(id=user_id)
+		new_usage_event.created = timezone.now()
+		new_usage_event.updated = timezone.now()
 		new_usage_event.save()
 
 		project_events = {}
@@ -787,6 +829,8 @@ def save_usage_event(request):
 				if index not in project_events:
 					project_events[index] = UsageEventProject()
 					project_events[index].usage_event = new_usage_event
+					project_events[index].created = timezone.now()
+					project_events[index].updated = timezone.now()
 				if attribute == "chosen_user":
 					if value is not None and value != "":
 						project_events[index].customer = User.objects.get(id=value)

@@ -227,6 +227,7 @@ def create_reservation(request):
 		user = request.user
 	# Create the new reservation:
 	new_reservation = Reservation()
+	new_reservation.created = timezone.now()
 	new_reservation.user = user
 	new_reservation.creator = request.user
 	new_reservation.tool = tool
@@ -260,6 +261,7 @@ def create_reservation(request):
 	configured = (request.POST.get('configured') == "true")
 	# If a reservation is requested and the tool does not require configuration...
 	if not tool.is_configurable():
+		new_reservation.updated = timezone.now()
 		new_reservation.save()
 		return HttpResponse()
 
@@ -274,10 +276,12 @@ def create_reservation(request):
 		# Reservation can't be short notice if the user is configuring the tool themselves.
 		if new_reservation.self_configuration:
 			new_reservation.short_notice = False
+		new_reservation.updated = timezone.now()
 		new_reservation.save()
 		for rc in res_conf:
 			if rc is not None:
 				rc.reservation = new_reservation
+				rc.updated = timezone.now()
 				rc.save()
 		return HttpResponse()
 
@@ -336,6 +340,7 @@ def create_outage(request):
 	tool = get_object_or_404(Tool, name=request.POST.get('tool_name'))
 	# Create the new reservation:
 	outage = ScheduledOutage()
+	outage.created = timezone.now()
 	outage.creator = request.user
 	outage.category = request.POST.get('category', '')[:200]
 	outage.tool = tool
@@ -355,6 +360,7 @@ def create_outage(request):
 	outage.title = request.POST['title']
 	outage.details = request.POST.get('details', '')
 
+	outage.updated = timezone.now()
 	outage.save()
 	return HttpResponse()
 
@@ -425,6 +431,7 @@ def modify_reservation(request, start_delta, end_delta):
 	reservation_to_cancel.cancelled_by = request.user
 	# Create a new reservation for the user.
 	new_reservation = Reservation()
+	new_reservation.created = now
 	new_reservation.title = reservation_to_cancel.title
 	new_reservation.creator = request.user
 	new_reservation.additional_information = reservation_to_cancel.additional_information
@@ -450,16 +457,20 @@ def modify_reservation(request, start_delta, end_delta):
 		return HttpResponseBadRequest(policy_problems[0])
 	else:
 		# All policy checks passed, so save the reservation.
+		new_reservation.updated = timezone.now()
 		new_reservation.save()
 		if ReservationConfiguration.objects.filter(reservation=reservation_to_cancel).exists:
 			for rc in ReservationConfiguration.objects.filter(reservation=reservation_to_cancel):
 				res_conf = ReservationConfiguration()
+				res_conf.created = timezone.now()
 				res_conf.reservation = new_reservation
 				res_conf.configuration = rc.configuration
 				res_conf.consumable = rc.consumable
+				res_conf.updated = timezone.now()
 				res_conf.save()
 
 		reservation_to_cancel.descendant = new_reservation
+		reservation_to_cancel.updated = timezone.now()
 		reservation_to_cancel.save()
 	return response
 
@@ -477,6 +488,7 @@ def modify_outage(request, start_delta, end_delta):
 		return HttpResponseBadRequest(policy_problem)
 	else:
 		# All policy checks passed, so save the reservation.
+		outage.updated = timezone.now()
 		outage.save()
 	return HttpResponse()
 
@@ -507,6 +519,7 @@ def cancel_reservation(request, reservation_id):
 		reservation.cancelled = True
 		reservation.cancellation_time = timezone.now()
 		reservation.cancelled_by = request.user
+		reservation.updated = timezone.now()
 		reservation.save()
 
 		if reason:
@@ -548,6 +561,7 @@ def set_reservation_title(request, reservation_id):
 	""" Cancel a reservation for a user. """
 	reservation = get_object_or_404(Reservation, id=reservation_id)
 	reservation.title = request.POST.get('title', '')[:reservation._meta.get_field('title').max_length]
+	reservation.updated = timezone.now()
 	reservation.save()
 	return HttpResponse()
 
@@ -693,6 +707,7 @@ def cancel_unused_reservations(request):
 			if not (UsageEvent.objects.filter(tool=tool, start__gte=threshold).exists() or UsageEvent.objects.filter(tool=tool, end__gte=threshold).exists()):
 				# Mark the reservation as missed and notify the user & laboratory staff.
 				r.missed = True
+				r.updated = timezone.now()
 				r.save()
 				missed_reservations.append(r)
 

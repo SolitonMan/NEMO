@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Contested Items Review{% endblock %}
+
+{% block content %}
+	{% if error is not None and error != '' %}
+		<div class="alert alert-danger">
+			{{ error }}
+		</div>
+	{% endif %}
+	<h1>Contested Items Review</h1>
+
+	<p>This page displays items that have been contested by users prior to validation.  These items include staff charges and usage events.  To resolve an item, click on the link to display the item details along with options for how to resolve it.  Once an item is resolved, it will return once again to the user's queue for validation.</p>
+
+	<h3>Staff Charge Contests</h3>
+
+	<table class="table">
+		<thead>
+		<tr>
+			<th>Staff Member</th>
+			<th>Customer</th>
+			<th>Project</th>
+			<th>Start - End</th>
+			<th>Duration</th>
+			<th>Resolve</th>
+		</tr>
+		</thead>
+		<tbody>
+		{% for c in staff_charges %}
+		<tr>
+			<td>{{ c.staff_member }}</td>
+			<td>
+				{% for s in c.customers.all %}
+					{{ s.first_name }}&nbsp;{{ s.last_name }}<br/>
+				{% endfor %}
+			</td>
+			<td>
+				{% for p in c.projects.all %}
+					{{ p.application_identifier }}<br/>
+				{% endfor %}
+			</td>
+			<td>{{ c.start }} - {{ c.end }}</td>
+			<td>{{ c.duration }}</td>
+			<td>
+				<form action="{% url 'resolve_staff_charge_contest' %}" method="POST">
+					{% csrf_token %}
+					<input type="hidden" name="staff_charge_id" value="{{ c.id }}" />
+					<input type="submit" class="btn btn-default" value="Resolve" />
+				</form>
+			</td>
+		</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+	<br/><br/>
+
+	<h3>Usage Event Contests</h3>
+
+	<table class="table">
+		<thead>
+		<tr>
+			<th>Operator</th>
+			<th>Tool</th>
+			<th>Customer</th>
+			<th>Project</th>
+			<th>Start - End</th>
+			<th>Duration</th>
+			<th>Resolve</th>
+		</tr>
+		</thead>
+		<tbody>
+		{% for u in usage %}
+		<tr>
+			<td>{{ u.operator }}</td>
+			<td>{{ u.tool }}</td>
+			<td>
+				{% if u.customers %}
+					{% for c in u.customers.all %}
+						{{ c.first_name }}&nbsp;{{ c.last_name }}<br/>
+					{% endfor %}
+				{% else %}
+					{{ u.user }}
+				{% endif %}
+			</td>
+			<td>
+				{% if u.projects %}
+					{% for p in u.projects.all %}
+						{{ p.application_identifier }}<br/>
+					{% endfor %}
+				{% else %}
+					{{ u.project }}
+				{% endif %}
+			</td>
+			<td>{{ u.start }} - {{ u.end }}</td>
+			<td>{{ u.duration }}</td>
+			<td>
+				<form action="{% url 'resolve_usage_event_contest' %}" method="POST">
+					{% csrf_token %}
+					<input type="hidden" name="usage_event_id" value="{{ u.id }}" />
+					<input type="submit" class="btn btn-default" value="Resolve" />
+				</form>
+			</td>
+		</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+{% endblock %}

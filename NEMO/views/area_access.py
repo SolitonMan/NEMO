@@ -153,6 +153,8 @@ def login_to_area(request, door_id=None, area_id=None):
 		record.area = door.area
 		record.customer = user
 		record.project = user.active_projects()[0]
+		record.created = timezone.now()
+		record.updated = timezone.now()
 		record.save()
 		if door_id is not None and door_id != 0:
 			unlock_door(door.id)
@@ -173,6 +175,7 @@ def login_to_area(request, door_id=None, area_id=None):
 			if user.in_area():
 				previous_area_access_record = user.area_access_record()
 				previous_area_access_record.end = timezone.now()
+				previous_area_access_record.updated = timezone.now()
 				previous_area_access_record.save()
 				previous_area = previous_area_access_record.area
 
@@ -180,6 +183,8 @@ def login_to_area(request, door_id=None, area_id=None):
 			record.area = area
 			record.customer = user
 			record.project = project
+			record.created = timezone.now()
+			record.updated = timezone.now()
 			record.save()
 			if door_id is not None and door_id != 0:
 				unlock_door(door.id)
@@ -211,6 +216,7 @@ def logout_of_area(request, door_id=None, area_id=None):
 	# Allow the user to log out of any area, even if this is a logout tablet for a different area.
 	if record:
 		record.end = timezone.now()
+		record.updated = timezone.now()
 		record.save()
 		return render(request, 'area_access/logout_success.html', {'area': record.area, 'name': user.first_name})
 	else:
@@ -225,6 +231,7 @@ def force_area_logout(request, user_id):
 	if record is None:
 		return HttpResponseBadRequest('That user is not logged into any areas.')
 	record.end = timezone.now()
+	record.updated = timezone.now()
 	record.save()
 	return HttpResponse()
 
@@ -272,6 +279,7 @@ def change_project(request, new_project=None):
 	# Stop billing the user's initial project
 	record = request.user.area_access_record()
 	record.end = timezone.now()
+	record.updated = timezone.now()
 	record.save()
 	area = record.area
 	# Start billing the user's new project
@@ -279,6 +287,8 @@ def change_project(request, new_project=None):
 	record.area = area
 	record.customer = request.user
 	record.project = new_project
+	record.created = timezone.now()
+	record.updated = timezone.now()
 	record.save()
 	return redirect(reverse('landing'))
 
@@ -331,6 +341,8 @@ def new_area_access_record(request):
 		record.area = area
 		record.customer = user
 		record.project = project
+		record.created = timezone.now()
+		record.updated = timezone.now()
 		record.save()
 		dictionary['success'] = '{} is now logged in to the {}.'.format(user, area.name.lower())
 		return render(request, 'area_access/new_area_access_record.html', dictionary)

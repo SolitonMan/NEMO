@@ -34,6 +34,26 @@
 
 	</script>
 	<div class="row">
+		{% if validation_needed %}
+			<div class="col-lg-4">
+				<h3>Validation Needed</h3>
+				<a href="{% url 'remote_work' %}" style="text-decoration: none">
+					<div class="alert alert-warning">
+					There are items that require validation.  Please review them now, they will be automatically validated within 5 days of completion.
+					</div>
+				</a>
+			</div>
+		{% endif %}
+		{% if contested_items %}
+			<div class="col-lg-4">
+				<h3>Contested Items</h3>
+				<a href="{% url 'review_contested_items' %}" style="text-decoration: none">
+					<div class="alert alert-warning">
+						<b>There are contested items that need to be reviewed</b>
+					</div>
+				</a>
+			</div>
+		{% endif %}
 		{% if upcoming_reservations %}
 			<div class="col-lg-4">
 				<h3>Upcoming reservations</h3>

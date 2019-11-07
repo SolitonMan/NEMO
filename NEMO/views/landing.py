@@ -7,7 +7,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_GET
 from django.http import HttpResponseRedirect
 
-from NEMO.models import Alert, LandingPageChoice, Reservation, Resource, UsageEvent
+from NEMO.models import Alert, LandingPageChoice, Reservation, Resource, StaffCharge, UsageEvent
 from NEMO.views.alerts import delete_expired_alerts
 from NEMO.views.area_access import able_to_self_log_in_to_area
 from NEMO.views.notifications import delete_expired_notifications, get_notificaiton_counts
@@ -30,6 +30,20 @@ def landing(request):
 	else:
 		active_area_access = False
 
+	contested_items = False
+	if request.user.is_superuser:
+		if UsageEvent.objects.filter(contested=True, validated=False, contest_resolved=False).exists() or StaffCharge.objects.filter(contested=True, validated=False, contest_resolved=False).exists():
+			contested_items = True
+	else:
+		if UsageEvent.objects.filter(contested=True, validated=False, contest_resolved=False, operator__core_ids__in=request.user.core_ids.all()).exists() or StaffCharge.objects.filter(contested=True, validated=False, contest_resolved=False, staff_member__core_ids__in=request.user.core_ids.all()).exists():
+			contested_items = True
+
+
+	if UsageEvent.objects.filter(operator=request.user, validated=False, contested=False).exists() or StaffCharge.objects.filter(staff_member=request.user, validated=False, contested=False).exists():
+		validation_needed = True
+	else:
+		validation_needed = False
+
 	tools_in_use = [u.tool_id for u in usage_events]
 	fifteen_minutes_from_now = timezone.now() + timedelta(minutes=15)
 	landing_page_choices = LandingPageChoice.objects.all()
@@ -49,5 +63,7 @@ def landing(request):
 		'notification_counts': get_notificaiton_counts(request.user),
 		'self_log_in': able_to_self_log_in_to_area(request.user),
 		'active_area_access': active_area_access,
+		'contested_items': contested_items,
+		'validation_needed': validation_needed,
 	}
 	return render(request, 'landing.html', dictionary)

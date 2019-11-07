@@ -25,7 +25,7 @@ def staff_charges(request):
 	if staff_charge:
 		try:
 			area_access_record = AreaAccessRecord.objects.get(staff_charge=staff_charge.id, end=None)
-			return render(request, 'staff_charges/end_area_charge.html', {'area': area_access_record.area})
+			return render(request, 'staff_charges/end_area_charge.html', {'area': area_access_record.area, 'staff_charge': staff_charge, 'scp': StaffChargeProject.objects.filter(staff_charge=staff_charge)})
 		except AreaAccessRecord.DoesNotExist:
 			scp = StaffChargeProject.objects.filter(staff_charge=staff_charge)
 			return render(request, 'staff_charges/change_status.html', {'areas': Area.objects.all(), 'scp': scp, 'staff_charge': staff_charge})
@@ -72,10 +72,9 @@ def begin_staff_charge(request):
 	charge = StaffCharge()
 
 	try:
-		#charge = StaffCharge()
-		#charge.customer = User.objects.get(id=request.POST['customer'])
-		#charge.project = Project.objects.get(id=request.POST['project'])
 		charge.staff_member = request.user
+		charge.created = timezone.now()
+		charge.updated = timezone.now()
 		charge.save()
 
 		project_charges = {}
@@ -87,6 +86,8 @@ def begin_staff_charge(request):
 				if index not in project_charges:
 					project_charges[index] = StaffChargeProject()
 					project_charges[index].staff_charge = charge
+					project_charges[index].created = timezone.now()
+					project_charges[index].updated = timezone.now()
 				if attribute == "chosen_user":
 					if value is not None and value != "":
 						project_charges[index].customer = User.objects.get(id=value)
@@ -129,8 +130,8 @@ def staff_charge_entry(request):
 @staff_member_required(login_url=None)
 @require_GET
 def ad_hoc_staff_charge_entry(request):
-        entry_number = int(request.GET['entry_number'])
-        return render(request, 'staff_charges/ad_hoc_staff_charge_entry.html', {'entry_number': entry_number})
+	entry_number = int(request.GET['entry_number'])
+	return render(request, 'staff_charges/ad_hoc_staff_charge_entry.html', {'entry_number': entry_number})
 
 
 
@@ -254,6 +255,8 @@ def ad_hoc_staff_charge(request):
 		charge.staff_member = request.user
 		charge.start = ad_hoc_start
 		charge.end = ad_hoc_end
+		charge.created = timezone.now()
+		charge.updated = timezone.now()
 		charge.save()
 
 		prc = 0.0
@@ -268,6 +271,8 @@ def ad_hoc_staff_charge(request):
 				if index not in project_charges:
 					project_charges[index] = StaffChargeProject()
 					project_charges[index].staff_charge = charge
+					project_charges[index].created = timezone.now()
+					project_charges[index].updated = timezone.now()
 				if attribute == "chosen_user":
 					if value is not None and value != "":
 						project_charges[index].customer = User.objects.get(id=value)
@@ -463,6 +468,8 @@ def ad_hoc_overlap_resolution(request):
 		ahc.start = request.POST.get("ad_hoc_start")
 		ahc.end = request.POST.get("ad_hoc_end")
 		ahc.staff_member = request.user
+		ahc.created = timezone.now()
+		ahc.updated = timezone.now()
 		ahc.save()
 	
 		ad_hoc_id = int(ahc.id)
@@ -479,6 +486,8 @@ def ad_hoc_overlap_resolution(request):
 			scp.project = Project.objects.get(id=a1)
 			a2 = a[2]
 			scp.project_percent = Decimal(a2)
+			scp.created = timezone.now()
+			scp.updated = timezone.now()
 			scp.save()
 
 		# get the StaffCharges that overlap the ad hoc charge
@@ -505,6 +514,7 @@ def ad_hoc_overlap_resolution(request):
 			if choice == 0:
 				if case == 1:
 					ad_hoc_charge.end = o.start
+					ad_hoc_charge.updated = timezone.now()
 					ad_hoc_charge.save()
 					sc_changed.append(ad_hoc_charge.id)
 
@@ -514,6 +524,7 @@ def ad_hoc_overlap_resolution(request):
 
 				if case == 3:
 					ad_hoc_charge.start = o.end
+					ad_hoc_charge.updated = timezone.now()
 					ad_hoc_charge.save()
 					sc_changed.append(ad_hoc_charge.id)
 
@@ -531,6 +542,7 @@ def ad_hoc_overlap_resolution(request):
 							new_replace = '|' + str(c1.id) + '|'
 							to_replace.replace(replaced, new_replace)
 							r.ad_hoc_related = to_replace
+							r.updated = timezone.now()
 							r.save()
 
 					ad_hoc_charge.delete()
@@ -543,6 +555,7 @@ def ad_hoc_overlap_resolution(request):
 					c1 = sc_clone(request, o, ad_hoc_charge.end, o.end)
 					o.ad_hoc_replaced = True
 					o.ad_hoc_related = '|' + str(c1.id) + '|'
+					o.updated = timezone.now()
 					o.save()
 					sc_changed.append(c1.id)
 
@@ -551,6 +564,7 @@ def ad_hoc_overlap_resolution(request):
 					c2 = sc_clone(request, o, ad_hoc_charge.end, o.end)
 					o.ad_hoc_replaced = True
 					o.ad_hoc_related = '|' + str(c1.id) + '|' + str(c2.id) + '|'
+					o.updated = timezone.now()
 					o.save()
 					sc_changed.append(c1.id)
 					sc_changed.append(c2.id)
@@ -559,12 +573,15 @@ def ad_hoc_overlap_resolution(request):
 					c1 = sc_clone(request, o, o.start, ad_hoc_charge.start)
 					o.ad_hoc_replaced = True
 					o.ad_hoc_related = '|' + str(c1.id) + '|'
+					o.updated = timezone.now()
 					o.save()
 					sc_changed.append(c1.id)
 	
 				if case == 4:
 					o.ad_hoc_replaced = True
 					o.ad_hoc_related = '|' + str(ad_hoc_charge.id) + '|'
+					o.updated = timezone.now()
+					o.save()
 	
 	
 		sc_changed.append(ad_hoc_charge.id)
@@ -598,6 +615,8 @@ def sc_clone(request, charge_to_clone, new_charge_start, new_charge_end):
 	new_charge.staff_member = request.user
 	new_charge.start = new_charge_start
 	new_charge.end = new_charge_end
+	new_charge.created = timezone.now()
+	new_charge.updated = timezone.now()
 	new_charge.save()
 
 	new_charge_id = int(new_charge.id)
@@ -612,6 +631,8 @@ def sc_clone(request, charge_to_clone, new_charge_start, new_charge_end):
 			new_scp.project = s.project
 			new_scp.customer = s.customer
 			new_scp.project_percent = s.project_percent
+			new_scp.created = timezone.now()
+			new_scp.updated = timezone.now()
 			new_scp.save()
 
 	return nc
@@ -631,8 +652,12 @@ def end_staff_charge(request):
 
 		if scp.count() == 1:
 			# set project_percent to 100
-			scp.update(project_percent=100.0)
+			scp = scp[0]
+			scp.project_percent = 100.0
+			scp.updated = timezone.now()
+			scp.save()
 			charge.end = timezone.now()
+			charge.updated = timezone.now()
 			charge.save()
 
 			return update_related_charges(request, charge, StaffCharge.objects.get(related_override_charge=charge))
@@ -683,6 +708,7 @@ def staff_charge_projects_save(request):
 					if value == '':
 						msg = 'You must enter a numerical value for the percent to charge to a project'
 						charge.end=null
+						charge.updated = timezone.now()
 						charge.save()
 						raise Exception()
 					else:
@@ -691,33 +717,41 @@ def staff_charge_projects_save(request):
 		if int(prc) != 100:
 			msg = 'Percent values must total to 100.0'
 			charge.end=null
+			charge.updated = timezone.now()
 			charge.save()
 			raise Exception()
 
 		for key, value in request.POST.items():
-                        if is_valid_field(key):
-                                attribute, separator, scpid = key.partition("__")
-                                scpid = int(scpid)
-                                if attribute == "project_percent":
-                                        StaffChargeProject.objects.filter(id=scpid).update(project_percent=value)		
-					
+			if is_valid_field(key):
+				attribute, separator, scpid = key.partition("__")
+				scpid = int(scpid)
+				if attribute == "project_percent":
+					scp = StaffChargeProject.objects.get(id=scpid)
+					scp.project_percent = value
+					scp.updated = timezone.now()
+					scp.save()
+
 		charge.end = timezone.now()
 		if charge.charge_end_override:
 			charge.override_confirmed = True
+		charge.updated = timezone.now()
 		charge.save()
 
 		# assign percentages to related staff charge project entries
+		# create placeholder charge variable so processing with existing charge can continue further on
+		check_charge = charge
 
-		while StaffCharge.objects.filter(related_override_charge=charge).count() > 0:
-			old_charge = StaffCharge.objects.get(related_override_charge=charge)
+		while StaffCharge.objects.filter(related_override_charge=check_charge).count() > 0:
+			old_charge = StaffCharge.objects.get(related_override_charge=check_charge)
 			old_scp = StaffChargeProject.objects.filter(staff_charge=old_charge)
 
 			for s in old_scp:
-				new_scp = StaffChargeProject.objects.get(staff_charge=charge, project=s.project, customer = s.customer)
+				new_scp = StaffChargeProject.objects.get(staff_charge=check_charge, project=s.project, customer = s.customer)
 				s.project_percent=new_scp.project_percent
+				s.updated = timezone.now()
 				s.save()
 
-			charge = old_charge
+			check_charge = old_charge
 
 		# check for area access records related to this staff charge and assign percentages
 		if AreaAccessRecord.objects.filter(staff_charge=charge).exists():
@@ -728,6 +762,7 @@ def staff_charge_projects_save(request):
 				scp = StaffChargeProject.objects.get(staff_charge=charge, project=a.project, customer=a.customer)
 				if scp:
 					a.project_percent = scp.project_percent
+					a.updated = timezone.now()
 					a.save()
 
 	except ObjectDoesNotExist:
@@ -746,13 +781,12 @@ def staff_charge_projects_save(request):
 def update_related_charges(request, new_charge=None, old_charge=None):
 
 	if old_charge is None:
-                return redirect(reverse('staff_charges'))
-
-	#return HttpResponseBadRequest('update_related_charges for'+str(old_charge.id))
+		return redirect(reverse('staff_charges'))
 
 	# find any outstanding StaffChargeProject entries that need to be updated for a related charge being ended
 	try:
 		old_charge.override_confirmed = True
+		old_charge.updated = timezone.now()
 		old_charge.save()
 
 		old_scp = StaffChargeProject.objects.filter(staff_charge=old_charge)
@@ -760,6 +794,7 @@ def update_related_charges(request, new_charge=None, old_charge=None):
 		for s in old_scp:
 			new_scp = StaffChargeProject.objects.get(staff_charge=new_charge, project=s.project, customer = s.customer)
 			s.project_percent=new_scp.project_percent
+			s.updated = timezone.now()
 			s.save()
 
 		if StaffCharge.objects.filter(related_override_charge=old_charge).exists():
@@ -788,10 +823,13 @@ def continue_staff_charge(request, staff_charge_id):
 		new_staff_charge.start = timezone.now()
 		new_staff_charge.charge_end_override = False
 		new_staff_charge.override_confirmed = False
+		new_staff_charge.created = timezone.now()
+		new_staff_charge.updated = timezone.now()
 		new_staff_charge.save()
 
 		staff_charge.related_override_charge = new_staff_charge
 		staff_charge.override_confirmed = True
+		staff_charge.updated = timezone.now()
 		staff_charge.save()
 
 		# copy the StaffChargeProject records
@@ -828,8 +866,8 @@ def begin_staff_area_charge(request):
 	area_access = AreaAccessRecord()
 	area_access.area = area
 	area_access.staff_charge = charge
-	#area_access.customer = charge.customer
-	#area_access.project = charge.project
+	area_access.created = timezone.now()
+	area_access.updated = timezone.now()
 	area_access.save()
 
 	scp = StaffChargeProject.objects.filter(staff_charge=charge)
@@ -839,6 +877,8 @@ def begin_staff_area_charge(request):
 		aarp.area_access_record = area_access
 		aarp.project = s.project
 		aarp.customer = s.customer
+		aarp.created = timezone.now()
+		aarp.updated = timezone.now()
 		aarp.save()
 
 	return redirect(reverse('staff_charges'))
@@ -852,5 +892,6 @@ def end_staff_area_charge(request):
 		return HttpResponseBadRequest('You do not have a staff charge in progress, so you cannot end area access.')
 	area_access = AreaAccessRecord.objects.get(staff_charge=charge, end=None)
 	area_access.end = timezone.now()
+	area_access.updated = timezone.now()
 	area_access.save()
 	return redirect(reverse('staff_charges'))

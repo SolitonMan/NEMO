@@ -257,6 +257,9 @@ if settings.ALLOW_CONDITIONAL_URLS:
 		url(r'^contest_staff_charge/(?P<staff_charge_id>\d+)/$', remote_work.contest_staff_charge, name='contest_staff_charge'),
 		url(r'^contest_usage_event/(?P<usage_event_id>\d+)/$', remote_work.contest_usage_event, name='contest_usage_event'),
 		url(r'^save_contest/$', remote_work.save_contest, name='save_contest'),
+		url(r'^review_contested_items/$', remote_work.review_contested_items, name='review_contested_items'),
+		url(r'^resolve_staff_charge_contest/$', remote_work.resolve_staff_charge_contest, name='resolve_staff_charge_contest'),
+		url(r'^resolve_usage_event_contest/$', remote_work.resolve_usage_event_contest, name='resolve_usage_event_contest'),
 
 		# Site customization:
 		url(r'^customization/$', customization.customization, name='customization'),
