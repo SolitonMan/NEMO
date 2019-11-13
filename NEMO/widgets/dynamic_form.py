@@ -71,6 +71,6 @@ class DynamicForm:
 					quantity = 1
 
 				if quantity > 0:
-					ConsumableWithdraw.objects.create(customer=customer, merchant=merchant, consumable=consumable, quantity=quantity, project=project, project_percent=project_percent, date=timezone.now())
+					ConsumableWithdraw.objects.create(customer=customer, merchant=merchant, consumable=consumable, quantity=quantity, project=project, project_percent=project_percent, date=timezone.now(), updated=timezone.now())
 			except:
 				pass

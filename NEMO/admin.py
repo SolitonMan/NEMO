@@ -216,6 +216,7 @@ class AreaAccessRecordProjectAdmin(admin.ModelAdmin):
 class ConfigurationAdmin(admin.ModelAdmin):
 	list_display = ('id', 'tool', 'name', 'qualified_users_are_maintainers', 'display_priority', 'exclude_from_configuration_agenda')
 	filter_horizontal = ('maintainers',)
+	exclude = ('current_settings',)
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "tool":

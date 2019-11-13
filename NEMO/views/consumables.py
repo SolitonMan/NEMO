@@ -1,5 +1,6 @@
 from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import render
+from django.utils import timezone
 from django.views.decorators.http import require_http_methods, require_GET
 from django.http import JsonResponse, HttpResponseRedirect
 
@@ -26,6 +27,7 @@ def consumables(request):
 	if form.is_valid():
 		withdraw = form.save(commit=False)
 		withdraw.merchant = request.user
+		withdraw.updated = timezone.now()
 		withdraw.save()
 		withdraw.consumable.quantity -= withdraw.quantity
 		withdraw.consumable.save()

@@ -146,6 +146,7 @@ def login_to_area(request, door_id=None, area_id=None):
 		if user.in_area():
 			previous_area_access_record = user.area_access_record()
 			previous_area_access_record.end = timezone.now()
+			previous_area_access_record.updated = timezone.now()
 			previous_area_access_record.save()
 			previous_area = previous_area_access_record.area
 

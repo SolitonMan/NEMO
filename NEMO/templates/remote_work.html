@@ -1,9 +1,10 @@
 {% extends 'base.html' %}
+{% load custom_tags_and_filters %}
 {% block title %}Remote work{% endblock %}
 {% block content %}
-	<h1>Remote work</h1>
+	<h1>Transaction validation</h1>
 
-	<p>This page displays remote work done by laboratory staff on behalf of users. You can filter by which staff member performed the work, and
+	<p>This page displays transactions conducted by laboratory staff on behalf of users. You can filter by which staff member performed the work, and
 	when, by using the dropdown boxes below.</p>
 
 	<p>Each charge can be validated, which means that you have confirmed that the charge is legitimate and correct, and no adjustment needs to
@@ -12,8 +13,6 @@
 
 	<p>Each charge can also be contested, which means that an adjustment is needed.  Press the yellow 'Contest' button on an individual row to contest the charge.  Charges that are already being contested are highlighted in <span class="warning-highlight">yellow</span>.</p>
 
-	<p>Do not validate a charge if part or all of it is incorrect. Instead, visit the user office so an adjustment can be entered
-	into the billing system. Furthermore, please visit the user office if there is a charge that you forgot to enter.</p>
 
 	<form class="form-inline" role="form">
 		<div class="form-group">
@@ -75,7 +74,7 @@
 				{% endfor %}
 				</td>
 				<td>{{ c.start }} - <br/>{{ c.end }}</td>
-				<td>{{ c.duration }}</td>
+				<td>{{ c.duration|smooth_timedelta }}</td>
 				<td>{% if not c.validated %}<button {% if c.contested %}disabled{% endif %} class="btn btn-success" onclick="validate_charge('{% url 'validate_staff_charge' c.id %}', this, '#staff_charge_row_{{ forloop.counter }}')">Validate</button>{% endif %}</td>
 				<td>
 				{% if not c.validated %}
@@ -130,7 +129,7 @@
 				{% endif %}
 				</td>
 				<td>{{ u.start }} - <br/>{{ u.end }}</td>
-				<td>{{ u.duration }}</td>
+				<td>{{ u.duration|smooth_timedelta }}</td>
 				<td>{{ u.tool }}</td>
 				<td>{% if not u.validated %}<button {% if u.contested%}disabled{% endif %} class="btn btn-success" onclick="validate_charge('{% url 'validate_usage_event' u.id %}', this, '#usage_event_row_{{ forloop.counter }}')">Validate</button>{% endif %}</td>
 				<td>
@@ -143,6 +142,118 @@
 				{% endif %}
 				</td>
 			</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+	<br/>
+	<h3>Consumable withdraws</h3>
+	<table class="table">
+		<thead>
+		<tr>
+			<th>ID</th>
+			<th>Staff member</th>
+			<th>Customer</th>
+			<th>Project</th>
+			<th>Consumable</th>
+			<th>Quantity</th>
+			<th>Withdraw date</th>
+			<th>Validate</th>
+			<th>Contest</th>
+		</tr>
+		</thead>
+		<tbody>
+		{% for w in consumable_withdraws %}
+			<tr {% if w.contested %}class="warning-highlight"{% endif %} {% if w.validated %}class="success-highlight"{% endif %} id="consumable_withdraw_row_{{ forloop.counter }}">
+				<td>{{ w.id }}</td>
+				<td>{{ w.merchant }}</td>
+				<td>
+				{% if w.customers %}
+					{% for c in w.customers.all %}
+						{{ c.first_name }}&nbsp;{{ c.last_name }}<br/>
+					{% endfor %}
+				{% else %}
+					{{ w.customer }}
+				{% endif %}
+				</td>
+				<td>
+				{% if w.projects %}
+					{% for p in w.projects.all %}
+						{{ p.application_identifier }}<br/>
+					{% endfor %}
+				{% else %}
+					{{ w.project }}
+				{% endif %}
+				</td>
+				<td>{{ w.consumable }}</td>
+				<td>{{ w.quantity }} {% if w.consumable.unit is not None %}{{ w.consumable.unit }}{% endif %}</td>
+				<td>{{ w.date }}</td>
+				<td>{% if not w.validated %}<button {% if w.contested%}disabled{% endif %} class="btn btn-success" onclick="validate_charge('{% url 'validate_consumable_withdraw' w.id %}', this, '#consumable_withdraw_row_{{ forloop.counter }}')">Validate</button>{% endif %}</td>
+				<td>
+				{% if not w.validated %}
+					<form action="{% url 'contest_consumable_withdraw' w.id %}" method="POST">
+					{% csrf_token %}
+					<input type="hidden" name="consumable_withdraw_id" value="{{ w.id }}" />
+					<input type="submit" class="btn btn-warning" value="Contest" {% if w.contested %} style="pointer-events:auto;" disabled title="{{ w.contest_description }}"{% endif %} />
+					</form>
+				{% endif %}
+				</td>
+			</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+	<br/>
+	<h3>Area access records</h3>
+	<table class="table">
+		<thead>
+		<tr>
+			<th>ID</th>
+			<th>Staff member</th>
+			<th>Customer</th>
+			<th>Project</th>
+			<th>Start - End</th>
+			<th>Duration</th>
+			<th>Area</th>
+			<th>Validate</th>
+			<th>Contest</th>
+		</tr>
+		</thead>
+		<tbody>
+		{% for a in area_access_records %}
+		<tr {% if a.contested %}class="warning-highlight"{% endif %} {% if a.validated %}class="success-highlight"{% endif %} id="area_access_record_row_{{ forloop.counter }}">
+			<td>{{ a.id }}</td>
+			<td>{{ a.staff_charge.staff_member }}</td>
+			<td>
+			{% if a.customers %}
+				{% for c in a.customers.all %}
+					{{ c.first_name }}&nbsp;{{ c.last_name }}<br/>
+				{% endfor %}
+			{% else %}
+				{{ u.user }}
+			{% endif %}
+			</td>
+			<td>
+			{% if a.projects %}
+				{% for p in a.projects.all %}
+					{{ p.application_identifier }}<br/>
+				{% endfor %}
+			{% else %}
+				{{ a.project }}
+			{% endif %}
+			</td>
+			<td>{{ a.start }} - {{ a.end }}</td>
+			<td>{{ a.duration|smooth_timedelta }}</td>
+			<td>{{ a.area }}</td>
+			<td>{% if not a.validated %}<button {% if a.contested%}disabled{% endif %} class="btn btn-success" onclick="validate_charge('{% url 'validate_area_access_record' a.id %}', this, '#area_access_record_row_{{ forloop.counter }}')">Validate</button>{% endif %}</td>
+			<td>
+			{% if not a.validated %}
+				<form action="{% url 'contest_area_access_record' a.id %}" method="POST">
+				{% csrf_token %}
+				<input type="hidden" name="area_access_record_id" value="{{ a.id }}" />
+				<input type="submit" class="btn btn-warning" value="Contest" {% if a.contested %} style="pointer-events:auto;" disabled title="{{ a.contest_description }}"{% endif %} />
+				</form>
+			{% endif %}
+			</td>
+		</tr>
 		{% endfor %}
 		</tbody>
 	</table>

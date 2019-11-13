@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load custom_tags_and_filters %}
 {% load static %}
 
 {% block title %}Contested Items Review{% endblock %}
@@ -41,7 +42,7 @@
 				{% endfor %}
 			</td>
 			<td>{{ c.start }} - {{ c.end }}</td>
-			<td>{{ c.duration }}</td>
+			<td>{{ c.duration|smooth_timedelta }}</td>
 			<td>
 				<form action="{% url 'resolve_staff_charge_contest' %}" method="POST">
 					{% csrf_token %}
@@ -93,7 +94,7 @@
 				{% endif %}
 			</td>
 			<td>{{ u.start }} - {{ u.end }}</td>
-			<td>{{ u.duration }}</td>
+			<td>{{ u.duration|smooth_timedelta }}</td>
 			<td>
 				<form action="{% url 'resolve_usage_event_contest' %}" method="POST">
 					{% csrf_token %}

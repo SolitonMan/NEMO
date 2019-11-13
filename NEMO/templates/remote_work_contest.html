@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load custom_tags_and_filters %}
+
 {% block title %}Contest {{ contest_type }}{% endblock %}
 
 {% block content %}
@@ -80,16 +82,86 @@
 		</tr>
 	</table>
 	{% endif %}
+
+	{% if area_access_record is not None %}
+	<input type="hidden" name="area_access_record_id" value="{{ area_access_record.id }}" />
+	<table class="table">
+		<tr>
+			<th>Area</th>
+			<td>{{ area_access_record.area }}</td>
+		</tr>
+		<tr>
+			<th>Staff Member</th>
+			<td>{{ area_access_record.staff_charge.staff_member }}</td>
+		</tr>
+		<tr>
+			<th>Customer</th>
+			<td>
+			{% for c in area_access_record.customers.all %}
+				{{ c.first_name }} {{ c.last_name }}<br/>
+			{% endfor %}
+			</td>
+		</tr>
+		<tr>
+			<th>Project</th>
+			<td>
+			{% for p in area_access_record.projects.all %}
+				{{ p.application_identifier }}<br/>
+			{% endfor %}
+			</td>
+		</tr>
+		<tr>
+			<th>Start - End</th>
+			<td>{{ area_access_record.start }} - {{ area_access_record.end }}</td>
+		</tr>
+		<tr>
+			<th>Duration</th>
+			<td>{{ area_access_record.duration|smooth_timedelta }}</td>
+		</tr>
+	</table>
+	{% endif %}
+
+	{% if consumable_withdraw is not None %}
+	<input type="hidden" name="consumable_withdraw_id" value="{{ consumable_withdraw.id }}" />
+	<table class="table">
+		<tr>
+			<th>Consumable</th>
+			<td>{{ consumable_withdraw.consumable }}</td>
+		</tr>
+		<tr>
+			<th>Quantity</th>
+			<td>{{ consumable_withdraw.quantity }} {% if consumable_withdraw.consumable.unit is not None %}{{ consumable_withdraw.consumable.unit }}{% endif %}</td>
+		</tr>
+		<tr>
+			<th>Staff member</th>
+			<td>{{ consumable_withdraw.merchant }}</td>
+		</tr>
+		<tr>
+			<th>Customer</th>
+			<td>{{ consumable_withdraw.customer }}</td>
+		</tr>
+		<tr>
+			<th>Project</th>
+			<td>{{ consumable_withdraw.project }}</td>
+		</tr>
+		<tr>
+			<th>Withdraw date</th>
+			<td>{{ consumable_withdraw.date }}</td>
+		</tr>
+	</table>
+	{% endif %}
+
 	<table class="table">
 		<tr>
 			<td>
 				<label for="contest_reason">Contest Reason
-				<select class="form-control" name="contest_reason" id="contest_reason" onchange="set_other(this);">
+				<select class="form-control" name="contest_reason" id="contest_reason">
 					<option value="">Please select a contest reason</option>
 					<option value="Equipment error">Equipment error</option>
 					<option value="Sample rework">Sample rework</option>
 					<option value="Forgot to log out">Forgot to log out</option>
 					<option value="Erroneous percentage assignments">Erroneous percentage assignments</option>
+					<option value="Incorrect project selection">Incorrect project selection</option>
 					<option value="Other">Other</option>
 				</select>
 				</label>
@@ -128,11 +200,11 @@
 			$("#contest_reason").focus();
 			return false;
 		}
-		if ($("#contest_reason").val() == "Other" && $("#other_reason").val() == "") {
+		/*if ($("#contest_reason").val() == "Other" && $("#other_reason").val() == "") {
 			alert("Please enter your other reason for contesting this {{ contest_type }}.");
 			$("#other_reason").focus();
 			return false;
-		}
+		}*/
 		if ($("#contest_description").val() == "") {
 			alert("Please enter a contest description.");
 			$("#contest_description").focus();

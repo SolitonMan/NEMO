@@ -516,6 +516,7 @@ class StaffCharge(CalendarDisplay):
 	contested_date = models.DateTimeField(null=True, blank=True)
 	contest_resolved = models.BooleanField(default=False)
 	contest_resolved_date = models.DateTimeField(null=True, blank=True)
+	auto_validated = models.BooleanField(default=False)
 
 	def duration(self):
 		return calculate_duration(self.start, self.end, "In progress")
@@ -559,6 +560,17 @@ class AreaAccessRecord(CalendarDisplay):
 	customers = models.ManyToManyField('User', through='AreaAccessRecordProject', related_name='AreaAccessRecordMultipleCustomers')
 	created = models.DateTimeField(null=True, blank=True)
 	updated = models.DateTimeField(null=True, blank=True)
+	validated = models.BooleanField(default=False)
+	contested = models.BooleanField(default=False)
+	contest_description = models.TextField(null=True, blank=True)
+	validated_date = models.DateTimeField(null=True, blank=True)
+	contested_date = models.DateTimeField(null=True, blank=True)
+	contest_resolved = models.BooleanField(default=False)
+	contest_resolved_date = models.DateTimeField(null=True, blank=True)
+	auto_validated = models.BooleanField(default=False)
+
+	def duration(self):
+		return calculate_duration(self.start, self.end, "In progress")
 
 	class Meta:
 		ordering = ['-start']
@@ -693,6 +705,7 @@ class UsageEvent(CalendarDisplay):
 	contested_date = models.DateTimeField(null=True, blank=True)
 	contest_resolved = models.BooleanField(default=False)
 	contest_resolved_date = models.DateTimeField(null=True, blank=True)
+	auto_validated = models.BooleanField(default=False)
 
 	def duration(self):
 		return calculate_duration(self.start, self.end, "In progress")
@@ -759,7 +772,15 @@ class ConsumableWithdraw(models.Model):
 	project = models.ForeignKey(Project, help_text="The withdraw will be billed to this project.")
 	project_percent = models.DecimalField(max_digits=4, decimal_places=2, null=True, blank=True)
 	date = models.DateTimeField(default=timezone.now, help_text="The date and time when the user withdrew the consumable.")
-
+	validated = models.BooleanField(default=False)
+	contested = models.BooleanField(default=False)
+	contest_description = models.TextField(null=True, blank=True)
+	updated = models.DateTimeField(null=True, blank=True)
+	validated_date = models.DateTimeField(null=True, blank=True)
+	contested_date = models.DateTimeField(null=True, blank=True)
+	contest_resolved = models.BooleanField(default=False)
+	contest_resolved_date = models.DateTimeField(null=True, blank=True)
+	auto_validated = models.BooleanField(default=False)
 
 	class Meta:
 		ordering = ['-date']

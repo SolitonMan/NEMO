@@ -254,12 +254,18 @@ if settings.ALLOW_CONDITIONAL_URLS:
 		url(r'^remote_work/$', remote_work.remote_work, name='remote_work'),
 		url(r'^validate_staff_charge/(?P<staff_charge_id>\d+)/$', remote_work.validate_staff_charge, name='validate_staff_charge'),
 		url(r'^validate_usage_event/(?P<usage_event_id>\d+)/$', remote_work.validate_usage_event, name='validate_usage_event'),
+		url(r'^validate_area_access_record/(?P<area_access_record_id>\d+)/$', remote_work.validate_area_access_record, name='validate_area_access_record'),
+		url(r'^validate_consumable_withdraw/(?P<consumable_withdraw_id>\d+)/$', remote_work.validate_consumable_withdraw, name='validate_consumable_withdraw'),
 		url(r'^contest_staff_charge/(?P<staff_charge_id>\d+)/$', remote_work.contest_staff_charge, name='contest_staff_charge'),
 		url(r'^contest_usage_event/(?P<usage_event_id>\d+)/$', remote_work.contest_usage_event, name='contest_usage_event'),
+		url(r'^contest_area_access_record/(?P<area_access_record_id>\d+)/$', remote_work.contest_area_access_record, name='contest_area_access_record'),
+		url(r'^contest_consumable_withdraw/(?P<consumable_withdraw_id>\d+)/$', remote_work.contest_consumable_withdraw, name='contest_consumable_withdraw'),
 		url(r'^save_contest/$', remote_work.save_contest, name='save_contest'),
 		url(r'^review_contested_items/$', remote_work.review_contested_items, name='review_contested_items'),
 		url(r'^resolve_staff_charge_contest/$', remote_work.resolve_staff_charge_contest, name='resolve_staff_charge_contest'),
 		url(r'^resolve_usage_event_contest/$', remote_work.resolve_usage_event_contest, name='resolve_usage_event_contest'),
+		url(r'^resolve_area_access_record_contest/$', remote_work.resolve_area_access_record_contest, name='resolve_area_access_record_contest'),
+		url(r'^resolve_consumable_withdraw_contest/$', remote_work.resolve_consumable_withdraw_contest, name='resolve_consumable_withdraw_contest'),
 
 		# Site customization:
 		url(r'^customization/$', customization.customization, name='customization'),
