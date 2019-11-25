@@ -169,7 +169,7 @@
 			let failure_dialog = ajax_failure_callback("Couldn't change tool status");
 			let enable_stop_button = function() { $("#stop").prop("disabled", false); };
 			ajax_post(url, contents, ajax_success_callback, failure_dialog, refresh_tool_status, enable_stop_button);
-			//ajax_post(url, contents, undefined, undefined, refresh_tool_status, enable_stop_button);
+			//ajax_post(url, contents, undefined, failure_dialog, refresh_tool_status, enable_stop_button);
 		}
 
 		function set_start_button(bMulti) {

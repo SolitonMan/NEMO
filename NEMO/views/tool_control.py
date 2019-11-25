@@ -57,7 +57,7 @@ def tool_control(request, tool_id=None, qualified_only=None, core_only=None):
 	categorized_tools = categorized_tools.rstrip(",") + "]"
 	categorized_tools = mark_safe(categorized_tools)
 
-	users = User.objects.filter(is_active=True).exclude(id=request.user.id)
+	users = User.objects.filter(is_active=True, projects__active=True, projects__account__active=True).exclude(id=request.user.id).distinct()
 
 	dictionary = {
 		'tools': tools,
@@ -128,7 +128,7 @@ def tool_status(request, tool_id):
 
 	# Staff need the user list to be able to qualify users for the tool.
 	if request.user.is_staff:
-		dictionary['users'] = User.objects.filter(is_active=True)
+		dictionary['users'] = User.objects.filter(is_active=True, projects__active=True, projects__account__active=True).distinct()
 
 	return render(request, 'tool_control/tool_status.html', dictionary)
 
@@ -137,7 +137,7 @@ def tool_status(request, tool_id):
 @require_GET
 def use_tool_for_other(request, entry_number):
 	dictionary = {
-		'users': User.objects.filter(is_active=True).exclude(id=request.user.id),
+		'users': User.objects.filter(is_active=True, projects__active=True, projects__account__active=True).exclude(id=request.user.id).distinct(),
 		'entry_number': entry_number
 	}
 	return render(request, 'tool_control/use_tool_for_other.html', dictionary)
@@ -541,7 +541,7 @@ def disable_tool(request, tool_id):
 
 
 	# Charge for consumables
-	dynamic_form.charge_for_consumable(current_usage_event.user, current_usage_event.operator, current_usage_event.project, current_usage_event.run_data)
+	dynamic_form.charge_for_consumable(current_usage_event.user, current_usage_event.operator, current_usage_event.project, current_usage_event.run_data, current_usage_event)
 
 	current_usage_event.updated = timezone.now()
 	current_usage_event.save()
@@ -576,7 +576,7 @@ def disable_tool_multi(request, tool_id, usage_event, dynamic_form):
 			uep = UsageEventProject.objects.get(usage_event=usage_event)
 
 			# run dynamic form processing
-			dynamic_form.charge_for_consumable(uep.customer, uep.usage_event.operator, uep.project, uep.usage_event.run_data, 100.0)
+			dynamic_form.charge_for_consumable(uep.customer, uep.usage_event.operator, uep.project, uep.usage_event.run_data, usage_event, 100.0)
 
 			if request.user.charging_staff_time():
 				existing_staff_charge = request.user.get_staff_charge()
@@ -663,7 +663,7 @@ def usage_event_projects_save(request):
 					uep.project_percent = value
 					uep.updated = timezone.now()
 					uep.save()
-					dynamic_form.charge_for_consumable(uep.customer, event.operator, uep.project, event.run_data, value)
+					dynamic_form.charge_for_consumable(uep.customer, event.operator, uep.project, event.run_data, event, value)
 
 		event.end = timezone.now() + downtime
 		event.updated = timezone.now()
@@ -730,7 +730,7 @@ def create_usage_event(request):
 
 	dictionary = {
 		'tools': tools,
-		'users': User.objects.filter(is_active=True).exclude(id=request.user.id),
+		'users': User.objects.filter(is_active=True, projects__active=True, projects__account__active=True).exclude(id=request.user.id).distinct(),
 	}
 
 	if request.user.is_superuser:
@@ -868,7 +868,7 @@ def save_usage_event(request):
 		if request.user.is_superuser:
 			operators = User.objects.filter(is_staff=True).order_by('last_name', 'first_name')
 			params['operators'] = operators
-		params['users'] = User.objects.filter(is_active=True).exclude(id=request.user.id)
+		params['users'] = User.objects.filter(is_active=True, projects__active=True, projects__account__active=True).exclude(id=request.user.id).distinct()
 
 		if msg == '':
 			params['error'] = inst

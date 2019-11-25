@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
+{% load custom_tags_and_filters %}
 
-{% block title %}{% if usage_event %}Usage Event{% else %}Staff Charge{% endif %} Contest Resolution{% endblock %}
+{% block title %}{% if usage_event %}Usage Event{% endif %}{% if staff_charge %}Staff Charge{% endif %}{% if consumable_withdraw %}Consumable Withdraw{% endif %}{% if area_access_record %}Area Access Record{% endif %} Contest Resolution{% endblock %}
 
 {% block content %}
 	{% if usage_event %}
@@ -8,49 +9,49 @@
 
 	<p>Please make any desired changes to the entry below and click Resolve Contest to save those changes.  The usage event will be returned to the submitter for validation.</p>
 
-	<form action="" method="POST">
+	<form action="{% url 'save_contest_resolution' %}" method="POST">
 		{% csrf_token %}
 		<input type="hidden" value="{{ usage_event.id }}" name="usage_event_id" />
+		{% autoescape off %}
+		{{ review_form }}
+		{% endautoescape %}
+
+		{% if usage_event.consumable_usage_event.all.count > 0 %}
+	<h3>Related Consumable Withdraws</h3>
+	<p>The following items were automatically created by the system via the use of a tool that is configured to use consumables as part of its run.  They are listed here in case changes might be needed based on the contest resolution for this usage event.</p>
+
 	<table class="table">
+		<thead>
 		<tr>
-			<th>Contest Description</th>
-			<td>{{ usage_event.contest_description }}</td>
-		<tr>
-			<th>Operator</th>
-			<td>{{ usage_event.operator }}</td>
+			<th>Staff member</th>
+			<th>Customer</th>
+			<th>Consumable</th>
+			<th>Quantity</th>
+			<th>Project</th>
+			<th>Percent</th>
+			<th>Withdraw date</th>
 		</tr>
+		</thead>
+		<tbody>
+			{% for c in usage_event.consumable_usage_event.all %}
 		<tr>
-			<th>Tool</th>
-			<td>{{ usage_event.tool }}</td>
+			<td>{{ c.merchant }}</td>
+			<td>{{ c.customer }}</td>
+			<td>{{ c.consumable }}</td>
+			<td>{{ c.quantity }}</td>
+			<td>{{ c.project.application_identifier }} [{{ c.project }}]</td>
+			<td>{{ c.project_percent }}</td>
+			<td>{{ c.date }}</td>
 		</tr>
-		<tr>
-			<th>Customer(s)</th>
-			<td>
-			{% for c in usage_event.customers.all %}
-				{{ c }}<br />
 			{% endfor %}
-			</td>
-		</tr>
-		<tr>
-			<th>Project(s)</th>
-			<td>
-			{% for p in usage_event.projects.all %}
-				{{ p.application_identifier }}<br/>
-			{% endfor %}
-			</td>
-		</tr>
-		<tr>
-			<th>Start</th>
-			<td>{{ usage_event.start }}</td>
-		</tr>
-		<tr>
-			<th>End</th>
-			<td>{{ usage_event.end }}</td>
-		</tr>
+		</tbody>
 	</table>
+		{% endif %}
+	<input type="submit" value="Resolve Contest" class="btn btn-success" />
 	<input type="button" value="Cancel Resolution" class="btn btn-warning" onclick="location.href='{% url 'review_contested_items' %}';" />
 	</form>
-	{% else %}
+	{% endif %}
+	{% if staff_charge %}
 	<h1>Staff Charge Contest Resolution</h1>
 
 	<p>Please make any desired changes to the entry below and click Resolve Contest to save those changes.  The staff charge will be returned to the submitter for validation.</p>
@@ -60,11 +61,11 @@
 		<input type="hidden" name="staff_charge_id" value="{{ staff_charge.id }}" />
 	<table class="table">
 		<tr>
-			<th>Contest Description</th>
+			<th>Contest description</th>
 			<td>{{ staff_charge.contest_description }}</td>
 		</tr>
 		<tr>
-			<th>Staff Member</th>
+			<th>Staff member</th>
 			<td>{{ staff_charge.staff_member }}</td>
 		</tr>
 		<tr>
@@ -79,7 +80,7 @@
 			<th>Project(s)</th>
 			<td>
 			{% for p in staff_charge.projects.all %}
-				{{ p.application_identifier }} <br/>
+				{{ p.application_identifier }} [{{ p }}]<br/>
 			{% endfor %}
 			</td>
 		</tr>
@@ -95,4 +96,95 @@
 	<input type="button" value="Cancel Resolution" class="btn btn-warning" onclick="location.href='{% url 'review_contested_items' %}';" />
 	</form>
 	{% endif %}
+	{% if consumable_withdraw %}
+	<h1>Consumable Withdraw Contest Resolution</h1>
+
+	<p>Please make any desired changes to the entry below and click Resolve Contest to save those changes.  The consumable withdraw will be returned to the submitter for validation.</p>
+
+	<form action="" method="POST">
+		{% csrf_token %}
+		<input type="hidden"  name="consumable_withdraw_id" value="{{ consumable_withdraw.id }}" />
+	<table class="table">
+		<tr>
+			<th>Contest Description</th>
+			<td>{{ consumable_withdraw.contest_description }}</td>
+		</tr>
+		<tr>
+			<th>Staff member</th>
+			<td>{{ consumable_withdraw.merchant }}</td>
+		</tr>
+		<tr>
+			<th>Customer</th>
+			<td>{{ consumable_withdraw.customer }}</td>
+		</tr>
+		<tr>
+			<th>Project</th>
+			<td>{{ consumable_withdraw.project.application_identifier }} [{{ consumable_withdraw.project }}]</td>
+		</tr>
+		<tr>
+			<th>Consumable</th>
+			<td>{{ consumable_withdraw.consumable }}</td>
+		</tr>
+		<tr>
+			<th>Quantity</th>
+			<td>{{ consumable_withdraw.quantity }} {% if consumable_withdraw.consumable.unit is not None %}{{ consumable_withdraw.consumable.unit }}{% endif %}</td>
+		</tr>
+		<tr>
+			<th>Withdraw date</th>
+			<td>{{ consumable_withdraw.date }}</td>
+		</tr>
+	</table>
+	<input type="button" value="Cancel Resolution" class="btn btn-warning" onclick="location.href='{% url 'review_contested_items' %}';" />
+	</form>
+	{% endif %}
+
+	{% if area_access_record %}
+	<h1>Area Access Record Contest Resolution</h1>
+
+	<p>Please make any desired changes to the entry below and click Resolve Contest to save those changes.  The area access record will be returned to the submitter for validation.</p>
+
+	<form action="" method="POST">
+		<input type="hidden" name="area_access_record_id" value="{{ area_access_record.id }}" />
+	<table class="table">
+		<tr>
+			<th>Contest Description</th>
+			<td>{{ area_access_record.contest_description }}</td>
+		</tr>
+		<tr>
+			<th>Area</th>
+			<td>{{ area_access_record.area }}</td>
+		</tr>
+		<tr>
+			<th>Staff member</th>
+			<td>{{ area_access_record.staff_charge.staff_member }}</td>
+		</tr>
+		<tr>
+			<th>Customer</th>
+			<td>
+			{% for c in area_access_record.customers.all %}
+				{{ c.first_name}} {{ c.last_name }}<br/>
+			{% endfor %}
+			</td>
+		</tr>
+		<tr>
+			<th>Project</th>
+			<td>
+			{% for p in area_access_record.projects.all %}
+				{{ p.application_identifier }} [{{ p }}]<br/>
+			{% endfor %}
+			</td>
+		</tr>
+		<tr>
+			<th>Start</th>
+			<td>{{ area_access_record.start }}</td>
+		</tr>
+		<tr>
+			<th>End</th>
+			<td>{{ area_access_record.end }}</td>
+		</tr>
+	</table>
+	<input type="button" value="Cancel Resolution" class="btn btn-warning" onclick="location.href='{% url 'review_contested_items' %}';" />
+	</form>
+	{% endif %}
+	
 {% endblock %}

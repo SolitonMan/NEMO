@@ -24,6 +24,7 @@
 			<th>Project</th>
 			<th>Start - End</th>
 			<th>Duration</th>
+			<th>Reason</th>
 			<th>Resolve</th>
 		</tr>
 		</thead>
@@ -43,6 +44,7 @@
 			</td>
 			<td>{{ c.start }} - {{ c.end }}</td>
 			<td>{{ c.duration|smooth_timedelta }}</td>
+			<td>{{ c.contest_description }}</td>
 			<td>
 				<form action="{% url 'resolve_staff_charge_contest' %}" method="POST">
 					{% csrf_token %}
@@ -67,6 +69,7 @@
 			<th>Project</th>
 			<th>Start - End</th>
 			<th>Duration</th>
+			<th>Reason</th>
 			<th>Resolve</th>
 		</tr>
 		</thead>
@@ -95,6 +98,7 @@
 			</td>
 			<td>{{ u.start }} - {{ u.end }}</td>
 			<td>{{ u.duration|smooth_timedelta }}</td>
+			<td>{{ u.contest_description }}</td>
 			<td>
 				<form action="{% url 'resolve_usage_event_contest' %}" method="POST">
 					{% csrf_token %}
@@ -106,4 +110,93 @@
 		{% endfor %}
 		</tbody>
 	</table>
+	<br/><br/>
+	<h3>Consumable Withdraw Contests</h3>
+	<table class="table">
+		<thead>
+			<tr>
+				<th>Staff member</th>
+				<th>Customer</th>
+				<th>Project</th>
+				<th>Consumable</th>
+				<th>Quantity</th>
+				<th>Withdraw date</th>
+				<th>Reason</th>
+				<th>Resolve</th>
+			</tr>
+		</thead>
+		<tbody>
+		{% for w in consumable_withdraws %}
+			<tr>
+				<td>{{ w.merchant }}</td>
+				<td>{{ w.customer }}</td>
+				<td>{{ w.project }}</td>
+				<td>{{ w.consumable }}</td>
+				<td>{{ w.quantity }} {% if w.consumable.unit is not None %}{{ w.consumable.unit }}{% endif %}</td>
+				<td>{{ w.date }}</td>
+				<td>{{ w.contest_description }}</td>
+				<td>
+				<form action="{% url 'resolve_consumable_withdraw_contest' %}" method="POST">
+					{% csrf_token %}
+					<input type="hidden" name="consumable_withdraw_id" value="{{ w.id }}" />
+					<input type="submit" class="btn btn-default" value="Resolve" />
+				</form>
+				</td>
+			</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+	<br/><br/>
+	<h3>Area Access Record Contests</h3>
+	<table class="table">
+		<thead>
+		<tr>
+			<th>Staff member</th>
+			<th>Customer</th>
+			<th>Project</th>
+			<th>Start - End</th>
+			<th>Duration</th>
+			<th>Area</th>
+			<th>Reason</th>
+			<th>Resolve</th>
+		</tr>
+		</thead>
+		<tbody>
+		{% for a in area_access_records %}
+		<tr>
+			<td>{{ a.staff_charge.staff_member }}</td>
+			<td>
+			{% if a.customers %}
+				{% for c in a.customers.all %}
+					{{ c.first_name }}&nbsp;{{ c.last_name }}<br/>
+				{% endfor %}
+			{% else %}
+				{{ u.user }}
+			{% endif %}
+			</td>
+			<td>
+			{% if a.projects %}
+				{% for p in a.projects.all %}
+					{{ p.application_identifier }}<br/>
+				{% endfor %}
+			{% else %}
+				{{ a.project }}
+			{% endif %}
+			</td>
+			<td>{{ a.start }} - {{ a.end }}</td>
+			<td>{{ a.duration|smooth_timedelta }}</td>
+			<td>{{ a.area }}</td>
+			<td>{{ a.contest_description }}</td>
+			<td>
+			<form action="{% url 'resolve_area_access_record_contest' %}" method="POST">
+				{% csrf_token %}
+				<input type="hidden" name="area_access_record_id" value="{{ a.id }}" />
+				<input type="submit" class="btn btn-default" value="Resolve" />
+			</form>
+			</td>
+		</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+
 {% endblock %}

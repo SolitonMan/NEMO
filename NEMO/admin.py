@@ -5,7 +5,7 @@ from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.contrib.auth.models import Permission
 
 from NEMO.actions import lock_selected_interlocks, synchronize_with_tool_usage, unlock_selected_interlocks
-from NEMO.models import Account, ActivityHistory, Alert, Area, AreaAccessRecord, AreaAccessRecordProject, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableUnit, ConsumableCategory, ConsumableWithdraw, ContactInformation, ContactInformationCategory, Core, Customization, Door, Interlock, InterlockCard, LandingPageChoice, MembershipHistory, News, Notification, PhysicalAccessLevel, PhysicalAccessLog, Project, Reservation, ReservationConfiguration, Resource, ResourceCategory, SafetyIssue, ScheduledOutage, ScheduledOutageCategory, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskHistory, TaskStatus, Tool, TrainingSession, UsageEvent, UsageEventProject, User, UserType
+from NEMO.models import Account, ActivityHistory, Alert, Area, AreaAccessRecord, AreaAccessRecordProject, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableUnit, ConsumableCategory, ConsumableWithdraw, ContactInformation, ContactInformationCategory, ContestTransaction, Core, Customization, Door, Interlock, InterlockCard, LandingPageChoice, MembershipHistory, News, Notification, PhysicalAccessLevel, PhysicalAccessLog, Project, Reservation, ReservationConfiguration, Resource, ResourceCategory, SafetyIssue, ScheduledOutage, ScheduledOutageCategory, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskHistory, TaskStatus, Tool, TrainingSession, UsageEvent, UsageEventProject, User, UserType
 
 admin.site.site_header = "LEO"
 admin.site.site_title = "LEO"
@@ -519,6 +519,11 @@ class NewsAdmin(admin.ModelAdmin):
 @register(Notification)
 class NotificationAdmin(admin.ModelAdmin):
 	list_display = ('id', 'user', 'expiration', 'content_type', 'object_id')
+
+
+@register(ContestTransaction)
+class ContestTransactionAdmin(admin.ModelAdmin):
+	list_display = ('id', 'content_type', 'object_id', 'field_name', 'original_value', 'proposed_value')
 
 
 admin.site.register(ResourceCategory)

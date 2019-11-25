@@ -73,7 +73,7 @@
 		</table>
 			
 	</div>
-	<form id="ad_hoc_staff_charge" action="{% url 'ad_hoc_staff_charge' %}" method="POST">
+	<form id="ad_hoc_staff_charge" action="{% url 'ad_hoc_staff_charge' %}" method="POST" onsubmit="return on_ad_hoc_submit();">
 		{% csrf_token %}
 		<table id="ad_hoc_entries" class="table">
 			<tr>
@@ -297,6 +297,11 @@
 
 		function on_submit()
 		{
+			if ($("#staff_charge_entries tr").length < 3) {
+				alert("You must add at least one customer");
+				add_customer();
+				return false;
+			}
 			var failure_dialog = ajax_failure_callback("Could not begin charging staff time");
 			ajax_post("{% url 'begin_staff_charge' %}", serialize("#new_staff_charge"), reload_staff_charges, failure_dialog);
 			return false;
@@ -304,9 +309,14 @@
 
 		function on_ad_hoc_submit()
 		{
-			var failure_dialog = ajax_failure_callback("There was a problem with your ad hoc submission");
-			ajax_post("{% url 'ad_hoc_staff_charge' %}", serialize("#ad_hoc_staff_charge"), ad_hoc_overlap_callback, failure_dialog);
-			return false;
+			if ($("#ad_hoc_entries tr").length < 5) {
+				alert("You must add at least one customer");
+				add_ad_hoc_customer();
+				return false;
+			}
+			//var failure_dialog = ajax_failure_callback("There was a problem with your ad hoc submission");
+			//ajax_post("{% url 'ad_hoc_staff_charge' %}", serialize("#ad_hoc_staff_charge"), ad_hoc_overlap_callback, failure_dialog);
+			return true;
 		}
 
 		function ad_hoc_overlap_callback(response, status, xml_http_request)

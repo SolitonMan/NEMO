@@ -13,10 +13,10 @@ RUN pip install django-auth-ldap
 RUN pip install psycopg2-binary
 
 # Install DEBUG support
-RUN pip install django-debug-toolbar
-RUN pip install django-debug-toolbar-request-history
-RUN pip install django-debug-panel
-RUN pip install django-developer-panel
+#RUN pip install django-debug-toolbar
+#RUN pip install django-debug-toolbar-request-history
+#RUN pip install django-debug-panel
+#RUN pip install django-developer-panel
 
 # Intall NEMO (in the current directory) and Gunicorn
 COPY . /nemo/

@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load custom_tags_and_filters %}
-{% block title %}Remote work{% endblock %}
+{% block title %}Transaction Validation{% endblock %}
 {% block content %}
 	<h1>Transaction validation</h1>
 
@@ -44,6 +44,7 @@
 		</div>
 	</form>
 
+	{% if staff_charges is not None %}
 	<h3>Staff charges</h3>
 	<table class="table">
 		<thead>
@@ -90,6 +91,9 @@
 		</tbody>
 	</table>
 	<br>
+	{% endif %}
+
+	{% if usage is not None %}
 	<h3>Tool usage</h3>
 	<table class="table">
 		<thead>
@@ -146,6 +150,9 @@
 		</tbody>
 	</table>
 	<br/>
+	{% endif %}
+
+	{% if consumable_withdraws is not None %}
 	<h3>Consumable withdraws</h3>
 	<table class="table">
 		<thead>
@@ -202,6 +209,9 @@
 		</tbody>
 	</table>
 	<br/>
+	{% endif %}
+
+	{% if area_access_records is not None %}
 	<h3>Area access records</h3>
 	<table class="table">
 		<thead>
@@ -257,6 +267,7 @@
 		{% endfor %}
 		</tbody>
 	</table>
+	{% endif %}
 
 	<script>
 		function validate_charge(url, button, row)

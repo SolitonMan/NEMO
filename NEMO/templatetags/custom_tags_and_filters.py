@@ -94,6 +94,8 @@ def app_version() -> str:
 @register.filter()
 def smooth_timedelta(timedeltaobj):
 	"""Convert a datetime.timedelta object into Days, Hours, Minutes, Seconds."""
+	if isinstance(timedeltaobj, str):
+		return timedeltaobj
 	secs = timedeltaobj.total_seconds()
 	timetot = ""
 	if secs > 86400: # 60sec * 60min * 24hrs

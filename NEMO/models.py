@@ -9,7 +9,7 @@ from logging import getLogger
 from django.conf import settings
 from django.contrib import auth
 from django.contrib.auth.models import BaseUserManager, Group, Permission
-from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.core.mail import send_mail
 from django.db import models
@@ -503,6 +503,7 @@ class StaffCharge(CalendarDisplay):
 	validated = models.BooleanField(default=False)
 	contested = models.BooleanField(default=False)
 	contest_description = models.TextField(null=True, blank=True)
+	contest_data = GenericRelation('ContestTransaction')
 	charge_end_override = models.BooleanField(default=False, blank=True)
 	override_confirmed = models.BooleanField(default=False, blank=True)
 	related_override_charge = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True)
@@ -517,6 +518,7 @@ class StaffCharge(CalendarDisplay):
 	contest_resolved = models.BooleanField(default=False)
 	contest_resolved_date = models.DateTimeField(null=True, blank=True)
 	auto_validated = models.BooleanField(default=False)
+	no_charge_flag = models.BooleanField(default=False)
 
 	def duration(self):
 		return calculate_duration(self.start, self.end, "In progress")
@@ -534,6 +536,7 @@ class StaffChargeProject(models.Model):
 	project_percent = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
 	created = models.DateTimeField(null=True, blank=True)
 	updated = models.DateTimeField(null=True, blank=True)
+	contest_data = GenericRelation('ContestTransaction')
 
 class Area(models.Model):
 	name = models.CharField(max_length=200, help_text='What is the name of this area? The name will be displayed on the tablet login and logout pages.')
@@ -563,11 +566,13 @@ class AreaAccessRecord(CalendarDisplay):
 	validated = models.BooleanField(default=False)
 	contested = models.BooleanField(default=False)
 	contest_description = models.TextField(null=True, blank=True)
+	contest_data = GenericRelation('ContestTransaction')
 	validated_date = models.DateTimeField(null=True, blank=True)
 	contested_date = models.DateTimeField(null=True, blank=True)
 	contest_resolved = models.BooleanField(default=False)
 	contest_resolved_date = models.DateTimeField(null=True, blank=True)
 	auto_validated = models.BooleanField(default=False)
+	no_charge_flag = models.BooleanField(default=False)
 
 	def duration(self):
 		return calculate_duration(self.start, self.end, "In progress")
@@ -578,6 +583,7 @@ class AreaAccessRecord(CalendarDisplay):
 	def __str__(self):
 		return str(self.id)
 
+
 class AreaAccessRecordProject(models.Model):
 	area_access_record = models.ForeignKey('AreaAccessRecord', on_delete=models.CASCADE)
 	project = models.ForeignKey('Project', on_delete=models.CASCADE)
@@ -585,6 +591,8 @@ class AreaAccessRecordProject(models.Model):
 	project_percent = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
 	created = models.DateTimeField(null=True, blank=True)
 	updated = models.DateTimeField(null=True, blank=True)
+	contest_data = GenericRelation('ContestTransaction')
+
 
 class ConfigurationHistory(models.Model):
 	configuration = models.ForeignKey(Configuration)
@@ -617,9 +625,6 @@ class Project(models.Model):
 	application_identifier = models.CharField(max_length=100)
 	account = models.ForeignKey(Account, help_text="All charges for this project will be billed to the selected account.")
 	active = models.BooleanField(default=True, help_text="Users may only charge to a project if it is active. Deactivate the project to block billable activity (such as tool usage and consumable check-outs).")
-	#events = models.ManyToManyField('UsageEvent', through='UsageEventProject', related_name='project_events')
-	#accesses = models.ManyToManyField('AreaAccessRecord', through='AreaAccessRecordProject', related_name='project_accesses')
-	#staff_charges = models.ManyToManyField('StaffCharge', through='StaffChargeProject', related_name='project_staff_charges')
 
 	class Meta:
 		ordering = ['name']
@@ -696,6 +701,7 @@ class UsageEvent(CalendarDisplay):
 	validated = models.BooleanField(default=False)
 	contested = models.BooleanField(default=False)
 	contest_description = models.TextField(null=True, blank=True)
+	contest_data = GenericRelation('ContestTransaction')
 	run_data = models.TextField(null=True, blank=True)
 	projects = models.ManyToManyField('Project', through='UsageEventProject')
 	customers = models.ManyToManyField('User', through='UsageEventProject')
@@ -706,6 +712,7 @@ class UsageEvent(CalendarDisplay):
 	contest_resolved = models.BooleanField(default=False)
 	contest_resolved_date = models.DateTimeField(null=True, blank=True)
 	auto_validated = models.BooleanField(default=False)
+	no_charge_flag = models.BooleanField(default=False)
 
 	def duration(self):
 		return calculate_duration(self.start, self.end, "In progress")
@@ -723,6 +730,7 @@ class UsageEventProject(models.Model):
 	customer = models.ForeignKey('User', on_delete=models.CASCADE)
 	created = models.DateTimeField(null=True, blank=True)
 	updated = models.DateTimeField(null=True, blank=True)
+	contest_data = GenericRelation('ContestTransaction')
 
 
 class Consumable(models.Model):
@@ -775,15 +783,36 @@ class ConsumableWithdraw(models.Model):
 	validated = models.BooleanField(default=False)
 	contested = models.BooleanField(default=False)
 	contest_description = models.TextField(null=True, blank=True)
+	contest_data = GenericRelation('ContestTransaction')
 	updated = models.DateTimeField(null=True, blank=True)
 	validated_date = models.DateTimeField(null=True, blank=True)
 	contested_date = models.DateTimeField(null=True, blank=True)
 	contest_resolved = models.BooleanField(default=False)
 	contest_resolved_date = models.DateTimeField(null=True, blank=True)
 	auto_validated = models.BooleanField(default=False)
+	no_charge_flag = models.BooleanField(default=False)
+
+	# adding related field for UsageEvent for the situation where a consumable is used during tool usage and then the charge is contested
+	usage_event = models.ForeignKey('UsageEvent', related_name="consumable_usage_event", null=True, blank=True)
 
 	class Meta:
 		ordering = ['-date']
+
+	def __str__(self):
+		return str(self.id)
+
+
+class ContestTransaction(models.Model):
+	content_type = models.ForeignKey(ContentType)
+	object_id = models.PositiveIntegerField()
+	content_object = GenericForeignKey('content_type', 'object_id')
+
+	field_name = models.CharField(max_length=50)
+	original_value = models.CharField(max_length=250)
+	proposed_value = models.CharField(max_length=250)
+
+	class Meta:
+		ordering = ['content_type','-object_id']
 
 	def __str__(self):
 		return str(self.id)

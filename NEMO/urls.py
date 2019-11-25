@@ -266,6 +266,7 @@ if settings.ALLOW_CONDITIONAL_URLS:
 		url(r'^resolve_usage_event_contest/$', remote_work.resolve_usage_event_contest, name='resolve_usage_event_contest'),
 		url(r'^resolve_area_access_record_contest/$', remote_work.resolve_area_access_record_contest, name='resolve_area_access_record_contest'),
 		url(r'^resolve_consumable_withdraw_contest/$', remote_work.resolve_consumable_withdraw_contest, name='resolve_consumable_withdraw_contest'),
+		url(r'^save_contest_resolution/$', remote_work.save_contest_resolution, name='save_contest_resolution'),
 
 		# Site customization:
 		url(r'^customization/$', customization.customization, name='customization'),

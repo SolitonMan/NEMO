@@ -40,7 +40,7 @@ def staff_charges(request):
 			return render(request, 'staff_charges/choose_project.html', {'customer': customer})
 		else:
 			error = str(customer) + ' does not have any active projects. You cannot bill staff time to this user.'
-	users = User.objects.filter(is_active=True).exclude(id=request.user.id)
+	users = User.objects.filter(is_active=True, active_project_count__gt=0).exclude(id=request.user.id)
 
 	params = {'users': users, 'error': error}
 
@@ -339,7 +339,7 @@ def ad_hoc_staff_charge(request):
 		if len(ad_hoc_entries) > 0:
 			error_params['ad_hoc_entries'] = ad_hoc_entries
 
-		users = User.objects.filter(is_active=True).exclude(id=request.user.id)
+		users = User.objects.filter(is_active=True, active_project_count__gt=0).exclude(id=request.user.id)
 
 		params['users'] = users
 
@@ -396,7 +396,7 @@ def ad_hoc_staff_charge(request):
 		if len(ad_hoc_entries) > 0:
 			error_params['ad_hoc_entries'] = ad_hoc_entries
 
-		users = User.objects.filter(is_active=True).exclude(id=request.user.id)
+		users = User.objects.filter(is_active=True, active_project_count__gt=0).exclude(id=request.user.id)
 
 		params = {'users': users}
 
