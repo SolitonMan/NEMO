@@ -502,8 +502,8 @@ class StaffCharge(CalendarDisplay):
 	end = models.DateTimeField(null=True, blank=True)
 	validated = models.BooleanField(default=False)
 	contested = models.BooleanField(default=False)
-	contest_description = models.TextField(null=True, blank=True)
-	contest_data = GenericRelation('ContestTransaction')
+	contest_data = GenericRelation('ContestTransactionData')
+	contest_record = GenericRelation('ContestTransaction', related_query_name='staff_charge_contests')
 	charge_end_override = models.BooleanField(default=False, blank=True)
 	override_confirmed = models.BooleanField(default=False, blank=True)
 	related_override_charge = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True)
@@ -514,9 +514,6 @@ class StaffCharge(CalendarDisplay):
 	created = models.DateTimeField(null=True, blank=True)
 	updated = models.DateTimeField(null=True, blank=True)
 	validated_date = models.DateTimeField(null=True, blank=True)
-	contested_date = models.DateTimeField(null=True, blank=True)
-	contest_resolved = models.BooleanField(default=False)
-	contest_resolved_date = models.DateTimeField(null=True, blank=True)
 	auto_validated = models.BooleanField(default=False)
 	no_charge_flag = models.BooleanField(default=False)
 
@@ -536,7 +533,7 @@ class StaffChargeProject(models.Model):
 	project_percent = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
 	created = models.DateTimeField(null=True, blank=True)
 	updated = models.DateTimeField(null=True, blank=True)
-	contest_data = GenericRelation('ContestTransaction')
+	contest_data = GenericRelation('ContestTransactionData')
 
 class Area(models.Model):
 	name = models.CharField(max_length=200, help_text='What is the name of this area? The name will be displayed on the tablet login and logout pages.')
@@ -565,12 +562,9 @@ class AreaAccessRecord(CalendarDisplay):
 	updated = models.DateTimeField(null=True, blank=True)
 	validated = models.BooleanField(default=False)
 	contested = models.BooleanField(default=False)
-	contest_description = models.TextField(null=True, blank=True)
-	contest_data = GenericRelation('ContestTransaction')
+	contest_data = GenericRelation('ContestTransactionData')
+	contest_record = GenericRelation('ContestTransaction', related_query_name='area_access_record_contests')
 	validated_date = models.DateTimeField(null=True, blank=True)
-	contested_date = models.DateTimeField(null=True, blank=True)
-	contest_resolved = models.BooleanField(default=False)
-	contest_resolved_date = models.DateTimeField(null=True, blank=True)
 	auto_validated = models.BooleanField(default=False)
 	no_charge_flag = models.BooleanField(default=False)
 
@@ -591,7 +585,7 @@ class AreaAccessRecordProject(models.Model):
 	project_percent = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
 	created = models.DateTimeField(null=True, blank=True)
 	updated = models.DateTimeField(null=True, blank=True)
-	contest_data = GenericRelation('ContestTransaction')
+	contest_data = GenericRelation('ContestTransactionData')
 
 
 class ConfigurationHistory(models.Model):
@@ -700,17 +694,14 @@ class UsageEvent(CalendarDisplay):
 	end = models.DateTimeField(null=True, blank=True)
 	validated = models.BooleanField(default=False)
 	contested = models.BooleanField(default=False)
-	contest_description = models.TextField(null=True, blank=True)
-	contest_data = GenericRelation('ContestTransaction')
+	contest_data = GenericRelation('ContestTransactionData')
+	contest_record = GenericRelation('ContestTransaction', related_query_name='usage_event_contests')
 	run_data = models.TextField(null=True, blank=True)
 	projects = models.ManyToManyField('Project', through='UsageEventProject')
 	customers = models.ManyToManyField('User', through='UsageEventProject')
 	created = models.DateTimeField(null=True, blank=True)
 	updated = models.DateTimeField(null=True, blank=True)
 	validated_date = models.DateTimeField(null=True, blank=True)
-	contested_date = models.DateTimeField(null=True, blank=True)
-	contest_resolved = models.BooleanField(default=False)
-	contest_resolved_date = models.DateTimeField(null=True, blank=True)
 	auto_validated = models.BooleanField(default=False)
 	no_charge_flag = models.BooleanField(default=False)
 
@@ -730,7 +721,7 @@ class UsageEventProject(models.Model):
 	customer = models.ForeignKey('User', on_delete=models.CASCADE)
 	created = models.DateTimeField(null=True, blank=True)
 	updated = models.DateTimeField(null=True, blank=True)
-	contest_data = GenericRelation('ContestTransaction')
+	contest_data = GenericRelation('ContestTransactionData')
 
 
 class Consumable(models.Model):
@@ -782,13 +773,10 @@ class ConsumableWithdraw(models.Model):
 	date = models.DateTimeField(default=timezone.now, help_text="The date and time when the user withdrew the consumable.")
 	validated = models.BooleanField(default=False)
 	contested = models.BooleanField(default=False)
-	contest_description = models.TextField(null=True, blank=True)
-	contest_data = GenericRelation('ContestTransaction')
+	contest_data = GenericRelation('ContestTransactionData')
+	contest_record = GenericRelation('ContestTransaction', related_query_name='consumable_withdraw_contests')
 	updated = models.DateTimeField(null=True, blank=True)
 	validated_date = models.DateTimeField(null=True, blank=True)
-	contested_date = models.DateTimeField(null=True, blank=True)
-	contest_resolved = models.BooleanField(default=False)
-	contest_resolved_date = models.DateTimeField(null=True, blank=True)
 	auto_validated = models.BooleanField(default=False)
 	no_charge_flag = models.BooleanField(default=False)
 
@@ -806,6 +794,27 @@ class ContestTransaction(models.Model):
 	content_type = models.ForeignKey(ContentType)
 	object_id = models.PositiveIntegerField()
 	content_object = GenericForeignKey('content_type', 'object_id')
+
+	contest_description = models.TextField(null=True, blank=True)
+	contested_date = models.DateTimeField(null=True, blank=True)
+	contest_resolved = models.BooleanField(default=False)
+	contest_resolved_date = models.DateTimeField(null=True, blank=True)
+	contest_resolution = models.BooleanField(default=False)
+	contest_rejection_reason = models.TextField(null=True, blank=True)
+
+	class Meta:
+		ordering = ['content_type','-object_id']
+
+	def __str__(self):
+		return str(self.id)
+
+
+class ContestTransactionData(models.Model):
+	content_type = models.ForeignKey(ContentType)
+	object_id = models.PositiveIntegerField()
+	content_object = GenericForeignKey('content_type', 'object_id')
+
+	contest_transaction = models.ForeignKey('ContestTransaction')
 
 	field_name = models.CharField(max_length=50)
 	original_value = models.CharField(max_length=250)

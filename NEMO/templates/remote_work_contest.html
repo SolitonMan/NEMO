@@ -312,6 +312,13 @@
 			</td>
 		</tr>
 		<tr>
+			<th>Percent</th>
+			<td>
+				<input type="hidden" name="original__project_percent__{{ consumable_withdraw.id }}" value="{{ consumable_withdraw.project_percent }}" />
+				<input type="text" class="form-control" id="proposed__project_percent__{{ consumable_withdraw.id }}" name="proposed__project_percent__{{ consumable_withdraw.id }}" value="{{ consumable_withdraw.project_percent }}" />
+			</td>
+		</tr>
+		<tr>
 			<th>Withdraw date</th>
 			<td>{{ consumable_withdraw.date }}</td>
 		</tr>

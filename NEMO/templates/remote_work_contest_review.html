@@ -19,6 +19,7 @@
 	<table class="table">
 		<thead>
 		<tr>
+			<th>ID</th>
 			<th>Staff Member</th>
 			<th>Customer</th>
 			<th>Project</th>
@@ -31,6 +32,7 @@
 		<tbody>
 		{% for c in staff_charges %}
 		<tr>
+			<td>{{ c.id }}</td>
 			<td>{{ c.staff_member }}</td>
 			<td>
 				{% for s in c.customers.all %}
@@ -63,6 +65,7 @@
 	<table class="table">
 		<thead>
 		<tr>
+			<th>ID</th>
 			<th>Operator</th>
 			<th>Tool</th>
 			<th>Customer</th>
@@ -76,6 +79,7 @@
 		<tbody>
 		{% for u in usage %}
 		<tr>
+			<td>{{ u.id }}</td>
 			<td>{{ u.operator }}</td>
 			<td>{{ u.tool }}</td>
 			<td>
@@ -115,6 +119,7 @@
 	<table class="table">
 		<thead>
 			<tr>
+				<th>ID</th>
 				<th>Staff member</th>
 				<th>Customer</th>
 				<th>Project</th>
@@ -128,6 +133,7 @@
 		<tbody>
 		{% for w in consumable_withdraws %}
 			<tr>
+				<td>{{ w.id }}</td>
 				<td>{{ w.merchant }}</td>
 				<td>{{ w.customer }}</td>
 				<td>{{ w.project }}</td>
@@ -151,6 +157,7 @@
 	<table class="table">
 		<thead>
 		<tr>
+			<th>ID</th>
 			<th>Staff member</th>
 			<th>Customer</th>
 			<th>Project</th>
@@ -164,6 +171,7 @@
 		<tbody>
 		{% for a in area_access_records %}
 		<tr>
+			<td>{{ a.id }}</td>
 			<td>{{ a.staff_charge.staff_member }}</td>
 			<td>
 			{% if a.customers %}

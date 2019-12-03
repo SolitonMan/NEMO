@@ -7,7 +7,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_GET
 from django.http import HttpResponseRedirect
 
-from NEMO.models import Alert, LandingPageChoice, Reservation, Resource, StaffCharge, UsageEvent
+from NEMO.models import Alert, AreaAccessRecord, ConsumableWithdraw, LandingPageChoice, Reservation, Resource, StaffCharge, UsageEvent
 from NEMO.views.alerts import delete_expired_alerts
 from NEMO.views.area_access import able_to_self_log_in_to_area
 from NEMO.views.notifications import delete_expired_notifications, get_notificaiton_counts
@@ -32,10 +32,10 @@ def landing(request):
 
 	contested_items = False
 	if request.user.is_superuser:
-		if UsageEvent.objects.filter(contested=True, validated=False, contest_resolved=False).exists() or StaffCharge.objects.filter(contested=True, validated=False, contest_resolved=False).exists():
+		if UsageEvent.objects.filter(contested=True, validated=False, contest_record__contest_resolved=False).exists() or StaffCharge.objects.filter(contested=True, validated=False, contest_record__contest_resolved=False).exists() or AreaAccessRecord.objects.filter(contested=True, validated=False, contest_record__contest_resolved=False).exists() or ConsumableWithdraw.objects.filter(contested=True, validated=False, contest_record__contest_resolved=False).exists():
 			contested_items = True
 	else:
-		if UsageEvent.objects.filter(contested=True, validated=False, contest_resolved=False, operator__core_ids__in=request.user.core_ids.all()).exists() or StaffCharge.objects.filter(contested=True, validated=False, contest_resolved=False, staff_member__core_ids__in=request.user.core_ids.all()).exists():
+		if UsageEvent.objects.filter(contested=True, validated=False, contest_record__contest_resolved=False, operator__core_ids__in=request.user.core_ids.all()).exists() or StaffCharge.objects.filter(contested=True, validated=False, contest_record__contest_resolved=False, staff_member__core_ids__in=request.user.core_ids.all()).exists() or AreaAccessRecord.objects.filter(contested=True, validated=False, contest_record__contest_resolved=False, staff_charge__staff_member__core_ids__in=request.user.core_ids.all()).exists() or ConsumableWithdraw.objects.filter(contested=True, validated=False, contest_record__contest_resolved=False, merchant__core_ids__in=request.user.core_ids.all()).exists():
 			contested_items = True
 
 

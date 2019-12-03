@@ -12,7 +12,7 @@ from django.utils import timezone
 from django.utils.dateformat import DateFormat
 from django.views.decorators.http import require_GET, require_POST
 
-from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, Consumable, ConsumableWithdraw, ContestTransaction, Project, UsageEvent, UsageEventProject, StaffCharge, StaffChargeProject, Tool, User
+from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, Consumable, ConsumableWithdraw, ContestTransaction, ContestTransactionData, Project, UsageEvent, UsageEventProject, StaffCharge, StaffChargeProject, Tool, User
 from NEMO.utilities import month_list, get_month_timeframe
 
 
@@ -207,11 +207,10 @@ def save_contest(request):
 		staff_charge = get_object_or_404(StaffCharge, id=staff_charge_id)
 		staff_charge.contested = True
 		description = request.POST.get("contest_reason")
-		#if description == "Other":
-		#	description = request.POST.get("other_reason")
 		description += " DESCRIPTION:" + request.POST.get("contest_description")
-		staff_charge.contest_description = description
-		staff_charge.contested_date = timezone.now()
+		# create ContestTransaction record
+		contest_transaction = ContestTransaction.objects.create(content_object=staff_charge, contest_description=description, contested_date=timezone.now())
+
 		staff_charge.updated = timezone.now()
 		staff_charge.save()
 
@@ -222,18 +221,17 @@ def save_contest(request):
 						content_object = StaffCharge.objects.get(id=id)
 					else:
 						content_object = StaffChargeProject.objects.get(id=id)
-					ContestTransaction.objects.create(content_object=content_object, field_name=field, original_value=submission[id][field]["original"], proposed_value=submission[id][field]["proposed"])
+					ContestTransactionData.objects.create(content_object=content_object, contest_transaction=contest_transaction, field_name=field, original_value=submission[id][field]["original"], proposed_value=submission[id][field]["proposed"])
 
 	if contest_type == "Usage Event":
 		usage_event_id = request.POST.get("usage_event_id")
 		usage_event = get_object_or_404(UsageEvent, id=usage_event_id)
 		usage_event.contested = True
 		description = request.POST.get("contest_reason")
-		#if description == "Other":
-		#	description = request.POST.get("other_reason")
 		description += " DESCRIPTION:" + request.POST.get("contest_description")
-		usage_event.contest_description = description
-		usage_event.contested_date = timezone.now()
+		# create ContestTransaction record
+		contest_transaction = ContestTransaction.objects.create(content_object=usage_event, contest_description=description, contested_date=timezone.now())
+
 		usage_event.updated = timezone.now()
 		usage_event.save()
 
@@ -245,18 +243,17 @@ def save_contest(request):
 					else:
 						content_object = UsageEventProject.objects.get(id=id)
 					
-					ContestTransaction.objects.create(content_object=content_object, field_name=field, original_value=submission[id][field]["original"], proposed_value=submission[id][field]["proposed"])
+					ContestTransactionData.objects.create(content_object=content_object, contest_transaction=contest_transaction, field_name=field, original_value=submission[id][field]["original"], proposed_value=submission[id][field]["proposed"])
 
 	if contest_type == "Area Access Record":
 		area_access_record_id = request.POST.get("area_access_record_id")
 		area_access_record = get_object_or_404(AreaAccessRecord, id=area_access_record_id)
 		area_access_record.contested = True
 		description = request.POST.get("contest_reason")
-		#if description == "Other":
-		#	description = request.POST.get("other_reason")
 		description += " DESCRIPTION:" + request.POST.get("contest_description")
-		area_access_record.contest_description = description
-		area_access_record.contested_date = timezone.now()
+		# create ContestTransaction record
+		contest_transaction = ContestTransaction.objects.create(content_object=area_access_record, contest_description=description, contested_date=timezone.now())
+
 		area_access_record.updated = timezone.now()
 		area_access_record.save()
 
@@ -267,18 +264,17 @@ def save_contest(request):
 						content_object = AreaAccessRecord.objects.get(id=id)
 					else:
 						content_object = AreaAccessRecordProject.objects.get(id=id)
-					ContestTransaction.objects.create(content_object=content_object, field_name=field, original_value=submission[id][field]["original"], proposed_value=submission[id][field]["proposed"])
+					ContestTransactionData.objects.create(content_object=content_object, contest_transaction=contest_transaction, field_name=field, original_value=submission[id][field]["original"], proposed_value=submission[id][field]["proposed"])
 
 	if contest_type == "Consumable Withdraw":
 		consumable_withdraw_id = request.POST.get("consumable_withdraw_id")
 		consumable_withdraw = get_object_or_404(ConsumableWithdraw, id=consumable_withdraw_id)
 		consumable_withdraw.contested = True
 		description = request.POST.get("contest_reason")
-		#if description == "Other":
-		#	description = request.POST.get("other_reason")
 		description += " DESCRIPTION:" + request.POST.get("contest_description")
-		consumable_withdraw.contest_description = description
-		consumable_withdraw.contested_date = timezone.now()
+		# create ContestTransaction record
+		contest_transaction = ContestTransaction.objects.create(content_object=consumable_withdraw, contest_description=description, contested_date=timezone.now())
+
 		consumable_withdraw.updated = timezone.now()
 		consumable_withdraw.save()
 
@@ -286,7 +282,7 @@ def save_contest(request):
 			for field in submission[id]:
 				if submission[id][field]["proposed"] != submission[id][field]["original"]:
 					content_object = ConsumableWithdraw.objects.get(id=id)
-					ContestTransaction.objects.create(content_object=content_object, field_name=field, original_value=submission[id][field]["original"], proposed_value=submission[id][field]["proposed"])
+					ContestTransactionData.objects.create(content_object=content_object,  contest_transaction=contest_transaction, field_name=field, original_value=submission[id][field]["original"], proposed_value=submission[id][field]["proposed"])
 
 	return HttpResponseRedirect('/remote_work/')
 
@@ -296,15 +292,15 @@ def review_contested_items(request):
 	dictionary = {}
 
 	if request.user.is_superuser:
-		dictionary['staff_charges'] = StaffCharge.objects.filter(validated=False, contested=True, contest_resolved=False)
-		dictionary['usage'] = UsageEvent.objects.filter(validated=False, contested=True, contest_resolved=False)
-		dictionary['area_access_records'] = AreaAccessRecord.objects.filter(validated=False, contested=True, contest_resolved=False)
-		dictionary['consumable_withdraws'] = ConsumableWithdraw.objects.filter(validated=False, contested=True, contest_resolved=False)
+		dictionary['staff_charges'] = StaffCharge.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False)
+		dictionary['usage'] = UsageEvent.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False)
+		dictionary['area_access_records'] = AreaAccessRecord.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False)
+		dictionary['consumable_withdraws'] = ConsumableWithdraw.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False)
 	else:
-		dictionary['staff_charges'] = StaffCharge.objects.filter(validated=False, contested=True, contest_resolved=False, staff_member__core_ids__in=request.user.core_ids.all())
-		dictionary['usage'] = UsageEvent.objects.filter(validated=False, contested=True, contest_resolved=False, operator__core_ids__in=request.user.core_ids.all())
-		dictionary['area_access_records'] = AreaAccessRecord.objects.filter(validated=False, contested=True, contest_resolved=False, staff_charge__staff_member__core_ids__in=request.user.core_ids.all())
-		dictionary['consumable_withdraws'] = ConsumableWithdraw.objects.filter(validated=False, contested=True, contest_resolved=False, consumable__core_id__in=request.user.core_ids.all())
+		dictionary['staff_charges'] = StaffCharge.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, staff_member__core_ids__in=request.user.core_ids.all())
+		dictionary['usage'] = UsageEvent.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, operator__core_ids__in=request.user.core_ids.all())
+		dictionary['area_access_records'] = AreaAccessRecord.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, staff_charge__staff_member__core_ids__in=request.user.core_ids.all())
+		dictionary['consumable_withdraws'] = ConsumableWithdraw.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, consumable__core_id__in=request.user.core_ids.all())
 
 	return render(request, 'remote_work_contest_review.html', dictionary)
 
@@ -330,6 +326,78 @@ def resolve_staff_charge_contest(request):
 		return render(request, 'remote_work_contest_review.html', dictionary)
 
 	dictionary['staff_charge'] = staff_charge
+	dictionary['contest_type'] = "Staff Charge"
+
+	"""
+	form content creation
+	"""
+	staff_charge_type = ContentType.objects.get_for_model(staff_charge)
+	contest_transaction = ContestTransaction.objects.get(content_type__pk=staff_charge_type.id, object_id=staff_charge.id, contest_resolved=False)
+
+	review_form = "<table class=\"table\">"
+	review_form += "<tr><th>Contest Description</th><td colspan=\"3\">" + contest_transaction.contest_description + "</td></tr>"
+	review_form += "<tr><th>Staff Member</th><td>" + str(staff_charge.staff_member) + "</td><td>&nbsp;</td><td>&nbsp;</td></tr>"
+
+	df = DateFormat(staff_charge.start)
+	review_form += "<tr><th>Start</th><td>" + df.format('Y-m-d H:i:s') + "</td>"
+	# check for start change
+	if ContestTransactionData.objects.filter(content_type__pk=staff_charge_type.id, object_id=staff_charge.id, contest_transaction=contest_transaction, field_name="start").exists():
+		ct = ContestTransactionData.objects.get(content_type__pk=staff_charge_type.id, object_id=staff_charge.id, contest_transaction=contest_transaction, field_name="start")
+		o_value = ct.original_value
+		p_value = ct.proposed_value
+		review_form += "<td><span style=\"font-weight:bold; color:red;\">" + p_value+ "</span><input type=\"hidden\" name=\"proposed__start__" + str(staff_charge_id) + "\" value=\"" + p_value + "\" /></td></tr>"
+	else:
+		review_form += "<td>&nbsp;</td><td>&nbsp;</td></tr>"
+
+	df = DateFormat(staff_charge.end)
+	review_form += "<tr><th>End</th><td>" + df.format('Y-m-d H:i:s') + "</td>"
+	# check for end change
+	if ContestTransactionData.objects.filter(content_type__pk=staff_charge_type.id, object_id=staff_charge.id, contest_transaction=contest_transaction, field_name="end").exists():
+		ct = ContestTransactionData.objects.get(content_type__pk=staff_charge_type.id, object_id=staff_charge.id, contest_transaction=contest_transaction, field_name="end")
+		o_value = ct.original_value
+		p_value = ct.proposed_value
+		review_form += "<td><span style=\"font-weight:bold; color:red;\">" + p_value+ "</span><input type=\"hidden\" name=\"proposed__end__" + str(staff_charge_id) + "\" value=\"" + p_value + "\" /></td></tr>"
+	else:
+		review_form += "<td>&nbsp;</td><td>&nbsp;</td></tr>"
+
+	# look for changes in customer, project and/or project_percent
+	review_form += "<tr><td colspan=\"4\"><table class=\"table\">"
+	review_form += "<tr><td colspan=\"3\"><hr></td></tr>"
+	for scp in StaffChargeProject.objects.filter(staff_charge=staff_charge):
+		scp_type = ContentType.objects.get_for_model(scp)
+
+		# add customer
+		review_form += "<tr><th>Customer</th><td>" + str(scp.customer) + "</td>"
+		if ContestTransactionData.objects.filter(content_type__pk=scp_type.id, object_id=scp.id, contest_transaction=contest_transaction, field_name="chosen_user").exists():
+			ct = ContestTransactionData.objects.get(content_type__pk=scp_type.id, object_id=scp.id, contest_transaction=contest_transaction, field_name="chosen_user")
+			o_id = int(ct.original_value)
+			p_id = int(ct.proposed_value)
+			review_form += "<td><span style=\"font-weight:bold; color:red;\">" + str(User.objects.get(id=p_id)) + "</span><input type=\"hidden\" name=\"proposed__chosen_user__" + str(scp.id) + "\" value=\"" + str(p_id) + "\" /></td></tr>"
+		else:
+			review_form += "<td>&nbsp;</td></tr>"
+		# add project
+		review_form += "<tr><th>Project</th><td>" + scp.project.application_identifier + "</td>"
+		if ContestTransactionData.objects.filter(content_type__pk=scp_type.id, object_id=scp.id, contest_transaction=contest_transaction, field_name="chosen_project").exists():
+			ct = ContestTransactionData.objects.get(content_type__pk=scp_type.id, object_id=scp.id, contest_transaction=contest_transaction, field_name="chosen_project")
+			o_id = int(ct.original_value)
+			p_id = int(ct.proposed_value)
+			p_project = Project.objects.get(id=p_id)
+			review_form += "<td><span style=\"font-weight:bold; color:red;\">" + p_project.application_identifier + "</span><input type=\"hidden\" name=\"proposed__chosen_project__" + str(scp.id) + "\" value=\"" + str(p_id) + "\" /></td></tr>"
+		else:
+			review_form += "<td>&nbsp;</td></tr>"
+		# add project_percent
+		review_form += "<tr><th>Percent</th><td>" + str(scp.project_percent) + "</td>"
+		if ContestTransactionData.objects.filter(content_type__pk=scp_type.id, object_id=scp.id, contest_transaction=contest_transaction, field_name="project_percent").exists():
+			ct = ContestTransactionData.objects.get(content_type__pk=scp_type.id, object_id=scp.id, contest_transaction=contest_transaction, field_name="project_percent")
+			o_value = ct.original_value
+			p_value = ct.proposed_value
+			review_form += "<td><span style=\"font-weight:bold; color:red;\">" + str(p_value) + "</span><input type=\"hidden\" name=\"proposed__project_percent__" + str(scp.id) + "\" value=\"" + str(p_value) + "\" /></td></tr>"
+		else:
+			review_form += "<td>&nbsp;</td></tr>"
+		review_form += "<tr><td colspan=\"3\"><hr></td></tr>"
+	review_form += "</table></td></tr></table>"
+
+	dictionary['review_form'] = review_form
 
 	return render(request, 'remote_work_contest_resolve.html', dictionary)
 
@@ -355,21 +423,24 @@ def resolve_usage_event_contest(request):
 		return render(request, 'remote_work_contest_review.html', dictionary)
 
 	dictionary['usage_event'] = usage_event
+	dictionary['contest_type'] = "Usage Event"
 
 	""" 
 	as an alternative to the clunky template-based generation, create the HTML here and pass as a string
 	This string will contain the form elements, but in order to easily preserve the csrf_token the form 
 	will be defined in the template
 	"""
+	usage_event_type = ContentType.objects.get_for_model(usage_event)
+	contest_transaction = ContestTransaction.objects.get(content_type__pk=usage_event_type.id, object_id=usage_event.id, contest_resolved=False)
+
 	review_form = "<table class=\"table\">"
-	review_form += "<tr><th>Contest Description</th><td colspan=\"3\">" + usage_event.contest_description + "</td></tr>"
+	review_form += "<tr><th>Contest Description</th><td colspan=\"3\">" + contest_transaction.contest_description + "</td></tr>"
 	review_form += "<tr><th>Operator</th><td>" + str(usage_event.operator) + "</td><td>&nbsp;</td><td>&nbsp;</td></tr>"
 	review_form += "<tr><th>Tool</th><td>" + str(usage_event.tool) + "</td><td>"
 
 	# check for tool change
-	usage_event_type = ContentType.objects.get_for_model(usage_event)
-	if ContestTransaction.objects.filter(content_type__pk=usage_event_type.id, object_id=usage_event.id, field_name="tool_id").exists():
-		ct = ContestTransaction.objects.get(content_type__pk=usage_event_type.id, object_id=usage_event.id, field_name="tool_id")
+	if ContestTransactionData.objects.filter(content_type__pk=usage_event_type.id, object_id=usage_event.id, contest_transaction=contest_transaction, field_name="tool_id").exists():
+		ct = ContestTransactionData.objects.get(content_type__pk=usage_event_type.id, object_id=usage_event.id, contest_transaction=contest_transaction, field_name="tool_id")
 		o_id = int(ct.original_value)
 		p_id = int(ct.proposed_value)
 		review_form += Tool.objects.get(id=o_id) + "</td><td><span style=\"font-weight:bold; color:red;\">" + str(Tool.objects.get(id=p_id)) + "</span><input type=\"hidden\" name=\"proposed__tool_id__" + str(usage_event_id) + "\" value=\"" + str(p_id) + "\" /></td></tr>"
@@ -379,19 +450,19 @@ def resolve_usage_event_contest(request):
 	df = DateFormat(usage_event.start)
 	review_form += "<tr><th>Start</th><td>" + df.format('Y-m-d H:i:s') + "</td>"
 	# check for start change
-	if ContestTransaction.objects.filter(content_type__pk=usage_event_type.id, object_id=usage_event.id, field_name="start").exists():
-		ct = ContestTransaction.objects.get(content_type__pk=usage_event_type.id, object_id=usage_event.id, field_name="start")
+	if ContestTransactionData.objects.filter(content_type__pk=usage_event_type.id, object_id=usage_event.id, contest_transaction=contest_transaction, field_name="start").exists():
+		ct = ContestTransactionData.objects.get(content_type__pk=usage_event_type.id, object_id=usage_event.id, contest_transaction=contest_transaction, field_name="start")
 		o_value = ct.original_value
 		p_value = ct.proposed_value
 		review_form += "<td><span style=\"font-weight:bold; color:red;\">" + p_value+ "</span><input type=\"hidden\" name=\"proposed__start__" + str(usage_event_id) + "\" value=\"" + p_value + "\" /></td></tr>"
 	else:
-		 review_form += "<td>&nbsp;</td><td>&nbsp;</td></tr>"
+		review_form += "<td>&nbsp;</td><td>&nbsp;</td></tr>"
 
 	df = DateFormat(usage_event.end)
 	review_form += "<tr><th>End</th><td>" + df.format('Y-m-d H:i:s') + "</td>"
 	# check for end chage
-	if ContestTransaction.objects.filter(content_type__pk=usage_event_type.id, object_id=usage_event.id, field_name="end").exists():
-		ct = ContestTransaction.objects.get(content_type__pk=usage_event_type.id, object_id=usage_event.id, field_name="end")
+	if ContestTransactionData.objects.filter(content_type__pk=usage_event_type.id, object_id=usage_event.id, contest_transaction=contest_transaction, field_name="end").exists():
+		ct = ContestTransactionData.objects.get(content_type__pk=usage_event_type.id, object_id=usage_event.id, contest_transaction=contest_transaction, field_name="end")
 		o_value = ct.original_value
 		p_value = ct.proposed_value
 		review_form += "<td><span style=\"font-weight:bold; color:red;\">" + p_value + "</span><input type=\"hidden\" name=\"proposed__end__" + str(usage_event_id) + "\" value=\"" + p_value + "\" /></td></tr>"
@@ -406,8 +477,8 @@ def resolve_usage_event_contest(request):
 
 		# add customer
 		review_form += "<tr><th>Customer</th><td>" + str(uep.customer) + "</td>"
-		if ContestTransaction.objects.filter(content_type__pk=uep_type.id, object_id=uep.id, field_name="chosen_user").exists():
-			ct = ContestTransaction.objects.get(content_type__pk=uep_type.id, object_id=uep.id, field_name="chosen_user")
+		if ContestTransactionData.objects.filter(content_type__pk=uep_type.id, object_id=uep.id, contest_transaction=contest_transaction, field_name="chosen_user").exists():
+			ct = ContestTransactionData.objects.get(content_type__pk=uep_type.id, object_id=uep.id, contest_transaction=contest_transaction, field_name="chosen_user")
 			o_id = int(ct.original_value)
 			p_id = int(ct.proposed_value)
 			review_form += "<td><span style=\"font-weight:bold; color:red;\">" + str(User.objects.get(id=p_id)) + "</span><input type=\"hidden\" name=\"proposed__chosen_user__" + str(uep.id) + "\" value=\"" + str(p_id) + "\" /></td></tr>"
@@ -415,8 +486,8 @@ def resolve_usage_event_contest(request):
 			review_form += "<td>&nbsp;</td></tr>"
 		# add project
 		review_form += "<tr><th>Project</th><td>" + uep.project.application_identifier + "</td>"
-		if ContestTransaction.objects.filter(content_type__pk=uep_type.id, object_id=uep.id, field_name="chosen_project").exists():
-			ct = ContestTransaction.objects.get(content_type__pk=uep_type.id, object_id=uep.id, field_name="chosen_project")
+		if ContestTransactionData.objects.filter(content_type__pk=uep_type.id, object_id=uep.id, contest_transaction=contest_transaction, field_name="chosen_project").exists():
+			ct = ContestTransactionData.objects.get(content_type__pk=uep_type.id, object_id=uep.id, contest_transaction=contest_transaction, field_name="chosen_project")
 			o_id = int(ct.original_value)
 			p_id = int(ct.proposed_value)
 			p_project = Project.objects.get(id=p_id)
@@ -425,8 +496,8 @@ def resolve_usage_event_contest(request):
 			review_form += "<td>&nbsp;</td></tr>"
 		# add project_percent
 		review_form += "<tr><th>Percent</th><td>" + str(uep.project_percent) + "</td>"
-		if ContestTransaction.objects.filter(content_type__pk=uep_type.id, object_id=uep.id, field_name="project_percent").exists():
-			ct = ContestTransaction.objects.get(content_type__pk=uep_type.id, object_id=uep.id, field_name="project_percent")
+		if ContestTransactionData.objects.filter(content_type__pk=uep_type.id, object_id=uep.id, contest_transaction=contest_transaction, field_name="project_percent").exists():
+			ct = ContestTransactionData.objects.get(content_type__pk=uep_type.id, object_id=uep.id, contest_transaction=contest_transaction, field_name="project_percent")
 			o_value = ct.original_value
 			p_value = ct.proposed_value
 			review_form += "<td><span style=\"font-weight:bold; color:red;\">" + str(p_value) + "</span><input type=\"hidden\" name=\"proposed__project_percent__" + str(uep.id) + "\" value=\"" + str(p_value) + "\" /></td></tr>"
@@ -461,6 +532,88 @@ def resolve_area_access_record_contest(request):
 		return render(request, 'remote_work_contest_review.html', dictionary)
 
 	dictionary['area_access_record'] = area_access_record
+	dictionary['contest_type'] = "Area Access Record"
+
+	aar_type = ContentType.objects.get_for_model(area_access_record)
+	contest_transaction = ContestTransaction.objects.get(content_type__pk=aar_type.id, object_id=area_access_record.id, contest_resolved=False)
+
+	review_form = "<table class=\"table\">"
+	review_form += "<tr><th>Contest Description</th><td colspan=\"3\">" + contest_transaction.contest_description + "</td></tr>"
+	review_form += "<tr><th>Area</th><td>" + str(area_access_record.area) + "</td>"
+	aar_type = ContentType.objects.get_for_model(area_access_record)
+	if ContestTransactionData.objects.filter(content_type__pk=aar_type.id, object_id=area_access_record.id, contest_transaction=contest_transaction, field_name="area").exists():
+		ct = ContestTransactionData.objects.get(content_type__pk=aar_type.id, object_id=area_access_record.id, contest_transaction=contest_transaction, field_name="area")
+		o_id = int(ct.original_value)
+		p_id = int(ct.proposed_value)
+		review_form += "<td>" + str(Area.objects.get(id=o_id)) + "</td><td><span style=\"font-weight:bold; color:red;\">" + str(Area.objects.get(id=p_id)) + "</span><input type=\"hidden\" name=\"proposed__area__" + str(area_access_record.id) + "\" value=\"" + str(p_id) + "\" /></td></tr>"
+	else:
+		review_form += "<td>&nbsp;</td><td>&nbsp;</td></tr>"
+
+	review_form += "<tr><th>Staff member</th><td>" + str(area_access_record.staff_charge.staff_member) + "</td><td>&nbsp;</td><td>&nbsp;</td></tr>"
+	
+	df = DateFormat(area_access_record.start)
+	review_form += "<tr><th>Start</th><td>" + df.format('Y-m-d H:i:s') + "</td>"
+	# check for start change
+	if ContestTransactionData.objects.filter(content_type__pk=aar_type.id, object_id=area_access_record.id, contest_transaction=contest_transaction, field_name="start").exists():
+		ct = ContestTransactionData.objects.get(content_type__pk=aar_type.id, object_id=area_access_record.id, contest_transaction=contest_transaction, field_name="start")
+		o_value = ct.original_value
+		p_value = ct.proposed_value
+		review_form += "<td><span style=\"font-weight:bold; color:red;\">" + p_value + "</span><input type=\"hidden\" name=\"proposed__start__" + str(area_access_record.id) + "\" value=\"" + p_value + "\" /></td></tr>"
+	else:
+		review_form += "<td>&nbsp;</td><td>&nbsp;</td></tr>"
+
+	df = DateFormat(area_access_record.end)
+	review_form += "<tr><th>Start</th><td>" + df.format('Y-m-d H:i:s') + "</td>"
+	# check for end change
+	if ContestTransactionData.objects.filter(content_type__pk=aar_type.id, object_id=area_access_record.id, contest_transaction=contest_transaction, field_name="end").exists():
+		ct = ContestTransactionData.objects.get(content_type__pk=aar_type.id, object_id=area_access_record.id, contest_transaction=contest_transaction, field_name="end")
+		o_value = ct.original_value
+		p_value = ct.proposed_value
+		review_form += "<td><span style=\"font-weight:bold; color:red;\">" + p_value + "</span><input type=\"hidden\" name=\"proposed__end__" + str(area_access_record.id) + "\" value=\"" + p_value + "\" /></td></tr>"
+	else:
+		review_form += "<td>&nbsp;</td><td>&nbsp;</td></tr>"
+
+	# look for changes in customer, project and/or project_percent
+	review_form += "<tr><td colspan=\"4\"><table class=\"table\">"
+	review_form += "<tr><td colspan=\"3\"><hr></td></tr>"
+	for aarp in AreaAccessRecordProject.objects.filter(area_access_record=area_access_record):
+		aarp_type = ContentType.objects.get_for_model(aarp)
+
+		# add customer
+		review_form += "<tr><th>Customer</th><td>" + str(aarp.customer) + "</td>"
+		if ContestTransactionData.objects.filter(content_type__pk=aarp_type.id, object_id=aarp.id, contest_transaction=contest_transaction, field_name="chosen_user").exists():
+			ct = ContestTransactionData.objects.get(content_type__pk=aarp_type.id, object_id=aarp.id, contest_transaction=contest_transaction, field_name="chosen_user")
+			o_id = int(ct.original_value)
+			p_id = int(ct.proposed_value)
+			review_form += "<td><span style=\"font-weight:bold; color:red;\">" + str(User.objects.get(id=p_id)) + "</span><input type=\"hidden\" name=\"proposed__chosen_user__" + str(aarp.id) + "\" value=\"" + str(p_id) + "\" /></td></tr>"
+		else:
+			review_form += "<td>&nbsp;</td></tr>"
+
+		# add project
+		review_form += "<tr><th>Project</th><td>" + aarp.project.application_identifier + "</td>"
+		if ContestTransactionData.objects.filter(content_type__pk=aarp_type.id, object_id=aarp.id, contest_transaction=contest_transaction, field_name="chosen_project").exists():
+			ct = ContestTransactionData.objects.get(content_type__pk=aarp_type.id, object_id=aarp.id, contest_transaction=contest_transaction, field_name="chosen_project")
+			o_id = int(ct.original_value)
+			p_id = int(ct.proposed_value)
+			p_project = Project.objects.get(id=p_id)
+			review_form += "<td><span style=\"font-weight:bold; color:red;\">" + p_project.application_identifier + "</span><input type=\"hidden\" name=\"proposed__chosen_project__" + str(aarp.id) + "\" value=\"" + str(p_id) + "\" /></td></tr>"
+		else:
+			review_form += "<td>&nbsp;</td></tr>"
+
+		# add project_percent
+		review_form += "<tr><th>Percent</th><td>" + str(aarp.project_percent) + "</td>"
+		if ContestTransactionData.objects.filter(content_type__pk=aarp_type.id, object_id=aarp.id, contest_transaction=contest_transaction, field_name="project_percent").exists():
+			ct = ContestTransactionData.objects.get(content_type__pk=aarp_type.id, object_id=aarp.id, contest_transaction=contest_transaction, field_name="project_percent")
+			o_value = ct.original_value
+			p_value = ct.proposed_value
+			review_form += "<td><span style=\"font-weight:bold; color:red;\">" + str(p_value) + "</span><input type=\"hidden\" name=\"proposed__project_percent__" + str(aarp.id) + "\" value=\"" + str(p_value) + "\" /></td></tr>"
+		else:
+			review_form += "<td>&nbsp;</td></tr>"
+
+		review_form += "<tr><td colspan=\"3\"><hr></td></tr>"
+	review_form += "</table></td></tr></table>"
+
+	dictionary['review_form'] = review_form
 
 	return render(request, 'remote_work_contest_resolve.html', dictionary)
 
@@ -486,6 +639,68 @@ def resolve_consumable_withdraw_contest(request):
 		return render(request, 'remote_work_contest_review.html', dictionary)
 
 	dictionary['consumable_withdraw'] = consumable_withdraw
+	dictionary['contest_type'] = "Consumable Withdraw"
+
+	c_type = ContentType.objects.get_for_model(consumable_withdraw)
+	contest_transaction = ContestTransaction.objects.get(content_type__pk=c_type.id, object_id=consumable_withdraw.id, contest_resolved=False)
+
+	review_form = "<table class=\"table\">"
+	review_form += "<tr><th>Contest Description</th><td colspan=\"3\">" + contest_transaction.contest_description + "</td></tr>"
+	review_form += "<tr><th>Staff member</th><td>" + str(consumable_withdraw.merchant) + "</td><td>&nbsp;</td><td>&nbsp;</td></tr>"
+	review_form += "<tr><th>Consumable</th><td>" + str(consumable_withdraw.consumable) + "</td>"
+
+	c_type = ContentType.objects.get_for_model(consumable_withdraw)
+
+	if ContestTransactionData.objects.filter(content_type__pk=c_type.id, object_id=consumable_withdraw.id, contest_transaction=contest_transaction, field_name="consumable").exists():
+		ct = ContestTransactionData.objects.get(content_type__pk=c_type.id, object_id=consumable_withdraw.id, contest_transaction=contest_transaction, field_name="consumable")
+		o_id = int(ct.original_value)
+		p_id = int(ct.proposed_value)
+		review_form += "<td>" + str(Consumable.objects.get(id=o_id)) + "</td><td><span style=\"font-weight:bold; color:red;\">" + str(Consumable.objects.get(id=p_id)) + "</span><input type=\"hidden\" name=\"proposed__consumable__" + str(consumable_withdraw.id) + "\" id=\"proposed__consumable__" + str(consumable_withdraw.id) + "\" value=\"" + str(p_id) + "\" /></td></tr>"
+	else:
+		review_form += "<td>&nbsp;</td><td>&nbsp;</td></tr>"
+
+	review_form += "<tr><th>Quantity</th><td>" + str(consumable_withdraw.quantity) + "</td>"
+
+	if ContestTransactionData.objects.filter(content_type__pk=c_type.id, object_id=consumable_withdraw.id, contest_transaction=contest_transaction, field_name="quantity").exists():
+		ct = ContestTransactionData.objects.get(content_type__pk=c_type.id, object_id=consumable_withdraw.id, contest_transaction=contest_transaction, field_name="quantity")
+		o_value = ct.original_value
+		p_value = ct.proposed_value
+		review_form += "<td>" + o_value + "</td><td><span style=\"font-weight:bold; color:red;\">" + p_value + "</span><input type=\"hidden\" name=\"proposed__quantity__" + str(consumable_withdraw.id) + "\" id=\"proposed__quantity__" + str(consumable_withdraw.id) + "\" value=\"" + p_value + "\" /></td></tr>"
+	else:
+		review_form += "<td>&nbsp;</td><td>&nbsp;</td></tr>"
+
+	review_form += "<tr><th>Customer</th><td>" + str(consumable_withdraw.customer) + "</td>"
+	if ContestTransactionData.objects.filter(content_type__pk=c_type.id, object_id=consumable_withdraw.id, contest_transaction=contest_transaction, field_name="chosen_user").exists():
+		ct = ContestTransactionData.objects.get(content_type__pk=c_type.id, object_id=consumable_withdraw.id, contest_transaction=contest_transaction, field_name="chosen_user")
+		o_id = int(ct.original_value)
+		p_id = int(ct.proposed_value)
+		review_form += "<td>" + str(User.objects.get(id=o_id)) + "</td><td><span style=\"font-weight:bold; color:red;\">" + str(User.objects.get(id=p_id)) + "</span><input type=\"hidden\" name=\"proposed__chosen_user__" + str(consumable_withdraw.id) + "\" id=\"proposed__chosen_user__" + str(consumable_withdraw.id) + "\" value=\"" + str(p_id) + "\" /></td></tr>"
+	else:
+		review_form += "<td>&nbsp;</td><td>&nbsp;</td></tr>"
+
+	review_form += "<tr><th>Project</th><td>" + consumable_withdraw.project.application_identifier + "</td>"
+	if ContestTransactionData.objects.filter(content_type__pk=c_type.id, object_id=consumable_withdraw.id, contest_transaction=contest_transaction, field_name="chosen_project").exists():
+		ct = ContestTransactionData.objects.get(content_type__pk=c_type.id, object_id=consumable_withdraw.id, contest_transaction=contest_transaction, field_name="chosen_project")
+		o_id = int(ct.original_value)
+		p_id = int(ct.proposed_value)
+		p_project = Project.objects.get(id=p_id)
+		review_form += "<td>" + str(Project.objects.get(id=o_id).application_identifier) + "</td><td><span style=\"font-weight:bold; color:red;\">" + str(p_project.application_identifier) + "</span><input type=\"hidden\" name=\"proposed__chosen_project__" + str(consumable_withdraw.id) + "\" id=\"proposed__chosen_project__" + str(consumable_withdraw.id) + "\" value=\"" + str(p_id) + "\" /></td></tr>"
+	else:
+		review_form += "<td>&nbsp;</td><td>&nbsp;</td></tr>"
+
+	review_form += "<tr><th>Percent</th><td>" + str(consumable_withdraw.project_percent) + "</td>"
+	if ContestTransactionData.objects.filter(content_type__pk=c_type.id, object_id=consumable_withdraw.id, contest_transaction=contest_transaction, field_name="project_percent").exists():
+		ct = ContestTransactionData.objects.get(content_type__pk=c_type.id, object_id=consumable_withdraw.id, contest_transaction=contest_transaction, field_name="project_percent")
+		o_value = ct.original_value
+		p_value = ct.proposed_value
+		review_form += "<td>" + o_value + "</td><td><span style=\"font-weight:bold; color:red;\">" + p_value + "</span><input type=\"hidden\" name=\"proposed__project_percent__" + str(consumable_withdraw.id) + "\" id=\"proposed__project_percent__" + str(consumable_withdraw.id) + "\" value=\"" + p_value + "\" /></td></tr>"
+	else:
+		review_form += "<td>&nbsp;</td><td>&nbsp;</td></tr>"
+
+	review_form += "<tr><th>Withdraw date</th><td>" + str(consumable_withdraw.date) + "</td><td>&nbsp;</td><td>&nbsp;</td></tr>"
+	review_form += "</table>"
+	
+	dictionary['review_form'] = review_form
 
 	return render(request, 'remote_work_contest_resolve.html', dictionary)
 
@@ -493,10 +708,62 @@ def resolve_consumable_withdraw_contest(request):
 @staff_member_required(login_url=None)
 @require_POST
 def save_contest_resolution(request):
+	contest_type = request.POST.get("contest_type")
+	contest_resolved = request.POST.get("resolve_contest")
+	contest_transaction = None
+	changes = None
+
+	if contest_resolved == "1":
+		# admin has accepted change, update appopriate records and set base transaction validated to True
+		if contest_type == "Staff Charge":
+			staff_charge_id = request.POST.get("staff_charge_id")
+			staff_charge = StaffCharge.objects.get(id=staff_charge_id)
+			sc_type = ContentType.objects.get_for_model(staff_charge)
+			contest_transaction = ContestTransaction.objects.get(content_type__pk=sc_type.id, object_id=staff_charge.id, contest_resolved=False)
+			changes = ContestTransactionData.objects.filter(contest_transaction=contest_transaction)
+
+
+		if contest_type == "Usage Event":
+			usage_event_id = request.POST.get("usage_event_id")
+			usage_event = UsageEvent.objects.get(id=usage_event_id)
+			ue_type = ContentType.objects.get_for_model(usage_event)
+			contest_transaction = ContestTransaction.objects.get(content_type__pk=ue_type.id, object_id=usage_event.id, contest_resolved=False)
+			changes = ContestTransactionData.objects.filter(contest_transaction=contest_transaction)
+
+
+		if contest_type == "Area Access Record":
+			area_access_record_id = request.POST.get("area_access_record_id")
+			area_access_record = AreaAccessRecord.objects.get(id=area_access_record_id)
+			aar_type = ContentType.objects.get_for_model(area_access_record)
+			contest_transaction = ContestTransaction.objects.get(content_type__pk=aar_type.id, object_id=area_access_record.id, contest_resolved=False)
+			changes = ContestTransactionData.objects.filter(contest_transaction=contest_transaction)
+
+
+		if contest_type == "Consumable Withdraw":
+			consumable_withdraw_id = request.POST.get("consumable_withdraw_id")
+			consumable_withdraw = ConsumableWithdraw.objects.get(id=consumable_withdraw_id)
+			cw_type = ContentType.objects.get_for_model(consumable_withdraw)
+			contest_transaction = ContestTransaction.objects.get(content_type__pk=cw_type.id, object_id=consumable_withdraw.id, contest_resolved=False)
+			changes = ContestTransactionData.objects.filter(contest_transaction=contest_transaction)
+
+
+	else:
+		# resolve contest but flag as rejected so submitter has another chance to contest
+		changes = None
+
 	output = "<a href='/review_contested_items/'>Return to contest review</a><br/>\n"
 
 	for key, value in request.POST.items():
 		output += key + " = " + value + "<br/>\n"
+
+	output += "<hr><br/>"
+
+	if changes is not None:
+		for c in changes:
+			for f in c._meta.get_fields():
+				output += f.name + " = " + str(getattr(c, f.name)) + "<br/>\n"
+
+	output += "<hr><br/>"
 
 	output += "<a href='/review_contested_items/'>Return to contest review</a><br/>\n"
 

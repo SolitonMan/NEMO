@@ -12,6 +12,7 @@
 	<form action="{% url 'save_contest_resolution' %}" method="POST">
 		{% csrf_token %}
 		<input type="hidden" value="{{ usage_event.id }}" name="usage_event_id" />
+		<input type="hidden" value="{{ contest_type }}" name="contest_type" />
 		{% autoescape off %}
 		{{ review_form }}
 		{% endautoescape %}
@@ -47,7 +48,16 @@
 		</tbody>
 	</table>
 		{% endif %}
-	<input type="submit" value="Resolve Contest" class="btn btn-success" />
+	<p>Do you wish to confirm this contest?
+	<input type="radio" name="resolve_contest" id="resolve_contest" value="0" />No
+	<input type="radio" name="resolve_contest" id="resolve_contest" value="1" />Yes
+	</p>
+	<p>
+	If you choose not to accept the contest, please explain briefly why it's being rejected<br/>
+	<textarea name="reject_contest_reason" id="reject_contest_reason" rows="10" cols="60"></textarea>
+	</p>
+
+	<input type="submit" value="Save Resolution" class="btn btn-success" />
 	<input type="button" value="Cancel Resolution" class="btn btn-warning" onclick="location.href='{% url 'review_contested_items' %}';" />
 	</form>
 	{% endif %}
@@ -56,84 +66,52 @@
 
 	<p>Please make any desired changes to the entry below and click Resolve Contest to save those changes.  The staff charge will be returned to the submitter for validation.</p>
 
-	<form action="" method="POST">
+	<form action="{% url 'save_contest_resolution' %}" method="POST">
 		{% csrf_token %}
 		<input type="hidden" name="staff_charge_id" value="{{ staff_charge.id }}" />
-	<table class="table">
-		<tr>
-			<th>Contest description</th>
-			<td>{{ staff_charge.contest_description }}</td>
-		</tr>
-		<tr>
-			<th>Staff member</th>
-			<td>{{ staff_charge.staff_member }}</td>
-		</tr>
-		<tr>
-			<th>Customer(s)</th>
-			<td>
-			{% for c in staff_charge.customers.all %}
-				{{ c }}<br/>
-			{% endfor %}
-			</td>
-		</tr>
-		<tr>
-			<th>Project(s)</th>
-			<td>
-			{% for p in staff_charge.projects.all %}
-				{{ p.application_identifier }} [{{ p }}]<br/>
-			{% endfor %}
-			</td>
-		</tr>
-		<tr>
-			<th>Start</th>
-			<td>{{ staff_charge.start }}</td>
-		</tr>
-		<tr>
-			<th>End</th>
-			<td>{{ staff_charge.end }}</td>
-		</tr>
-	</table>
+		<input type="hidden" value="{{ contest_type }}" name="contest_type" />
+	{% autoescape off %}
+	{{ review_form }}
+	{% endautoescape %}
+
+	<p>Do you wish to confirm this contest?
+	<input type="radio" name="resolve_contest" id="resolve_contest" value="0" />No
+	<input type="radio" name="resolve_contest" id="resolve_contest" value="1" />Yes
+	</p>
+	<p>
+	If you choose not to accept the contest, please explain briefly why it's being rejected<br/>
+	<textarea name="reject_contest_reason" id="reject_contest_reason" rows="10" cols="60"></textarea>
+	</p>
+
+	<input type="submit" value="Save Resolution" class="btn btn-success" />
 	<input type="button" value="Cancel Resolution" class="btn btn-warning" onclick="location.href='{% url 'review_contested_items' %}';" />
 	</form>
 	{% endif %}
+
+
 	{% if consumable_withdraw %}
 	<h1>Consumable Withdraw Contest Resolution</h1>
 
 	<p>Please make any desired changes to the entry below and click Resolve Contest to save those changes.  The consumable withdraw will be returned to the submitter for validation.</p>
 
-	<form action="" method="POST">
+	<form action="{% url 'save_contest_resolution' %}" method="POST">
 		{% csrf_token %}
 		<input type="hidden"  name="consumable_withdraw_id" value="{{ consumable_withdraw.id }}" />
-	<table class="table">
-		<tr>
-			<th>Contest Description</th>
-			<td>{{ consumable_withdraw.contest_description }}</td>
-		</tr>
-		<tr>
-			<th>Staff member</th>
-			<td>{{ consumable_withdraw.merchant }}</td>
-		</tr>
-		<tr>
-			<th>Customer</th>
-			<td>{{ consumable_withdraw.customer }}</td>
-		</tr>
-		<tr>
-			<th>Project</th>
-			<td>{{ consumable_withdraw.project.application_identifier }} [{{ consumable_withdraw.project }}]</td>
-		</tr>
-		<tr>
-			<th>Consumable</th>
-			<td>{{ consumable_withdraw.consumable }}</td>
-		</tr>
-		<tr>
-			<th>Quantity</th>
-			<td>{{ consumable_withdraw.quantity }} {% if consumable_withdraw.consumable.unit is not None %}{{ consumable_withdraw.consumable.unit }}{% endif %}</td>
-		</tr>
-		<tr>
-			<th>Withdraw date</th>
-			<td>{{ consumable_withdraw.date }}</td>
-		</tr>
-	</table>
+		<input type="hidden" value="{{ contest_type }}" name="contest_type" />
+	{% autoescape off %}
+	{{ review_form }}
+	{% endautoescape %}
+
+	<p>Do you wish to confirm this contest?
+	<input type="radio" name="resolve_contest" id="resolve_contest" value="0" />No
+	<input type="radio" name="resolve_contest" id="resolve_contest" value="1" />Yes
+	</p>
+	<p>
+	If you choose not to accept the contest, please explain briefly why it's being rejected<br/>
+	<textarea name="reject_contest_reason" id="reject_contest_reason" rows="10" cols="60"></textarea>
+	</p>
+
+	<input type="submit" value="Save Resolution" class="btn btn-success" />
 	<input type="button" value="Cancel Resolution" class="btn btn-warning" onclick="location.href='{% url 'review_contested_items' %}';" />
 	</form>
 	{% endif %}
@@ -143,46 +121,24 @@
 
 	<p>Please make any desired changes to the entry below and click Resolve Contest to save those changes.  The area access record will be returned to the submitter for validation.</p>
 
-	<form action="" method="POST">
+	<form action="{% url 'save_contest_resolution' %}" method="POST">
+		{% csrf_token %}
 		<input type="hidden" name="area_access_record_id" value="{{ area_access_record.id }}" />
-	<table class="table">
-		<tr>
-			<th>Contest Description</th>
-			<td>{{ area_access_record.contest_description }}</td>
-		</tr>
-		<tr>
-			<th>Area</th>
-			<td>{{ area_access_record.area }}</td>
-		</tr>
-		<tr>
-			<th>Staff member</th>
-			<td>{{ area_access_record.staff_charge.staff_member }}</td>
-		</tr>
-		<tr>
-			<th>Customer</th>
-			<td>
-			{% for c in area_access_record.customers.all %}
-				{{ c.first_name}} {{ c.last_name }}<br/>
-			{% endfor %}
-			</td>
-		</tr>
-		<tr>
-			<th>Project</th>
-			<td>
-			{% for p in area_access_record.projects.all %}
-				{{ p.application_identifier }} [{{ p }}]<br/>
-			{% endfor %}
-			</td>
-		</tr>
-		<tr>
-			<th>Start</th>
-			<td>{{ area_access_record.start }}</td>
-		</tr>
-		<tr>
-			<th>End</th>
-			<td>{{ area_access_record.end }}</td>
-		</tr>
-	</table>
+		<input type="hidden" value="{{ contest_type }}" name="contest_type" />
+	{% autoescape off %}
+	{{ review_form }}
+	{% endautoescape %}
+
+	<p>Do you wish to confirm this contest?
+	<input type="radio" name="resolve_contest" id="resolve_contest" value="0" />No
+	<input type="radio" name="resolve_contest" id="resolve_contest" value="1" />Yes
+	</p>
+	<p>
+	If you choose not to accept the contest, please explain briefly why it's being rejected<br/>
+	<textarea name="reject_contest_reason" id="reject_contest_reason" rows="10" cols="60"></textarea>
+	</p>
+
+	<input type="submit" value="Save Resolution" class="btn btn-success" />
 	<input type="button" value="Cancel Resolution" class="btn btn-warning" onclick="location.href='{% url 'review_contested_items' %}';" />
 	</form>
 	{% endif %}
