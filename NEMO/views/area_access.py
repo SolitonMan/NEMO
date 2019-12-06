@@ -298,7 +298,7 @@ def change_project(request, new_project=None):
 @require_http_methods(['GET', 'POST'])
 def new_area_access_record(request):
 	dictionary = {
-		'customers': User.objects.filter(is_active=True, active_project_count__gt=0)
+		'customers': User.objects.filter(is_active=True, projects__active=True).distinct()
 	}
 	if request.method == 'GET':
 		try:

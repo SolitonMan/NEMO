@@ -7,9 +7,7 @@
 	{% if usage_event %}
 	<h1>Usage Event Contest Resolution</h1>
 
-	<p>Please make any desired changes to the entry below and click Resolve Contest to save those changes.  The usage event will be returned to the submitter for validation.</p>
-
-	<form action="{% url 'save_contest_resolution' %}" method="POST">
+	<form action="{% url 'save_contest_resolution' %}" method="POST" onsubmit="return on_submit();">
 		{% csrf_token %}
 		<input type="hidden" value="{{ usage_event.id }}" name="usage_event_id" />
 		<input type="hidden" value="{{ contest_type }}" name="contest_type" />
@@ -56,6 +54,10 @@
 	If you choose not to accept the contest, please explain briefly why it's being rejected<br/>
 	<textarea name="reject_contest_reason" id="reject_contest_reason" rows="10" cols="60"></textarea>
 	</p>
+	<p>
+	Mark this transaction as no charge <input type="checkbox" name="no_charge_transaction" id="no_charge_transaction" value="1" /><br/>
+	Note that selecting this option will only work if the "Yes" option above is chosen.  
+	</p>
 
 	<input type="submit" value="Save Resolution" class="btn btn-success" />
 	<input type="button" value="Cancel Resolution" class="btn btn-warning" onclick="location.href='{% url 'review_contested_items' %}';" />
@@ -64,9 +66,7 @@
 	{% if staff_charge %}
 	<h1>Staff Charge Contest Resolution</h1>
 
-	<p>Please make any desired changes to the entry below and click Resolve Contest to save those changes.  The staff charge will be returned to the submitter for validation.</p>
-
-	<form action="{% url 'save_contest_resolution' %}" method="POST">
+	<form action="{% url 'save_contest_resolution' %}" method="POST" onsubmit="return on_submit();">
 		{% csrf_token %}
 		<input type="hidden" name="staff_charge_id" value="{{ staff_charge.id }}" />
 		<input type="hidden" value="{{ contest_type }}" name="contest_type" />
@@ -82,7 +82,11 @@
 	If you choose not to accept the contest, please explain briefly why it's being rejected<br/>
 	<textarea name="reject_contest_reason" id="reject_contest_reason" rows="10" cols="60"></textarea>
 	</p>
-
+	<p>
+        Mark this transaction as no charge <input type="checkbox" name="no_charge_transaction" id="no_charge_transaction" value="1" /><br/>
+        Note that selecting this option will only work if the "Yes" option above is chosen.
+        </p>
+	
 	<input type="submit" value="Save Resolution" class="btn btn-success" />
 	<input type="button" value="Cancel Resolution" class="btn btn-warning" onclick="location.href='{% url 'review_contested_items' %}';" />
 	</form>
@@ -92,9 +96,7 @@
 	{% if consumable_withdraw %}
 	<h1>Consumable Withdraw Contest Resolution</h1>
 
-	<p>Please make any desired changes to the entry below and click Resolve Contest to save those changes.  The consumable withdraw will be returned to the submitter for validation.</p>
-
-	<form action="{% url 'save_contest_resolution' %}" method="POST">
+	<form action="{% url 'save_contest_resolution' %}" method="POST" onsubmit="return on_submit();">
 		{% csrf_token %}
 		<input type="hidden"  name="consumable_withdraw_id" value="{{ consumable_withdraw.id }}" />
 		<input type="hidden" value="{{ contest_type }}" name="contest_type" />
@@ -110,6 +112,10 @@
 	If you choose not to accept the contest, please explain briefly why it's being rejected<br/>
 	<textarea name="reject_contest_reason" id="reject_contest_reason" rows="10" cols="60"></textarea>
 	</p>
+	<p>
+        Mark this transaction as no charge <input type="checkbox" name="no_charge_transaction" id="no_charge_transaction" value="1" /><br/>
+        Note that selecting this option will only work if the "Yes" option above is chosen.
+        </p>
 
 	<input type="submit" value="Save Resolution" class="btn btn-success" />
 	<input type="button" value="Cancel Resolution" class="btn btn-warning" onclick="location.href='{% url 'review_contested_items' %}';" />
@@ -119,9 +125,7 @@
 	{% if area_access_record %}
 	<h1>Area Access Record Contest Resolution</h1>
 
-	<p>Please make any desired changes to the entry below and click Resolve Contest to save those changes.  The area access record will be returned to the submitter for validation.</p>
-
-	<form action="{% url 'save_contest_resolution' %}" method="POST">
+	<form action="{% url 'save_contest_resolution' %}" method="POST" onsubmit="return on_submit();">
 		{% csrf_token %}
 		<input type="hidden" name="area_access_record_id" value="{{ area_access_record.id }}" />
 		<input type="hidden" value="{{ contest_type }}" name="contest_type" />
@@ -137,10 +141,34 @@
 	If you choose not to accept the contest, please explain briefly why it's being rejected<br/>
 	<textarea name="reject_contest_reason" id="reject_contest_reason" rows="10" cols="60"></textarea>
 	</p>
+	<p>
+        Mark this transaction as no charge <input type="checkbox" name="no_charge_transaction" id="no_charge_transaction" value="1" /><br/>
+        Note that selecting this option will only work if the "Yes" option above is chosen.
+        </p>
 
 	<input type="submit" value="Save Resolution" class="btn btn-success" />
 	<input type="button" value="Cancel Resolution" class="btn btn-warning" onclick="location.href='{% url 'review_contested_items' %}';" />
 	</form>
 	{% endif %}
+
+	<script type="javascript">
+	function on_submit()
+	{
+		if (!$("#resolve_contest[value='0'].selected && !$("#resolve_contest[value='1'].selected)
+		{
+			alert("Please select either 'Yes' or 'No' to resolve this contest");
+			$("#resolve_contest[value='0'].focus();
+			return false;
+		}
+
+		if ($("#resolve_contest[value='0'].selected && $("#reject_contest_reason").val() == "") {
+			alert("Please provide a reason to reject the proposed resolution to this contest.");
+			$("#reject_contest_reason").focus();
+			return false;
+		}
+
+		return true;
+	}
+	</script>
 	
 {% endblock %}

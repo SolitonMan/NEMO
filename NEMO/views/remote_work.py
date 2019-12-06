@@ -649,8 +649,6 @@ def resolve_consumable_withdraw_contest(request):
 	review_form += "<tr><th>Staff member</th><td>" + str(consumable_withdraw.merchant) + "</td><td>&nbsp;</td><td>&nbsp;</td></tr>"
 	review_form += "<tr><th>Consumable</th><td>" + str(consumable_withdraw.consumable) + "</td>"
 
-	c_type = ContentType.objects.get_for_model(consumable_withdraw)
-
 	if ContestTransactionData.objects.filter(content_type__pk=c_type.id, object_id=consumable_withdraw.id, contest_transaction=contest_transaction, field_name="consumable").exists():
 		ct = ContestTransactionData.objects.get(content_type__pk=c_type.id, object_id=consumable_withdraw.id, contest_transaction=contest_transaction, field_name="consumable")
 		o_id = int(ct.original_value)
@@ -712,45 +710,133 @@ def save_contest_resolution(request):
 	contest_resolved = request.POST.get("resolve_contest")
 	contest_transaction = None
 	changes = None
+	no_charge_transaction = request.POST.get("no_charge_transaction", None)
+
+	if contest_type == "Staff Charge":
+		staff_charge_id = request.POST.get("staff_charge_id")
+		staff_charge = StaffCharge.objects.get(id=staff_charge_id)
+		sc_type = ContentType.objects.get_for_model(staff_charge)
+		contest_transaction = ContestTransaction.objects.get(content_type__pk=sc_type.id, object_id=staff_charge.id, contest_resolved=False)
+
+	if contest_type == "Usage Event":
+		usage_event_id = request.POST.get("usage_event_id")
+		usage_event = UsageEvent.objects.get(id=usage_event_id)
+		ue_type = ContentType.objects.get_for_model(usage_event)
+		contest_transaction = ContestTransaction.objects.get(content_type__pk=ue_type.id, object_id=usage_event.id, contest_resolved=False)
+
+	if contest_type == "Area Access Record":
+		area_access_record_id = request.POST.get("area_access_record_id")
+		area_access_record = AreaAccessRecord.objects.get(id=area_access_record_id)
+		aar_type = ContentType.objects.get_for_model(area_access_record)
+		contest_transaction = ContestTransaction.objects.get(content_type__pk=aar_type.id, object_id=area_access_record.id, contest_resolved=False)
+
+	if contest_type == "Consumable Withdraw":
+		consumable_withdraw_id = request.POST.get("consumable_withdraw_id")
+		consumable_withdraw = ConsumableWithdraw.objects.get(id=consumable_withdraw_id)
+		cw_type = ContentType.objects.get_for_model(consumable_withdraw)
+		contest_transaction = ContestTransaction.objects.get(content_type__pk=cw_type.id, object_id=consumable_withdraw.id, contest_resolved=False)
 
 	if contest_resolved == "1":
 		# admin has accepted change, update appopriate records and set base transaction validated to True
 		if contest_type == "Staff Charge":
-			staff_charge_id = request.POST.get("staff_charge_id")
-			staff_charge = StaffCharge.objects.get(id=staff_charge_id)
-			sc_type = ContentType.objects.get_for_model(staff_charge)
-			contest_transaction = ContestTransaction.objects.get(content_type__pk=sc_type.id, object_id=staff_charge.id, contest_resolved=False)
 			changes = ContestTransactionData.objects.filter(contest_transaction=contest_transaction)
+			staff_charge.validated = True
+			staff_charge.validated_date = timezone.now()
+			staff_charge.contested = False
+			staff_charge.updated = timezone.now()
+			if no_charge_transaction is not None:
+				if int(no_charge_transaction) == 1:
+					staff_charge.no_charge_flag = True
+			staff_charge.save()
 
 
 		if contest_type == "Usage Event":
-			usage_event_id = request.POST.get("usage_event_id")
-			usage_event = UsageEvent.objects.get(id=usage_event_id)
-			ue_type = ContentType.objects.get_for_model(usage_event)
-			contest_transaction = ContestTransaction.objects.get(content_type__pk=ue_type.id, object_id=usage_event.id, contest_resolved=False)
 			changes = ContestTransactionData.objects.filter(contest_transaction=contest_transaction)
+			usage_event.validated = True
+			usage_event.validated_date = timezone.now()
+			usage_event.contested = False
+			usage_event.updated = timezone.now()
+			if no_charge_transaction is not None:
+				if int(no_charge_transaction) == 1:
+					usage_event.no_charge_flag = True
+			usage_event.save()
 
 
 		if contest_type == "Area Access Record":
-			area_access_record_id = request.POST.get("area_access_record_id")
-			area_access_record = AreaAccessRecord.objects.get(id=area_access_record_id)
-			aar_type = ContentType.objects.get_for_model(area_access_record)
-			contest_transaction = ContestTransaction.objects.get(content_type__pk=aar_type.id, object_id=area_access_record.id, contest_resolved=False)
 			changes = ContestTransactionData.objects.filter(contest_transaction=contest_transaction)
+			area_access_record.validated = True
+			area_access_record.validated_date = timezone.now()
+			area_access_record.contested = False
+			area_access_record.updated = timezone.now()
+			if no_charge_transaction is not None:
+				if int(no_charge_transaction) == 1:
+					area_access_record.no_charge_flag = True
+			area_access_record.save()
 
 
 		if contest_type == "Consumable Withdraw":
-			consumable_withdraw_id = request.POST.get("consumable_withdraw_id")
-			consumable_withdraw = ConsumableWithdraw.objects.get(id=consumable_withdraw_id)
-			cw_type = ContentType.objects.get_for_model(consumable_withdraw)
-			contest_transaction = ContestTransaction.objects.get(content_type__pk=cw_type.id, object_id=consumable_withdraw.id, contest_resolved=False)
 			changes = ContestTransactionData.objects.filter(contest_transaction=contest_transaction)
+			consumable_withdraw.validated = True
+			consumable_withdraw.validated_date = timezone.now()
+			consumable_withdraw.contested = False
+			consumable_withdraw.updated = timezone.now()
+			if no_charge_transaction is not None:
+				if int(no_charge_transaction) == 1:
+					consumable_withdraw.no_charge_flag = True
+			consumable_withdraw.save()
+
+
+		contest_transaction.contest_resolved = True
+		contest_transaction.contest_resolved_date = timezone.now()
+		contest_transaction.contest_resolution = True
+
+		if changes is not None:
+			for c in changes:
+				field_name = c.field_name
+
+				if field_name == "start":
+					c.content_object.start = c.proposed_value
+
+				if field_name == "end":
+					c.content_object.end = c.proposed_value
+
+				if field_name == "area":
+					c.content_object.area = Area.objects.get(id=int(c.proposed_value))
+
+				if field_name == "consumable":
+					c.content_object.consumable = Consumable.objects.get(id=int(c.proposed_value))
+
+				if field_name == "quantity":
+					c.content_object.quantity = c.proposed_value
+
+				if field_name == "chosen_user":
+					c.content_object.customer = User.objects.get(id=int(c.proposed_value))
+
+				if field_name == "chosen_project":
+					c.content_object.project = Project.objects.get(id=int(c.proposed_value))
+
+				if field_name == "project_percent":
+					c.content_object.project_percent = c.proposed_value
+
+				if field_name == "tool_id":
+					c.content_object.tool = Tool.objects.get(id=int(c.proposed_value))
+
+				c.content_object.updated = timezone.now()
+				c.content_object.save()
+
+		contest_transaction.save()
 
 
 	else:
 		# resolve contest but flag as rejected so submitter has another chance to contest
 		changes = None
+		contest_transaction.contest_resolved = True
+		contest_transaction.contest_resolved_date = timezone.now()
+		contest_transaction.contest_resolution = False
+		contest_transaction.contest_rejection_reason = request.POST.get("reject_contest_reason")
+		contest_transaction.save()
 
+	"""
 	output = "<a href='/review_contested_items/'>Return to contest review</a><br/>\n"
 
 	for key, value in request.POST.items():
@@ -768,3 +854,6 @@ def save_contest_resolution(request):
 	output += "<a href='/review_contested_items/'>Return to contest review</a><br/>\n"
 
 	return HttpResponse(output)
+	"""
+
+	return HttpResponseRedirect('/review_contested_items/')

@@ -720,7 +720,7 @@ def cancel_unused_reservations(request):
 @staff_member_required(login_url=None)
 @require_GET
 def proxy_reservation(request):
-	return render(request, 'calendar/proxy_reservation.html', {'users': User.objects.filter(is_active=True, active_project_count__gt=0)})
+	return render(request, 'calendar/proxy_reservation.html', {'users': User.objects.filter(is_active=True, projects__active=True).distinct()})
 
 
 def send_missed_reservation_notification(reservation):
