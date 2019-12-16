@@ -32,11 +32,17 @@ def landing(request):
 
 	contested_items = False
 	if request.user.is_superuser:
-		if UsageEvent.objects.filter(contested=True, validated=False, contest_record__contest_resolved=False).exists() or StaffCharge.objects.filter(contested=True, validated=False, contest_record__contest_resolved=False).exists() or AreaAccessRecord.objects.filter(contested=True, validated=False, contest_record__contest_resolved=False).exists() or ConsumableWithdraw.objects.filter(contested=True, validated=False, contest_record__contest_resolved=False).exists():
+		if UsageEvent.objects.filter(contested=True, validated=False, contest_record__contest_resolved=False).exclude(operator=request.user).exists() or StaffCharge.objects.filter(contested=True, validated=False, contest_record__contest_resolved=False).exclude(staff_member=request.user).exists() or AreaAccessRecord.objects.filter(contested=True, validated=False, contest_record__contest_resolved=False).exclude(staff_charge__staff_member=request.user).exists() or ConsumableWithdraw.objects.filter(contested=True, validated=False, contest_record__contest_resolved=False).exclude(customer=request.user).exists():
 			contested_items = True
 	else:
-		if UsageEvent.objects.filter(contested=True, validated=False, contest_record__contest_resolved=False, operator__core_ids__in=request.user.core_ids.all()).exists() or StaffCharge.objects.filter(contested=True, validated=False, contest_record__contest_resolved=False, staff_member__core_ids__in=request.user.core_ids.all()).exists() or AreaAccessRecord.objects.filter(contested=True, validated=False, contest_record__contest_resolved=False, staff_charge__staff_member__core_ids__in=request.user.core_ids.all()).exists() or ConsumableWithdraw.objects.filter(contested=True, validated=False, contest_record__contest_resolved=False, merchant__core_ids__in=request.user.core_ids.all()).exists():
-			contested_items = True
+		if request.user.is_staff:
+			group_name="Core Admin"
+			if request.user.groups.filter(name=group_name).exists():
+				if StaffCharge.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, staff_member__core_ids__in=request.user.core_ids.all()).exclude(staff_member=request.user).exists() or UsageEvent.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, operator__core_ids__in=request.user.core_ids.all()).exclude(operator=request.user).exists() or AreaAccessRecord.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, staff_charge__staff_member__core_ids__in=request.user.core_ids.all()).exclude(staff_charge__staff_member=request.user).exists() or ConsumableWithdraw.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, consumable__core_id__in=request.user.core_ids.all()).exclude(customer=request.user).exists():
+					contested_items = True
+			else:
+				if UsageEvent.objects.filter(Q(validated=False, contested=True, contest_record__contest_resolved=False), Q(tool__primary_owner=request.user) | Q(tool__backup_owners__in=[request.user])).exclude(operator=request.user).exists() or ConsumableWithdraw.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, consumable__core_id__in=request.user.core_ids.all()).exclude(customer=request.user).exists():
+					contested_items = True
 
 
 	if UsageEvent.objects.filter(operator=request.user, validated=False, contested=False).exists() or StaffCharge.objects.filter(staff_member=request.user, validated=False, contested=False).exists():
@@ -53,6 +59,8 @@ def landing(request):
 		landing_page_choices = landing_page_choices.exclude(hide_from_mobile_devices=True)
 	if not request.user.is_staff and not request.user.is_superuser and not request.user.is_technician:
 		landing_page_choices = landing_page_choices.exclude(hide_from_users=True)
+
+
 	dictionary = {
 		'now': timezone.now(),
 		'alerts': Alert.objects.filter(Q(user=None) | Q(user=request.user), debut_time__lte=timezone.now()),

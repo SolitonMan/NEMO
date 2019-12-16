@@ -18,7 +18,7 @@ from NEMO.models import User, Project, Tool, PhysicalAccessLevel, Reservation, S
 @staff_member_required(login_url=None)
 @require_GET
 def users(request):
-	all_users = User.objects.all()
+	all_users = User.objects.order_by('last_name', 'first_name')
 	return render(request, 'users/users.html', {'users': all_users})
 
 

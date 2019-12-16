@@ -84,29 +84,61 @@
 				<li><a href="{% url 'tool_control' 0 1 0 %}">Tool control</a></li>
 				{% endif %}
 				<li><a href="{% url 'status_dashboard' %}">Status dashboard</a></li>
-				{% if user.is_staff %}
+				{% if user.is_staff or request.session.pi %}
 					<li class="dropdown">
 						<a href="#" class="dropdown-toggle" data-toggle="dropdown">Administration <b class="caret"></b></a>
 						<ul class="dropdown-menu">
 							{# The navigation_url tag will display the item if the URL name can be reversed. #}
 							{# This allows items to be easily removed from the public facing version of NEMO. #}
+							{% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
 							{% navigation_url 'abuse' 'Abuse' %}
+							{% endif %}
 							{% navigation_url 'accounts_and_projects' 'Accounts and projects' %}
+							{% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
 							{% navigation_url 'alerts' 'Alerts' %}
+							{% endif %}
+							{% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
 							{% navigation_url 'area_access' 'Area access' %}
+							{% endif %}
+							{% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
 							{% navigation_url 'configuration_agenda' 'Configuration agenda' %}
+							{% endif %}
+							{% if user.is_superuser %}
 							{% navigation_url 'customization' 'Customization' %}
+							{% endif %}
+							{% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or user.is_superuser %}
 							{% navigation_url 'admin:index' 'Detailed administration' %}
+							{% endif %}
+							{% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
 							{% navigation_url 'email_broadcast' 'Email' %}
+							{% endif %}
+							{% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
 							{% navigation_url 'maintenance' 'Maintenance' %}
+							{% endif %}
+							{% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
 							{% navigation_url 'qualifications' 'Qualifications' %}
+							{% endif %}
+							{% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
 							{% navigation_url 'remote_work' 'Transaction validation' %}
+							{% endif %}
+							{% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
 							{% navigation_url 'resources' 'Resources' %}
+							{% endif %}
+							{% if request.session.core_admin or request.session.technical_staff or user.is_superuser %}
 							{% navigation_url 'staff_charges' 'Staff charges' %}
+							{% endif %}
+							{% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
 							{% navigation_url 'consumables' 'Supplies' %}
+							{% endif %}
+							{% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
 							{% navigation_url 'training' 'Training' %}
+							{% endif %}
+							{% if request.session.core_admin or request.session.technical_staff or user.is_superuser %}
 							{% navigation_url 'create_usage_event' 'Usage events' %}
+							{% endif %}
+							{% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
 							{% navigation_url 'users' 'Users' %}
+							{% endif %}
 						</ul>
 					</li>
 				{% endif %}

@@ -12,14 +12,60 @@
 		</div>
 	</div>
 	<script>
-		function get_user(jquery_event, search_selection, dataset_name)
-		{
-			window.location.href = '/user/' + search_selection.id + '/';
+	$("#search").keyup(function () {
+		var data = this.value.split(" ");
+
+		var tr = $("#user_data").find("tr");
+		if (this.value == "") {
+			tr.show();
+			return;
 		}
-		function on_load()
-		{
-			$("#search").autocomplete('users', get_user, {{ users|json_search_base }}).focus();
-		}
-		$(on_load);
+
+		tr.hide();
+
+		tr.filter(function(i, v) {
+			var $t = $(this);
+			for (var d = 0; d < data.length; ++d) {
+				var s = data[d].toUpperCase();
+				if ($t.text().toUpperCase().indexOf(s) > -1) {
+					return true;
+				}
+			}
+		})
+		.show();
+	});
 	</script>
+
+	<table class="table">
+		<thead>
+		<tr>
+			<th>Last</th>
+			<th>First</th>
+			<th>Username</th>
+			<th>Core</th>
+			<th>Roles</th>
+			<th>Staff?</th>
+		</tr>
+		</thead>
+		<tbody id="user_data">
+	{% for u in users %}
+		<tr>
+			<td>{{ u.last_name }}</td>
+			<td>{{ u.first_name }}</td>
+			<td><a href="{% url 'create_or_modify_user' u.id %}">{{ u.username }}</a></td>
+			<td>
+			{% for c in u.core_ids.all %}
+			{{ c.name }} <br/>
+			{% endfor %}
+			</td>
+			<td>
+			{% for g in u.groups.all %}
+			{{ g.name }} <br/>
+			{% endfor %}
+			</td>
+			<td>{{ u.is_staff }}</td>
+		</tr>
+	{% endfor %}
+		</tbody>
+	</table>
 {% endblock %}

@@ -4,6 +4,7 @@ from re import search
 
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import F, Q
 from django.http import HttpResponse, HttpResponseRedirect
@@ -292,16 +293,22 @@ def review_contested_items(request):
 	dictionary = {}
 
 	if request.user.is_superuser:
-		dictionary['staff_charges'] = StaffCharge.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False)
-		dictionary['usage'] = UsageEvent.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False)
-		dictionary['area_access_records'] = AreaAccessRecord.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False)
-		dictionary['consumable_withdraws'] = ConsumableWithdraw.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False)
+		dictionary['staff_charges'] = StaffCharge.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False).exclude(staff_member=request.user)
+		dictionary['usage'] = UsageEvent.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False).exclude(operator=request.user)
+		dictionary['area_access_records'] = AreaAccessRecord.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False).exclude(staff_charge__staff_member=request.user)
+		dictionary['consumable_withdraws'] = ConsumableWithdraw.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False).exclude(customer=request.user)
 	else:
-		dictionary['staff_charges'] = StaffCharge.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, staff_member__core_ids__in=request.user.core_ids.all())
-		dictionary['usage'] = UsageEvent.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, operator__core_ids__in=request.user.core_ids.all())
-		dictionary['area_access_records'] = AreaAccessRecord.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, staff_charge__staff_member__core_ids__in=request.user.core_ids.all())
-		dictionary['consumable_withdraws'] = ConsumableWithdraw.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, consumable__core_id__in=request.user.core_ids.all())
-
+		if request.user.is_staff:
+			group_name="Core Admin"
+			if request.user.groups.filter(name=group_name).exists():
+				dictionary['staff_charges'] = StaffCharge.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, staff_member__core_ids__in=request.user.core_ids.all()).exclude(staff_member=request.user)
+				dictionary['usage'] = UsageEvent.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, operator__core_ids__in=request.user.core_ids.all()).exclude(operator=request.user)
+				dictionary['area_access_records'] = AreaAccessRecord.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, staff_charge__staff_member__core_ids__in=request.user.core_ids.all()).exclude(staff_charge__staff_member=request.user)
+				dictionary['consumable_withdraws'] = ConsumableWithdraw.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, consumable__core_id__in=request.user.core_ids.all()).exclude(customer=request.user)
+			else:
+				dictionary['usage'] = UsageEvent.objects.filter(Q(validated=False, contested=True, contest_record__contest_resolved=False), Q(tool__primary_owner=request.user) | Q(tool__backup_owners__in=[request.user])).exclude(operator=request.user)
+				dictionary['consumable_withdraws'] = ConsumableWithdraw.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, consumable__core_id__in=request.user.core_ids.all()).exclude(customer=request.user)
+		
 	return render(request, 'remote_work_contest_review.html', dictionary)
 
 

@@ -10,6 +10,7 @@ from itertools import chain
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotFound, HttpResponseServerError, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -47,8 +48,8 @@ def tool_control(request, tool_id=None, qualified_only=None, core_only=None):
 		ctools = ctools.filter(id__in=request.user.qualifications.all()).order_by('category', 'name')
 
 	if core_only == '1':
-		tools = tools.filter(core_id__in=request.user.core_ids.all()).order_by('category', 'name')
-		ctools = ctools.filter(core_id__in=request.user.core_ids.all()).order_by('category', 'name')
+		tools = tools.filter(Q(core_id__in=request.user.core_ids.all()) | Q(id__in=request.user.qualifications.all())).order_by('category', 'name')
+		ctools = ctools.filter(Q(core_id__in=request.user.core_ids.all()) | Q(id__in=request.user.qualifications.all())).order_by('category', 'name')
 
 	# create searchable names for tools that include the category
 	categorized_tools = "["

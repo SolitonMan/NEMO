@@ -129,6 +129,33 @@ def login_user(request):
 	if user:
 		login(request, user)
 		try:
+
+			# check for group affiliations and set flags
+			if user.groups.filter(name="Administrative Staff").exists():
+				request.session['administrative_staff'] = True
+			else:
+				request.session['administrative_staff'] = False
+
+			if user.groups.filter(name="Core Admin").exists():
+				request.session['core_admin'] = True
+			else:
+				request.session['core_admin'] = False
+
+			if user.groups.filter(name="Financial Admin").exists():
+				request.session['financial_admin'] = True
+			else:
+				request.session['financial_admin'] = False
+
+			if user.groups.filter(name="PI").exists():
+				request.session['pi'] = True
+			else:
+				request.session['pi'] = False
+
+			if user.groups.filter(name="Technical Staff").exists():
+				request.session['technical_staff'] = True
+			else:
+				request.session['technical_staff'] = False
+
 			# check for a Core relationship for the user
 			count = user.core_ids.all().count()
 			if count == 0:
