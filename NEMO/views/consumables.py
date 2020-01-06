@@ -5,7 +5,7 @@ from django.views.decorators.http import require_http_methods, require_GET
 from django.http import JsonResponse, HttpResponseRedirect
 
 from NEMO.forms import ConsumableWithdrawForm
-from NEMO.models import Consumable, Core, User
+from NEMO.models import Consumable, ConsumableWithdraw, Core, User
 
 
 @staff_member_required(login_url=None)
@@ -15,6 +15,7 @@ def consumables(request):
 
 	dictionary = {
 		'users': User.objects.filter(is_active=True),
+		'recent': ConsumableWithdraw.objects.filter(merchant=request.user).order_by('-date')[:10]
 	}
 
 	if request.user.is_superuser:

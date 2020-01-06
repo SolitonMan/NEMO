@@ -450,7 +450,7 @@ def resolve_usage_event_contest(request):
 		ct = ContestTransactionData.objects.get(content_type__pk=usage_event_type.id, object_id=usage_event.id, contest_transaction=contest_transaction, field_name="tool_id")
 		o_id = int(ct.original_value)
 		p_id = int(ct.proposed_value)
-		review_form += Tool.objects.get(id=o_id) + "</td><td><span style=\"font-weight:bold; color:red;\">" + str(Tool.objects.get(id=p_id)) + "</span><input type=\"hidden\" name=\"proposed__tool_id__" + str(usage_event_id) + "\" value=\"" + str(p_id) + "\" /></td></tr>"
+		review_form += str(Tool.objects.get(id=o_id)) + "</td><td><span style=\"font-weight:bold; color:red;\">" + str(Tool.objects.get(id=p_id)) + "</span><input type=\"hidden\" name=\"proposed__tool_id__" + str(usage_event_id) + "\" value=\"" + str(p_id) + "\" /></td></tr>"
 	else:
 		review_form += "&nbsp;</td><td>&nbsp;</td></tr>"
 

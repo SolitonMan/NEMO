@@ -130,6 +130,9 @@
 							{% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
 							{% navigation_url 'consumables' 'Supplies' %}
 							{% endif %}
+							{% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
+							{% navigation_url 'tools' 'Tools' %}
+							{% endif %}
 							{% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
 							{% navigation_url 'training' 'Training' %}
 							{% endif %}

@@ -1,11 +1,12 @@
 from datetime import datetime
 
+from django import forms
 from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
 from django.forms import BaseForm, BooleanField, CharField, ChoiceField, DateField, Form, IntegerField, ModelChoiceField, ModelForm
 from django.forms.utils import ErrorDict
 from django.utils import timezone
 
-from NEMO.models import Account, Alert, Comment, Consumable, ConsumableWithdraw, Project, SafetyIssue, ScheduledOutage, Task, TaskCategory, User
+from NEMO.models import Account, Alert, Comment, Consumable, ConsumableWithdraw, Project, SafetyIssue, ScheduledOutage, Task, TaskCategory, Tool, User
 from NEMO.utilities import bootstrap_primary_color, format_datetime
 
 
@@ -13,6 +14,22 @@ class UserForm(ModelForm):
 	class Meta:
 		model = User
 		fields = ['username', 'first_name', 'last_name', 'email', 'badge_number', 'access_expiration', 'type', 'domain', 'is_active', 'training_required', 'physical_access_levels', 'qualifications', 'projects']
+
+
+class ToolForm(ModelForm):
+	class Meta:
+		model = Tool
+		fields = ['name', 'reservation_horizon', 'minimum_usage_block_time', 'maximum_usage_block_time', 'maximum_reservations_per_day', 'minimum_time_between_reservations', 'maximum_future_reservation_time', 'missed_reservation_threshold', 'reservation_required']
+		widgets = {
+			'name': forms.TextInput(attrs={'readonly': 'readonly', 'class': 'form-control'}),
+			'reservation_horizon': forms.NumberInput(attrs={'class': 'form-control'}),
+			'minimum_usage_block_time': forms.NumberInput(attrs={'class': 'form-control'}),
+			'maximum_usage_block_time': forms.NumberInput(attrs={'class': 'form-control'}),
+			'maximum_reservations_per_day': forms.NumberInput(attrs={'class': 'form-control'}),
+			'minimum_time_between_reservations': forms.NumberInput(attrs={'class': 'form-control'}),
+			'maximum_future_reservation_time': forms.NumberInput(attrs={'class': 'form-control'}),
+			'missed_reservation_threshold': forms.NumberInput(attrs={'class': 'form-control'}),
+		}
 
 
 class ProjectForm(ModelForm):

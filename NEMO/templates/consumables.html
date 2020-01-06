@@ -112,6 +112,34 @@
 		<input type="submit" class="btn btn-default" value="Make withdraw">
 	</form>
 
+	{% if recent %}
+		<table class="table">
+			<thead>
+			<tr>
+				<th colspan="5" style="text-align:center;">Recent Transactions</th>
+			</tr>
+			<tr>
+				<th>Customer</th>
+				<th>Consumable</th>
+				<th>Quantity</th>
+				<th>Project</th>
+				<th>Date</th>
+			</tr>
+			</thead>
+			<tbody>
+		{% for r in recent %}
+			<tr>
+				<td>{{ r.customer }}</td>
+				<td>{{ r.consumable }}</td>
+				<td>{{ r.quantity }}</td>
+				<td>{{ r.project.application_identifier }} [{{ r.project }}]</td>
+				<td>{{ r.date|date:'Y-m-d' }}</td>
+			</tr>
+		{% endfor %}
+			</tbody>
+		</table>
+	{% endif %}
+
 	<script type="text/javascript">
 		function update_consumables(core_id)
 		{

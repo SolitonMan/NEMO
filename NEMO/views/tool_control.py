@@ -14,18 +14,55 @@ from django.db.models import Q
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotFound, HttpResponseServerError, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
-from django.views.decorators.http import logger, require_GET, require_POST
+from django.views.decorators.http import logger, require_GET, require_POST, require_http_methods
 from django.utils.dateparse import parse_time, parse_date, parse_datetime
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from django.urls import reverse
 
-from NEMO.forms import CommentForm, nice_errors
+from NEMO.forms import CommentForm, nice_errors, ToolForm
 from NEMO.models import AreaAccessRecord, AreaAccessRecordProject, Comment, Configuration, ConfigurationHistory, Project, Reservation, ReservationConfiguration, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskStatus, Tool, UsageEvent, UsageEventProject, User
 from NEMO.utilities import extract_times, quiet_int
 from NEMO.views.policy import check_policy_to_disable_tool, check_policy_to_enable_tool, check_policy_to_enable_tool_for_multi
 from NEMO.widgets.dynamic_form import DynamicForm
 from NEMO.widgets.tool_tree import ToolTree
+
+
+@staff_member_required(login_url=None)
+@require_GET
+def tools(request):
+	if request.user.is_superuser:
+		tool_list = Tool.objects.all().order_by('name')
+	else:
+		tool_list = Tool.objects.filter(core_id__in=request.user.core_ids.all()).order_by('name')
+	return render(request, 'tool_control/tools.html', { 'tools': tool_list })
+
+
+@staff_member_required(login_url=None)
+@require_http_methods(['GET', 'POST'])
+def create_or_modify_tool(request, tool_id):
+	dictionary = {
+		'tool_id': tool_id,
+	}
+
+	try:
+		tool = Tool.objects.get(id=tool_id)
+	except:
+		tool = None
+
+	if request.method == 'GET':
+		dictionary['form'] = ToolForm(instance=tool)
+		return render(request, 'tool_control/create_or_modify_tool.html', dictionary)
+
+	elif request.method == 'POST':
+		form = ToolForm(request.POST, instance=tool)
+		dictionary['form'] = form
+
+		if not form.is_valid():
+			return render(request, 'tool_control/create_or_modify_tool.html', dictionary)
+
+		form.save()
+		return redirect('tools')
 
 
 @login_required

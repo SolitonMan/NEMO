@@ -37,6 +37,8 @@ urlpatterns = [
 	url(r'^get_projects_for_self/(?P<tool_id>\d+)/$', get_projects.get_projects_for_self, name='get_projects_for_self'),
 
 	# Tool control:
+	url(r'^tools/$', tool_control.tools, name='tools'),
+	url(r'^create_or_modify_tool/(?P<tool_id>\d+)/$', tool_control.create_or_modify_tool, name='create_or_modify_tool'),
 	url(r'^tool_control/(?P<tool_id>\d+)/$', tool_control.tool_control, name='tool_control'),
 	url(r'^tool_control/(?P<tool_id>\d+)/(?P<qualified_only>\d+)/(?P<core_only>\d+)/$', tool_control.tool_control, name='tool_control'),
 	url(r'^tool_control/$', tool_control.tool_control, name='tool_control'),
