@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load custom_tags_and_filters %}
+{% block title %}Tools{% endblock %}
+{% block content %}
+	<h1>Tools</h1>
+
+	<div class="row">
+		<div class="col-md-4">
+			<input id="search" type="text" placeholder="Search for a tool" class="form-control" autofocus>
+		</div>
+	</div>
+
+	<script>
+	$("#search").keyup(function () {
+		var data = this.value.split(" ");
+		var tr = $("#tool_data").find("tr");
+		if (this.value == "") {
+			tr.show();
+			return;
+		}
+		tr.hide();
+		tr.filter(function(i, v) {
+			var $t = $(this);
+			for (var d = 0; d < data.length; ++d) {
+				var s = data[d].toUpperCase();
+				if ($t.text().toUpperCase().indexOf(s) > -1) {
+					return true;
+				}
+			}
+		})
+		.show();
+	});
+	</script>
+
+	<table class="table">
+		<thead>
+		<tr>
+			<th>Tool</th>
+			<th>Category</th>
+			<th>Owner</th>
+		</tr>
+		<tbody id="tool_data">
+		{% for t in tools %}
+		<tr>
+			<td><a href="{% url 'create_or_modify_tool' t.id %}">{{ t.name }}</a></td>
+			<td>{{ t.category }}</td>
+			<td>{{ t.primary_owner }}</td>
+		</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+{% endblock %}

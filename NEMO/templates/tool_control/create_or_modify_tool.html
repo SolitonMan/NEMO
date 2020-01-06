@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% load custom_tags_and_filters %}
+{% block title %}Modify Tool{% endblock %}
+{% block content %}
+	<h1>Modify Tool</h1>
+	<form action="{% url 'create_or_modify_tool' tool_id %}" method="post">
+		{% csrf_token %}
+		<table class="table">
+		{{ form.as_table }}
+		</table>
+		<input type="submit" value="Submit" class="btn btn-default" />
+	</form>
+{% endblock %}
