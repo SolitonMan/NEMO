@@ -72,10 +72,20 @@ function get_selected_item()
 // This function visually highlights a clicked link with a gray background.
 function set_selected_item(element)
 {
+	if ($("#calendar").length)
+	{
+		//$("#calendar").fullCalendar("removeEventSource", "/event_feed/");
+		$("#calendar").fullCalendar("removeEvents");
+	}
 	$("#sidebar a").removeClass('selected');
 	$(element).addClass('selected');
 	$("#current_tool_selection").html($(element).html());
 	save_sidebar_state();
+
+	//if ($("#calendar").length)
+	//{
+	//	$("#calendar").fullCalendar("refetchEvents");
+	//}
 }
 
 function set_selected_item_by_id(tool_id)

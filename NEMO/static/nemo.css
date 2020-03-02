@@ -11,7 +11,14 @@ label
 	left: 0;
 	width: 300px;
 	padding: 10px;
+	//overflow: auto;
+}
+
+.tool_tree_scrolling {
+	position: absolute;
 	overflow: auto;
+	width: 285px;
+	max-height: 600px;
 }
 
 .application-content
@@ -279,4 +286,8 @@ Twitter Typeahead autocomplete dropdown menu isn't chopped off. */
 	color: transparent;
 	display: inline-block !important;
 	margin-right: -170px;
+}
+
+table {
+	width: 100%;
 }

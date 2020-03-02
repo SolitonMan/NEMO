@@ -606,12 +606,12 @@ def disable_tool_multi(request, tool_id, usage_event, dynamic_form):
 
 	try:
 		if uep.count() == 1:
+			uep = UsageEventProject.objects.get(usage_event=usage_event)
+
 			# set project_percent to 100
-			uep.update(project_percent=100.0)
+			uep.project_percent=100.0
 			uep.updated = timezone.now()
 			uep.save()
-
-			uep = UsageEventProject.objects.get(usage_event=usage_event)
 
 			# run dynamic form processing
 			dynamic_form.charge_for_consumable(uep.customer, uep.usage_event.operator, uep.project, uep.usage_event.run_data, usage_event, 100.0)

@@ -41,7 +41,7 @@
 							<td>{{ task.tool.name }}</td>
 							<td>{{ task.problem_category|default_if_none:"" }}</td>
 							<td>{% if task.last_updated and task.last_updated_by %}{{ task.last_updated|naturaltime }} by {{ task.last_updated_by.first_name }}{% endif %}</td>
-							<td>{{ task.creation_time|naturaltime }}</td>
+							<td>{{ task.creation_time }}</td>
 							<td>{{ task.problem_description }}</td>
 						</tr>
 					{% endfor %}

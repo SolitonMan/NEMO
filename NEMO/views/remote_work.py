@@ -40,6 +40,10 @@ def remote_work(request):
 		area_access_records = area_access_records.exclude(~Q(staff_charge__staff_member_id=operator.id))
 		consumable_withdraws = consumable_withdraws.exclude(~Q(merchant_id=operator.id))
 
+	uep = UsageEventProject.objects.filter(usage_event__in=usage_events)
+	scp = StaffChargeProject.objects.filter(staff_charge__in=staff_charges)
+	aarp = AreaAccessRecordProject.objects.filter(area_access_record__in=area_access_records)
+
 	dictionary = {
 		'usage': usage_events,
 		'staff_charges': staff_charges if request.user.is_staff else None,
@@ -49,6 +53,9 @@ def remote_work(request):
 		'month_list': month_list(),
 		'selected_staff': operator.id if operator else "all staff",
 		'selected_month': request.GET.get('date'),
+		'uep': uep,
+		'scp': scp,
+		'aarp': aarp,
 	}
 	return render(request, 'remote_work.html', dictionary)
 

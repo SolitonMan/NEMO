@@ -76,10 +76,10 @@ class ToolTreeHelper:
 		The function assumes that a tree structure of the tools has already been created by calling 'add(...)' multiple
 		times. A string of unordered HTML lists is returned.
 		"""
-		result = '<div class="nav nav-list" style="border: solid 1px grey; background-color:#f0f0f0; padding: 3px;">Current tool:<div id="current_tool_selection" style="font-weight: bold; color: green;"></div></div><ul class="nav nav-list" id="tool_tree" style="display:none">'
+		result = '<div class="nav nav-list" style="border: solid 1px grey; background-color:#f0f0f0; padding: 3px; width: 95%;">Current tool:<div id="current_tool_selection" style="font-weight: bold; color: green;"></div></div><hr/><div class="tool_tree_scrolling"><ul class="nav nav-list" id="tool_tree" style="display:none">'
 		for child in self.children:
 			result += self.__render_helper(child, '')
-		result += '</ul>'
+		result += '</ul></div>'
 		return result
 
 	def __render_helper(self, node, result):

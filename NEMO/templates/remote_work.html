@@ -53,6 +53,7 @@
 			<th>Staff member</th>
 			<th>Customer</th>
 			<th>Project</th>
+			<th>Percent</th>
 			<th>Start - End</th>
 			<th>Duration</th>
 			<th>Validate</th>
@@ -66,15 +67,18 @@
 			<tr {% if c.contested is True and cr.contest_resolved is True and cr.contest_resolution is False and c.validated is False %}class="danger-highlight"{% endif %} {% if c.contested is True and cr.contest_resolved is False and c.validated is False %}class="warning-highlight"{% endif %} {% if c.validated %}class="success-highlight"{% endif %} id="staff_charge_row_{{ forloop.counter }}">
 				<td>{{ c.id }}</td>
 				<td>{{ c.staff_member }}</td>
-				<td>
-				{% for s in c.customers.all %}
-					{{ s.first_name }}&nbsp;{{ s.last_name }}<br/>
+				<td colspan="3">
+				<table>
+				{% for s in scp %}
+					{% if s.staff_charge == c %}
+					<tr>
+						<td>{{ s.customer }}</td>
+						<td>{{ s.project.application_identifier }} - [{{ s.project }}]</td>
+						<td>{{ s.project_percent }}</td>
+					</tr>
+					{% endif %}
 				{% endfor %}
-				</td>
-				<td>
-				{% for p in c.projects.all %}
-					{{ p.application_identifier }}<br/>
-				{% endfor %}
+				</table>
 				</td>
 				<td>{{ c.start }} - <br/>{{ c.end }}</td>
 				<td>{{ c.duration|smooth_timedelta }}</td>
@@ -94,16 +98,19 @@
 			<tr {% if c.contested is True %}class="warning-highlight"{% endif %} {% if c.validated %}class="success-highlight"{% endif %} id="staff_charge_row_{{ forloop.counter }}">
 				<td>{{ c.id }}</td>
 				<td>{{ c.staff_member }}</td>
-				<td>
-				{% for s in c.customers.all %}
-					{{ s.first_name }}&nbsp;{{ s.last_name }}<br/>
-				{% endfor %}
-				</td>
-				<td>
-				{% for p in c.projects.all %}
-					{{ p.application_identifier }}<br/>
-				{% endfor %}
-				</td>
+                                <td colspan="3">
+                                <table>
+                                {% for s in scp %}
+                                        {% if s.staff_charge == c %}
+                                        <tr>
+                                                <td>{{ s.customer }}</td>
+                                                <td>{{ s.project.application_identifier }} - [{{ s.project }}]</td>
+                                                <td>{{ s.project_percent }}</td>
+                                        </tr>
+                                        {% endif %}
+                                {% endfor %}
+                                </table>
+                                </td>
 				<td>{{ c.start }} - <br/>{{ c.end }}</td>
 				<td>{{ c.duration|smooth_timedelta }}</td>
 				<td>{% if not c.validated %}<button {% if c.contested is True %}disabled{% endif %} class="btn btn-success" onclick="validate_charge('{% url 'validate_staff_charge' c.id %}', this, '#staff_charge_row_{{ forloop.counter }}')">Validate</button>{% endif %}</td>
@@ -133,6 +140,7 @@
 			<th>Operator</th>
 			<th>User</th>
 			<th>Project</th>
+			<th>Percent</th>
 			<th>Start - End</th>
 			<th>Duration</th>
 			<th>Tool</th>
@@ -147,24 +155,25 @@
 			<tr {% if u.contested is True and cr.contest_resolved is True and cr.contest_resolution is False and u.validated is False %}class="danger-highlight"{% endif %} {% if u.contested is True and cr.contest_resolved is False %}class="warning-highlight"{% endif %} {% if u.validated %}class="success-highlight"{% endif %} id="usage_event_row_{{ forloop.counter }}">
 				<td>{{ u.id }}</td>
 				<td>{{ u.operator }}</td>
-				<td>
 				{% if u.customers %}
-					{% for c in u.customers.all %}
-						{{ c.first_name }}&nbsp;{{ c.last_name }}<br/>
+				<td colspan="3">
+				<table>
+					{% for ep in uep %}
+						{% if ep.usage_event == u %}
+						<tr>
+							<td>{{ ep.customer }}</td>
+							<td>{{ ep.project.application_identifier }} [{{ ep.project }}]</td>
+							<td>{{ ep.project_percent }}</td>
+						</tr>
+						{% endif %}
 					{% endfor %}
-				{% else %}
-					{{ u.user }}
-				{% endif %}
+				</table>
 				</td>
-				<td>
-				{% if u.projects %}
-					{% for p in u.projects.all %}
-						{{ p.application_identifier }}<br/>
-					{% endfor %}
 				{% else %}
-					{{ u.project }}
+				<td>{{ u.user }}</td>
+				<td>{{ u.project.application_identifier }} [{{ u.project }}]</td>
+				<td>100.0</td>
 				{% endif %}
-				</td>
 				<td>{{ u.start }} - <br/>{{ u.end }}</td>
 				<td>{{ u.duration|smooth_timedelta }}</td>
 				<td>{{ u.tool }}</td>
@@ -184,24 +193,25 @@
 			<tr {% if u.contested is True %}class="warning-highlight"{% endif %} {% if u.validated %}class="success-highlight"{% endif %} id="usage_event_row_{{ forloop.counter }}">
 				<td>{{ u.id }}</td>
 				<td>{{ u.operator }}</td>
-				<td>
-				{% if u.customers %}
-					{% for c in u.customers.all %}
-						{{ c.first_name }}&nbsp;{{ c.last_name }}<br/>
-					{% endfor %}
-				{% else %}
-					{{ u.user }}
-				{% endif %}
-				</td>
-				<td>
-				{% if u.projects %}
-					{% for p in u.projects.all %}
-						{{ p.application_identifier }}<br/>
-					{% endfor %}
-				{% else %}
-					{{ u.project }}
-				{% endif %}
-				</td>
+                                {% if u.customers %}
+                                <td colspan="3">
+                                <table>
+                                        {% for ep in uep %}
+                                                {% if ep.usage_event == u %}
+                                                <tr>
+                                                        <td>{{ ep.customer }}</td>
+                                                        <td>{{ ep.project.application_identifier }} [{{ ep.project }}]</td>
+                                                        <td>{{ ep.project_percent }}</td>
+                                                </tr>
+                                                {% endif %}
+                                        {% endfor %}
+                                </table>
+                                </td>
+                                {% else %}
+                                <td>{{ u.user }}</td>
+                                <td>{{ u.project.application_identifier }} [{{ u.project }}]</td>
+                                <td>100.0</td>
+                                {% endif %}
 				<td>{{ u.start }} - <br/>{{ u.end }}</td>
 				<td>{{ u.duration|smooth_timedelta }}</td>
 				<td>{{ u.tool }}</td>
@@ -232,6 +242,7 @@
 			<th>Staff member</th>
 			<th>Customer</th>
 			<th>Project</th>
+			<th>Percent</th>
 			<th>Consumable</th>
 			<th>Quantity</th>
 			<th>Withdraw date</th>
@@ -246,24 +257,9 @@
 			<tr {% if w.contested is True and cr.contest_resolved is True and cr.contest_resolution is False and w.validated is False %}class="danger-highlight"{% endif %} {% if w.contested is True and cr.contest_resolved is False %}class="warning-highlight"{% endif %} {% if w.validated %}class="success-highlight"{% endif %} id="consumable_withdraw_row_{{ forloop.counter }}">
 				<td>{{ w.id }}</td>
 				<td>{{ w.merchant }}</td>
-				<td>
-				{% if w.customers %}
-					{% for c in w.customers.all %}
-						{{ c.first_name }}&nbsp;{{ c.last_name }}<br/>
-					{% endfor %}
-				{% else %}
-					{{ w.customer }}
-				{% endif %}
-				</td>
-				<td>
-				{% if w.projects %}
-					{% for p in w.projects.all %}
-						{{ p.application_identifier }}<br/>
-					{% endfor %}
-				{% else %}
-					{{ w.project }}
-				{% endif %}
-				</td>
+				<td>{{ w.customer }}</td>
+				<td>{{ w.project.application_identifier }} [{{ w.project }}]</td>
+				<td>{% if w.project_percent is None %}100.0{% else %}{{ w.project_percent }}{% endif %}</td>
 				<td>{{ w.consumable }}</td>
 				<td>{{ w.quantity }} {% if w.consumable.unit is not None %}{{ w.consumable.unit }}{% endif %}</td>
 				<td>{{ w.date }}</td>
@@ -283,24 +279,9 @@
 			<tr {% if w.contested is True %}class="warning-highlight"{% endif %} {% if w.validated %}class="success-highlight"{% endif %} id="consumable_withdraw_row_{{ forloop.counter }}">
 				<td>{{ w.id }}</td>
 				<td>{{ w.merchant }}</td>
-				<td>
-				{% if w.customers %}
-					{% for c in w.customers.all %}
-						{{ c.first_name }}&nbsp;{{ c.last_name }}<br/>
-					{% endfor %}
-				{% else %}
-					{{ w.customer }}
-				{% endif %}
-				</td>
-				<td>
-				{% if w.projects %}
-					{% for p in w.projects.all %}
-						{{ p.application_identifier }}<br/>
-					{% endfor %}
-				{% else %}
-					{{ w.project }}
-				{% endif %}
-				</td>
+				<td>{{ w.customer }}</td>
+				<td>{{ w.project.application_identifier }} [{{ w.project }}]</td>
+                                <td>{% if w.project_percent is None %}100.0{% else %}{{ w.project_percent }}{% endif %}</td>
 				<td>{{ w.consumable }}</td>
 				<td>{{ w.quantity }} {% if w.consumable.unit is not None %}{{ w.consumable.unit }}{% endif %}</td>
 				<td>{{ w.date }}</td>
@@ -331,6 +312,7 @@
 			<th>Staff member</th>
 			<th>Customer</th>
 			<th>Project</th>
+			<th>Percent</th>
 			<th>Start - End</th>
 			<th>Duration</th>
 			<th>Area</th>
@@ -345,24 +327,25 @@
 		<tr {% if a.contested is True and cr.contest_resolved is True and cr.contest_resolution is False and a.validated is False %}class="danger-highlight"{% endif %} {% if a.contested is True and cr.contest_resolved is False %}class="warning-highlight"{% endif %} {% if a.validated %}class="success-highlight"{% endif %} id="area_access_record_row_{{ forloop.counter }}">
 			<td>{{ a.id }}</td>
 			<td>{{ a.staff_charge.staff_member }}</td>
-			<td>
 			{% if a.customers %}
-				{% for c in a.customers.all %}
-					{{ c.first_name }}&nbsp;{{ c.last_name }}<br/>
+			<td colspan="3">
+			<table>
+				{% for aa in aarp %}
+					{% if aa.area_access_record == a %}
+					<tr>
+						<td>{{ aa.customer }}</td>
+						<td>{{ aa.project.application_identifier }} [{{ aa.project }}]</td>
+						<td>{{ aa.project_percent }}</td>
+					</tr>
+					{% endif %}
 				{% endfor %}
-			{% else %}
-				{{ u.user }}
-			{% endif %}
+			</table>
 			</td>
-			<td>
-			{% if a.projects %}
-				{% for p in a.projects.all %}
-					{{ p.application_identifier }}<br/>
-				{% endfor %}
 			{% else %}
-				{{ a.project }}
+			<td>{{ a.customer }}</td>
+			<td>{{ a.project.application_identifier }} [{{ a.project }}]</td>
+			<td>100.0</td>
 			{% endif %}
-			</td>
 			<td>{{ a.start }} - {{ a.end }}</td>
 			<td>{{ a.duration|smooth_timedelta }}</td>
 			<td>{{ a.area }}</td>
@@ -382,24 +365,25 @@
 		<tr {% if a.contested is True %}class="warning-highlight"{% endif %} {% if a.validated %}class="success-highlight"{% endif %} id="area_access_record_row_{{ forloop.counter }}">
 			<td>{{ a.id }}</td>
 			<td>{{ a.staff_charge.staff_member }}</td>
-			<td>
 			{% if a.customers %}
-				{% for c in a.customers.all %}
-					{{ c.first_name }}&nbsp;{{ c.last_name }}<br/>
+			<td colspan="3">
+			<table>
+				{% for aa in aarp %}
+					{% if aa.area_access_record == a %}
+					<tr>
+						<td>{{ aa.customer }}</td>
+						<td>{{ aa.project.application_identifier }} [{{ aa.project }}]</td>
+						<td>{{ aa.project_percent }}</td>
+					</tr>
+					{% endif %}
 				{% endfor %}
-			{% else %}
-				{{ u.user }}
-			{% endif %}
+			</table>
 			</td>
-			<td>
-			{% if a.projects %}
-				{% for p in a.projects.all %}
-					{{ p.application_identifier }}<br/>
-				{% endfor %}
 			{% else %}
-				{{ a.project }}
+			<td>{{ a.customer }}</td>
+			<td>{{ a.project.application_identifier }} [{{ a.project }}]</td>
+			<td>100.0</td>
 			{% endif %}
-			</td>
 			<td>{{ a.start }} - {{ a.end }}</td>
 			<td>{{ a.duration|smooth_timedelta }}</td>
 			<td>{{ a.area }}</td>

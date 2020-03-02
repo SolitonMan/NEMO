@@ -21,6 +21,7 @@
 			{% if user.is_staff %}
 				<li data-toggle="tooltip" data-placement="right" title="Displays laboratory reservations and usage for a specific user. This includes reservations, area access, tool usage, and missed reservations."><a href="javascript:void(0)" onclick="change_calendar_event_type(this)">Specific user</a></li>
 			{% endif %}
+			<li data-toggle="tooltip" data-placement="right" title="Displays reservations for multiple tools simultaneously.  In this mode no reservations can be placed, it is strictly a viewing mode.  Tools are selected by clicking the checkbox next to the tool name, at which point any reservation information for the tool will be added to the view."><a href="javascript:void(0)" onclick="change_calendar_event_type(this)">Multi-tool display</a></li>
 		</ul>
 	</div>
 	<div id="expand-collapse" class="btn-group sidebar-item">
@@ -41,6 +42,8 @@
 	{# The tool tree has the HTML ID tag "tool_tree". See the widgets/tool_tree.py file for more information. #}
 	{{ rendered_tool_tree_html }}
 	<div style="height:50px"></div>
+	<ul id="tool_tree_toggle" style="display: none;"></ul>
+	<ul id="tool_tree_store" style="display: none;"></ul>
 </div>
 
 <div id="calendar" class="application-content"></div>
@@ -88,6 +91,7 @@ function update_event_sources()
 {
 	{# Remove all event sources from the calendar. #}
 	$("#calendar").fullCalendar("removeEventSource", "{% url 'event_feed' %}");
+	//$("#calendar").fullCalendar("removeEvents");
 
 	var event_type = get_event_type();
 	var tool_event_source =
@@ -99,8 +103,10 @@ function update_event_sources()
 		}
 	};
 
-	if(event_type === 'reservations' || event_type === 'nanofab usage')
+	if(event_type === 'reservations' || event_type === 'laboratory usage')
 	{
+		//$("#calendar").fullCalendar('option', 'selectable', true);
+		$("#extra-links").show();
 		var item = get_selected_item();
 		if(item === 'personal_schedule')
 		{
@@ -113,13 +119,39 @@ function update_event_sources()
 	}
 	else if(event_type === 'specific user')
 	{
+		//$("#calendar").fullCalendar('option', 'selectable', true);
 		if($("#user_search").typeahead('val'))
 			tool_event_source.data.user = $("#user_search").typeahead('val');
 		else
 			return;
 	}
+	else if(event_type === 'multi-tool display') 
+	{
+		//$("#current_tool_selection").html("");
+		//$("#calendar").fullCalendar('option', 'selectable', false);
+		$("#extra-links").hide();
+		var items = "";
+		$('input:checked').each(function() {
+			items += $(this).val() + ",";
+		});
+		if (items != "")
+		{
+			items += "0";
+		}
+		if (items == "") 
+		{
+			alert("No tools have yet been selected.  Please select one or more tools to update the display with reservations for the current week.");
+			refresh_sidebar_icons();
+			return false;
+		}
+		else
+		{
+			tool_event_source.data.tool_ids = items;
+		}
+	}
 
 	$("#calendar").fullCalendar("addEventSource", tool_event_source);
+	//$("#calendar").fullCalendar("refetchEvents");
 
 	refresh_sidebar_icons();
 }
@@ -134,7 +166,7 @@ function event_creation_success_callback(response, status, xml_http_request, aja
 		refresh_calendar_and_sidebar();
 	else {# the response was non-empty so the tool requires configuration details before the reservation is created. #}
 	{
-		{# Construct the configuration dialog that is contained in the server response. #}
+	{# Construct the configuration dialog that is contained in the server response. #}
 		$("#dialog .modal-content").html(response);
 		$("#dialog").one('hidden.bs.modal', function() { return submit_event_with_more_information(ajax_post) });
 		$("#dialog").modal('show');
@@ -390,6 +422,11 @@ function refresh_calendar_and_sidebar()
 
 function change_calendar_event_type(calling_element)
 {
+	//$("#calendar").fullCalendar("destroy");
+	//create_calendar();
+	//$("#calendar").fullCalendar("removeEventSource", "{% url 'event_feed' %}");
+	//$("#calendar").fullCalendar("removeEvents");
+	//$("#sidebar a").removeClass('selected');
 	set_event_type(calling_element.text);
 	var expand_collapse = $("#expand-collapse").hide();
 	var tool_search = $("#tool_search").hide();
@@ -400,8 +437,10 @@ function change_calendar_event_type(calling_element)
 	var chosen_user_button = $("#chosen_user_button").show();
 	var proxy_reservation_button = $(".fc-proxyReservation-button")[0];
 	var scheduled_outage_button = $(".fc-scheduledOutage-button")[0];
+
 	if(event_type === "reservations")
 	{
+		$("#tool_tree").html($("#tool_tree_store").html());
 		user_search.hide();
 		chosen_user_button.hide();
 		extra_links.show();
@@ -410,10 +449,14 @@ function change_calendar_event_type(calling_element)
 		tool_tree.show();
 		$(proxy_reservation_button).show();
 		$(scheduled_outage_button).show();
+		enable_tool_tree_toggling();
+		load_sidebar_state();
+		set_tool_link_callback(update_event_sources);
 		update_event_sources();
 	}
-	else if(event_type === "nanofab usage")
+	else if(event_type === "laboratory usage")
 	{
+		$("#tool_tree").html($("#tool_tree_store").html());
 		user_search.hide();
 		chosen_user_button.hide();
 		extra_links.show();
@@ -422,10 +465,14 @@ function change_calendar_event_type(calling_element)
 		tool_tree.show();
 		$(proxy_reservation_button).hide();
 		$(scheduled_outage_button).hide();
+		enable_tool_tree_toggling();
+		load_sidebar_state();
+		set_tool_link_callback(update_event_sources);
 		update_event_sources();
 	}
 	else if(event_type === "specific user")
 	{
+		$("#tool_tree").html($("#tool_tree_store").html());
 		extra_links.hide();
 		expand_collapse.hide();
 		tool_search.hide();
@@ -433,6 +480,24 @@ function change_calendar_event_type(calling_element)
 		$(proxy_reservation_button).hide();
 		$(scheduled_outage_button).hide();
 		clear_specific_user();
+	}
+	else if(event_type == "multi-tool display")
+	{
+		var item = get_selected_item();
+		$("#tool_tree").html($("#tool_tree_toggle").html());
+		if (item != undefined && item != "personal_schedule") 
+		{
+			tool_selected = "input[type='checkbox'][value='" + item + "']";
+			$(tool_selected).prop("checked", true);
+		}
+		user_search.hide();
+                chosen_user_button.hide();
+		expand_collapse.show();
+		tool_tree.show();
+                $(proxy_reservation_button).hide();
+                $(scheduled_outage_button).hide();
+		enable_tool_tree_toggling();
+                update_event_sources();
 	}
 }
 
@@ -453,7 +518,7 @@ function clear_specific_user()
 function on_load()
 {
 	create_calendar();
-	setInterval(refresh_calendar_and_sidebar, 30000);
+	//setInterval(refresh_calendar_and_sidebar, 30000);
 	set_tool_link_callback(update_event_sources);
 	enable_tool_tree_toggling();
 	$('#tool_search').autocomplete('tools', on_tool_search_selection, {{ cat_tools }});
@@ -479,6 +544,32 @@ function on_load()
 		var selector = "a[data-tool-id='" + int_selected + "']";
 		$("#current_tool_selection").html($(selector).html());
 	}
+
+	/*
+	* This section is to create a duplicate copy of the tool tree and modify it to serve as the multi-tool 
+	* display selector list.  Once created then the list will be toggled out of the tool tree container from 
+	* a hidden container
+	*/
+
+	// copy the tool tree
+	$("#tool_tree_store").html($("#tool_tree").html());
+	$("#tool_tree_toggle").html($("#tool_tree").html());
+
+	// update the copied tool tree
+	$("#tool_tree_toggle a").each(function () {
+		const chk = $('<input></input>').attr('type', 'checkbox').attr('value', $(this).attr('data-tool-id')).attr('onclick','toggle_view_item(this);').css('display', 'inline');
+		$(this).parent().prepend(chk);
+		$(this).css('display', 'inline');
+		$(this).removeAttr('onclick');
+	});
+}
+
+function toggle_view_item(item)
+{
+	//alert($(item).html());
+
+	// update tool list and reset calendar view
+	update_event_sources();
 }
 
 $(on_load);

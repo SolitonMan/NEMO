@@ -4,7 +4,7 @@
 		{% if personal_schedule %}
 			"title": "{{ x.tool.name }}",
 		{% else %}
-			"title": "{% if x.operator.id != x.user.id %}{{ x.operator }} on behalf of {% endif %}{{ x.user }}",
+			"title": "{{ x.tool.name }} - {% if x.operator.id != x.user.id %}{{ x.operator }} on behalf of {% endif %}{{ x.user }}",
 		{% endif %}
 		"id": {{ x.id }},
 		"start": "{{ x.start|date:"c" }}",

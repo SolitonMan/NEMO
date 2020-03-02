@@ -89,14 +89,46 @@ def event_feed(request):
 
 	if event_type == 'reservations':
 		return reservation_event_feed(request, start, end)
-	elif event_type == 'nanofab usage':
+	elif event_type == 'laboratory usage':
 		return usage_event_feed(request, start, end)
 	# Only staff may request a specific user's history...
 	elif event_type == 'specific user' and request.user.is_staff:
 		user = get_object_or_404(User, id=request.GET.get('user'))
 		return specific_user_feed(request, user, start, end)
+	elif event_type == 'multi-tool display':
+		return multiple_tool_feed(request, start, end)
 	else:
 		return HttpResponseBadRequest('Invalid event type or operation not authorized.')
+
+
+def multiple_tool_feed(request, start, end):
+	events = Reservation.objects.filter(cancelled=False, missed=False, shortened=False)
+	outages = None
+	# Exclude events for which the following is true:
+	# The event starts and ends before the time-window, and...
+	# The event starts and ends after the time-window.
+	events = events.exclude(start__lt=start, end__lt=start)
+	events = events.exclude(start__gt=end, end__gt=end)
+
+	# Filter events that only have to do with the relevant tool.
+	tools = request.GET.get('tool_ids')
+	tool_list = tools.split(",")
+
+	if len(tool_list) > 0:
+		events = events.filter(tool__id__in=tool_list)
+
+		outages = ScheduledOutage.objects.filter(tool_id__in=tool_list)
+		outages = outages.exclude(start__lt=start, end__lt=start)
+		outages = outages.exclude(start__gt=end, end__gt=end)
+	else:
+		events = None
+
+	dictionary = {
+		'events': events,
+		'outages': outages,
+	}
+
+	return render(request, 'calendar/multi_tool_event_feed.html', dictionary)
 
 
 def reservation_event_feed(request, start, end):
@@ -121,6 +153,9 @@ def reservation_event_feed(request, start, end):
 	personal_schedule = request.GET.get('personal_schedule')
 	if personal_schedule:
 		events = events.filter(user=request.user)
+
+	if not tool and not personal_schedule:
+		events = None
 
 	dictionary = {
 		'events': events,
