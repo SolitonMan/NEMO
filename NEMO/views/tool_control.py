@@ -492,12 +492,12 @@ def enable_tool_multi(request):
 		aar.created = timezone.now()
 		aar.updated = timezone.now()
 
-		if staff_charge:
+		if new_staff_charge:
 			aar.staff_charge = new_staff_charge
 
 		aar.save()
 
-		if staff_charge:
+		if new_staff_charge:
 			scp = StaffChargeProject.objects.filter(staff_charge=new_staff_charge)
 
 			for s in scp:

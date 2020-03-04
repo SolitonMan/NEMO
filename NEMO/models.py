@@ -898,6 +898,15 @@ class Interlock(models.Model):
 		self.save()
 		return self.state == command_type
 
+	def pulse(self):
+		uri = 'http://' + str(self.card.server) + '/state.xml?relay' + str(self.card.number) + 'State=2'
+		req = requests.get(uri)
+
+		self.most_recent_reply = "Pulsed " + uri + " successfully."
+		self.state = 2
+		self.save()
+		return self.state == 2
+
 	class Meta:
 		unique_together = ('card', 'channel')
 		ordering = ['card__server', 'card__number', 'channel']

@@ -558,6 +558,7 @@ function on_load()
 	// update the copied tool tree
 	$("#tool_tree_toggle a").each(function () {
 		const chk = $('<input></input>').attr('type', 'checkbox').attr('value', $(this).attr('data-tool-id')).attr('onclick','toggle_view_item(this);').css('display', 'inline');
+		$(chk).prop("checked", false);
 		$(this).parent().prepend(chk);
 		$(this).css('display', 'inline');
 		$(this).removeAttr('onclick');

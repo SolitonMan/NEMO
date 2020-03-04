@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.static import serve
 from rest_framework import routers
 
+from NEMO.scheduler import start_scheduler
 from NEMO.views import abuse, accounts_and_projects, alerts, api, area_access, authentication, calendar, configuration_agenda, consumables, contact_staff, customization, email, feedback, get_projects, history, jumbotron, kiosk, landing, maintenance, mobile, usage, news, qualifications, remote_work, resources, safety, sidebar, staff_charges, status_dashboard, tasks, tool_control, training, tutorials, users
 
 # Use our custom login page instead of Django's built-in one.
@@ -287,3 +288,5 @@ if settings.DEBUG:
 		]
 	except ImportError:
 		pass
+
+start_scheduler()
