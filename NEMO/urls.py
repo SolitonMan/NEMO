@@ -96,10 +96,10 @@ urlpatterns = [
 	url(r'^staff_charge_entry/$', staff_charges.staff_charge_entry, name='staff_charge_entry'),
 	url(r'^ad_hoc_staff_charge_entry/$', staff_charges.ad_hoc_staff_charge_entry, name='ad_hoc_staff_charge_entry'),
 	url(r'^begin_staff_charge/$', staff_charges.begin_staff_charge, name='begin_staff_charge'),
-	url(r'^end_staff_charge/$', staff_charges.end_staff_charge, name='end_staff_charge'),
+	url(r'^end_staff_charge/(?P<modal_flag>\d+)/$', staff_charges.end_staff_charge, name='end_staff_charge'),
 	url(r'^begin_staff_area_charge/$', staff_charges.begin_staff_area_charge, name='begin_staff_area_charge'),
 	url(r'^end_staff_area_charge/$', staff_charges.end_staff_area_charge, name='end_staff_area_charge'),
-	url(r'^staff_charge_projects_save/$', staff_charges.staff_charge_projects_save, name='staff_charge_projects_save'),
+	url(r'^staff_charge_projects_save/(?P<modal_flag>\d+)/$', staff_charges.staff_charge_projects_save, name='staff_charge_projects_save'),
 	url(r'^continue_staff_charge/(?P<staff_charge_id>\d+)/$', staff_charges.continue_staff_charge, name='continue_staff_charge'),
 
 	# Status dashboard:

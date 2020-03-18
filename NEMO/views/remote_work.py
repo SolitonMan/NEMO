@@ -13,7 +13,7 @@ from django.utils import timezone
 from django.utils.dateformat import DateFormat
 from django.views.decorators.http import require_GET, require_POST
 
-from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, Consumable, ConsumableWithdraw, ContestTransaction, ContestTransactionData, Project, UsageEvent, UsageEventProject, StaffCharge, StaffChargeProject, Tool, User
+from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, Consumable, ConsumableWithdraw, ContestTransaction, ContestTransactionData, LockBilling, Project, UsageEvent, UsageEventProject, StaffCharge, StaffChargeProject, Tool, User
 from NEMO.utilities import month_list, get_month_timeframe
 
 
@@ -821,7 +821,7 @@ def save_contest_resolution(request):
 					c.content_object.consumable = Consumable.objects.get(id=int(c.proposed_value))
 
 				if field_name == "quantity":
-					c.content_object.quantity = c.proposed_value
+					c.content_object.quantity = int(c.proposed_value)
 
 				if field_name == "chosen_user":
 					c.content_object.customer = User.objects.get(id=int(c.proposed_value))
@@ -830,7 +830,7 @@ def save_contest_resolution(request):
 					c.content_object.project = Project.objects.get(id=int(c.proposed_value))
 
 				if field_name == "project_percent":
-					c.content_object.project_percent = c.proposed_value
+					c.content_object.project_percent = float(c.proposed_value)
 
 				if field_name == "tool_id":
 					c.content_object.tool = Tool.objects.get(id=int(c.proposed_value))

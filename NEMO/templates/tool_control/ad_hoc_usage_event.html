@@ -420,9 +420,9 @@ function on_submit()
 
 function on_load()
 {
-	$("#ad_hoc_start").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss'});
+	$("#ad_hoc_start").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss', minDate: '{{ start_date }}', maxDate: '{{ end_date }}'});
 	$("#ad_hoc_start").val({% if ad_hoc_start %}"{{ ad_hoc_start }}"{% else %}""{% endif %});
-	$("#ad_hoc_end").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss'});
+	$("#ad_hoc_end").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss', minDate: '{{ start_date }}', maxDate: '{{ end_date }}'});
 	$("#ad_hoc_end").val({% if ad_hoc_end %}"{{ ad_hoc_end }}"{% else %}""{% endif %});
 }
 

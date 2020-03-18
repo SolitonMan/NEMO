@@ -1,8 +1,9 @@
-{% extends 'base.html' %}
-{% load custom_tags_and_filters %}
-{% block title %}Staff charges - multiple projects{% endblock %}
+<div class="modal-header">
+	<button type="button" class="close" data-dismiss="modal">&times;</button>
+	<h4>Staff charges - multiple projects</h4>
+</div>
 
-{% block content %}
+<div class="modal-body">
 	<h1>Staff charges - multiple projects</h1>
 
 {% if scp|length == 0 %}
@@ -11,8 +12,9 @@
 	<p>Charges will assigned 100% for {{ scp.customer.first_name }} {{ scp.customer.last_name }} to project {{ scp.project.name }}</p>
 {% else %}
 	<p>Please assign the desired percent of staff charges to each project included:</p>
-	<form id="staff_charge_projects" method="POST" class="form-horizontal" onsubmit="return on_submit();">
+	<form id="staff_charge_projects" method="POST" class="form-horizontal" onsubmit="return submit_charges();">
 		{% csrf_token %}
+		<input type="hidden" name="tool_id" value="{{ tool_id }}" />
 		<table class="table">
 			<tr>
 				<th>Customer</th>
@@ -35,17 +37,17 @@
 		<input type="submit" value="Record Staff Charges" class="btn btn-default"/>
 	</form>
 	<script>
-	function on_submit()
+	function submit_charges()
 	{
 		var failure_dialog = ajax_failure_callback("There was an error processing the data.  Please check the form and try again.");
-		ajax_post("{% url 'staff_charge_projects_save' 0 %}", serialize("#staff_charge_projects"), reload_staff_charges, failure_dialog);
+		ajax_post("{% url 'staff_charge_projects_save' 1 %}", serialize("#staff_charge_projects"), reload_tool, failure_dialog);
 		return false;
 	}
 
-	function reload_staff_charges()
+	function reload_tool()
 	{
-		window.location = "{% url 'staff_charges' %}";
+		window.location = "{% url 'tool_control' tool_id %}";
 	}
 	</script>
 {% endif %}
-{% endblock %}
+</div>

@@ -284,7 +284,11 @@
 			function end_staff_charge()
 			{
 				var failure_dialog = ajax_failure_callback("Unable to end staff charge", "There was a problem ending your staff charge.");
-				ajax_post("{% url 'end_staff_charge' %}", undefined, reload_page, failure_dialog);
+				var tool_id = get_selected_item();
+				var data = {
+					'tool_id': tool_id,
+				}
+				ajax_post("{% url 'end_staff_charge' 1 %}", data, ajax_success_callback, failure_dialog);
 			}
 
 			{# Adding supporting javascript functions to implement a multi-project selection option for tool user #}

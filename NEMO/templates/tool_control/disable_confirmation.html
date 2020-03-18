@@ -4,6 +4,6 @@
 </div>
 
 <div class="modal-body">
-	<p>You have successfully finished using the {{ tool }}.</p>
-	<button class="btn btn-default" onclick="window.location = '{% url 'tool_control' tool.id %}';">Close</button>
+	<p>You have successfully finished using the {% if tool is not None %}{{ tool }}{% else %} tool{% endif %}.</p>
+	<button class="btn btn-default" data-dismiss="modal" onclick="return false;">Close</button>
 </div>

@@ -333,7 +333,7 @@
 		{
 			var form_id = "#override_charges_" + num;
 			var failure_dialog = ajax_failure_callback("There was an error processing the data.  Please check the form and try again.");
-			ajax_post("{% url 'staff_charge_projects_save' %}", serialize(form_id), reload_staff_charges, failure_dialog);
+			ajax_post("{% url 'staff_charge_projects_save' 0 %}", serialize(form_id), reload_staff_charges, failure_dialog);
 			return false;
 		}
 
@@ -352,9 +352,9 @@
 			hide_user_charges();
 			enable_autocompletion(0);
 			enable_ad_hoc_autocompletion(0);
-			$("#ad_hoc_start").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss', minDate: moment().add(-5, 'days'), maxDate: moment().add(0, 'days')});
+			$("#ad_hoc_start").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss', minDate: '{{ start_date }}', maxDate: '{{ end_date }}'});
 			$("#ad_hoc_start").val({% if ad_hoc_start %}"{{ ad_hoc_start }}"{% else %}""{% endif %});
-			$("#ad_hoc_end").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss', minDate: moment().add(-5, 'days'), maxDate: moment().add(0, 'days')});
+			$("#ad_hoc_end").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss', minDate: '{{ start_date }}', maxDate: '{{ end_date }}'});
 			$("#ad_hoc_end").val({% if ad_hoc_end %}"{{ ad_hoc_end }}"{% else %}""{% endif %});
 			$(document).scrollTop(0);
 		}

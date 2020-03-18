@@ -10,7 +10,7 @@ from itertools import chain
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q
+from django.db.models import Q, Max
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotFound, HttpResponseServerError, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -21,9 +21,10 @@ from django.utils.safestring import mark_safe
 from django.urls import reverse
 
 from NEMO.forms import CommentForm, nice_errors, ToolForm
-from NEMO.models import AreaAccessRecord, AreaAccessRecordProject, Comment, Configuration, ConfigurationHistory, Project, Reservation, ReservationConfiguration, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskStatus, Tool, UsageEvent, UsageEventProject, User
+from NEMO.models import AreaAccessRecord, AreaAccessRecordProject, Comment, Configuration, ConfigurationHistory, LockBilling, Project, Reservation, ReservationConfiguration, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskStatus, Tool, UsageEvent, UsageEventProject, User
 from NEMO.utilities import extract_times, quiet_int
 from NEMO.views.policy import check_policy_to_disable_tool, check_policy_to_enable_tool, check_policy_to_enable_tool_for_multi
+from NEMO.views.staff_charges import month_is_locked, month_is_closed, get_billing_date_range
 from NEMO.widgets.dynamic_form import DynamicForm
 from NEMO.widgets.tool_tree import ToolTree
 
@@ -247,6 +248,34 @@ def determine_tool_status(tool):
 	else:
 		tool.operational = False
 	tool.save()
+
+
+"""
+commenting out these functions for now to try importing from another view
+def month_is_locked(check_date):
+	month = int(check_date.month)
+	year = int(check_date.year)
+	return LockBilling.objects.filter(is_locked=True, billing_month=month, billing_year=year).exists()
+
+def month_is_closed(check_date):
+	month = int(check_date.month)
+	year = int(check_date.year)
+	return LockBilling.objects.filter(is_closed=True, billing_month=month, billing_year=year).exists()
+
+def get_billing_date_range():
+	max_year = int(LockBilling.objects.filter(is_locked=True).aggregate(Max('billing_year'))['billing_year__max'])
+	max_month = int(LockBilling.objects.filter(billing_year=max_year, is_locked=True).aggregate(Max('billing_month'))['billing_month__max'])
+
+	start = str(max_month+1) + '/1/' + str(max_year)
+	end = str(datetime.today().strftime('%m/%d/%Y'))
+
+	dictionary = {
+		'start': start,
+		'end': end,
+	}
+
+	return dictionary
+"""
 
 
 @login_required
@@ -589,7 +618,6 @@ def disable_tool(request, tool_id):
 		if existing_staff_charge.customer == current_usage_event.user and existing_staff_charge.project == current_usage_event.project:
 			return render(request, 'staff_charges/reminder.html', {'tool': tool})
 
-	#return redirect(reverse('tool_control'))
 	return render(request, 'tool_control/disable_confirmation.html', {'tool': tool})
 
 
@@ -709,6 +737,7 @@ def usage_event_projects_save(request):
 
 		if request.user.charging_staff_time():
 			existing_staff_charge = request.user.get_staff_charge()
+
 			response = render(request, 'staff_charges/general_reminder.html', {'staff_charge': existing_staff_charge})
 			return response
 
@@ -766,9 +795,13 @@ def create_usage_event(request):
 	else:
 		tools = Tool.objects.all()
 
+	dates = get_billing_date_range()
+
 	dictionary = {
 		'tools': tools,
 		'users': User.objects.filter(is_active=True, projects__active=True, projects__account__active=True).exclude(id=request.user.id).distinct(),
+		'start_date': dates['start'],
+		'end_date': dates['end'],
 	}
 
 	if request.user.is_superuser:
@@ -805,6 +838,17 @@ def save_usage_event(request):
 
 		ad_hoc_start = parse_datetime(ad_hoc_start)
 		ad_hoc_end = parse_datetime(ad_hoc_end)
+
+		# check for closed month
+		if month_is_closed(ad_hoc_start) or month_is_closed(ad_hoc_end):
+			msg = 'Billing is closed for the selected month.  No entries can be made for this month.  Please speak with a financial administrator for help with your billing question.'
+			raise Exception(msg)
+
+		# check for locked month
+		if month_is_locked(ad_hoc_start) or month_is_locked(ad_hoc_end):
+			if not request.user.is_superuser and not request.user.groups.filter(name="Financial Admin").exists():
+				msg = 'Billing is locked for the selected month.  Please contact a system administrator or financial administrator for help with your billing question.'
+				raise Exception(msg)
 
 		if ad_hoc_start is None or ad_hoc_end is None:
 			msg = 'The start date and end date are required to save an ad hoc usage event. The values must be valid datetimes.'

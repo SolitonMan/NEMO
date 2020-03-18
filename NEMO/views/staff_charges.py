@@ -2,12 +2,13 @@ from re import search
 
 import requests
 import string
-from datetime import timedelta
+from datetime import timedelta, datetime
 from decimal import Decimal
 
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponseBadRequest, HttpResponseRedirect
+from django.db.models import Q, Max
 from django.shortcuts import render, redirect
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -15,7 +16,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_time, parse_date, parse_datetime
 from django.views.decorators.http import require_GET, require_POST
 
-from NEMO.models import User, StaffCharge, AreaAccessRecord, Project, Area, StaffChargeProject, AreaAccessRecordProject
+from NEMO.models import User, StaffCharge, AreaAccessRecord, Project, Area, StaffChargeProject, AreaAccessRecordProject, LockBilling
 
 
 @staff_member_required(login_url=None)
@@ -59,6 +60,12 @@ def staff_charges(request):
 	my_staff_charges = StaffCharge.objects.filter(staff_member=request.user, start__range=(earliest, timezone.now().date()))
 	if my_staff_charges:
 		params['current_user_charges'] = my_staff_charges
+
+	# include start and end dates for ad hoc charge min and max values
+	dates = get_billing_date_range()
+
+	params['start_date'] = dates['start']
+	params['end_date'] = dates['end']
 
 	return render(request, 'staff_charges/new_staff_charge.html', params)
 
@@ -118,6 +125,37 @@ def begin_staff_charge(request):
 def is_valid_field(field):
 	return search("^(chosen_user|chosen_project|project_percent|overlap_choice)__[0-9]+$", field) is not None
 
+def month_is_locked(check_date):
+	month = int(check_date.month)
+	year = int(check_date.year)
+	return LockBilling.objects.filter(is_locked=True,billing_month=month,billing_year=year).exists()
+
+def month_is_closed(check_date):
+	month = int(check_date.month)
+	year = int(check_date.year)
+	return LockBilling.objects.filter(is_closed=True,billing_month=month,billing_year=year).exists()
+
+def get_billing_date_range():
+	if LockBilling.objects.filter(is_locked=True).aggregate(Max('billing_year'))['billing_year__max'] is not None:
+		max_year = int(LockBilling.objects.filter(is_locked=True).aggregate(Max('billing_year'))['billing_year__max'])
+	else:
+		max_year = datetime.today().year
+
+	if LockBilling.objects.filter(billing_year=max_year, is_locked=True).aggregate(Max('billing_month'))['billing_month__max'] is not None:
+		max_month = int(LockBilling.objects.filter(billing_year=max_year, is_locked=True).aggregate(Max('billing_month'))['billing_month__max'])
+	else:
+		max_month = datetime.today().month - 2
+
+	start = str(max_month+1) + '/1/' + str(max_year)
+	end = str(datetime.today().strftime('%m/%d/%Y'))
+
+	dictionary = {
+		'start': start,
+		'end': end,
+	}
+
+	return dictionary
+
 
 @staff_member_required(login_url=None)
 @require_GET
@@ -162,6 +200,17 @@ def ad_hoc_staff_charge(request):
 
 		ad_hoc_start = parse_datetime(ad_hoc_start)
 		ad_hoc_end = parse_datetime(ad_hoc_end)
+
+		# check for validity of dates for closed month
+		if month_is_closed(ad_hoc_start) or month_is_closed(ad_hoc_end):
+			msg = 'Billing is closed for the chosen month.  Further changes to the billing cannot be made in LEO.  Please contact a financial administrator for help with your billing issue.'
+			raise Exception(msg)
+
+		# check for validity of dates for locked month
+		if month_is_locked(ad_hoc_start) or month_is_locked(ad_hoc_end):
+			if not request.user.is_superuser and not request.user.groups.filter(name="Financial Admin").exists():
+				msg = 'Billing is locked for the chosen month.  Please correct your start or end date, or else contact an administrator for help with this.'
+				raise Exception(msg)
 
 		if ad_hoc_start is None or ad_hoc_end is None:
 			msg = 'The start date and end date are required to save an ad hoc staff charge. The values must be valid datetimes.'
@@ -364,6 +413,11 @@ def ad_hoc_staff_charge(request):
 
 		for key, value in error_params.items():
 			params[key] = value
+
+		# get date range for ad hoc billing mins and maxes
+		dates = get_billing_date_range()
+		params['start_date'] = dates['start']
+		params['end_date'] = dates['end']
 
 		return render(request, 'staff_charges/new_staff_charge.html', params)
 
@@ -641,7 +695,7 @@ def sc_clone(request, charge_to_clone, new_charge_start, new_charge_end):
 
 @staff_member_required(login_url=None)
 @require_POST
-def end_staff_charge(request):
+def end_staff_charge(request, modal_flag):
 	if not request.user.charging_staff_time():
 		return HttpResponseBadRequest('You do not have a staff charge in progress, so you cannot end it.')
 	charge = request.user.get_staff_charge()
@@ -660,6 +714,22 @@ def end_staff_charge(request):
 			charge.updated = timezone.now()
 			charge.save()
 
+			if AreaAccessRecord.objects.filter(staff_charge=charge).exists():
+				aar = AreaAccessRecord.objects.get(staff_charge=charge)
+				if aar.end is None:
+					aar.end = timezone.now()
+					aar.updated = timezone.now()
+					aar.save()
+
+				aarp = AreaAccessRecordProject.objects.filter(area_access_record=aar)
+
+				if aarp is not None:
+					for a in aarp:
+						a.project_percent = 100.0
+						a.updated = timezone.now()
+						a.save()
+
+
 			return update_related_charges(request, charge, StaffCharge.objects.get(related_override_charge=charge))
 
 		else:
@@ -669,16 +739,13 @@ def end_staff_charge(request):
 				'scp': scp,
 				'staff_charge_id': charge.id,
 			}
-			return render(request, 'staff_charges/multiple_projects_finish.html', params)
+			if int(modal_flag) == 0:
+				return render(request, 'staff_charges/multiple_projects_finish.html', params)
+			else:
+				tool_id = request.POST.get("tool_id")
+				params["tool_id"] = tool_id
+				return render(request, 'staff_charges/modal_multiple_projects_finish.html', params)
 
-		#area_access = AreaAccessRecord.objects.get(staff_charge=charge, end=None)
-		#area_access.end = timezone.now()
-		#area_access.save()
-
-		# close out any area access record project entries
-
-	#except AreaAccessRecord.DoesNotExist:
-	#	pass
 
 	except ObjectDoesNotExist:
 		return update_related_charges(request, charge, None)
@@ -688,7 +755,7 @@ def end_staff_charge(request):
 
 @staff_member_required(login_url=None)
 @require_POST
-def staff_charge_projects_save(request):
+def staff_charge_projects_save(request, modal_flag):
 	msg = ''
 
 	try:
@@ -774,13 +841,22 @@ def staff_charge_projects_save(request):
 		else:
 			return HttpResponseBadRequest(msg)
 
-	return redirect(reverse('staff_charges'))
+	if int(modal_flag) == 0:
+		return redirect(reverse('staff_charges'))
+	else:
+		tool_id = request.POST.get("tool_id")
+		str_url = "/tool_control/" + tool_id
+		return redirect(str_url)
 
 
 @staff_member_required(login_url=None)
 def update_related_charges(request, new_charge=None, old_charge=None):
 
 	if old_charge is None:
+		referer = request.META.get('HTTP_REFERER')
+		if referer.find("tool") != -1:
+			tool = None
+			return render(request, 'tool_control/disable_confirmation.html', {'tool': tool})
 		return redirect(reverse('staff_charges'))
 
 	# find any outstanding StaffChargeProject entries that need to be updated for a related charge being ended

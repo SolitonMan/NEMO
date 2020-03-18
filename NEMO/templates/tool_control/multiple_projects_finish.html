@@ -30,7 +30,7 @@
 	function on_submit()
 	{
 		var failure_dialog = ajax_failure_callback("There was an error processing the data.  Please check the form and try again.");
-		ajax_post("{% url 'usage_event_projects_save' %}", serialize("#usage_event_projects"), reload_events, failure_dialog);
+		ajax_post("{% url 'usage_event_projects_save' %}", serialize("#usage_event_projects"), ajax_success_callback, failure_dialog);
 		return false;
 	}
 

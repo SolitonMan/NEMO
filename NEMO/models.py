@@ -891,7 +891,7 @@ class Interlock(models.Model):
 			cmdst = 0
 
 		uri = 'http://' + str(self.card.server) + '/state.xml?relay' + str(self.card.number) + 'State=' + str(cmdst)
-		req = requests.get(uri)
+		req = requests.get(uri, timeout=0.01)
 
 		self.most_recent_reply = "Executed " + uri + " successfully."
 		self.state = command_type
@@ -900,11 +900,19 @@ class Interlock(models.Model):
 
 	def pulse(self):
 		uri = 'http://' + str(self.card.server) + '/state.xml?relay' + str(self.card.number) + 'State=2'
-		req = requests.get(uri)
 
-		self.most_recent_reply = "Pulsed " + uri + " successfully."
-		self.state = 2
-		self.save()
+		try:
+			req = requests.get(uri, timeout=0.01)
+
+			self.most_recent_reply = "Pulsed " + uri + " successfully."
+			print(self.most_recent_reply)
+			self.state = 2
+			self.save()
+
+		except requests.exceptions.RequestException as e:
+			print(e)
+			return False
+			
 		return self.state == 2
 
 	class Meta:
@@ -1369,3 +1377,14 @@ class Core(models.Model):
 	
 	def __str__(self):
 		return str(self.name)
+
+
+class LockBilling(models.Model):
+	fiscal_year = models.CharField(max_length=20, help_text="indicator for the fiscal year in the format 20192020")
+	billing_month = models.PositiveIntegerField(help_text="integer indicating the month: 1 = January, 12 = December")
+	billing_year = models.PositiveIntegerField(help_text="the current year for which the month is being locked")
+	is_locked = models.BooleanField(default=False)
+	is_closed = models.BooleanField(default=False)
+	created = models.DateTimeField(null=True, blank=True)
+	updated = models.DateTimeField(null=True, blank=True)
+
