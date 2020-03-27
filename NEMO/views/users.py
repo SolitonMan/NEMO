@@ -5,14 +5,14 @@ from urllib.parse import urljoin
 import requests
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
-from django.http import HttpResponseBadRequest, HttpResponseRedirect
+from django.http import HttpResponseBadRequest, HttpResponseRedirect, JsonResponse, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_http_methods, require_POST, logger
 
 from NEMO.admin import record_local_many_to_many_changes, record_active_state
 from NEMO.forms import UserForm
-from NEMO.models import User, Project, Tool, PhysicalAccessLevel, Reservation, StaffCharge, UsageEvent, AreaAccessRecord, ActivityHistory
+from NEMO.models import UserRelationship, UserRelationshipType, User, Project, Tool, PhysicalAccessLevel, Reservation, StaffCharge, UsageEvent, AreaAccessRecord, ActivityHistory
 
 
 @staff_member_required(login_url=None)
@@ -292,3 +292,80 @@ def unlock_account(request, user_id):
 			'content': 'Exception caught: {}. {}'.format(type(e).__name__, str(e)),
 		}
 	return render(request, 'acknowledgement.html', dictionary)
+
+
+
+@staff_member_required(login_url=None)
+@require_GET
+def delegates(request):
+	all_pis = User.objects.filter(groups__name="PI").order_by('last_name', 'first_name')
+
+	return render(request, 'users/delegates.html', { 'pis': all_pis, 'users': User.objects.all(), })
+
+
+@staff_member_required(login_url=None)
+@require_POST
+def delete_delegate(request, pi_id, delegate_id):
+	pi = User.objects.get(id=pi_id)
+	d = User.objects.get(id=delegate_id)
+	pi.pi_delegates.remove(d)	
+
+	return HttpResponse("Delegate deleted")
+
+
+@staff_member_required(login_url=None)
+@require_POST
+def add_delegate(request, pi_id, delegate_id):
+	d = User.objects.get(id=delegate_id)
+	pi = User.objects.get(id=pi_id)
+	pi.pi_delegates.add(d)
+	data = {
+		'delegate_first': d.first_name,
+		'delegate_last': d.last_name,
+		'delegate_id': d.id,
+		'delegate_username': d.username,
+		'pi_id': pi.id,
+	}
+
+	return JsonResponse(data)
+
+"""
+@staff_member_required(login_url=None)
+@require_POST
+def add_user_relationship_type(request):
+	try:
+
+
+
+	except Exception as e:
+
+	return render()
+
+@staff_member_required(login_url=None)
+@require_POST
+def add_user_relationship(request):
+	try:
+
+
+
+	except Exception as e:
+
+	return render()
+
+@staff_member_required(login_url=None)
+@require_POST
+def user_relationships(request, relationship_type=None):
+	try:
+		if relationship_type is None:
+			return render(request, 'user_relationship.html', {'relationship_type':relationship_type, 'types': UserRelationshipType.objects.all(), 'users': None })
+
+		type = UserRelationshipType.objects.get(type=relationship_type)
+		users = UserRelationship.objects.filter(type=type.id)
+
+		return render(request, 'user_relationship.html', {'relationship_type':relationship_type, 'types': type, 'users': users })
+
+	except Exception as e:
+
+	return render()
+
+"""

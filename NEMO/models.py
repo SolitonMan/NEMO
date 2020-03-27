@@ -94,6 +94,7 @@ class User(models.Model):
 	training_required = models.BooleanField(default=True, help_text='When selected, the user is blocked from all reservation and tool usage capabilities.')
 	groups = models.ManyToManyField(Group, blank=True, help_text='The groups this user belongs to. A user will get all permissions granted to each of his/her group.')
 	user_permissions = models.ManyToManyField(Permission, blank=True, help_text='Specific permissions for this user.')
+	pi_delegates = models.ManyToManyField('self', blank=True, help_text='Users that a PI gives permission to manage accounts and their users on behalf of that PI', related_name='delegates')
 
 	# Important dates
 	date_joined = models.DateTimeField(default=timezone.now)
@@ -237,6 +238,18 @@ class User(models.Model):
 
 	def __str__(self):
 		return self.get_full_name()
+
+class UserRelationshipType(models.Model):
+	name = models.CharField(max_length=255, unique=True)
+	user_1_role = models.CharField(max_length=255)
+	user_2_role = models.CharField(max_length=255)
+	description = models.TextField(null=True, blank=True)
+
+
+class UserRelationship(models.Model):
+	type = models.ForeignKey(UserRelationshipType, related_name="user_relationship_type")
+	user_1 = models.ForeignKey(User, related_name="upper_tier_role", help_text="The person who is the manager, superviser, PI, or other role higher in the structure")
+	user_2 = models.ForeignKey(User, related_name="lower_tier_role", help_text="The person who is the subordinate, supervisee, delegate or other role lower in the structure.")
 
 
 class Tool(models.Model):

@@ -427,16 +427,16 @@ class UserTypeAdmin(admin.ModelAdmin):
 
 @register(User)
 class UserAdmin(admin.ModelAdmin):
-	filter_horizontal = ('groups', 'user_permissions', 'qualifications', 'projects', 'physical_access_levels')
+	filter_horizontal = ('groups', 'user_permissions', 'qualifications', 'projects', 'physical_access_levels', 'pi_delegates')
 	fieldsets = (
 		('Personal information', {'fields': ('first_name', 'last_name', 'username', 'email', 'badge_number', 'type', 'domain', 'core_ids')}),
-		('Permissions', {'fields': ('is_active', 'is_staff', 'is_technician', 'is_superuser', 'training_required', 'groups', 'user_permissions', 'physical_access_levels')}),
+		('Permissions', {'fields': ('is_active', 'is_staff', 'is_technician', 'is_superuser', 'training_required', 'groups', 'user_permissions', 'physical_access_levels', 'pi_delegates')}),
 		('Important dates', {'fields': ('date_joined', 'last_login', 'access_expiration')}),
 		('Laboratory information', {'fields': ('qualifications', 'projects')}),
 	)
 	search_fields = ('first_name', 'last_name', 'username', 'email')
 	list_display = ('first_name', 'last_name', 'username', 'email', 'is_active', 'domain', 'is_staff', 'is_technician', 'is_superuser', 'date_joined', 'last_login')
-	list_filter = ('is_active', 'domain', 'is_staff', 'is_technician', 'is_superuser', 'date_joined', 'last_login')
+	list_filter = ('is_active','groups','projects','last_name','username')
 
 	def save_model(self, request, obj, form, change):
 		""" Audit project membership and qualifications when a user is saved. """

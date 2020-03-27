@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+{% load custom_tags_and_filters %}
+{% block title %}PI Delegates{% endblock %}
+{% block content %}
+	<h1>
+		PI Delegates
+	</h1>
+	<div class="row">
+		<div class="col-md-4">
+			<input id="search" type="text" placeholder="Search for a PI" class="form-control" autofocus>
+		</div>
+	</div>
+	<script>
+	$("#search").keyup(function () {
+		var data = this.value.split(" ");
+
+		//var tr = $("#user_data").find("tr");
+		var tr = $("#user_data").children();
+		if (this.value == "") {
+			tr.show();
+			return;
+		}
+
+		tr.hide();
+
+		tr.filter(function(i, v) {
+			var $t = $(this);
+			for (var d = 0; d < data.length; ++d) {
+				var s = data[d].toUpperCase();
+				if ($t.text().toUpperCase().indexOf(s) > -1) {
+					return true;
+				}
+			}
+		})
+		.show();
+	});
+	</script>
+
+	<table class="table">
+		<thead>
+		<tr>
+			<th>Principle Investigator</th>
+			<th>Delegates</th>
+			<th>Add delegate</th>
+		</tr>
+		</thead>
+		<tbody id="user_data">
+	{% for pi in pis %}
+		<tr>
+			<td>{{ pi.last_name }}, {{ pi.first_name }}</td>
+			<td>
+			<table class="table" id="pi_{{ pi.id }}">
+		{% if pi.pi_delegates.all|length > 0 %}
+			{% for d in pi.pi_delegates.all %}
+			<tr id="del_{{ d.id }}">
+				<td>{{ d.last_name }}, {{ d.first_name }}</td>
+				<td>{{ d.username }}</td>
+				<td><button type="button" class="btn btn-danger" onclick="delete_delegate({{ pi.id }}, {{d.id}});">Delete</button></td>
+			</tr>
+			{% endfor %}
+		{% else %}
+			<tr id="no_del_{{ pi.id }}">
+				<td>No delegates assigned</td>
+			</tr>
+		{% endif %}
+			</table>
+			</td>
+			<td>
+				<input id="search_{{ pi.id }}" type="text" placeholder="Add a delegate" class="form-control" autofocus>
+
+				<span id="selection_{{ pi.id }}" style="display:inline" class="form-control"></span>
+				<button id="add_{{ pi.id }}" type="button" style="display:none" class="btn btn-success">Add </button>
+				<button id="cancel_{{ pi.id }}" type="button" style="display:none" class="btn btn-danger">Cancel</button>
+			</td>
+		</tr>
+	{% endfor %}
+		</tbody>
+	</table>
+
+	<script>
+	var current_pi_id = 0;
+	function on_autocomplete_selection(jquery_event, search_selection)
+	{
+		var id = $(this).attr("id");
+		var pi_id = id.split("_")[1];
+		var add = "#add_" + pi_id;
+		var cancel = "#cancel_" + pi_id;
+		var selection = "#selection_" + pi_id;
+
+		$(this).typeahead('val', search_selection.id).hide();
+		$(selection).html(search_selection.name).show();
+		$(add).show();
+		$(cancel).show();
+	}
+	function enable_autocompletion(pi_id)
+	{
+		var id = "#search_" + pi_id;
+		$(id).autocomplete('user', on_autocomplete_selection, {{ users|json_search_base }});
+		id = "#add_" + pi_id;
+		$(id).click(add_delegate);
+		id = "#cancel_" + pi_id;
+		$(id).click(cancel_delegate);
+	}
+	function delete_delegate(pi_id, delegate_id)
+	{
+		var data = {};
+		var url = '/delete_delegate' + '/' + pi_id + '/' + delegate_id + '/';
+		var failure_dialog = ajax_failure_callback("There was an error processing the data.  Please try again.");
+
+		var ddr = function() {
+			var id = "#pi_" + pi_id;
+			var id_tbody = id + " > tbody";
+			var el = "#del_" + delegate_id;
+			$(el).remove();
+			if ($(id_tbody).children().length == 0) {
+				var $tr = $("<tr></tr>");
+				var $td = $("<td></td>");
+				var no_del = "no_del_" + pi_id;
+				$tr.attr("id", no_del);
+				$td.text("No delegates assigned");
+				$tr.append($td);
+				$(id).append($tr);
+			}
+		}
+		ajax_post(url, data, ddr, failure_dialog);
+	}
+	function add_delegate()
+	{
+		var id = $(this).attr("id");
+		var pi_id = id.split("_")[1];
+		id = "#search_" + pi_id;
+		var delegate_id = $(id).val();
+
+		var url = '/add_delegate/' + pi_id + '/' + delegate_id + '/';
+		var adr = function(data) {
+			var pi_id = data.pi_id;
+
+			// if there are currently no delegates
+			var no_del_id = "#no_del_" + pi_id;
+			$(no_del_id).remove();
+
+			// add new delegate to existing delegates table
+			var tbl_id = "#pi_" + pi_id;
+			var $tbl = $(tbl_id);
+			var $tr = $('<tr></tr>');
+			$tr.attr("id", "del_"+data.delegate_id);
+			var $td1 = $('<td></td>');
+			$td1.text(data.delegate_last + ', ' + data.delegate_first);
+			var $td2 = $('<td></td>');
+			$td2.text(data.delegate_username);
+			var $td3 = $('<td></td>');
+			var $btn = $('<button></button>');
+			$btn.text('Delete');
+			$btn.attr('class','btn btn-danger').attr('type','button').attr('id', 'del_'+ data.delegate_id);
+			$btn.bind('click',function() { delete_delegate(pi_id,data.delegate_id); });
+			$td3.append($btn);
+			$tr.append($td1);
+			$tr.append($td2);
+			$tr.append($td3);
+			$tbl.append($tr);
+
+			// hide buttons and show search field
+			var add = "#add_" + pi_id;
+			var cancel = "#cancel_" + pi_id;
+			var selection = "#selection_" + pi_id;
+			var search = "#search_" + pi_id;
+
+			$(cancel).hide();
+			$(add).hide();
+			$(selection).hide();
+			$(search).typeahead('val', '').show();
+		}
+		var data = {};
+		var failure_dialog = ajax_failure_callback("There was an error processing the data.  Please try again.");
+		ajax_post(url, data, adr, failure_dialog);
+	}
+	function cancel_delegate()
+	{
+		var id = $(this).attr("id"); 
+		var pi_id = id.split("_")[1];
+		var add = "#add_" + pi_id;
+		var cancel = "#cancel_" + pi_id;
+		var selection = "#selection_" + pi_id;
+		var search = "#search_" + pi_id;
+
+		$(cancel).hide();
+		$(add).hide();
+		$(selection).hide();
+		$(search).typeahead('val', '').show();
+	}
+	{% for pi in pis %}
+	id = "#selection_" + '{{ pi.id }}';
+	$(id).hide();
+	enable_autocompletion({{ pi.id }});
+	{% endfor %}
+	</script>
+
+
+{% endblock %}

@@ -239,6 +239,9 @@ if settings.ALLOW_CONDITIONAL_URLS:
 		url(r'^deactivate_user/(?P<user_id>\d+)/', users.deactivate, name='deactivate_user'),
 		url(r'^reset_password/(?P<user_id>\d+)/$', users.reset_password, name='reset_password'),
 		url(r'^unlock_account/(?P<user_id>\d+)/$', users.unlock_account, name='unlock_account'),
+		url(r'^delegates/$', users.delegates, name='delegates'),
+		url(r'^delete_delegate/(?P<pi_id>\d+)/(?P<delegate_id>\d+)/$', users.delete_delegate, name='delete_delegate'),
+		url(r'^add_delegate/(?P<pi_id>\d+)/(?P<delegate_id>\d+)/$', users.add_delegate, name='add_delegate'),
 
 		# Account & project management:
 		url(r'^accounts_and_projects/$', accounts_and_projects.accounts_and_projects, name='accounts_and_projects'),
