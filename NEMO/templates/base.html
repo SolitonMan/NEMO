@@ -93,7 +93,6 @@
 							{% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
 							{% navigation_url 'abuse' 'Abuse' %}
 							{% endif %}
-							{% navigation_url 'accounts_and_projects' 'Accounts and projects' %}
 							{% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
 							{% navigation_url 'alerts' 'Alerts' %}
 							{% endif %}

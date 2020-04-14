@@ -618,7 +618,11 @@ class ConfigurationHistory(models.Model):
 
 class Account(models.Model):
 	name = models.CharField(max_length=100, unique=True)
+	cost_center = models.CharField(max_length=10, unique=True, null=True, blank=True)
+	owner = models.ForeignKey('User', null=True, blank=True, help_text="The owner or person responsible for the Account (Cost Center in SIMBA) as imported via SIMBA download nightly")
 	active = models.BooleanField(default=True, help_text="Users may only charge to an account if it is active. Deactivate the account to block future billable activity (such as tool usage and consumable check-outs) of all the projects that belong to it.")
+	start_date = models.DateField(null=True, blank=True, help_text="The date on which the cost center becomes active")
+	end_date = models.DateField(null=True, blank=True, help_text="The date on which the cost center becomes inactive")
 
 	class Meta:
 		ordering = ['name']
@@ -631,7 +635,12 @@ class Project(models.Model):
 	name = models.CharField(max_length=100, unique=True)
 	application_identifier = models.CharField(max_length=100)
 	account = models.ForeignKey(Account, help_text="All charges for this project will be billed to the selected account.")
+	internal_order = models.CharField(max_length=12, null=True, blank=True)
+	wbs_element = models.CharField(max_length=12, null=True, blank=True)
+	owner = models.ForeignKey('User', null=True, blank=True, help_text="The owner or person responsible for the Project (Internal Order or WBS Element in SIMBA) as imported via SIMBA download nightly")
 	active = models.BooleanField(default=True, help_text="Users may only charge to a project if it is active. Deactivate the project to block billable activity (such as tool usage and consumable check-outs).")
+	start_date = models.DateField(null=True, blank=True, help_text="The date on which the project, internal order or wbs element becomes active")
+	end_date = models.DateField(null=True, blank=True, help_text="The date on which the project, internal order or wbs element becomes inactive")
 
 	class Meta:
 		ordering = ['name']

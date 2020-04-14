@@ -9,6 +9,8 @@ from NEMO.models import Account, Project, User, MembershipHistory, ActivityHisto
 @staff_member_required(login_url=None)
 @require_GET
 def accounts_and_projects(request, kind=None, identifier=None):
+	return HttpResponseRedirect('landing')
+"""
 	try:
 		if kind == 'project':
 			account = Project.objects.get(id=identifier).account
@@ -25,6 +27,7 @@ def accounts_and_projects(request, kind=None, identifier=None):
 		'users': User.objects.all(),
 	}
 	return render(request, 'accounts_and_projects/accounts_and_projects.html', dictionary)
+"""
 
 
 @staff_member_required(login_url=None)

@@ -246,8 +246,8 @@ class ConfigurationHistoryAdmin(admin.ModelAdmin):
 
 @register(Account)
 class AccountAdmin(admin.ModelAdmin):
-	list_display = ('name', 'id', 'active')
-	search_fields = ('name',)
+	list_display = ('id', 'name','cost_center', 'owner', 'active')
+	search_fields = ('name','cost_center')
 	list_filter = ('active',)
 
 	def save_model(self, request, obj, form, change):
@@ -278,8 +278,8 @@ class ProjectAdminForm(forms.ModelForm):
 
 @register(Project)
 class ProjectAdmin(admin.ModelAdmin):
-	list_display = ('name', 'id', 'application_identifier', 'account', 'active')
-	search_fields = ('name', 'application_identifier', 'account__name')
+	list_display = ('id', 'name', 'application_identifier', 'internal_order', 'wbs_element', 'account', 'owner', 'active')
+	search_fields = ('name', 'internal_order', 'wbs_element', 'application_identifier', 'account__name', 'owner', 'account__cost_center')
 	list_filter = ('active',)
 	form = ProjectAdminForm
 

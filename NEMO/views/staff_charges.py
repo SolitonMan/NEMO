@@ -56,7 +56,7 @@ def staff_charges(request):
 			params['scp'] = scp
 
 	# get all staff charges for this user so ad hoc charges can be made with an appropriate reference
-	earliest = timezone.now().date() - timedelta(days=5)
+	earliest = timezone.now().date() - timedelta(days=30)
 	my_staff_charges = StaffCharge.objects.filter(staff_member=request.user, start__range=(earliest, timezone.now().date()))
 	if my_staff_charges:
 		params['current_user_charges'] = my_staff_charges
