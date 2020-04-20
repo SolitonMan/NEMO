@@ -1,6 +1,7 @@
 from datetime import timedelta
 from http import HTTPStatus
 from urllib.parse import urljoin
+from logging import getLogger
 
 import requests
 from django.conf import settings
@@ -8,7 +9,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.http import HttpResponseBadRequest, HttpResponseRedirect, JsonResponse, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
-from django.views.decorators.http import require_GET, require_http_methods, require_POST, logger
+from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from NEMO.admin import record_local_many_to_many_changes, record_active_state
 from NEMO.forms import UserForm
@@ -25,6 +26,7 @@ def users(request):
 @staff_member_required(login_url=None)
 @require_http_methods(['GET', 'POST'])
 def create_or_modify_user(request, user_id):
+	logger = getLogger(__name__)
 	dictionary = {
 		'projects': Project.objects.filter(active=True, account__active=True),
 		'tools': Tool.objects.filter(visible=True),
@@ -163,6 +165,7 @@ def create_or_modify_user(request, user_id):
 @staff_member_required(login_url=None)
 @require_http_methods(['GET', 'POST'])
 def deactivate(request, user_id):
+	logger = getLogger(__name__)
 	dictionary = {
 		'user_to_deactivate': get_object_or_404(User, id=user_id),
 		'reservations': Reservation.objects.filter(user=user_id, cancelled=False, missed=False, end__gt=timezone.now()),

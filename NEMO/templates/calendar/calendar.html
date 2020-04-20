@@ -199,7 +199,7 @@ function submit_event_with_more_information(ajax_post)
 function create(start, end, jsEvent, view)
 {
 	{# Find out which tool is selected in the tool tree. #}
-	var item = $(".selected");
+	var item = $("#tool_tree .selected");
 	{# Only allow reservations to be created when a tool has been selected. #}
 	var item_selected = (item != null);
 	{# Only allow selection to proceed when we're in reservation view (instead of usage view). #}
@@ -534,15 +534,11 @@ function on_load()
 		$("#user_search").autocomplete('users', get_specific_user_activity, {{ users|json_search_base }});
 	{% endif %}
 	$('[data-toggle~="tooltip"]').tooltip({ container: 'body' });
-	{% if user.is_superuser %}
-	collapse_all_categories();
-	{% else %}
-	expand_all_categories();
-	{% endif %}
 	int_selected = get_selected_item();
 	if (int_selected) {
 		var selector = "a[data-tool-id='" + int_selected + "']";
 		$("#current_tool_selection").html($(selector).html());
+		set_selected_item_by_id(int_selected);
 	}
 
 	/*
@@ -553,7 +549,9 @@ function on_load()
 
 	// copy the tool tree
 	$("#tool_tree_store").html($("#tool_tree").html());
+	$("#tool_tree_store a").removeClass("selected");
 	$("#tool_tree_toggle").html($("#tool_tree").html());
+	$("#tool_tree_toggle a").removeClass("selected");
 
 	// update the copied tool tree
 	$("#tool_tree_toggle a").each(function () {

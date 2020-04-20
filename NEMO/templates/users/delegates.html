@@ -53,9 +53,9 @@
 		{% if pi.pi_delegates.all|length > 0 %}
 			{% for d in pi.pi_delegates.all %}
 			<tr id="del_{{ d.id }}">
-				<td>{{ d.last_name }}, {{ d.first_name }}</td>
-				<td>{{ d.username }}</td>
-				<td><button type="button" class="btn btn-danger" onclick="delete_delegate({{ pi.id }}, {{d.id}});">Delete</button></td>
+				<td width="65%">{{ d.last_name }}, {{ d.first_name }}</td>
+				<td width="20%">{{ d.username }}</td>
+				<td width="15%"><button type="button" class="btn btn-danger" onclick="delete_delegate({{ pi.id }}, {{d.id}});">Delete</button></td>
 			</tr>
 			{% endfor %}
 		{% else %}

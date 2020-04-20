@@ -532,7 +532,7 @@ def determine_insufficient_notice(tool, start):
 	""" Determines if a reservation is created that does not give the
 	Laboratory staff sufficient advance notice to configure a tool. """
 	for config in tool.configuration_set.all():
-		advance_notice = start - timezone.now()
+		advance_notice = start.replace(tzinfo=None) - timezone.now().replace(tzinfo=None)
 		if advance_notice < timedelta(hours=config.advance_notice_limit):
 			return True
 	return False

@@ -23,7 +23,7 @@ RUN pip install schedule
 
 # Intall NEMO (in the current directory) and Gunicorn
 COPY . /nemo/
-RUN pip install /nemo/ gunicorn==19.9.0
+RUN pip install /nemo/ gunicorn==20.0.4
 RUN rm --recursive --force /nemo/
 
 RUN mkdir /nemo

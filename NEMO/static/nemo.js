@@ -95,6 +95,7 @@ function set_selected_item_by_id(tool_id)
 	{
 		$("#sidebar a").removeClass('selected');
 		tool.addClass('selected');
+		$("#current_tool_selection").html(tool.html());
 	}
 }
 

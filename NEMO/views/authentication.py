@@ -1,6 +1,6 @@
 from _ssl import PROTOCOL_TLSv1_2, CERT_REQUIRED
 from base64 import b64decode
-from logging import exception
+from logging import exception, getLogger
 
 from django.conf import settings
 from django.contrib.auth import authenticate, login, REDIRECT_FIELD_NAME, logout
@@ -10,7 +10,7 @@ from django.shortcuts import render
 from django.urls import reverse, resolve
 from django.utils.decorators import method_decorator
 from django.views.decorators.debug import sensitive_post_parameters
-from django.views.decorators.http import require_http_methods, require_GET, logger
+from django.views.decorators.http import require_http_methods, require_GET
 from ldap3 import Tls, Server, Connection, AUTO_BIND_TLS_BEFORE_BIND, SIMPLE
 from ldap3.core.exceptions import LDAPBindError, LDAPExceptionError
 
@@ -37,6 +37,7 @@ class NginxKerberosAuthorizationHeaderAuthenticationBackend(ModelBackend):
 		# Perform any custom security checks below.
 		# Returning None blocks the user's access.
 		username = self.clean_username(request.META.get('HTTP_AUTHORIZATION', None))
+		logger = getLogger(__name__)
 
 		# The user must exist in the database
 		try:
@@ -74,6 +75,8 @@ class LDAPAuthenticationBackend(ModelBackend):
 
 	@method_decorator(sensitive_post_parameters('password'))
 	def authenticate(self, request, username=None, password=None, **keyword_arguments):
+		logger = getLogger(__name__)
+
 		if not username or not password:
 			return None
 

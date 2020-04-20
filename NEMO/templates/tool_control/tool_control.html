@@ -525,11 +525,6 @@
 				setInterval(refresh_sidebar_icons, 30000);
 			{% endif %}
 			refresh_tool_status();
-			{% if user.is_superuser %}
-			collapse_all_categories();
-			{% else %}
-			expand_all_categories();
-			{% endif %}
 			var int_selected = get_selected_item();
 			if (int_selected) {
 				var selector = "a[data-tool-id='" + int_selected + "']";

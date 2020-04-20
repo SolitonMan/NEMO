@@ -6,6 +6,7 @@ from copy import deepcopy
 from datetime import timedelta
 from http import HTTPStatus
 from itertools import chain
+from logging import getLogger
 
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
@@ -14,7 +15,7 @@ from django.db.models import Q, Max
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotFound, HttpResponseServerError, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
-from django.views.decorators.http import logger, require_GET, require_POST, require_http_methods
+from django.views.decorators.http import require_GET, require_POST, require_http_methods
 from django.utils.dateparse import parse_time, parse_date, parse_datetime
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
@@ -554,6 +555,7 @@ def usage_event_entry(request):
 
 @login_required
 def disable_tool(request, tool_id):
+	logger = getLogger(__name__)
 
 	if not settings.ALLOW_CONDITIONAL_URLS:
 		return HttpResponseBadRequest('Tool control is only available on campus.')
@@ -740,6 +742,8 @@ def usage_event_projects_save(request):
 
 			response = render(request, 'staff_charges/general_reminder.html', {'staff_charge': existing_staff_charge})
 			return response
+
+		return render(request, 'tool_control/disable_confirmation.html', {'tool': tool})
 
 	except Exception as inst:
 		if msg == '':

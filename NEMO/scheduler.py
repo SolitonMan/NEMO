@@ -8,14 +8,14 @@ from NEMO.models import Interlock, Tool
 
 
 def pulse_interlocks():
-	print("pulse_interlocks() called")
+	# print("pulse_interlocks() called")
 	tools = Tool.objects.all()
 	for t in tools:
 		if not t.in_use():
 			if t.interlock is not None:
 				t.interlock.pulse()
-		else:
-			print(t.name + " has been detected as being in use")
+	#	else:
+	#		print(t.name + " has been detected as being in use")
 
 
 def run_continuously(self, interval=1):

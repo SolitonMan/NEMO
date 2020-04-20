@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.conf.urls import include, url
+from django.conf.urls import url, include
 from django.contrib import admin
 from django.contrib.auth.decorators import login_required
 from django.views.static import serve
@@ -198,7 +198,7 @@ urlpatterns = [
 
 if settings.ALLOW_CONDITIONAL_URLS:
 	urlpatterns += [
-		url(r'^admin/', include(admin.site.urls)),
+		url(r'^admin/', admin.site.urls),
 		url(r'^api/', include(router.urls)),
 
 		# Tablet area access
@@ -287,7 +287,7 @@ if settings.DEBUG:
 		# Django debug toolbar
 		import debug_toolbar
 		urlpatterns += [
-			url(r'^__debug__/', include(debug_toolbar.urls)),
+			url(r'^__debug__/', debug_toolbar.urls),
 		]
 	except ImportError:
 		pass
