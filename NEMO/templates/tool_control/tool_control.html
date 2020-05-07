@@ -36,6 +36,7 @@
 
 	<script>
 	var current_entry_number = 1;
+	var staff_reserved_for_customer = false;
 
 	function update_tool_filter(btn)
 	{
@@ -96,6 +97,7 @@
 			$("#start").click(enable_tool);
 			{% endif %}
 			$("#project_choice_multi").hide();
+			reservation_update();
 		}
 
 		function use_tool_for_self(tool_id)
@@ -196,35 +198,30 @@
 				{% if staff_charge_projects %}
 
 					$("#tool_control").append("<input type=\"hidden\" name=\"override_staff_charge\" id=\"override_staff_charge\" value=\"false\" />");				
-					var scp = {{ staff_charge_projects }};
+					if (!staff_reserved_for_customer) {
 
-					if ($("#project_choice_multi").html() == "") {
-						$("#project_choice_multi").html($("#project_choice_multi_source").html());
-					}
+						var scp = {{ staff_charge_projects }};
 
-					var table_row;
+						if ($("#project_choice_multi").html() == "") {
+							$("#project_choice_multi").html($("#project_choice_multi_source").html());
+						}
 
-					for (s in scp) {
-						// for each record add a row to the table
-						table_row = "<tr id=\"row_" + current_entry_number + "\"><td style=\"vertical-align: middle\"><span class=\"glyphicon glyphicon-remove-circle grey pointer\" onclick=\"remove_row(" + current_entry_number + ");{% if staff_charge_projects %}update_override(true);{% endif %}\"></span></td><td>" + scp[s]["customer"] + "<input type=\"hidden\" value=\"" + scp[s]["user_id"] + "\" id=\"user_textbox__" + current_entry_number + "\" name=\"chosen_user__" + current_entry_number + "\" data-row=\"" + current_entry_number + "\"></td><td id=\"project__" + current_entry_number + "\" style=\"vertical-align: middle\">" + scp[s]["project"] + "<input type=\"hidden\" value=\"" + scp[s]["project_id"] + "\" name=\"chosen_project__" + current_entry_number + "\" id=\"chosen_project__" + current_entry_number + "\"></td></tr>";
-						$("#usage_event_entries tr:last").before(table_row);
-						current_entry_number++;
-					}
+						var table_row;
 
-					$("#usage_event_entries").after("<div>You are currently applying staff charges to the listed customer(s).  To end this charge before using the tool please proceed to the <a href=\"{% url 'staff_charges' %}\">staff charges</a> page and end the current charges.  To proceed with charging tool time to the current customer(s) click the Start button.  You may also alter the selection of customer(s) by adding new ones or removing currently selected individuals.</div>");
+						for (s in scp) {
+							// for each record add a row to the table
+							table_row = "<tr id=\"row_" + current_entry_number + "\"><td style=\"vertical-align: middle\"><span class=\"glyphicon glyphicon-remove-circle grey pointer\" onclick=\"remove_row(" + current_entry_number + ");{% if staff_charge_projects %}update_override(true);{% endif %}\"></span></td><td>" + scp[s]["customer"] + "<input type=\"hidden\" value=\"" + scp[s]["user_id"] + "\" id=\"user_textbox__" + current_entry_number + "\" name=\"chosen_user__" + current_entry_number + "\" data-row=\"" + current_entry_number + "\"></td><td id=\"project__" + current_entry_number + "\" style=\"vertical-align: middle\">" + scp[s]["project"] + "<input type=\"hidden\" value=\"" + scp[s]["project_id"] + "\" name=\"chosen_project__" + current_entry_number + "\" id=\"chosen_project__" + current_entry_number + "\"></td></tr>";
+							$("#usage_event_entries tr:last").before(table_row);
+							current_entry_number++;
+						}
 
-					$("#project_choice_multi").show();
-					$("#start").unbind("click");
-					//if (scp.length == 1) {
-					//	$("#start").click(enable_tool);
-					//} else {
+						$("#usage_event_entries").after("<div>You are currently applying staff charges to the listed customer(s).  To end this charge before using the tool please proceed to the <a href=\"{% url 'staff_charges' %}\">staff charges</a> page and end the current charges.  To proceed with charging tool time to the current customer(s) click the Start button.  You may also alter the selection of customer(s) by adding new ones or removing currently selected individuals.</div>");
+
+						$("#project_choice_multi").show();
+						$("#start").unbind("click");
 						$("#start").click(on_submit);
-					//}
-					//if ( $("#usage_event_entries tr").length > 2) {
 						$("#start").show();
-					//} else {
-					//	$("#start").hide();
-					//}
+					}
 
 				{% else %}
 
@@ -235,9 +232,6 @@
 						add_customer();
 				
 						$("#project_choice_multi").show();
-						// change default onclick event for start button
-						//$("#start").unbind("click");
-						//$("#start").click(on_submit);
 					}
 
 				{% endif %}
@@ -529,6 +523,8 @@
 			if (int_selected) {
 				var selector = "a[data-tool-id='" + int_selected + "']";
 				$("#current_tool_selection").html($(selector).html());
+			} else {
+				$("#current_tool_selection").html("");
 			}
 		}
 

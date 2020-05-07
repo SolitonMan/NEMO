@@ -172,7 +172,7 @@
 		{% endfor %}
 
 		<div style="margin-top:10px">
-			{% if my_reservation %}
+			{% if my_reservation is not None %}
 			You are accessing the {{ my_reservation.tool.name }} during a scheduled reservation.  The configuration parameters below have been set to those selected during the reservation process.  While the tool should be configured to use those options, you are still able to make changes prior to starting your run.
 			{% endif %}
 			{{ rendered_configuration_html }}
@@ -196,32 +196,16 @@
 			{% else %}
 				{% if user.is_staff %}
 					<h4>What would you like to do?</h4>
-					<div class="radio"><label><input type="radio" onchange="use_tool_for_self({{ tool.id }}){% if my_reservation %};set_start_button(0);{% endif %}" name="staff_charge" value="false">Use this tool for my own project</label></div>
-					<div class="radio"><label><input type="radio" onchange="use_tool_for_other({{ tool.id }}){% if my_reservation %};set_start_button(1);{% endif %}" name="staff_charge" value="false">Use this tool on behalf of another user</label></div>
-					<!--
-					This section is being commented out since it shouldn't be necessary, as the "use tool for other" option automatically charges staff time.
-					{% if user.charging_staff_time %}
-						{% with user.get_staff_charge as staff_charge %}
-							<div class="radio disabled">
-								<label id="staff_charge_tooltip_container" class="light-grey" data-toggle="tooltip" data-placement="right" title="This option is not available because you are already charging staff time to {{ staff_charge.customer }} for the project named {{ staff_charge.project }} since {{ staff_charge.start }}.">
-									<input type="radio" onchange="use_tool_for_other({{ tool.id }})" disabled>
-									<span id="staff_charge_tooltip_location">Use this tool on behalf of another user and begin charging staff time</span>
-								</label>
-							</div>
-							<script>
-								$("#staff_charge_tooltip_container").tooltip();
-							</script>
-						{% endwith %}
-					{% else %}
-						<div class="radio"><label><input type="radio" onchange="use_tool_for_other({{ tool.id }})" name="staff_charge" value="true">Use this tool on behalf of another user and begin charging staff time</label></div>
-					{% endif %}
-					-->
+					<div class="radio"><label><input type="radio" onchange="use_tool_for_self({{ tool.id }}){% if my_reservation %};set_start_button(0);{% endif %}" name="staff_charge" value="false" {% if my_reservation %}{% if my_reservation_projects is None %} checked{% endif %}{% endif %}>Use this tool for my own project</label></div>
+					<div class="radio"><label><input type="radio" onchange="use_tool_for_other({{ tool.id }}){% if my_reservation %};set_start_button(1);{% endif %}" name="staff_charge" value="false" {% if my_reservation %}{% if my_reservation_projects %} checked{% endif %}{% endif %}>Use this tool on behalf of another user</label></div>
 					<div id="project_choice"></div>
 					<div id="project_choice_multi"></div>
 				{% elif tool.operational and not tool.required_resource_is_unavailable and not tool.delayed_logoff_in_progress and not tool.scheduled_outage_in_progress %}
 					{% include 'tool_control/get_projects.html' with active_projects=user.active_projects user_id=user.id my_reservation=my_reservation%}
 				{% endif %}
-				{% if user.is_staff or tool.operational and not tool.required_resource_is_unavailable and not tool.delayed_logoff_in_progress and not tool.scheduled_outage_in_progress %}
+				{% if my_reservation %}
+					<button id="start" class="btn btn-default"><span class="glyphicon glyphicon-play"></span> Start using the {{ tool.name }}</button>
+				{% elif user.is_staff or tool.operational and not tool.required_resource_is_unavailable and not tool.delayed_logoff_in_progress and not tool.scheduled_outage_in_progress %}
 					<button id="start" class="btn btn-default" style="display:none"><span class="glyphicon glyphicon-play"></span> Start using the {{ tool.name }}</button>
 				{% endif %}
 			{% endif %}
@@ -476,4 +460,37 @@
 
 	update_stop_button();
 	$('#tool_control input[required]').on('change keyup', update_stop_button);
+
+	function reservation_update()
+	{
+		$("#tool_control").append("<input type=\"hidden\" name=\"override_staff_charge\" id=\"override_staff_charge\" value=\"false\" />");
+		{% if my_reservation_projects %}
+		staff_reserved_for_customer = true;
+		var rp = {{ reservation_projects }};
+
+		if ($("#project_choice_multi").html() == "") {
+			$("#project_choice_multi").html($("#project_choice_multi_source").html());
+		}
+
+		var table_row;
+
+		for (r in rp) {
+			table_row = "<tr id=\"row_" + current_entry_number + "\"><td style=\"vertical-align: middle\"><span class=\"glyphicon glyphicon-remove-circle grey pointer\" onclick=\"remove_row(" + current_entry_number + ");\"></span></td><td>" + rp[r]["customer"] + "<input type=\"hidden\" value=\"" + rp[r]["user_id"] + "\" id=\"user_textbox__" + current_entry_number + "\" name=\"chosen_user__" + current_entry_number + "\" data-row=\"" + current_entry_number + "\"></td><td id=\"project__" + current_entry_number + "\" style=\"vertical-align: middle\">" + rp[r]["project"] + "<input type=\"hidden\" value=\"" + rp[r]["project_id"] + "\" name=\"chosen_project__" + current_entry_number + "\" id=\"chosen_project__" + current_entry_number + "\"></td></tr>";
+			$("#usage_event_entries tr:last").before(table_row);
+			current_entry_number++;
+		}
+
+		$("#project_choice_multi").show();
+		$("#start").unbind("click");
+		$("#start").click(on_submit);
+		$("#start").show();
+		{% else %}
+		staff_reserved_for_customer = false;
+		{% endif %}
+	}
+
+	{% if my_reservation and my_reservation_projects is None %}
+	use_tool_for_self({{ tool.id }});
+	{% endif %}
+//# sourceURL=tool_control/tool_status.html
 </script>

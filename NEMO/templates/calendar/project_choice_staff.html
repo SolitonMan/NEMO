@@ -1,0 +1,198 @@
+<div class="modal-header">
+	<button type="button" class="close" data-dismiss="modal">&times;</button>
+	<h4 class="modal-title">Which project is this for?</h4>
+</div>
+
+<div class="modal-body">
+	{# Assume the dialog is cancelled by default, preventing the reservation request from being processed further. #}
+	{# When a button is clicked this value is set to true, enabling further processing. #}
+	{# Hiding the dialog using the X in the top right, or clicking outside of it, will stop processing. #}
+	<input type="hidden" id="dialog_cancelled" value="true">
+	<form id="additional_event_parameters" onsubmit="return false">
+		<div class="radio"><label><input type="radio" onchange="show_self_ui()" name="staff_charge" value="self">Reserve this tool for my own project</label></div>
+
+		<div id="self_ui" style="display: none;">
+		<p>Associate your reservation with a project.</p>
+		<input type="hidden" id="project_id" name="project_id">
+		<select class="form-control" onchange="return set_project(this.options[this.selectedIndex].value);">
+			<option value="">Please select a project</option>
+		{% for project in active_projects %}
+			<option value="{{ project.id }}">{{ project.application_identifier }}</option>
+		{% endfor %}
+		</select>
+		</div>
+
+		<div class="radio"><label><input type="radio" onchange="show_customer_ui()" name="staff_charge" value="customer">Reserve this tool on behalf of a customer.</label></div>
+
+		<div id="customer_ui" style="display: none;">
+			<div id="project_choice_multi">
+				<table id="customer_entries" class="table">
+					<tr>
+						<th>&nbsp;</th>
+						<th style="min-width:200px">Customer</th>
+						<th style="min-width:200px">Project</th>
+					</tr>
+					<tr>
+						<td colspan="3" style="text-align:center"><a href="javascript:void(0)" onclick="add_customer()">Add another customer</a></td>
+					</tr>
+				</table>
+			</div>
+
+			<button id="done" class="btn btn-default" style="display:none">Done adding customers to this reservation</button>
+		</div>
+	</form>
+	<script type="text/javascript">
+	{% load custom_tags_and_filters %}
+
+	function set_project(id)
+	{
+		if (id == "") return false;
+		$('#project_id').val(id);
+		$('#dialog_cancelled').val(false);
+		$('#dialog').modal('hide');
+		return true;
+	}
+
+	var current_entry_number = 1;
+
+	function show_self_ui()
+	{
+		$("#customer_ui").hide();
+		$("#self_ui").show();
+	}
+
+	function show_customer_ui()
+	{
+		$("#self_ui").hide();
+		$("#customer_ui").show();
+	}
+
+	function add_customer()
+	{
+		var failure_dialog = ajax_failure_callback("Cannot add new entry", "The web browser was not able to communicate with the server.");
+		ajax_get("{% url 'staff_charge_entry' %}", { "entry_number": current_entry_number }, add_entry_success_callback, failure_dialog);
+		function add_entry_success_callback(response, status, xml_http_request)
+		{
+			$("#customer_entries tr:last").before(response);
+			enable_autocompletion(current_entry_number);
+			current_entry_number++;
+		}
+	}
+
+	function enable_autocompletion(entry_number)
+	{
+		var id = "#user_textbox__" + entry_number;
+		$(id).autocomplete('user', on_autocomplete_selection, {{ users|json_search_base }}).focus();
+	}
+
+
+	function remove_row(number)
+	{
+		$("#row_" + number).remove();
+	}
+
+	function on_autocomplete_selection(jquery_event, search_selection, dataset_name)
+	{
+		$(this).typeahead('val', search_selection.id).hide();
+		var row = $(this).data('row');
+		var button_id = "#" + dataset_name + "_button__" + row;
+		$(button_id).val(search_selection.name).show();
+		if(dataset_name == "user")
+			fetch_projects(row, search_selection.id);
+	}
+
+	function fetch_projects(row, user_id)
+	{
+		var parameters =
+		{
+			"source_template": "staff_charges",
+			"user_id": user_id,
+			"entry_number": row
+		};
+		var target_element = "#project__" + row;
+		var url = "{% url 'get_projects' %}?" + jQuery.param(parameters);
+		var report_error = ajax_complete_callback("Could not fetch projects for user", "There was a problem obtaining the list of projects for the user.");
+		$(target_element).load(url, undefined, function(responseTxt, statusTxt, xhr) {
+			if (statusTxt == "success") {
+				var el =  $("#chosen_project__" + row);
+
+				if (el.tagName == "SELECT") {
+					$("#chosen_project__" + row).change(function() {
+						$("#done").click(on_submit);
+						$("#done").show();
+					});
+				} else {
+					$("#done").click(on_submit);
+					$("#done").show();
+				}
+			} else {
+				ajax_complete_callback("Could not fetch projects for user", "There was a problem obtaining the list of projects for the user.");
+			}
+		});
+	}
+
+	function purge_customer(row)
+	{
+		$("#user_button__" + row).hide();
+		$("#project__" + row).html("");
+		$("#user_textbox__" + row).typeahead('val', '').show().focus();
+	}
+
+	function on_submit()
+	{
+		var s;
+		var o;
+		var u;
+		var b;
+		var total_entry_count = 0;
+
+		for (var i=0; i<=current_entry_number; i++) {
+			b = false;
+			s = "#user_textbox__" + i;
+
+			if ($(s).length) {
+				if ($(s).css("display") != "none") {
+					alert("Please select a user for each row, or else delete the row.");
+					$(s).focus();
+					return false;
+				} else {
+					b = true;
+				}
+				total_entry_count++;
+			}
+
+			if (b) {
+				s = "#chosen_project__" + i;
+				if ($(s).prop("type") != "hidden") {
+					o = $(s).find(":selected").val();
+					if (o == "-1") {
+						alert("Please select a value for each project field for each customer, or else delete the row.");
+						$(s).focus();
+						return false;
+					}
+				}
+			}
+		}
+
+		if (total_entry_count == 0) {
+			alert("You must add at least one customer in order to use this tool for other.");
+			return false;
+		}
+
+		//var failure_dialog = ajax_failure_callback("Could not begin charging staff time");
+		//var success_callbacks = [reload_page];
+		//ajax_post("{% url 'create_reservation' %}", serialize("#additional_event_parameters"), success_callbacks, failure_dialog);
+		$('#dialog_cancelled').val(false);
+		$('#dialog').modal('hide');
+		return true;
+	}
+
+
+	function on_load()
+	{
+		add_customer();
+	}
+
+	$(on_load);
+	</script>
+</div>

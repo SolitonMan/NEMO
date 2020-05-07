@@ -161,7 +161,8 @@ def localize(dt, tz=None):
 
 
 def naive_local_current_datetime():
-	return localtime(timezone.now()).replace(tzinfo=None)
+	return timezone.now().replace(tzinfo=None)
+	#return localtime(timezone.now()).replace(tzinfo=None)
 
 
 def beginning_of_the_day(t, in_local_timezone=True):

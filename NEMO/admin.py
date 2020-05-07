@@ -5,12 +5,17 @@ from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.contrib.auth.models import Permission
 
 from NEMO.actions import lock_selected_interlocks, synchronize_with_tool_usage, unlock_selected_interlocks
-from NEMO.models import Account, ActivityHistory, Alert, Area, AreaAccessRecord, AreaAccessRecordProject, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableUnit, ConsumableCategory, ConsumableWithdraw, ContactInformation, ContactInformationCategory, ContestTransaction, ContestTransactionData, Core, Customization, Door, Interlock, InterlockCard, LandingPageChoice, LockBilling, MembershipHistory, News, Notification, PhysicalAccessLevel, PhysicalAccessLog, Project, Reservation, ReservationConfiguration, Resource, ResourceCategory, SafetyIssue, ScheduledOutage, ScheduledOutageCategory, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskHistory, TaskStatus, Tool, TrainingSession, UsageEvent, UsageEventProject, User, UserType
+from NEMO.models import Account, ActivityHistory, Alert, Area, AreaAccessRecord, AreaAccessRecordProject, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableUnit, ConsumableCategory, ConsumableWithdraw, ContactInformation, ContactInformationCategory, ContestTransaction, ContestTransactionData, Core, Customization, Door, Interlock, InterlockCard, LandingPageChoice, LockBilling, MembershipHistory, News, Notification, PhysicalAccessLevel, PhysicalAccessLog, Project, Reservation, ReservationConfiguration, ReservationProject, Resource, ResourceCategory, SafetyIssue, ScheduledOutage, ScheduledOutageCategory, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskHistory, TaskStatus, Tool, TrainingSession, UsageEvent, UsageEventProject, User, UserType
 
 admin.site.site_header = "LEO"
 admin.site.site_title = "LEO"
 admin.site.index_title = "Detailed administration"
 
+def has_delete_permission(request, obj=None):
+	return request.user.is_superuser()
+
+def change_view(self, request, object_id=None, form_url='', extra_context=None):
+	return super().change_view(request, object_id, form_url, extra_context=dict(show_delete=False))
 
 def record_remote_many_to_many_changes_and_save(request, obj, form, change, many_to_many_field, save_function_pointer):
 	"""
@@ -41,7 +46,7 @@ def record_remote_many_to_many_changes_and_save(request, obj, form, change, many
 	# If the object is being changed then it has already been assigned a primary key.
 	if not change:
 		save_function_pointer(request, obj, form, change)
-	obj.user_set = form.cleaned_data[many_to_many_field]
+	obj.user_set.set(form.cleaned_data[many_to_many_field])
 	save_function_pointer(request, obj, form, change)
 
 	# Record which members were added to the object.
@@ -142,7 +147,7 @@ class ToolAdminForm(forms.ModelForm):
 	)
 
 	def __init__(self, *args, **kwargs):
-		super(ToolAdminForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		if self.instance.pk:
 			self.fields['qualified_users'].initial = self.instance.user_set.all()
 			self.fields['required_resources'].initial = self.instance.required_resource_set.all()
@@ -167,14 +172,14 @@ class ToolAdmin(admin.ModelAdmin):
 		"""
 		Explicitly record any project membership changes.
 		"""
-		record_remote_many_to_many_changes_and_save(request, obj, form, change, 'qualified_users', super(ToolAdmin, self).save_model)
+		record_remote_many_to_many_changes_and_save(request, obj, form, change, 'qualified_users', super().save_model)
 		if 'required_resources' in form.changed_data:
-			obj.required_resource_set = form.cleaned_data['required_resources']
+			obj.required_resource_set.set(form.cleaned_data['required_resources'])
 		if 'nonrequired_resources' in form.changed_data:
-			obj.nonrequired_resource_set = form.cleaned_data['nonrequired_resources']
+			obj.nonrequired_resource_set.set(form.cleaned_data['nonrequired_resources'])
 
 	def get_queryset(self, request):
-		qs = super(ToolAdmin, self).get_queryset(request)
+		qs = super().get_queryset(request)
 		if request.user.is_superuser:
 			return qs
 		return qs.filter(core_id__in=request.user.core_ids.all())
@@ -222,20 +227,21 @@ class ConfigurationAdmin(admin.ModelAdmin):
 		if db_field.name == "tool":
 			if not request.user.is_superuser:
 				kwargs["queryset"] = Tool.objects.filter(core_id__in=request.user.core_ids.all())
-		return super(ConfigurationAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+		return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 	def formfield_for_manytomany(self, db_field, request, **kwargs):
 		if db_field.name == "consumable":
 			vertical = False
 			kwargs['widget'] = widgets.FilteredSelectMultiple(
-				db_field.verbose_name,
-				vertical,
+				verbose_name = db_field.verbose_name,
+				is_stacked = vertical,
 			)
+			kwargs['queryset'] = Consumable.objects.all()
 			if not request.user.is_superuser:
-				kwargs["queryset"] = Consumable.objects.filter(core_id__in=request.user.core_ids.all(), category__name='Consumables')
+				kwargs['queryset'] = Consumable.objects.filter(core_id__in=request.user.core_ids.all(), category__name__exact='Consumables')
 			else:
-				kwargs["queryset"] = Consumable.objects.filter(category__name='Consumables')
-		return super(ConfigurationAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
+				kwargs['queryset'] = Consumable.objects.filter(category__name__exact='Consumables')
+		return super().formfield_for_manytomany(db_field, request, **kwargs)
 
 
 @register(ConfigurationHistory)
@@ -252,7 +258,7 @@ class AccountAdmin(admin.ModelAdmin):
 
 	def save_model(self, request, obj, form, change):
 		""" Audit account and project active status. """
-		super(AccountAdmin, self).save_model(request, obj, form, change)
+		super().save_model(request, obj, form, change)
 		record_active_state(request, obj, form, 'active', not change)
 
 
@@ -271,7 +277,7 @@ class ProjectAdminForm(forms.ModelForm):
 	)
 
 	def __init__(self, *args, **kwargs):
-		super(ProjectAdminForm, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		if self.instance.pk:
 			self.fields['members'].initial = self.instance.user_set.all()
 
@@ -287,7 +293,7 @@ class ProjectAdmin(admin.ModelAdmin):
 		"""
 		Audit project creation and modification. Also save any project membership changes explicitly.
 		"""
-		record_remote_many_to_many_changes_and_save(request, obj, form, change, 'members', super(ProjectAdmin, self).save_model)
+		record_remote_many_to_many_changes_and_save(request, obj, form, change, 'members', super().save_model)
 		# Make a history entry if a project has been moved under an account.
 		# This applies to newly created projects and project ownership reassignment.
 		if 'account' in form.changed_data:
@@ -322,6 +328,9 @@ class ReservationAdmin(admin.ModelAdmin):
 class ReservationConfigurationAdmin(admin.ModelAdmin):
 	list_display = ('id', 'reservation', 'configuration', 'consumable')
 
+@register(ReservationProject)
+class ReservationProjectAdmin(admin.ModelAdmin):
+	list_display = ('id', 'reservation', 'project', 'customer')
 
 @register(UsageEvent)
 class UsageEventAdmin(admin.ModelAdmin):
@@ -440,7 +449,7 @@ class UserAdmin(admin.ModelAdmin):
 
 	def save_model(self, request, obj, form, change):
 		""" Audit project membership and qualifications when a user is saved. """
-		super(UserAdmin, self).save_model(request, obj, form, change)
+		super().save_model(request, obj, form, change)
 		record_local_many_to_many_changes(request, obj, form, 'projects')
 		record_local_many_to_many_changes(request, obj, form, 'qualifications')
 		record_local_many_to_many_changes(request, obj, form, 'physical_access_levels')

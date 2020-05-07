@@ -267,13 +267,13 @@ def check_policy_to_save_reservation(request, cancelled_reservation, new_reserva
 	# The user may not create or move a reservation to have a start time that is earlier than the current time.
 	# Staff may break this rule.
 	# An explicit policy override allows this rule to be broken.
-	if new_reservation.start < timezone.now():
+	if new_reservation.start.replace(tzinfo=None) < timezone.now().replace(tzinfo=None):
 		policy_problems.append("Reservation start time (" + format_datetime(new_reservation.start) + ") is earlier than the current time (" + format_datetime(timezone.now()) + ").")
 
 	# The user may not move or resize a reservation to have an end time that is earlier than the current time.
 	# Staff may break this rule.
 	# An explicit policy override allows this rule to be broken.
-	if new_reservation.end < timezone.now():
+	if new_reservation.end.replace(tzinfo=None) < timezone.now().replace(tzinfo=None):
 		policy_problems.append("Reservation end time (" + format_datetime(new_reservation.end) + ") is earlier than the current time (" + format_datetime(timezone.now()) + ").")
 
 	# The user must be qualified on the tool in question in order to create, move, or resize a reservation.
@@ -287,7 +287,7 @@ def check_policy_to_save_reservation(request, cancelled_reservation, new_reserva
 	# An explicit policy override allows this rule to be broken.
 	if new_reservation.tool.reservation_horizon is not None:
 		reservation_horizon = timedelta(days=new_reservation.tool.reservation_horizon)
-		if new_reservation.start > timezone.now() + reservation_horizon:
+		if new_reservation.start.replace(tzinfo=None) > timezone.now().replace(tzinfo=None) + reservation_horizon:
 			policy_problems.append("You may not create reservations further than " + str(reservation_horizon.days) + " days from now for this tool.")
 
 	# Calculate the duration of the reservation:
@@ -372,7 +372,7 @@ def check_policy_to_cancel_reservation(reservation, user, request):
 
 	# Users may not cancel reservations that have already ended.
 	# Staff may break this rule.
-	if reservation.end < timezone.now() and not user.is_staff:
+	if reservation.end.replace(tzinfo=None) < timezone.now().replace(tzinfo=None) and not user.is_staff:
 		return HttpResponseBadRequest("You may not cancel reservations that have already ended.")
 
 	if reservation.cancelled:

@@ -822,15 +822,20 @@ def staff_charge_projects_save(request, modal_flag):
 
 		# check for area access records related to this staff charge and assign percentages
 		if AreaAccessRecord.objects.filter(staff_charge=charge).exists():
-			area_access =  AreaAccessRecord.objects.get(staff_charge=charge)
-			aarp = AreaAccessRecordProject.objects.filter(area_access_record=area_access)
+			aar = AreaAccessRecord.objects.filter(staff_charge=charge)
+			for area_access in aar:
+				if area_access.end is None:
+					area_access.end = charge.end
+					area_access.save()
 
-			for a in aarp:
-				scp = StaffChargeProject.objects.get(staff_charge=charge, project=a.project, customer=a.customer)
-				if scp:
-					a.project_percent = scp.project_percent
-					a.updated = timezone.now()
-					a.save()
+				aarp = AreaAccessRecordProject.objects.filter(area_access_record=area_access)
+
+				for a in aarp:
+					scp = StaffChargeProject.objects.get(staff_charge=charge, project=a.project, customer=a.customer)
+					if scp:
+						a.project_percent = scp.project_percent
+						a.updated = timezone.now()
+						a.save()
 
 	except ObjectDoesNotExist:
 		return HttpResponseBadRequest("No entry found related to StaffCharge with id {0}".format(str(charge.id)))

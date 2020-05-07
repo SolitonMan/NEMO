@@ -539,6 +539,8 @@ function on_load()
 		var selector = "a[data-tool-id='" + int_selected + "']";
 		$("#current_tool_selection").html($(selector).html());
 		set_selected_item_by_id(int_selected);
+	} else {
+		$("#current_tool_selection").html("");
 	}
 
 	/*

@@ -22,7 +22,7 @@ from django.utils.safestring import mark_safe
 from django.urls import reverse
 
 from NEMO.forms import CommentForm, nice_errors, ToolForm
-from NEMO.models import AreaAccessRecord, AreaAccessRecordProject, Comment, Configuration, ConfigurationHistory, LockBilling, Project, Reservation, ReservationConfiguration, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskStatus, Tool, UsageEvent, UsageEventProject, User
+from NEMO.models import AreaAccessRecord, AreaAccessRecordProject, Comment, Configuration, ConfigurationHistory, LockBilling, Project, Reservation, ReservationConfiguration, ReservationProject, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskStatus, Tool, UsageEvent, UsageEventProject, User
 from NEMO.utilities import extract_times, quiet_int
 from NEMO.views.policy import check_policy_to_disable_tool, check_policy_to_enable_tool, check_policy_to_enable_tool_for_multi
 from NEMO.views.staff_charges import month_is_locked, month_is_closed, get_billing_date_range
@@ -151,15 +151,21 @@ def tool_status(request, tool_id):
 		if current_reservation is not None:
 			dictionary['time_left'] = current_reservation.end
 			dictionary['my_reservation'] = current_reservation
-			# set configuration to reservation
-			#for rc in current_reservation.reservationconfiguration_set.all():
-			#	if rc.configuration.available_settings is None or rc.configuration.available_settings == '':
-			#		rc.configuration.replace_current_setting(0, rc.consumable.id)
-			#	else:
-			#		setting_id = rc.configuration.get_setting_id(rc.setting)
-			#		if setting_id is not None:
-			#			rc.configuration.replace_current_setting(0, setting_id)
-			#tool.update_post_usage_questions()
+			if ReservationProject.objects.filter(reservation=current_reservation).exists():
+				rp = ReservationProject.objects.filter(reservation=current_reservation)
+				dictionary['my_reservation_projects'] = rp
+				# format a string of values to be used in Javascript to configure users for the reservation
+				rp_out = "["
+
+				for r in rp:
+					rp_out += '{{"project":"{0}", "customer":"{1}", "project_id":"{2}", "user_id":"{3}"}},'.format(escape(str(r.project)), escape(str(r.customer)), escape(str(r.project.id)), escape(str(r.customer.id)))
+				rp_out = rp_out.rstrip(",") + "]"
+				rp_out = mark_safe(rp_out)
+				dictionary['reservation_projects'] = rp_out
+		else:
+			dictionary['time_left'] = None
+			dictionary['my_reservation'] = None
+			dictionary['my_reservation_projects'] = None
 	except Reservation.DoesNotExist:
 		pass
 

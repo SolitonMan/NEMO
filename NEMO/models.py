@@ -638,6 +638,8 @@ class Project(models.Model):
 	internal_order = models.CharField(max_length=12, null=True, blank=True)
 	wbs_element = models.CharField(max_length=12, null=True, blank=True)
 	owner = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, help_text="The owner or person responsible for the Project (Internal Order or WBS Element in SIMBA) as imported via SIMBA download nightly")
+	rate_type_id = models.PositiveIntegerField(null=True, blank=True)
+	fa_type_id = models.PositiveIntegerField(null=True, blank=True)
 	active = models.BooleanField(default=True, help_text="Users may only charge to a project if it is active. Deactivate the project to block billable activity (such as tool usage and consumable check-outs).")
 	start_date = models.DateField(null=True, blank=True, help_text="The date on which the project, internal order or wbs element becomes active")
 	end_date = models.DateField(null=True, blank=True, help_text="The date on which the project, internal order or wbs element becomes inactive")
@@ -689,7 +691,7 @@ class Reservation(CalendarDisplay):
 		return self.end - self.start
 
 	def has_not_ended(self):
-		return False if self.end < timezone.now() else True
+		return False if self.end < timezone.now().replace(tzinfo=None) else True
 
 	class Meta:
 		ordering = ['-start']
@@ -703,6 +705,14 @@ class ReservationConfiguration(models.Model):
 	configuration = models.ForeignKey('Configuration', on_delete=models.SET_NULL, null=True, blank=True)
 	consumable = models.ForeignKey('Consumable', on_delete=models.SET_NULL, null=True, blank=True)
 	setting = models.TextField(null=True, blank=True)
+	created = models.DateTimeField(null=True, blank=True)
+	updated = models.DateTimeField(null=True, blank=True)
+
+
+class ReservationProject(models.Model):
+	reservation = models.ForeignKey('Reservation', on_delete=models.CASCADE, null=True, blank=True)
+	project = models.ForeignKey('Project', on_delete=models.CASCADE)
+	customer = models.ForeignKey('User', on_delete=models.CASCADE)
 	created = models.DateTimeField(null=True, blank=True)
 	updated = models.DateTimeField(null=True, blank=True)
 
@@ -894,7 +904,7 @@ class Interlock(models.Model):
 				cmdst = 0
 
 			uri = 'http://' + str(self.card.server) + '/state.xml?relay' + str(self.card.number) + 'State=' + str(cmdst)
-			print(uri)
+			#print(uri)
 			req = requests.get(uri)
 
 			self.most_recent_reply = "Interlock interface mocked out because settings.DEBUG = True. Interlock last set on " + format_datetime(timezone.now()) + "."
@@ -932,7 +942,7 @@ class Interlock(models.Model):
 			self.save()
 
 		except requests.exceptions.RequestException as e:
-			print(e)
+			#print(e)
 			return False
 			
 		return self.state == 2
