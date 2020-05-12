@@ -259,7 +259,7 @@ class Tool(models.Model):
 	operational = models.BooleanField(default=False, help_text="Marking the tool non-operational will prevent users from using the tool.")
 	primary_owner = models.ForeignKey(User, related_name="primary_tool_owner", on_delete=models.SET_NULL, null=True, help_text="The staff member who is responsible for administration of this tool.")
 	backup_owners = models.ManyToManyField(User, blank=True, related_name="backup_for_tools", help_text="Alternate staff members who are responsible for administration of this tool when the primary owner is unavailable.")
-	location = models.CharField(max_length=100)
+	location = models.CharField(max_length=100, null=True, blank=True)
 	phone_number = models.CharField(max_length=100)
 	notification_email_address = models.EmailField(blank=True, null=True, help_text="Messages that relate to this tool (such as comments, problems, and shutdowns) will be forwarded to this email address. This can be a normal email address or a mailing list address.")
 	# Policy fields:
@@ -513,6 +513,7 @@ class StaffCharge(CalendarDisplay):
 	project = models.ForeignKey('Project', on_delete=models.SET_NULL, related_name='staff_charge_project', null=True)
 	start = models.DateTimeField(default=timezone.now)
 	end = models.DateTimeField(null=True, blank=True)
+	staff_member_comment = models.TextField(null=True, blank=True)
 	validated = models.BooleanField(default=False)
 	contested = models.BooleanField(default=False)
 	contest_data = GenericRelation('ContestTransactionData')
@@ -532,6 +533,13 @@ class StaffCharge(CalendarDisplay):
 
 	def duration(self):
 		return calculate_duration(self.start, self.end, "In progress")
+
+	def auto_validate(self):
+		self.validated = True
+		self.validated_date = timezone.now()
+		self.auto_validated = True
+		self.updated = timezone.now()
+		self.save()
 
 	class Meta:
 		ordering = ['-start']
@@ -583,6 +591,13 @@ class AreaAccessRecord(CalendarDisplay):
 
 	def duration(self):
 		return calculate_duration(self.start, self.end, "In progress")
+
+	def auto_validate(self):
+		self.validated = True
+		self.validated_date = timezone.now()
+		self.auto_validated = True
+		self.updated = timezone.now()
+		self.save()
 
 	class Meta:
 		ordering = ['-start']
@@ -729,6 +744,7 @@ class UsageEvent(CalendarDisplay):
 	contest_data = GenericRelation('ContestTransactionData')
 	contest_record = GenericRelation('ContestTransaction', related_query_name='usage_event_contests')
 	run_data = models.TextField(null=True, blank=True)
+	operator_comment = models.TextField(null=True, blank=True)
 	projects = models.ManyToManyField('Project', through='UsageEventProject')
 	customers = models.ManyToManyField('User', through='UsageEventProject')
 	created = models.DateTimeField(null=True, blank=True)
@@ -739,6 +755,13 @@ class UsageEvent(CalendarDisplay):
 
 	def duration(self):
 		return calculate_duration(self.start, self.end, "In progress")
+
+	def auto_validate(self):
+		self.validated = True
+		self.validated_date = timezone.now()
+		self.auto_validated = True
+		self.updated = timezone.now()
+		self.save()
 
 	class Meta:
 		ordering = ['-start']
@@ -814,6 +837,13 @@ class ConsumableWithdraw(models.Model):
 
 	# adding related field for UsageEvent for the situation where a consumable is used during tool usage and then the charge is contested
 	usage_event = models.ForeignKey('UsageEvent', on_delete=models.SET_NULL, related_name="consumable_usage_event", null=True, blank=True)
+
+	def auto_validate(self):
+		self.validated = True
+		self.validated_date = timezone.now()
+		self.auto_validated = True
+		self.updated = timezone.now()
+		self.save()
 
 	class Meta:
 		ordering = ['-date']
@@ -1419,4 +1449,10 @@ class LockBilling(models.Model):
 	is_closed = models.BooleanField(default=False)
 	created = models.DateTimeField(null=True, blank=True)
 	updated = models.DateTimeField(null=True, blank=True)
+
+
+class GlobalFlag(models.Model):
+	name = models.CharField(max_length=200)
+	active = models.BooleanField(default=False)
+
 

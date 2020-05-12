@@ -5,7 +5,8 @@ from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.contrib.auth.models import Permission
 
 from NEMO.actions import lock_selected_interlocks, synchronize_with_tool_usage, unlock_selected_interlocks
-from NEMO.models import Account, ActivityHistory, Alert, Area, AreaAccessRecord, AreaAccessRecordProject, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableUnit, ConsumableCategory, ConsumableWithdraw, ContactInformation, ContactInformationCategory, ContestTransaction, ContestTransactionData, Core, Customization, Door, Interlock, InterlockCard, LandingPageChoice, LockBilling, MembershipHistory, News, Notification, PhysicalAccessLevel, PhysicalAccessLog, Project, Reservation, ReservationConfiguration, ReservationProject, Resource, ResourceCategory, SafetyIssue, ScheduledOutage, ScheduledOutageCategory, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskHistory, TaskStatus, Tool, TrainingSession, UsageEvent, UsageEventProject, User, UserType
+from NEMO.models import Account, ActivityHistory, Alert, Area, AreaAccessRecord, AreaAccessRecordProject, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableUnit, ConsumableCategory, ConsumableWithdraw, ContactInformation, ContactInformationCategory, ContestTransaction, ContestTransactionData, Core, Customization, Door, GlobalFlag, Interlock, InterlockCard, LandingPageChoice, LockBilling, MembershipHistory, News, Notification, PhysicalAccessLevel, PhysicalAccessLog, Project, Reservation, ReservationConfiguration, ReservationProject, Resource, ResourceCategory, SafetyIssue, ScheduledOutage, ScheduledOutageCategory, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskHistory, TaskStatus, Tool, TrainingSession, UsageEvent, UsageEventProject, User, UserType
+#from NEMO.models import Account, ActivityHistory, Alert, Area, AreaAccessRecord, AreaAccessRecordProject, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableUnit, ConsumableCategory, ConsumableWithdraw, ContactInformation, ContactInformationCategory, ContestTransaction, ContestTransactionData, Core, Customization, Door, Interlock, InterlockCard, LandingPageChoice, LockBilling, MembershipHistory, News, Notification, PhysicalAccessLevel, PhysicalAccessLog, Project, Reservation, ReservationConfiguration, ReservationProject, Resource, ResourceCategory, SafetyIssue, ScheduledOutage, ScheduledOutageCategory, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskHistory, TaskStatus, Tool, TrainingSession, UsageEvent, UsageEventProject, User, UserType
 
 admin.site.site_header = "LEO"
 admin.site.site_title = "LEO"
@@ -544,6 +545,10 @@ class ContestTransactionDataAdmin(admin.ModelAdmin):
 class LockBillingAdmin(admin.ModelAdmin):
 	list_display = ('id', 'fiscal_year', 'billing_month', 'billing_year', 'is_locked', 'is_closed', 'created', 'updated')
 	list_filter = ('billing_year', 'billing_month')
+
+@register(GlobalFlag)
+class GlobalFlagAdmin(admin.ModelAdmin):
+	list_display = ('id', 'name', 'active')
 
 admin.site.register(ResourceCategory)
 admin.site.register(Area)

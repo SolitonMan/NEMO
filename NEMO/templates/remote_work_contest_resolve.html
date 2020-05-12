@@ -7,7 +7,7 @@
 	{% if usage_event %}
 	<h1>Usage Event Contest Resolution</h1>
 
-	<form action="{% url 'save_contest_resolution' %}" method="POST" onsubmit="return on_submit();">
+	<form action="{% url 'save_contest_resolution' %}" method="POST" onsubmit="return on_submit()">
 		{% csrf_token %}
 		<input type="hidden" value="{{ usage_event.id }}" name="usage_event_id" />
 		<input type="hidden" value="{{ contest_type }}" name="contest_type" />
@@ -61,12 +61,11 @@
 
 	<input type="submit" value="Save Resolution" class="btn btn-success" />
 	<input type="button" value="Cancel Resolution" class="btn btn-warning" onclick="location.href='{% url 'review_contested_items' %}';" />
-	</form>
 	{% endif %}
 	{% if staff_charge %}
 	<h1>Staff Charge Contest Resolution</h1>
 
-	<form action="{% url 'save_contest_resolution' %}" method="POST" onsubmit="return on_submit();">
+	<form action="{% url 'save_contest_resolution' %}" method="POST" onsubmit="return on_submit()">
 		{% csrf_token %}
 		<input type="hidden" name="staff_charge_id" value="{{ staff_charge.id }}" />
 		<input type="hidden" value="{{ contest_type }}" name="contest_type" />
@@ -89,14 +88,13 @@
 	
 	<input type="submit" value="Save Resolution" class="btn btn-success" />
 	<input type="button" value="Cancel Resolution" class="btn btn-warning" onclick="location.href='{% url 'review_contested_items' %}';" />
-	</form>
 	{% endif %}
 
 
 	{% if consumable_withdraw %}
 	<h1>Consumable Withdraw Contest Resolution</h1>
 
-	<form action="{% url 'save_contest_resolution' %}" method="POST" onsubmit="return on_submit();">
+	<form action="{% url 'save_contest_resolution' %}" method="POST" onsubmit="return on_submit()">
 		{% csrf_token %}
 		<input type="hidden"  name="consumable_withdraw_id" value="{{ consumable_withdraw.id }}" />
 		<input type="hidden" value="{{ contest_type }}" name="contest_type" />
@@ -119,13 +117,12 @@
 
 	<input type="submit" value="Save Resolution" class="btn btn-success" />
 	<input type="button" value="Cancel Resolution" class="btn btn-warning" onclick="location.href='{% url 'review_contested_items' %}';" />
-	</form>
 	{% endif %}
 
 	{% if area_access_record %}
 	<h1>Area Access Record Contest Resolution</h1>
 
-	<form action="{% url 'save_contest_resolution' %}" method="POST" onsubmit="return on_submit();">
+	<form action="{% url 'save_contest_resolution' %}" method="POST" onsubmit="return on_submit()">
 		{% csrf_token %}
 		<input type="hidden" name="area_access_record_id" value="{{ area_access_record.id }}" />
 		<input type="hidden" value="{{ contest_type }}" name="contest_type" />
@@ -148,20 +145,21 @@
 
 	<input type="submit" value="Save Resolution" class="btn btn-success" />
 	<input type="button" value="Cancel Resolution" class="btn btn-warning" onclick="location.href='{% url 'review_contested_items' %}';" />
-	</form>
 	{% endif %}
 
-	<script type="javascript">
+	<script type="text/javascript">
 	function on_submit()
 	{
-		if (!$("#resolve_contest[value='0'].selected && !$("#resolve_contest[value='1'].selected)
+		var radNo = $("#resolve_contest[value='0']");
+		var radYes = $("#resolve_contest[value='1']");
+		if (!radNo.prop("checked") && !radYes.prop("checked"))
 		{
 			alert("Please select either 'Yes' or 'No' to resolve this contest");
-			$("#resolve_contest[value='0'].focus();
+			radNo.focus();
 			return false;
 		}
 
-		if ($("#resolve_contest[value='0'].selected && $("#reject_contest_reason").val() == "") {
+		if (radNo.prop("checked") && $("#reject_contest_reason").val() == "") {
 			alert("Please provide a reason to reject the proposed resolution to this contest.");
 			$("#reject_contest_reason").focus();
 			return false;
@@ -170,5 +168,5 @@
 		return true;
 	}
 	</script>
-	
+	</form>	
 {% endblock %}

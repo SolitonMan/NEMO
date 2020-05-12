@@ -260,15 +260,21 @@ def create_reservation(request):
 			pass
 	else:
 		user = request.user
-	# Create the new reservation:
-	new_reservation = Reservation()
-	new_reservation.created = timezone.now()
-	new_reservation.user = user
-	new_reservation.creator = request.user
-	new_reservation.tool = tool
-	new_reservation.start = start
-	new_reservation.end = end
-	new_reservation.short_notice = determine_insufficient_notice(tool, start)
+
+	# check if this is an update to a new reservation, specifically for the case of a reservation for a configurable tool
+	if request.POST.get('reservation_id') is not None:
+		new_reservation = Reservation.objects.get(id=int(request.POST.get('reservation_id')))
+	else:
+		# Create the new reservation:
+		new_reservation = Reservation()
+		new_reservation.created = timezone.now()
+		new_reservation.user = user
+		new_reservation.creator = request.user
+		new_reservation.tool = tool
+		new_reservation.start = start
+		new_reservation.end = end
+		new_reservation.short_notice = determine_insufficient_notice(tool, start)
+
 	policy_problems, overridable = check_policy_to_save_reservation(request, None, new_reservation, user, explicit_policy_override)
 
 	# If there was a problem in saving the reservation then return the error...
@@ -358,6 +364,10 @@ def create_reservation(request):
 	# If a reservation is requested and the tool requires configuration that has not been submitted...
 	elif tool.is_configurable() and not configured:
 		configuration_information = tool.get_configuration_information(user=user, start=start)
+		try:
+			configuration_information['reservation_id'] = new_reservation.id
+		except:
+			configuration_information['reservation_id'] = None
 		return render(request, 'calendar/configuration.html', configuration_information)
 
 	# If a reservation is requested and configuration information is present also...

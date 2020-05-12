@@ -10,6 +10,9 @@
 	<input type="hidden" id="dialog_cancelled" value="true">
 	<form id="additional_event_parameters">
 		<input type="hidden" id="configured" name="configured" value="true">
+		{% if reservation_id %}
+		<input type="hidden" id="reservation_id" name="reservation_id" value="{{ reservation_id }}" />
+		{% endif %}
 		{% if not sufficient_notice %}
 			<div class="alert alert-danger">
 				<strong>Warning:</strong> {{ notice_limit }} hours of advance notice is required when reserving this tool in order to configure it properly. You may still create a reservation right now, but there is no guarantee the tool will be properly configured when you arrive to use it.

@@ -206,6 +206,11 @@ def check_policy_to_save_reservation(request, cancelled_reservation, new_reserva
 	# The event starts and ends after the time-window.
 	coincident_events = coincident_events.exclude(start__lt=new_reservation.start, end__lte=new_reservation.start)
 	coincident_events = coincident_events.exclude(start__gte=new_reservation.end, end__gt=new_reservation.end)
+
+	# since the creation process an be recursive we should check if our new reservation is really an update, and exclude it if it has an id, since an actual new_reservation should have a null id
+	if new_reservation.id is not None:
+		coincident_events = coincident_events.exclude(id=new_reservation.id)
+
 	if coincident_events.count() > 0:
 		policy_problems.append("Your reservation coincides with another reservation that already exists. Please choose a different time.")
 

@@ -1,14 +1,25 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from schedule import Scheduler
 import threading
 import time
 
-from django.conf import settings
-from NEMO.models import Interlock, Tool
-
+from NEMO.models import Interlock, Tool, UsageEvent, StaffCharge, AreaAccessRecord, ConsumableWithdraw, GlobalFlag
 
 def pulse_interlocks():
 	# print("pulse_interlocks() called")
+
+	d = datetime.now()
+	d1 = d - timedelta(minutes=1)
+	i = 8
+
+	while i < 21:
+
+		t = datetime(d.year, d.month, d.day, i, 0, 0)
+		if d1 < t < d:
+			print("pulse_interlocks() called at " + str(d))
+
+		i += 1
+
 	tools = Tool.objects.all()
 	for t in tools:
 		if not t.in_use():
@@ -18,22 +29,54 @@ def pulse_interlocks():
 	#		print(t.name + " has been detected as being in use")
 
 
-def run_continuously(self, interval=1):
-	"""Continuously run, while executing pending jobs at each elapsed
-	time interval.
-	@return cease_continuous_run: threading.Event which can be set to
-	cease continuous run.
-	Please note that it is *intended behavior that run_continuously()
-	does not run missed jobs*. For example, if you've registered a job
-	that should run every minute and you set a continuous run interval
-	of one hour then your job won't be run 60 times at each interval but
-	only once.
-	"""
+def daily_validate_transactions():
+	print("Daily transaction validation started at " + str(datetime.now()))
+	validation_date = datetime.now()-timedelta(days=5)
+	print("Running validation for transactions older than " + str(validation_date))
 
+	# validate usage events
+	usage_events = UsageEvent.objects.filter(end__lte=validation_date, validated=False, contested=False)
+
+	print("Found " + str(usage_events.count()) + " usage event transactions to validate.")
+
+	for u in usage_events:
+		u.auto_validate()
+
+	# validate staff charges
+	staff_charges = StaffCharge.objects.filter(end__lte=validation_date, validated=False, contested=False)
+
+	print("Found " + str(staff_charges.count()) + " staff charge transactions to validate.")
+
+	for s in staff_charges:
+		s.auto_validate()
+
+	# validate area access records
+	area_access_records = AreaAccessRecord.objects.filter(end__lte=validation_date, validated=False, contested=False)
+
+	print("Found " + str(area_access_records.count()) + " area access record transactions to validate.")
+
+	for a in area_access_records:
+		a.auto_validate()
+
+	# validate consumable withdraws
+	consumable_withdraws = ConsumableWithdraw.objects.filter(date__lte=validation_date, validated=False, contested=False)
+
+	print("Found " + str(consumable_withdraws.count()) + " consumable withdraw transactions to validate.")
+
+	for c in consumable_withdraws:
+		c.auto_validate()
+
+	print("Daily transaction validation completed at " + str(datetime.now()))
+
+
+def print_status():
+	print("schedule is running at " + str(datetime.now()))
+
+
+def run_continuously(self, interval=1):
 	cease_continuous_run = threading.Event()
 
 	class ScheduleThread(threading.Thread):
-
 		@classmethod
 		def run(cls):
 			while not cease_continuous_run.is_set():
@@ -45,25 +88,24 @@ def run_continuously(self, interval=1):
 	continuous_thread.start()
 	return cease_continuous_run
 
-Scheduler.run_continuously = run_continuously
 
+Scheduler.run_continuously = run_continuously
 
 def start_scheduler():
 	now = datetime.now()
 	dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
 
-	if settings.SCHEDULED_JOBS_THREAD is None:
-		print("start_scheduler called at " + dt_string)
-		scheduler = Scheduler()
-		scheduler.every(1).minutes.do(pulse_interlocks)
-		settings.SCHEDULED_JOBS_THREAD = scheduler.run_continuously()
-	else:
-		print("start_scheduler already started when called at " + dt_string)
+	print("start_scheduler called at " + dt_string)
+	scheduler = Scheduler()
+	scheduler.every(1).minutes.do(pulse_interlocks)
+	scheduler.every().day.at("22:00").do(daily_validate_transactions)
+	scheduler.every(15).minutes.do(print_status)
+	scheduler.run_continuously()
 
-	if settings.SCHEDULED_JOBS_THREAD is None:
-		print("Job scheduler failed to start at " + dt_string)
-	else:
-		print("Job scheduler is running at " + dt_string)
+	flag = GlobalFlag.objects.get(name="SchedulerStarted")
+	if flag is not None:
+		flag.active = True
+		flag.save()
 
 
 def stop_scheduler():
@@ -71,7 +113,17 @@ def stop_scheduler():
 	dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
 
 	print("stop_scheduler called at " + dt_string)
-	job_thread = settings.SCHEDULED_JOBS_THREAD
-	if job_thread is not None:
-		job_thread.set()
-	settings.SCHEDULED_JOBS_THREAD = None
+
+
+
+"""
+def start_schedule():
+	print("Starting schedule at " + str(datetime.now()))
+	schedule.every(1).minutes.do(pulse_interlocks)
+	schedule.every().day.at("22:00").do(daily_validate_transactions)
+	schedule.every(15).minutes.do(print_status)
+
+	while True:
+		schedule.run_pending()
+		time.sleep(1)
+"""
