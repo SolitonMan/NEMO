@@ -26,6 +26,12 @@
 				<td><input type="text" name="project_percent__{{ s.id }}" value="" /></td>
 			</tr>
 		{% endfor %}
+			<tr>
+				<td colspan="3" align="left" valign="top">
+					<label for="staff_member_comment">Comment / Purpose of Charge</label>
+					<textarea name="staff_member_comment" id="staff_member_comment" rows="6" cols="50">{{ staff_member_comment }}</textarea>
+				</td>
+			</tr>
 		</table>
 		<br />
 		<input type="hidden" value="{{ staff_charge_id }}" name="staff_charge_id" />

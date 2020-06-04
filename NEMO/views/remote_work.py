@@ -30,9 +30,9 @@ def remote_work(request):
 			operator = get_object_or_404(User, id=operator)
 	else:
 		operator = request.user
-	usage_events = UsageEvent.objects.filter(start__gte=first_of_the_month, start__lte=last_of_the_month)
-	staff_charges = StaffCharge.objects.filter(start__gte=first_of_the_month, start__lte=last_of_the_month)
-	area_access_records = AreaAccessRecord.objects.filter(start__gte=first_of_the_month, start__lte=last_of_the_month)
+	usage_events = UsageEvent.objects.filter(start__gte=first_of_the_month, start__lte=last_of_the_month).exclude(end=None)
+	staff_charges = StaffCharge.objects.filter(start__gte=first_of_the_month, start__lte=last_of_the_month).exclude(end=None)
+	area_access_records = AreaAccessRecord.objects.filter(start__gte=first_of_the_month, start__lte=last_of_the_month).exclude(end=None)
 	consumable_withdraws = ConsumableWithdraw.objects.filter(date__gte=first_of_the_month, date__lte=last_of_the_month)
 	if operator:
 		usage_events = usage_events.exclude(~Q(operator_id=operator.id))

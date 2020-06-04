@@ -29,6 +29,24 @@
 	Created on: {{ reservation.creation_time }}<br>
 	Tool: {{ reservation.tool }}<br>
 	{% if reservation.project %}Project: {{ reservation.project }}<br>{% endif %}
+	{% if rp is not None %}
+	<table class="table">
+		<thead>
+			<tr>
+			<th>Customer</th>
+			<th>Project</th>
+			</tr>
+		</thead>
+		<tbody>
+		{% for r in rp %}
+			<tr>
+			<td>{{ r.customer }}</td>
+			<td>{{ r.project }} [{{ r.project.application_identifier }}]</td>
+			</tr>	
+		{% endfor %}
+		</tbody>
+	</table>
+	{% endif %}
 	Start: {{ reservation.start }}<br>
 	End: {{ reservation.end }}<br>
 	Identifier: {{ reservation.id }}<br>

@@ -199,6 +199,12 @@
 					</label></div>
 				</td>
 			</tr>
+			<tr>
+				<td colspan="2">
+					<label for="operator_comment">Comment / Description of Work</label>
+					<textarea name="operator_comment" id="operator_comment" rows="10" cols="80"></textarea>
+				</td>
+			</tr>
 		</table>
 		<input type="submit" value="Save Usage Event" class="btn btn-default" />
 	</form>
@@ -420,9 +426,9 @@ function on_submit()
 
 function on_load()
 {
-	$("#ad_hoc_start").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss', minDate: '{{ start_date }}', maxDate: '{{ end_date }}'});
+	$("#ad_hoc_start").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss', minDate: '{{ start_date }} 00:00:00', maxDate: '{{ end_date }} 23:59:59'});
 	$("#ad_hoc_start").val({% if ad_hoc_start %}"{{ ad_hoc_start }}"{% else %}""{% endif %});
-	$("#ad_hoc_end").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss', minDate: '{{ start_date }}', maxDate: '{{ end_date }}'});
+	$("#ad_hoc_end").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss', minDate: '{{ start_date }} 00:00:00', maxDate: '{{ end_date }} 23:59:59'});
 	$("#ad_hoc_end").val({% if ad_hoc_end %}"{{ ad_hoc_end }}"{% else %}""{% endif %});
 }
 

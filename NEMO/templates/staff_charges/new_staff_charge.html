@@ -97,6 +97,12 @@
 				<th>&nbsp;</th>
 			</tr>
 			<tr>
+				<td colspan="4" align="left" valign="top" style="align: left; vertical-align: top;">
+					<label for="staff_member_comment">Comment / Purpose of Charge</label>
+					<textarea name="staff_member_comment" id="staff_member_comment" rows="6" cols="50" placeholder="Please enter any comments about the reason for or details about the work performed"></textarea>
+				</td>
+			</tr>
+			<tr>
                                 <th>&nbsp;</th>
 				<th style="min-width:200px">Customer</th>
                                 <th style="min-width:200px">Project</th>
@@ -157,9 +163,17 @@
 			{% endif %}
 		{% endfor %}
 			<tr>
+				<td colspan="3" align="left" valign="top" style="align: left; vertical-align: top;">
+					<label for="staff_member_comment_{{ o.id }}">Comment / Purpose of Charge</label>
+					<textarea name="staff_member_comment" id="staff_member_comment_{{ o.id }}" rows="6" cols="50" placeholder="Please enter any comments about the reason for or details about the work performed"></textarea>
+				</td>
+			</tr>
+			<tr>
 				<td colspan="3">
 					<input type="submit" value="End the current charges" class="btn btn-default" />
 					<input type="button" class="btn btn-default" value="Continue the current charges" onclick="continue_staff_charges({{ o.id }}, '{% url 'continue_staff_charge' o.id %}');" />
+				</td>
+			</tr>
 		</table>
 		</form>
 		<br/><br/>
@@ -352,9 +366,9 @@
 			hide_user_charges();
 			enable_autocompletion(0);
 			enable_ad_hoc_autocompletion(0);
-			$("#ad_hoc_start").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss', minDate: '{{ start_date }}', maxDate: '{{ end_date }}'});
+			$("#ad_hoc_start").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss', minDate: '{{ start_date }} 00:00:00', maxDate: '{{ end_date }} 23:59:59'});
 			$("#ad_hoc_start").val({% if ad_hoc_start %}"{{ ad_hoc_start }}"{% else %}""{% endif %});
-			$("#ad_hoc_end").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss', minDate: '{{ start_date }}', maxDate: '{{ end_date }}'});
+			$("#ad_hoc_end").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss', minDate: '{{ start_date }} 00:00:00', maxDate: '{{ end_date }} 23:59:59'});
 			$("#ad_hoc_end").val({% if ad_hoc_end %}"{{ ad_hoc_end }}"{% else %}""{% endif %});
 			$(document).scrollTop(0);
 		}

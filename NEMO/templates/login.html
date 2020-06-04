@@ -31,7 +31,7 @@
 	<div class="container">
 		<div class="col-md-8 col-md-offset-2" style="text-align:center; margin-bottom:30px"><h1>Laboratory Equipment Operations</h1></div>
 
-		<form method="post" class="form-horizontal" autocomplete="off" id="login_form">
+		<form method="post" class="form-horizontal" autocomplete="off" id="login_form" onsubmit="return check_submit();">
 			{% csrf_token %}
 
 			<div class="form-group">
@@ -73,11 +73,22 @@
 	</div>
 
 	<script>
-		if(!navigator.cookieEnabled)
-		{
-			document.getElementById("login_form").style.display = "none";
-			document.getElementById("cookie_error").style.display = "block";
+	if(!navigator.cookieEnabled)
+	{
+		document.getElementById("login_form").style.display = "none";
+		document.getElementById("cookie_error").style.display = "block";
+	}
+
+	function check_submit()
+	{
+		var user = document.getElementById("username");
+		if (user.value == "") {
+			alert("Please enter a username.");
+			return false;
 		}
+
+		return true;
+	}
 	</script>
 
 </body>

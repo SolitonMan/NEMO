@@ -304,6 +304,8 @@ def ad_hoc_staff_charge(request):
 		charge.staff_member = request.user
 		charge.start = ad_hoc_start
 		charge.end = ad_hoc_end
+		if request.POST.get("staff_member_comment") is not None:
+			charge.staff_member_comment = request.POST.get("staff_member_comment")
 		charge.created = timezone.now()
 		charge.updated = timezone.now()
 		charge.save()
@@ -700,6 +702,11 @@ def end_staff_charge(request, modal_flag):
 		return HttpResponseBadRequest('You do not have a staff charge in progress, so you cannot end it.')
 	charge = request.user.get_staff_charge()
 
+	# add any comments the staff member made
+	if request.POST.get("staff_member_comment") is not None:
+		charge.staff_member_comment = request.POST.get("staff_member_comment")
+		charge.save()
+
 	try:
 		# close out the project entries for this run
 		scp = StaffChargeProject.objects.filter(staff_charge=charge)
@@ -738,6 +745,7 @@ def end_staff_charge(request, modal_flag):
 				'charge': charge,
 				'scp': scp,
 				'staff_charge_id': charge.id,
+				'staff_member_comment': request.POST.get("staff_member_comment")
 			}
 			if int(modal_flag) == 0:
 				return render(request, 'staff_charges/multiple_projects_finish.html', params)
@@ -801,6 +809,8 @@ def staff_charge_projects_save(request, modal_flag):
 		charge.end = timezone.now()
 		if charge.charge_end_override:
 			charge.override_confirmed = True
+		if request.POST.get("staff_member_comment") is not None:
+			charge.staff_member_comment = request.POST.get("staff_member_comment")
 		charge.updated = timezone.now()
 		charge.save()
 

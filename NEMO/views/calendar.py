@@ -15,7 +15,7 @@ from django.utils.html import escape
 from django.utils.safestring import mark_safe
 
 from NEMO.decorators import disable_session_expiry_refresh
-from NEMO.models import Tool, Reservation, Configuration, ReservationConfiguration, ReservationProject, Consumable, UsageEvent, AreaAccessRecord, StaffCharge, User, Project, ScheduledOutage, ScheduledOutageCategory
+from NEMO.models import Tool, Reservation, Configuration, ReservationConfiguration, ReservationProject, Consumable, UsageEvent, UsageEventProject, AreaAccessRecord, StaffCharge, StaffChargeProject, User, Project, ScheduledOutage, ScheduledOutageCategory
 from NEMO.utilities import bootstrap_primary_color, extract_times, extract_dates, format_datetime, parse_parameter_string
 from NEMO.views.constants import ADDITIONAL_INFORMATION_MAXIMUM_LENGTH
 from NEMO.views.customization import get_customization, get_media_file_contents
@@ -29,7 +29,7 @@ def calendar(request, tool_id=None, qualified_only=None, core_only=None):
 	""" Present the calendar view to the user. """
 
 	if request.device == 'mobile':
-		if tool_id:
+		if tool_id and tool_id > 0:
 			return redirect('view_calendar', tool_id)
 		else:
 			return redirect('choose_tool', 'view_calendar')
@@ -123,8 +123,14 @@ def multiple_tool_feed(request, start, end):
 	else:
 		events = None
 
+	if events is not None:
+		event_projects = ReservationProject.objects.filter(reservation__in=events)
+	else:
+		event_projects = None
+
 	dictionary = {
 		'events': events,
+		'event_projects': event_projects,
 		'outages': outages,
 	}
 
@@ -157,8 +163,14 @@ def reservation_event_feed(request, start, end):
 	if not tool and not personal_schedule:
 		events = None
 
+	if events is not None:
+		event_projects = ReservationProject.objects.filter(reservation__in=events)
+	else:
+		event_projects = None
+
 	dictionary = {
 		'events': events,
+		'event_projects': event_projects,
 		'outages': outages,
 		'personal_schedule': personal_schedule,
 	}
@@ -197,11 +209,23 @@ def usage_event_feed(request, start, end):
 		missed_reservations = missed_reservations.exclude(start__lt=start, end__lt=start)
 		missed_reservations = missed_reservations.exclude(start__gt=end, end__gt=end)
 
+	if usage_events is not None:
+		usage_event_projects = UsageEventProject.objects.filter(usage_event__in=usage_events)
+	else:
+		usage_event_projects = None
+
+	if missed_reservations is not None:
+		missed_reservation_projects = ReservationProject.objects.filter(reservation__in=missed_reservations)
+	else:
+		missed_reservation_projects = None
+
 	dictionary = {
 		'usage_events': usage_events,
+		'usage_event_projects': usage_event_projects,
 		'area_access_events': area_access_events,
 		'personal_schedule': personal_schedule,
 		'missed_reservations': missed_reservations,
+		'missed_reservation_projects': missed_reservation_projects,
 	}
 	return render(request, 'calendar/usage_event_feed.html', dictionary)
 
@@ -569,6 +593,16 @@ def modify_reservation(request, start_delta, end_delta):
 				res_conf.updated = timezone.now()
 				res_conf.save()
 
+		if ReservationProject.objects.filter(reservation=reservation_to_cancel).exists():
+			for rp in ReservationProject.objects.filter(reservation=reservation_to_cancel):
+				res_proj = ReservationProject()
+				res_proj.reservation = new_reservation
+				res_proj.project = rp.project
+				res_proj.customer = rp.customer
+				res_proj.created = timezone.now()
+				res_proj.updated = timezone.now()
+				res_proj.save()
+
 		reservation_to_cancel.descendant = new_reservation
 		reservation_to_cancel.updated = timezone.now()
 		reservation_to_cancel.save()
@@ -756,7 +790,11 @@ def reservation_details(request, reservation_id):
 	if reservation.cancelled:
 		error_message = 'This reservation was cancelled by {0} at {1}.'.format(reservation.cancelled_by, format_datetime(reservation.cancellation_time))
 		return HttpResponseNotFound(error_message)
-	return render(request, 'calendar/reservation_details.html', {'reservation': reservation})
+	if ReservationProject.objects.filter(reservation=reservation).exists():
+		rp =  ReservationProject.objects.filter(reservation=reservation)
+	else:
+		rp = None
+	return render(request, 'calendar/reservation_details.html', {'reservation': reservation, 'rp': rp})
 
 
 @login_required
@@ -820,7 +858,16 @@ def cancel_unused_reservations(request):
 @staff_member_required(login_url=None)
 @require_GET
 def proxy_reservation(request):
-	return render(request, 'calendar/proxy_reservation.html', {'users': User.objects.filter(is_active=True, projects__active=True).distinct()})
+	if request.user.is_superuser:
+		users = User.objects.filter(is_active=True, projects__active=True).distinct()
+	elif request.session['core_admin'] or request.session['administrative_staff']:
+		users = User.objects.filter(is_active=True, projects__active=True, core_ids__in=request.user.core_ids.all()).distinct()
+	elif request.session['technical_staff']:
+		users = User.objects.filter(is_active=True, projects__active=True, is_staff=False).distinct()
+	else:
+		users = request.user
+
+	return render(request, 'calendar/proxy_reservation.html', {'users': users })
 
 
 def send_missed_reservation_notification(reservation):

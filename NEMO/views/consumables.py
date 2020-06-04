@@ -23,7 +23,7 @@ def consumables(request):
 		dictionary['consumables'] = Consumable.objects.filter(visible=True).order_by('category', 'name')
 	else:
 		dictionary['active_core'] = request.session.get('active_core')
-		dictionary['consumables'] = Consumable.objects.filter(visible=True, core_id=request.session.get('active_core_id')).order_by('category', 'name')
+		dictionary['consumables'] = Consumable.objects.filter(visible=True, core_id__in=request.user.core_ids.all()).order_by('category', 'name')
 
 	if form.is_valid():
 		withdraw = form.save(commit=False)

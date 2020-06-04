@@ -8,7 +8,7 @@ function switch_tab(element)
 
 function set_tool_link_callback(callback)
 {
-	$("a[data-type='tool link']").each(function()
+	$("#tool_tree").find("a[data-type='tool link']").each(function()
 	{
 		$(this).click({"callback": callback}, callback);
 	});
@@ -37,8 +37,9 @@ function on_tool_search_selection(jquery_event, search_selection, dataset_name)
 function expand_to_tool(id)
 {
 	$("#sidebar a").removeClass('selected');
-	$("a[data-tool-id='" + id + "']").addClass('selected').click().parents('ul.tree').show();
-	save_sidebar_state();
+	//$("a[data-tool-id='" + id + "']").addClass('selected').click().parents('ul.tree').show();
+	$("#tool_tree").find("a[data-tool-id='" + id + "']").addClass('selected').click().parents('ul.tree').show();
+	//save_sidebar_state();
 }
 
 // This function expands all tool category branches for the sidebar in the calendar & tool control pages.
@@ -59,10 +60,10 @@ function collapse_all_categories()
 
 function get_selected_item()
 {
-	let selected_item = $(".selected");
+	let selected_item = $("#tool_tree").find(".selected");
 	// Exactly one thing should be selected at a time, otherwise there's an error.
 	if(!(selected_item && selected_item.length === 1))
-		return undefined;
+		selected_item = $("#sidebar .selected");
 	// Check if the selected item is a special link. Otherwise, get its tool ID.
 	if($(selected_item[0]).hasClass('personal_schedule'))
 		return 'personal_schedule';
@@ -74,28 +75,25 @@ function set_selected_item(element)
 {
 	if ($("#calendar").length)
 	{
-		//$("#calendar").fullCalendar("removeEventSource", "/event_feed/");
 		$("#calendar").fullCalendar("removeEvents");
 	}
 	$("#sidebar a").removeClass('selected');
 	$(element).addClass('selected');
-	$("#current_tool_selection").html($(element).html());
+	$("#current_tool_selection").html($(element).text());
 	save_sidebar_state();
-
-	//if ($("#calendar").length)
-	//{
-	//	$("#calendar").fullCalendar("refetchEvents");
-	//}
 }
 
 function set_selected_item_by_id(tool_id)
 {
+	if (!tool_id) {
+		tool_id = 1;
+	}
 	let tool = $("#tool_tree [data-tool-id=" + tool_id + "]");
 	if(tool.length === 1)
 	{
 		$("#sidebar a").removeClass('selected');
 		tool.addClass('selected');
-		$("#current_tool_selection").html(tool.html());
+		$("#current_tool_selection").html(tool.text());
 	}
 }
 

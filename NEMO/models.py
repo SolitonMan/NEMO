@@ -435,10 +435,19 @@ class Configuration(models.Model):
 		return self.current_settings_as_list()[slot]
 
 	def current_settings_as_list(self):
-		return [x.strip() for x in self.current_settings.split(',')]
+		if self.current_settings is not None and self.current_settings != '':
+			return [x.strip() for x in self.current_settings.split(',')]
+		else:
+			if self.available_settings is not None and self.available_settings != '':
+				return [self.available_settings_as_list()[0]]
+			else:
+				return []
 
 	def available_settings_as_list(self):
-		return [x.strip() for x in self.available_settings.split(',')]
+		if self.available_settings is not None and self.available_settings != '':
+			return [x.strip() for x in self.available_settings.split(',')]
+		else:
+			return []
 
 	def get_available_setting(self, choice):
 		choice = int(choice)
@@ -541,6 +550,17 @@ class StaffCharge(CalendarDisplay):
 		self.updated = timezone.now()
 		self.save()
 
+	def description(self):
+		ep = StaffChargeProject.objects.filter(staff_charge=self)
+		if ep.exists():
+			d = "<table class=\"table\"><thead><tr><th>Customer</th><th>Project</th></tr></thead><tbody>"
+			for e in ep:
+				d += "<tr><td>" + e.customer.get_full_name() + "</td><td>" + e.project.name + "</td></tr>"
+			d += "</tbody></table>"
+		else:
+			d = ""
+		return d
+
 	class Meta:
 		ordering = ['-start']
 
@@ -599,6 +619,17 @@ class AreaAccessRecord(CalendarDisplay):
 		self.updated = timezone.now()
 		self.save()
 
+	def description(self):
+		ep = AreaAccessRecordProject.objects.filter(area_access_record=self)
+		if ep.exists():
+			d = "<table class=\"table\"><thead><tr><th>Customer</th><th>Project</th></tr></thead><tbody>"
+			for e in ep:
+				d += "<tr><td>" + e.customer.get_full_name() + "</td><td>" + e.project.name + "</td></tr>"
+			d += "</tbody></table>"
+		else:
+			d = ""
+		return d
+
 	class Meta:
 		ordering = ['-start']
 
@@ -632,8 +663,9 @@ class ConfigurationHistory(models.Model):
 
 
 class Account(models.Model):
-	name = models.CharField(max_length=100, unique=True)
-	cost_center = models.CharField(max_length=10, unique=True, null=True, blank=True)
+	name = models.CharField(max_length=100)
+	simba_cost_center = models.CharField(max_length=10, null=True, blank=True)
+	ibis_account = models.CharField(max_length=25, unique=True, null=True, blank=True)
 	owner = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, help_text="The owner or person responsible for the Account (Cost Center in SIMBA) as imported via SIMBA download nightly")
 	active = models.BooleanField(default=True, help_text="Users may only charge to an account if it is active. Deactivate the account to block future billable activity (such as tool usage and consumable check-outs) of all the projects that belong to it.")
 	start_date = models.DateField(null=True, blank=True, help_text="The date on which the cost center becomes active")
@@ -647,7 +679,8 @@ class Account(models.Model):
 
 
 class Project(models.Model):
-	name = models.CharField(max_length=100, unique=True)
+	name = models.CharField(max_length=100)
+	project_number = models.CharField(max_length=20, null=True, blank=True)
 	application_identifier = models.CharField(max_length=100)
 	account = models.ForeignKey(Account, on_delete=models.SET_NULL, null=True, help_text="All charges for this project will be billed to the selected account.")
 	internal_order = models.CharField(max_length=12, null=True, blank=True)
@@ -663,7 +696,14 @@ class Project(models.Model):
 		ordering = ['name']
 
 	def __str__(self):
-		return str(self.name)
+		return str("[" + self.project_number + "] " +   self.name)
+
+	def get_project(self):
+		if len(self.wbs_element) > 0:
+			return self.wbs_element
+		if len(self.internal_order) > 0:
+			return self.internal_order
+		return self.account.simba_cost_center
 
 
 def pre_delete_entity(sender, instance, using, **kwargs):
@@ -687,6 +727,8 @@ class Reservation(CalendarDisplay):
 	creation_time = models.DateTimeField(default=timezone.now)
 	tool = models.ForeignKey(Tool, on_delete=models.SET_NULL, null=True)
 	project = models.ForeignKey(Project, on_delete=models.SET_NULL, null=True, blank=True, help_text="Indicates the intended project for this reservation. A missed reservation would be billed to this project.")
+	projects = models.ManyToManyField('Project', through='ReservationProject', related_name='reservation_projects')
+	customers = models.ManyToManyField('User', through='ReservationProject', related_name='reservation_customers')
 	start = models.DateTimeField('start')
 	end = models.DateTimeField('end')
 	short_notice = models.BooleanField(default=None, help_text="Indicates that the reservation was made after the configuration deadline for a tool. Laboratory staff may not have enough time to properly configure the tool before the user is scheduled to use it.")
@@ -707,6 +749,17 @@ class Reservation(CalendarDisplay):
 
 	def has_not_ended(self):
 		return False if self.end < timezone.now().replace(tzinfo=None) else True
+
+	def description(self):
+		ep = ReservationProject.objects.filter(reservation=self)
+		if ep.exists():
+			d = "<table class=\"table\"><thead><tr><th>Customer</th><th>Project</th></tr></thead><tbody>"
+			for e in ep:
+				d += "<tr><td>" + e.customer.get_full_name() + "</td><td>" + e.project.name + "</td></tr>"
+			d += "</tbody></table>"
+		else:
+			d = ""
+		return d
 
 	class Meta:
 		ordering = ['-start']
@@ -762,6 +815,17 @@ class UsageEvent(CalendarDisplay):
 		self.auto_validated = True
 		self.updated = timezone.now()
 		self.save()
+
+	def description(self):
+		ep = UsageEventProject.objects.filter(usage_event=self)
+		if ep.exists():
+			d = "<table class=\"table\"><thead><tr><th>Customer</th><th>Project</th></tr></thead><tbody>"
+			for e in ep:
+				d += "<tr><td>" + e.customer.get_full_name() + "</td><td>" + e.project.name + "</td></tr>"
+			d += "</tbody></table>"
+		else:
+			d = ""
+		return d
 
 	class Meta:
 		ordering = ['-start']
@@ -1230,7 +1294,10 @@ class PhysicalAccessLevel(models.Model):
 	schedule = models.IntegerField(choices=Schedule.Choices)
 
 	def accessible(self):
-		now = timezone.localtime(timezone.now())
+		try:
+			now = timezone.localtime(timezone.now())
+		except:
+			now = timezone.now()
 		saturday = 6
 		sunday = 7
 		if self.schedule == self.Schedule.ALWAYS:

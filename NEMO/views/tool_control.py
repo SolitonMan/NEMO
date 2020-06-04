@@ -600,6 +600,8 @@ def disable_tool(request, tool_id):
 
 	# End the current usage event for the tool
 	current_usage_event = tool.get_current_usage_event()
+	if request.POST.get("operator_comment") is not None:
+		current_usage_event.operator_comment = request.POST.get("operator_comment")
 	current_usage_event.end = timezone.now() + downtime
 
 	# Collect post-usage questions
@@ -679,7 +681,8 @@ def disable_tool_multi(request, tool_id, usage_event, dynamic_form):
 				'usage_event': usage_event,
 				'uep': uep,
 				'tool_id': tool_id,
-				'downtime': request.POST.get('downtime')
+				'downtime': request.POST.get('downtime'),
+				'operator_comment': usage_event.operator_comment
 			}
 			return render(request, 'tool_control/multiple_projects_finish.html', params)
 
@@ -697,6 +700,8 @@ def usage_event_projects_save(request):
 		prc = 0.0
 		usage_event_id = int(request.POST.get('usage_event_id'))
 		event = UsageEvent.objects.get(id=usage_event_id)
+		if request.POST.get("operator_comment") is not None:
+			event.operator_comment = request.POST.get("operator_comment")
 		tool = event.tool
 		downtime = timedelta(minutes=quiet_int(request.POST.get('downtime')))
 
@@ -900,6 +905,8 @@ def save_usage_event(request):
 		new_usage_event.tool = tool
 		new_usage_event.start = ad_hoc_start
 		new_usage_event.end = ad_hoc_end
+		if request.POST.get("operator_comment") is not None:
+			new_usage_event.operator_comment = request.POST.get("operator_comment")
 		project_id = request.POST.get("chosen_project__0", None)
 		if project_id is not None and project_id != "":
 			project_id = int(project_id)

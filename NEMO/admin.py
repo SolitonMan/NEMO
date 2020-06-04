@@ -160,14 +160,27 @@ class ToolAdmin(admin.ModelAdmin):
 	list_display = ('name', 'category', 'core_id', 'visible', 'operational', 'problematic', 'is_configurable')
 	list_filter = ('visible', 'operational', 'category', 'core_id')
 	form = ToolAdminForm
-	fieldsets = (
-		(None, {'fields': ('name', 'category', 'core_id', 'qualified_users'),}),
-		('Current state', {'fields': ('visible', 'operational'),}),
-		('Contact information', {'fields': ('primary_owner', 'backup_owners', 'notification_email_address', 'location', 'phone_number'),}),
-		('Usage policy', {'fields': ('reservation_horizon', 'minimum_usage_block_time', 'maximum_usage_block_time', 'maximum_reservations_per_day', 'minimum_time_between_reservations', 'maximum_future_reservation_time', 'missed_reservation_threshold', 'requires_area_access', 'grant_physical_access_level_upon_qualification', 'grant_badge_reader_access_upon_qualification', 'interlock', 'allow_delayed_logoff', 'reservation_required'),}),
-		('Dependencies', {'fields': ('required_resources', 'nonrequired_resources'),}),
-	)
+
 	search_fields = ('name', 'category')
+
+	def change_view(self, request, object_id, form_url='', extra_context=None):
+		if request.user.is_superuser:
+			self.fieldsets = (
+				(None, {'fields': ('name', 'category', 'core_id', 'qualified_users'),}),
+				('Current state', {'fields': ('post_usage_questions', 'visible', 'operational'),}),
+				('Contact information', {'fields': ('primary_owner', 'backup_owners', 'notification_email_address', 'location', 'phone_number'),}),
+				('Usage policy', {'fields': ('reservation_horizon', 'minimum_usage_block_time', 'maximum_usage_block_time', 'maximum_reservations_per_day', 'minimum_time_between_reservations', 'maximum_future_reservation_time', 'missed_reservation_threshold', 'requires_area_access', 'grant_physical_access_level_upon_qualification', 'grant_badge_reader_access_upon_qualification', 'interlock', 'allow_delayed_logoff', 'reservation_required'),}),
+				('Dependencies', {'fields': ('required_resources', 'nonrequired_resources'),}),
+			)
+		else:
+			self.fieldsets = (
+				(None, {'fields': ('name', 'category', 'core_id', 'qualified_users'),}),
+				('Current state', {'fields': ('visible', 'operational'),}),
+				('Contact information', {'fields': ('primary_owner', 'backup_owners', 'notification_email_address', 'location', 'phone_number'),}),
+				('Usage policy', {'fields': ('reservation_horizon', 'minimum_usage_block_time', 'maximum_usage_block_time', 'maximum_reservations_per_day', 'minimum_time_between_reservations', 'maximum_future_reservation_time', 'missed_reservation_threshold', 'requires_area_access', 'grant_physical_access_level_upon_qualification', 'grant_badge_reader_access_upon_qualification', 'interlock', 'allow_delayed_logoff', 'reservation_required'),}),
+				('Dependencies', {'fields': ('required_resources', 'nonrequired_resources'),}),
+			)
+		return super().change_view(request, object_id, form_url, extra_context)
 
 	def save_model(self, request, obj, form, change):
 		"""
@@ -222,7 +235,11 @@ class AreaAccessRecordProjectAdmin(admin.ModelAdmin):
 class ConfigurationAdmin(admin.ModelAdmin):
 	list_display = ('id', 'tool', 'name', 'qualified_users_are_maintainers', 'display_priority', 'exclude_from_configuration_agenda')
 	filter_horizontal = ('maintainers',)
-	exclude = ('current_settings',)
+
+	def change_view(self, request, object_id, form_url='', extra_context=None):
+		if not request.user.is_superuser:
+			self.exclude = ('current_settings',)
+		return super().change_view(request, object_id, form_url, extra_context)
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "tool":
@@ -253,8 +270,8 @@ class ConfigurationHistoryAdmin(admin.ModelAdmin):
 
 @register(Account)
 class AccountAdmin(admin.ModelAdmin):
-	list_display = ('id', 'name','cost_center', 'owner', 'active')
-	search_fields = ('name','cost_center')
+	list_display = ('id', 'name','simba_cost_center', 'ibis_account', 'owner', 'active')
+	search_fields = ('name','simba_cost_center', 'ibis_account')
 	list_filter = ('active',)
 
 	def save_model(self, request, obj, form, change):
@@ -286,7 +303,7 @@ class ProjectAdminForm(forms.ModelForm):
 @register(Project)
 class ProjectAdmin(admin.ModelAdmin):
 	list_display = ('id', 'name', 'application_identifier', 'internal_order', 'wbs_element', 'account', 'owner', 'active')
-	search_fields = ('name', 'internal_order', 'wbs_element', 'application_identifier', 'account__name', 'owner', 'account__cost_center')
+	search_fields = ('name', 'internal_order', 'wbs_element', 'application_identifier', 'account__name', 'owner', 'account__simba_cost_center')
 	list_filter = ('active',)
 	form = ProjectAdminForm
 

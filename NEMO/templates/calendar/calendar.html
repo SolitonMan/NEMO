@@ -108,6 +108,12 @@ function update_event_sources()
 		//$("#calendar").fullCalendar('option', 'selectable', true);
 		$("#extra-links").show();
 		var item = get_selected_item();
+		if (!item) {
+			// might be personal schedule
+			var selected_item = $(".selected");
+			if($(selected_item[0]).hasClass('personal_schedule')) 
+				item = 'personal_schedule';
+		}
 		if(item === 'personal_schedule')
 		{
 			tool_event_source.color = "#33ad33";
@@ -116,6 +122,8 @@ function update_event_sources()
 		}
 		else if(item)
 			tool_event_source.data.tool_id = item;
+		else
+			tool_event_source.data.tool_id = 0;
 	}
 	else if(event_type === 'specific user')
 	{
@@ -201,7 +209,7 @@ function create(start, end, jsEvent, view)
 	{# Find out which tool is selected in the tool tree. #}
 	var item = $("#tool_tree .selected");
 	{# Only allow reservations to be created when a tool has been selected. #}
-	var item_selected = (item != null);
+	var item_selected = (item != null && item.is("a"));
 	{# Only allow selection to proceed when we're in reservation view (instead of usage view). #}
 	var reservation_view = get_event_type() === 'reservations';
 	{# Users may not create reservations when viewing their personal schedule. #}
@@ -209,6 +217,12 @@ function create(start, end, jsEvent, view)
 	if(!item_selected || !reservation_view || personal_schedule)
 	{
 		$("#calendar").fullCalendar("unselect");
+
+		if (personal_schedule) {
+			alert("You are currently viewing the calendar in Personal Schedule mode.  Please select Reservation mode to make a reservation.");
+		} else {
+			alert("A tool selection was not detected.  Please select a tool in the left navigation and try to make a reservation again.");
+		}
 		return;
 	}
 
@@ -374,6 +388,9 @@ function create_calendar()
 				"text": "Schedule an outage",
 				"click": scheduled_outage
 			}
+		},
+		"eventRender": function(event, element) {
+			element.find('.fc-title').after("<span>" + event.description + "</span>");
 		}
 	};
 	$("#calendar").fullCalendar(calendar_properties);
@@ -536,8 +553,8 @@ function on_load()
 	$('[data-toggle~="tooltip"]').tooltip({ container: 'body' });
 	int_selected = get_selected_item();
 	if (int_selected) {
-		var selector = "a[data-tool-id='" + int_selected + "']";
-		$("#current_tool_selection").html($(selector).html());
+		var selector = "#tool_tree > a[data-tool-id='" + int_selected + "']";
+		$("#current_tool_selection").html($(selector).text());
 		set_selected_item_by_id(int_selected);
 	} else {
 		$("#current_tool_selection").html("");

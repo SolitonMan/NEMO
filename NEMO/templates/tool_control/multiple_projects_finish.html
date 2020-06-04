@@ -22,6 +22,12 @@
 				<td><input type="text" name="project_percent__{{ u.id }}" value="" /></td>
 			</tr>
 		{% endfor %}
+			<tr>
+				<td colspan="3" align="left" valign="top">
+					<label for="operator_comment">Comment / Purpose of Work</label>
+					<textarea name="operator_comment" id="operator_comment" rows="6" cols="50">{{ operator_comment }}</textarea>
+				</td>
+			</tr>
 		</table>
 		<br />
 		<input type="submit" value="Record Tool Usage" class="btn btn-default"/>

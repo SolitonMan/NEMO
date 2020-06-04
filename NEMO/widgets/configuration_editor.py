@@ -11,7 +11,7 @@ class ConfigurationEditor(Widget):
 				result += self.__render_consumable(config, value["user"])
 			else:
 				current_settings = config.current_settings_as_list()
-				if len(current_settings) == 1:
+				if len(current_settings) == 1 or current_settings == []:
 					result += self.__render_for_one(config, value["user"])
 				else:
 					result += self.__render_for_multiple(config, value["user"])
@@ -48,8 +48,13 @@ class ConfigurationEditor(Widget):
 		return result
 
 	def __render_for_one(self, config, user):
-		current_setting = config.current_settings_as_list()[0]
+		if config.current_settings is None or config.current_settings == '':
+			current_setting =  config.available_settings_as_list()[0]
+		else:
+			current_setting = config.current_settings_as_list()[0]
+		
 		tool = config.tool
+
 		try:
 			current_reservation = user.current_reservation_for_tool(tool)
 			res_conf = current_reservation.reservationconfiguration_set.get(configuration=config)
@@ -83,7 +88,7 @@ class ConfigurationEditor(Widget):
 			except:
 				pass
 
-			result += "<li>"
+			result += "<li title=\"" + escape(config.current_settings_as_list()) + "\">"
 			if not config.tool.in_use() and config.user_is_maintainer(user):
 				result += "<label class='form-inline'>" + escape(config.configurable_item_name) + " #" + str(setting_index + 1) + ": "
 				result += "<select class='form-control' style='width:300px' onchange=\"on_change_configuration(" + str(config.id) + ", " + str(setting_index) + ", this.value)\">"

@@ -1,13 +1,14 @@
 [
 	{% for x in events %}
 	{
-		"title": "{{ x.tool.name|default:x.user|escapejs }} for {{ x.user }}",
+		"title": "{{ x.tool.name|escapejs }} for {{ x.user }}",
 		"id": "Reservation {{ x.id }}",
 		{# The reservation creator or staff may edit the event: #}
 		"editable": false,
 		"start": "{{ x.start|date:"c" }}",
 		"end": "{{ x.get_visual_end|date:"c" }}",
-		"details_url": "{% url 'reservation_details' x.id %}"
+		"details_url": "{% url 'reservation_details' x.id %}",
+		"description": "{{ x.description|escapejs }}"
 	}{% if not forloop.last %},{% elif outages %},{% endif %}
 	{% endfor %}
 	{% for x in outages %}
@@ -18,7 +19,8 @@
 		"color": "#ff0000",
 		"start": "{{ x.start|date:"c" }}",
 		"end": "{{ x.end|date:"c" }}",
-		"details_url": "{% url 'outage_details' x.id %}"
+		"details_url": "{% url 'outage_details' x.id %}",
+		"description": ""
 	}{% if not forloop.last %},{% endif %}
 	{% endfor %}
 ]
