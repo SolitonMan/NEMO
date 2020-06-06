@@ -13,7 +13,7 @@ from django.views.decorators.http import require_GET, require_http_methods, requ
 
 from NEMO.admin import record_local_many_to_many_changes, record_active_state
 from NEMO.forms import UserForm
-from NEMO.models import UserRelationship, UserRelationshipType, User, Project, Tool, PhysicalAccessLevel, Reservation, StaffCharge, UsageEvent, AreaAccessRecord, ActivityHistory
+from NEMO.models import Account, UserRelationship, UserRelationshipType, User, Project, Tool, PhysicalAccessLevel, Reservation, StaffCharge, UsageEvent, AreaAccessRecord, ActivityHistory
 
 
 @staff_member_required(login_url=None)
@@ -301,7 +301,12 @@ def unlock_account(request, user_id):
 @staff_member_required(login_url=None)
 @require_GET
 def delegates(request):
-	all_pis = User.objects.filter(groups__name="PI").order_by('last_name', 'first_name')
+	users = []
+	for u in User.objects.all():
+		if Account.objects.filter(owner=u).exists():
+			users.append(u.id)
+
+	all_pis = User.objects.filter(id__in=users).order_by('last_name', 'first_name')
 
 	return render(request, 'users/delegates.html', { 'pis': all_pis, 'users': User.objects.all(), })
 

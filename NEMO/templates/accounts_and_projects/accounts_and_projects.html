@@ -4,67 +4,65 @@
 {% block content %}
 	<h1>
 		Accounts and projects
-		<span class="hidden-sm hidden-xs">
-			<a href="{% url 'create_project' %}" class="btn btn-success pull-right" style="margin-left:17px">New project</a>
-			<a href="{% url 'create_account' %}" class="btn btn-success pull-right">New account</a>
-		</span>
 	</h1>
-	<div class="row visible-sm visible-xs" style="margin-bottom:17px">
-		<div class="col-sm-12">
-			<a href="{% url 'create_project' %}" class="btn btn-success pull-right">New project</a>
-			<a href="{% url 'create_account' %}" class="btn btn-success">New account</a>
-		</div>
-	</div>
 	<div class="row">
 		<div class="col-md-4" id="search_container">
 			<input id="search" type="text" placeholder="Search for an account or project" class="form-control" autofocus>
 		</div>
 	</div>
-	{% if account %}
-		<div class="row">
-			<div class="col-sm-12">
-				<h2>
-					{{ account }}
-					<form style="display:inline" method="post" action="{% url 'toggle_active' 'account' account.id %}">
-						{% csrf_token %}
-						{# Using an 'input submit' element would be preferable to an anchor on the following line, but Bootstrap can't style a 'submit' as a label so you have to use an anchor. #}
-						<a onclick="$(this).closest('form').submit()" class="label {% if account.active %}label-success{% else %}label-danger{% endif %}" style="vertical-align:50%; font-size:small">
-							{% if account.active %}Active{% else %}Inactive{% endif %}
-						</a>
-					</form>
-				</h2>
-				{% for project in account.project_set.all %}
-					<h3>
-						<a onclick="toggle_details(this)" data-toggle="collapse" data-target="#project_{{ project.id }}_details" class="pointer" style="text-decoration:none">
-							<span id="project_{{ project.id }}_chevron" class="glyphicon glyphicon-chevron-right pull-left chevron"></span>
-							{{ project }}
-						</a>
-						<form style="display:inline" method="post" action="{% url 'toggle_active' 'project' project.id %}">
-							{% csrf_token %}
-							{# Using an 'input submit' element would be preferable to an anchor on the following line, but Bootstrap can't style a 'submit' as a label so you have to use an anchor. #}
-							<a onclick="$(this).closest('form').submit()" class="label {% if project.active %}label-success{% else %}label-danger{% endif %}" style="vertical-align:50%; font-size:small">
-								{% if project.active %}Active{% else %}Inactive{% endif %}
-							</a>
-						</form>
-					</h3>
-					<div style="margin-left:34px">
-						<span class="grey">{{ project.application_identifier }}</span>
-						<div id="project_{{ project.id }}_details" class="collapse">
-							<div style="height:10px"></div>
-							<div id="add_user_to_project_{{ project.id }}">
-								<label class="control-label"><input id="search_user_for_project_{{ project.id }}" type="text" class="form-control user_search" placeholder="Search for a user to add" data-project-id="{{ project.id }}"></label>
-							</div>
-							<div id="project_{{ project.id }}_users">
-								{% include 'accounts_and_projects/users_for_project.html' with users=project.user_set.all %}
-							</div>
-						</div>
-					</div>
-				{% empty %}
-					<h4 class="grey">This account does not have any projects</h4>
+
+
+	<table class="table">
+		<thead>
+		<tr>
+			<th>Account Info</th>
+			<th>Users</th>
+			<th>Add user</th>
+		</tr>
+		</thead>
+		<tbody id="project_data">
+
+	{% for p in projects %}
+		<tr>
+			<td>
+				<b>Account:</b> {{ p.account }}<br/>
+				<b>Account Owner:</b> {{ p.account.owner }}<br/>
+				<b>Project: {{ p }}</b><br/>
+				<b>Project Owner:</b> {{ p.owner }}<br/>
+				<b>End Date:</b> {{ p.end_date }}
+			</td>
+			<td>
+				<table class="table" id="project_{{ p.id }}">
+			{% if p.user_set.all|length > 0 %}
+				{% for u in p.user_set.all %}
+				<tr id="user_{{ u.id }}">
+
+					<td width="85%">{{ u }}</td>
+					<td>
+						<button type="button" class="btn btn-danger" onclick="remove_user_from_project({{ u.id}},{{ p.id }});">Remove</button>
+					</td>
+				</tr>
 				{% endfor %}
-			</div>
-		</div>
-	{% endif %}
+			{% else %}
+				<tr id="no_user_{{ p.id }}">
+					<td>No users assigned</td>
+				</tr>
+			{% endif %}
+				</table>
+			</td>
+			<td>
+				<input id="search_{{ p.id }}" type="text" placeholder="Add a user" class="form-control user_search" autofocus>
+
+				<span id="selection_{{ p.id }}" style="display:inline" class="form-control user_search_span"></span>
+				<button id="add_{{ p.id }}" type="button" style="display:none" class="btn btn-success user_add">Add </button>
+				<button id="cancel_{{ p.id }}" type="button" style="display:none" class="btn btn-danger user_cancel">Cancel</button>
+			</td>
+
+	{% endfor %}
+
+		</tbody>
+	</table>
+
 	<script>
 		function get_account(jquery_event, search_selection, dataset_name)
 		{
@@ -73,23 +71,156 @@
 			else if(search_selection.type == 'account')
 				window.location.href = '/account/' + search_selection.id + '/';
 		}
-		function add_user_to_project(jquery_event, search_selection, dataset_name)
+		function add_user_to_project()
 		{
-			var project_id = $(this).data('project-id');
-			$(this).typeahead('val', '').focus();
-			var url = "/add_user/" + search_selection.id + "/to_project/" + project_id + "/";
+			//var project_id = $(this).data('project-id');
+			var id = $(this).attr("id");
+			var project_id = id.split("_")[1];
+			id = "#search_" + project_id;
+			var user_id = $(id).val();
+
+			// $(this).typeahead('val', '').focus();
+			var url = "/add_user/" + user_id + "/to_project/" + project_id + "/";
 			var complete_callback = ajax_complete_callback('Unable to modify project');
-			$("#project_" + project_id + "_users").load(url, {'csrfmiddlewaretoken': '{{ csrf_token }}'}, complete_callback);
+			//$("#project_" + project_id + "_users").load(url, {'csrfmiddlewaretoken': '{{ csrf_token }}'}, complete_callback);
+
+			var adr = function(data) {
+				var project_id = data.project_id;
+
+				// if there are currently no users
+				var no_user_id = "#no_del_" + project_id;
+				$(no_user_id).remove();
+
+				// add new user to existing users table
+				var tbl_id = "#project_" + project_id;
+				var $tbl = $(tbl_id);
+				var $tr = $('<tr></tr>');
+				$tr.attr("id", "user_"+data.user_id);
+				var $td1 = $('<td></td>');
+				$td1.text(data.user_last + ', ' + data.user_first + ' (' + data.user_username + ')');
+				var $td2 = $('<td></td>');
+				var $btn = $('<button></button>');
+				$btn.text('Remove');
+				$btn.attr('class','btn btn-danger').attr('type','button').attr('id', 'del_'+ data.user_id);
+				$btn.bind('click',function() { remove_user_from_project(project_id,data.user_id); });
+				$td2.append($btn);
+				$tr.append($td1);
+				$tr.append($td2);
+				$tbl.append($tr);
+
+				// hide buttons and show search field
+				var add = "#add_" + project_id;
+				var cancel = "#cancel_" + project_id;
+				var selection = "#selection_" + project_id;
+				var search = "#search_" + project_id;
+	
+				$(cancel).hide();
+				$(add).hide();
+				$(selection).hide();
+				$(search).typeahead('val', '').show();
+			}
+			var data = {};
+
+			ajax_post(url, data, adr, complete_callback);
 		}
 		function remove_user_from_project(user_id, project_id)
 		{
 			var complete_callback = ajax_complete_callback('Unable to remove user from project');
-			$("#project_" + project_id + "_users").load('/remove_user/' + user_id + '/from_project/' + project_id + '/', {'csrfmiddlewaretoken': '{{ csrf_token }}'}, complete_callback);
+			var url = '/remove_user/' + user_id + '/from_project/' + project_id + '/';
+
+			var ddr = function() {
+				var id = "#project_" + project_id;
+				var id_tbody = id + " > tbody";
+				var el = "#user_" + user_id;
+				$(el).remove();
+				if ($(id_tbody).children().length == 0) {
+					var $tr = $("<tr></tr>");
+					var $td = $("<td></td>");
+					var no_user = "no_user_" + project_id;
+					$tr.attr("id", no_user);
+					$td.text("No users assigned");
+					$tr.append($td);
+					$(id).append($tr);
+				}
+			}
+			var data = {};
+			ajax_post(url, data, ddr, complete_callback);
+
+
+			//$("#project_" + project_id + "_users").load('/remove_user/' + user_id + '/from_project/' + project_id + '/', {'csrfmiddlewaretoken': '{{ csrf_token }}'}, complete_callback);
+		}
+		function cancel_user()
+		{
+			var id = $(this).attr("id");
+			var project_id = id.split("_")[1];
+			var add = "#add_" + project_id;
+			var cancel = "#cancel_" + project_id;
+			var selection = "#selection_" + project_id;
+			var search = "#search_" + project_id;
+
+			$(cancel).hide();
+			$(add).hide();
+			$(selection).hide();
+			$(search).typeahead('val', '').show();
+		}
+		function on_autocomplete_selection(jquery_event, search_selection)
+		{
+			var id = $(this).attr("id");
+			var project_id = id.split("_")[1];
+			var add = "#add_" + project_id;
+			var cancel = "#cancel_" + project_id;
+			var selection = "#selection_" + project_id;
+
+			$(this).typeahead('val', search_selection.id).hide();
+			$(selection).html(search_selection.name).show();
+			$(add).show();
+			$(cancel).show();
+		}
+		function enable_autocompletion(project_id)
+		{
+			var id = "#search_" + project_id;
+			$(id).autocomplete('user', on_autocomplete_selection, {{ users|json_search_base }});
+			id = "#add_" + project_id;
+			$(id).click(add_user_to_project);
+			id = "#cancel_" + project_id;
+			$(id).click(cancel_user);
 		}
 		function on_load()
 		{
-			$('#search').autocomplete('accounts_and_projects', get_account, {% json_search_base_with_extra_fields accounts_and_projects 'application_identifier' %});
-			$('.user_search').autocomplete('users', add_user_to_project, {{ users|json_search_base }});
+			//$('#search').autocomplete('accounts_and_projects', get_account, {% json_search_base_with_extra_fields accounts_and_projects 'application_identifier' %});
+			$("#search").keyup(function () {
+				var data = this.value.split(" ");
+				var tr = $("#project_data").children();
+
+				if (this.value == "") {
+					tr.show();
+					return;
+				}
+
+				tr.hide();
+
+				tr.filter(function(i, v) {
+					var $t = $(this);
+					for (var d = 0; d < data.length; ++d) {
+						var s = data[d].toUpperCase();
+						if ($t.text().toUpperCase().indexOf(s) > -1) {
+							return true;
+						}
+					}
+				})
+				.show();
+			});
+
+			{% for p in projects %}
+			id = "#selection_" + '{{ p.id }}';
+			$(id).hide();
+			enable_autocompletion({{ p.id }});
+			{% endfor %}
+
+			//$('.user_search').autocomplete('users', on_autocomplete_selection, {{ users|json_search_base }});
+			//$('.user_search_span').hide();
+			//$('.user_add').click(add_user_to_project);
+			//$('.user_cancel').click(cancel_user);
 		}
 		$(on_load);
 	</script>

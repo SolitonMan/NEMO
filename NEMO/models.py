@@ -435,13 +435,16 @@ class Configuration(models.Model):
 		return self.current_settings_as_list()[slot]
 
 	def current_settings_as_list(self):
-		if self.current_settings is not None and self.current_settings != '':
+		if len(self.current_settings) == 0 or len(self.current_settings) is None:
+			if len(self.available_settings_as_list()[0]) > 0:
+				self.current_settings = self.available_settings_as_list()[0]
+			else:
+				self.current_settings = self.consumable.all()[0]
+
+		if len(self.current_settings) is not None and len(self.current_settings) > 0:
 			return [x.strip() for x in self.current_settings.split(',')]
 		else:
-			if self.available_settings is not None and self.available_settings != '':
-				return [self.available_settings_as_list()[0]]
-			else:
-				return []
+			return []
 
 	def available_settings_as_list(self):
 		if self.available_settings is not None and self.available_settings != '':
@@ -467,12 +470,18 @@ class Configuration(models.Model):
 
 	def replace_current_setting(self, slot, choice):
 		slot = int(slot)
-		current_settings = self.current_settings_as_list()
-		if self.available_settings is None or self.available_settings == '':
-			current_settings[slot] = str(choice)
-		else:
-			current_settings[slot] = self.get_available_setting(choice)
-		self.current_settings = ', '.join(current_settings)
+		try:
+			current_settings = self.current_settings_as_list()
+		except Exception as e:
+			current_settings = []
+		try:
+			if self.consumable.all().count() > 0:
+				current_settings[slot] = str(choice)
+			else:
+				current_settings[slot] = self.get_available_setting(choice)
+			self.current_settings = ', '.join(current_settings)
+		except:
+			self.current_settings = str(choice)
 
 	def range_of_configurable_items(self):
 		return range(0, len(self.current_settings.split(',')))
@@ -675,7 +684,7 @@ class Account(models.Model):
 		ordering = ['name']
 
 	def __str__(self):
-		return str(self.name)
+		return str(self.name + ' [I:' + str(self.ibis_account) + '][S:' + str(self.simba_cost_center) + ']')
 
 
 class Project(models.Model):
@@ -696,14 +705,16 @@ class Project(models.Model):
 		ordering = ['name']
 
 	def __str__(self):
-		return str("[" + self.project_number + "] " +   self.name)
+		return str('[' + self.project_number + '] ' + self.name + ' [' + self.get_project() + ']')
 
 	def get_project(self):
-		if len(self.wbs_element) > 0:
-			return self.wbs_element
-		if len(self.internal_order) > 0:
-			return self.internal_order
-		return self.account.simba_cost_center
+		if self.wbs_element is not None:
+			if len(self.wbs_element) > 0:
+				return str(self.wbs_element)
+		if self.internal_order is not None:
+			if len(self.internal_order) > 0:
+				return str(self.internal_order)
+		return str(self.account.simba_cost_center)
 
 
 def pre_delete_entity(sender, instance, using, **kwargs):

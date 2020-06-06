@@ -1,5 +1,6 @@
 from django.contrib.admin.views.decorators import staff_member_required
-from django.http import HttpResponseBadRequest, HttpResponseRedirect
+from django.db.models.expressions import RawSQL
+from django.http import HttpResponseBadRequest, HttpResponseRedirect, JsonResponse, HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
@@ -9,8 +10,6 @@ from NEMO.models import Account, Project, User, MembershipHistory, ActivityHisto
 @staff_member_required(login_url=None)
 @require_GET
 def accounts_and_projects(request, kind=None, identifier=None):
-	return HttpResponseRedirect('landing')
-"""
 	try:
 		if kind == 'project':
 			account = Project.objects.get(id=identifier).account
@@ -20,14 +19,31 @@ def accounts_and_projects(request, kind=None, identifier=None):
 			account = None
 	except:
 		account = None
+
+	account_list = None
+	accounts_and_projects = None
+
+	if request.session['pi']:
+		account_list = Account.objects.filter(owner=request.user)
+		accounts_and_projects = set(Account.objects.filter(owner=request.user)) | set(Project.objects.filter(owner=request.user))
+		projects = Project.objects.filter(owner=request.user)
+	if not request.session['pi'] and User.objects.filter(pi_delegates=request.user).exists():
+		account_list = Account.objects.filter(owner__pi_delegates=request.user)
+		accounts_and_projects = set(Account.objects.filter(owner__pi_delegates=request.user)) | set(Project.objects.filter(owner__pi_delegates=request.user))
+		projects = Project.objects.filter(owner__pi_delegates=request.user)
+	if request.user.is_superuser:
+		account_list = Account.objects.all()
+		accounts_and_projects = set(Account.objects.all()) | set(Project.objects.all())
+		projects = Project.objects.all()
+
 	dictionary = {
 		'account': account,
-		'account_list': Account.objects.all(),
-		'accounts_and_projects': set(Account.objects.all()) | set(Project.objects.all()),
+		'account_list': account_list,
+		'accounts_and_projects': accounts_and_projects,
 		'users': User.objects.all(),
+		'projects': projects,
 	}
 	return render(request, 'accounts_and_projects/accounts_and_projects.html', dictionary)
-"""
 
 
 @staff_member_required(login_url=None)
@@ -94,7 +110,7 @@ def create_account(request):
 
 
 @staff_member_required(login_url=None)
-@require_POST
+@require_http_methods(['GET', 'POST'])
 def remove_user_from_project(request, user_id, project_id):
 	user = get_object_or_404(User, id=user_id)
 	project = get_object_or_404(Project, id=project_id)
@@ -110,11 +126,14 @@ def remove_user_from_project(request, user_id, project_id):
 		'users': project.user_set.all(),
 		'project': project
 	}
-	return render(request, 'accounts_and_projects/users_for_project.html', dictionary)
+	msg = "User " + str(user) + " has been removed from project " + str(project)
+	return HttpResponse(msg)
+
+#	return render(request, 'accounts_and_projects/users_for_project.html', dictionary)
 
 
 @staff_member_required(login_url=None)
-@require_POST
+@require_http_methods(['GET', 'POST'])
 def add_user_to_project(request, user_id, project_id):
 	user = get_object_or_404(User, id=user_id)
 	project = get_object_or_404(Project, id=project_id)
@@ -126,8 +145,14 @@ def add_user_to_project(request, user_id, project_id):
 		history.child_content_object = user
 		history.save()
 		project.user_set.add(user)
-	dictionary = {
-		'users': project.user_set.all(),
-		'project': project
+	data = {
+		'user_username': str(user.username),
+		'user_first': str(user.first_name),
+		'user_last': str(user.last_name),
+		'user_id': user.id,
+		'project_id': project.id,
+#		'project': project
 	}
-	return render(request, 'accounts_and_projects/users_for_project.html', dictionary)
+	return JsonResponse(data)
+
+#	return render(request, 'accounts_and_projects/users_for_project.html', dictionary)

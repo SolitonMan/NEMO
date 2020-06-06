@@ -208,8 +208,8 @@ def tool_configuration(request):
 		return HttpResponseBadRequest('Invalid configuration parameters.')
 	try:
 		configuration.replace_current_setting(slot, choice)
-	except IndexError:
-		return HttpResponseBadRequest('Invalid configuration choice.')
+	except IndexError as e:
+		return HttpResponseBadRequest('Invalid configuration choice.' + str(e))
 	configuration.save()
 	history = ConfigurationHistory()
 	history.configuration = configuration
