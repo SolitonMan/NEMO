@@ -15,6 +15,9 @@ RUN pip install psycopg2-binary
 # Install schedule library for interlock pulsing
 RUN pip install schedule
 
+# Install easyaudit from https://github.com/soynatan/django-easy-audit
+RUN pip install django-easy-audit
+
 # Install DEBUG support
 #RUN pip install django-debug-toolbar
 #RUN pip install django-debug-toolbar-request-history
