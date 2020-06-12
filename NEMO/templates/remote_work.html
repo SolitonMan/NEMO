@@ -73,7 +73,7 @@
 					{% if s.staff_charge == c %}
 					<tr>
 						<td>{{ s.customer }}</td>
-						<td>{{ s.project.application_identifier }} - [{{ s.project }}]</td>
+						<td>{{ s.project }}</td>
 						<td>{{ s.project_percent }}</td>
 					</tr>
 					{% endif %}
@@ -88,11 +88,17 @@
 				<form action="{% url 'contest_staff_charge' c.id %}" method="POST">
 					{% csrf_token %}
 					<input type="hidden" name="staff_charge_id" value="{{ c.id }}" />
-					<input type="submit" class="btn btn-warning" value="Contest" {% if c.contested is True and cr.contest_resolved is False %} style="pointer-events:auto;" disabled title="{{ cr.contest_description }}"{% endif %} {% if c.contested is True and cr.contest_resolved is True and cr.contest_resolution is False %} style="pointer-events:auto;" title="{{ cr.contest_rejection_reason }}"{% endif %} />
+					<input type="submit" class="btn btn-warning" value="Contest" {% if c.contested is True and cr.contest_resolved is False %} style="pointer-events:auto;" disabled title="{{ cr.contest_description }}"{% endif %} />
 				</form>
 				{% endif %}
 				</td>
 			</tr>
+			{% if c.contested is True and cr.contest_resolved is True and cr.contest_resolution is False %}
+			<tr>
+				<td colspan="10">The above transaction contest was rejected because: <span style="">{{ cr.contest_rejection_reason }}</td>
+			</tr>
+			{% endif %}
+			
 			{% endwith %}
 			{% else %}
 			<tr {% if c.contested is True %}class="warning-highlight"{% endif %} {% if c.validated %}class="success-highlight"{% endif %} id="staff_charge_row_{{ forloop.counter }}">
@@ -104,7 +110,7 @@
                                         {% if s.staff_charge == c %}
                                         <tr>
                                                 <td>{{ s.customer }}</td>
-                                                <td>{{ s.project.application_identifier }} - [{{ s.project }}]</td>
+                                                <td>{{ s.project }}</td>
                                                 <td>{{ s.project_percent }}</td>
                                         </tr>
                                         {% endif %}
@@ -162,7 +168,7 @@
 						{% if ep.usage_event == u %}
 						<tr>
 							<td>{{ ep.customer }}</td>
-							<td>{{ ep.project.application_identifier }} [{{ ep.project }}]</td>
+							<td>{{ ep.project }}</td>
 							<td>{{ ep.project_percent }}</td>
 						</tr>
 						{% endif %}
@@ -171,7 +177,7 @@
 				</td>
 				{% else %}
 				<td>{{ u.user }}</td>
-				<td>{{ u.project.application_identifier }} [{{ u.project }}]</td>
+				<td>{{ u.project }}</td>
 				<td>100.0</td>
 				{% endif %}
 				<td>{{ u.start }} - <br/>{{ u.end }}</td>
@@ -183,11 +189,16 @@
 					<form action="{% url 'contest_usage_event' u.id %}" method="POST">
 					{% csrf_token %}
 					<input type="hidden" name="usage_event_id" value="{{ u.id }}" />
-					<input type="submit" class="btn btn-warning" value="Contest" {% if u.contested is True and cr.contest_resolved is False %} style="pointer-events:auto;" disabled title="{{ cr.contest_description }}"{% endif %} {% if u.contested is True and cr.contest_resolved is True and cr.contest_resolution is False %} style="pointer-events:auto;" title="{{ cr.contest_rejection_reason }}"{% endif %}/>
+					<input type="submit" class="btn btn-warning" value="Contest" {% if u.contested is True and cr.contest_resolved is False %} style="pointer-events:auto;" disabled title="{{ cr.contest_description }}"{% endif %}/>
 					</form>
 				{% endif %}
 				</td>
 			</tr>
+			{% if u.contested is True and cr.contest_resolved is True and cr.contest_resolution is False %}
+			<tr>
+				<td colspan="10">The above transaction's contest was rejected.  The reason was: <span class="danger-highlight">{{  cr.contest_rejection_reason }}</span></td>
+			</tr>
+			{% endif %}
 			{% endwith %}
 			{% else %}
 			<tr {% if u.contested is True %}class="warning-highlight"{% endif %} {% if u.validated %}class="success-highlight"{% endif %} id="usage_event_row_{{ forloop.counter }}">
@@ -200,7 +211,7 @@
                                                 {% if ep.usage_event == u %}
                                                 <tr>
                                                         <td>{{ ep.customer }}</td>
-                                                        <td>{{ ep.project.application_identifier }} [{{ ep.project }}]</td>
+                                                        <td>{{ ep.project }}</td>
                                                         <td>{{ ep.project_percent }}</td>
                                                 </tr>
                                                 {% endif %}
@@ -209,7 +220,7 @@
                                 </td>
                                 {% else %}
                                 <td>{{ u.user }}</td>
-                                <td>{{ u.project.application_identifier }} [{{ u.project }}]</td>
+                                <td>{{ u.project }}</td>
                                 <td>100.0</td>
                                 {% endif %}
 				<td>{{ u.start }} - <br/>{{ u.end }}</td>
@@ -258,7 +269,7 @@
 				<td>{{ w.id }}</td>
 				<td>{{ w.merchant }}</td>
 				<td>{{ w.customer }}</td>
-				<td>{{ w.project.application_identifier }} [{{ w.project }}]</td>
+				<td>{{ w.project }}</td>
 				<td>{% if w.project_percent is None %}100.0{% else %}{{ w.project_percent }}{% endif %}</td>
 				<td>{{ w.consumable }}</td>
 				<td>{{ w.quantity }} {% if w.consumable.unit is not None %}{{ w.consumable.unit }}{% endif %}</td>
@@ -269,18 +280,23 @@
 					<form action="{% url 'contest_consumable_withdraw' w.id %}" method="POST">
 					{% csrf_token %}
 					<input type="hidden" name="consumable_withdraw_id" value="{{ w.id }}" />
-					<input type="submit" class="btn btn-warning" value="Contest" {% if w.contested is True and cr.contest_resolved is False %} style="pointer-events:auto;" disabled title="{{ cr.contest_description }}"{% endif %} {% if w.contested is True and cr.contest_resolved is True and cr.contest_resolution is False %} style="pointer-events:auto;" title="{{ cr.contest_rejection_reason }}" {% endif %}/>
+					<input type="submit" class="btn btn-warning" value="Contest" {% if w.contested is True and cr.contest_resolved is False %} style="pointer-events:auto;" disabled title="{{ cr.contest_description }}"{% endif %}/>
 					</form>
 				{% endif %}
 				</td>
 			</tr>
+			{% if w.contested is True and cr.contest_resolved is True and cr.contest_resolution is False %}
+			<tr>
+				<td colspan="10">The above transaction's contest was rejected.  The reason was: <span class="danger-highlight">{{  cr.contest_rejection_reason }}</span></td>
+			</tr>
+			{% endif %}
 			{% endwith %}
 			{% else %}
 			<tr {% if w.contested is True %}class="warning-highlight"{% endif %} {% if w.validated %}class="success-highlight"{% endif %} id="consumable_withdraw_row_{{ forloop.counter }}">
 				<td>{{ w.id }}</td>
 				<td>{{ w.merchant }}</td>
 				<td>{{ w.customer }}</td>
-				<td>{{ w.project.application_identifier }} [{{ w.project }}]</td>
+				<td>{{ w.project }}</td>
                                 <td>{% if w.project_percent is None %}100.0{% else %}{{ w.project_percent }}{% endif %}</td>
 				<td>{{ w.consumable }}</td>
 				<td>{{ w.quantity }} {% if w.consumable.unit is not None %}{{ w.consumable.unit }}{% endif %}</td>
@@ -334,7 +350,7 @@
 					{% if aa.area_access_record == a %}
 					<tr>
 						<td>{{ aa.customer }}</td>
-						<td>{{ aa.project.application_identifier }} [{{ aa.project }}]</td>
+						<td>{{ aa.project }}</td>
 						<td>{{ aa.project_percent }}</td>
 					</tr>
 					{% endif %}
@@ -343,7 +359,7 @@
 			</td>
 			{% else %}
 			<td>{{ a.customer }}</td>
-			<td>{{ a.project.application_identifier }} [{{ a.project }}]</td>
+			<td>{{ a.project }}</td>
 			<td>100.0</td>
 			{% endif %}
 			<td>{{ a.start }} - {{ a.end }}</td>
@@ -355,11 +371,16 @@
 				<form action="{% url 'contest_area_access_record' a.id %}" method="POST">
 				{% csrf_token %}
 				<input type="hidden" name="area_access_record_id" value="{{ a.id }}" />
-				<input type="submit" class="btn btn-warning" value="Contest" {% if a.contested is True and cr.contest_resolved is False %} style="pointer-events:auto;" disabled title="{{ cr.contest_description }}"{% endif %} {% if a.contested is True and cr.contest_resolved is True and cr.contest_resolution is False %} style="pointer-events:auto;" title="{{ cr.contest_rejection_reason }}" {% endif %}/>
+				<input type="submit" class="btn btn-warning" value="Contest" {% if a.contested is True and cr.contest_resolved is False %} style="pointer-events:auto;" disabled title="{{ cr.contest_description }}"{% endif %}/>
 				</form>
 			{% endif %}
 			</td>
 		</tr>
+			{% if a.contested is True and cr.contest_resolved is True and cr.contest_resolution is False %}
+		<tr>
+			<td colspan="10">The above transaction's contest was rejected.  The reason was: <span class="danger-highlight">{{  cr.contest_rejection_reason }}</span></td>
+		</tr>
+			{% endif %}
 			{% endwith %}
 			{% else %}
 		<tr {% if a.contested is True %}class="warning-highlight"{% endif %} {% if a.validated %}class="success-highlight"{% endif %} id="area_access_record_row_{{ forloop.counter }}">
@@ -372,7 +393,7 @@
 					{% if aa.area_access_record == a %}
 					<tr>
 						<td>{{ aa.customer }}</td>
-						<td>{{ aa.project.application_identifier }} [{{ aa.project }}]</td>
+						<td>{{ aa.project }}</td>
 						<td>{{ aa.project_percent }}</td>
 					</tr>
 					{% endif %}
@@ -381,7 +402,7 @@
 			</td>
 			{% else %}
 			<td>{{ a.customer }}</td>
-			<td>{{ a.project.application_identifier }} [{{ a.project }}]</td>
+			<td>{{ a.project }}</td>
 			<td>100.0</td>
 			{% endif %}
 			<td>{{ a.start }} - {{ a.end }}</td>

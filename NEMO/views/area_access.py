@@ -370,7 +370,7 @@ def self_log_in(request):
 			a = Area.objects.get(id=request.POST['area'])
 			p = Project.objects.get(id=request.POST['project'])
 			if a in dictionary['areas'] and p in dictionary['projects']:
-				AreaAccessRecord.objects.create(area=a, customer=request.user, project=p)
+				AreaAccessRecord.objects.create(area=a, customer=request.user, project=p, created=timezone.now(), updated=timezone.now())
 		except:
 			pass
 		return redirect(reverse('landing'))

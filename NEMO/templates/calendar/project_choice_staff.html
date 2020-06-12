@@ -17,7 +17,7 @@
 		<select class="form-control" onchange="return set_project(this.options[this.selectedIndex].value);">
 			<option value="">Please select a project</option>
 		{% for project in active_projects %}
-			<option value="{{ project.id }}">{{ project.application_identifier }}</option>
+			<option value="{{ project.id }}">{{ project }}</option>
 		{% endfor %}
 		</select>
 		</div>

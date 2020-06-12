@@ -73,12 +73,12 @@
 						</td>
 						<td id="user_project__{{ u.id }}">
 							{% if u.customer.active_project_count == 1 %}
-								{{ u.project.application_identifier }}
+								{{ u.project }}
 								<input type="hidden" name="proposed__chosen_project__{{ u.id }}" value="{{ u.project.id }}" />
 							{% else %}
 							<select name="proposed__chosen_project__{{ u.id }}" id="proposed__chosen_project__{{ u.id }}" class="form-control">
 								{% for p in u.customer.active_projects %}
-								<option value="{{ p.id }}"{% if p == u.project %} selected{% endif %}>{{ p.application_identifier }} [{{ p }}]</option>
+								<option value="{{ p.id }}"{% if p == u.project %} selected{% endif %}>{{ p }} [{{ p }}]</option>
 								{% endfor %}
 							</select>
 							{% endif %}
@@ -146,12 +146,12 @@
 						</td>
 						<td id="user_project__{{ s.id }}">
 							{% if s.customer.active_project_count == 1 %}
-								{{ s.project.application_identifier }}
+								{{ s.project }}
 								<input type="hidden" name="proposed__chosen_project__{{ s.id }}" value="{{ s.project.id }}" />
 							{% else %}
 							<select name="proposed__chosen_project__{{ s.id }}" id="proposed__chosen_project__{{ s.id }}" class="form-control">
 								{% for p in s.customer.active_projects %}
-								<option value="{{ p.id }}"{% if p == s.project %} selected{% endif %}>{{ p.application_identifier }} [{{ p }}]</option>
+								<option value="{{ p.id }}"{% if p == s.project %} selected{% endif %}>{{ p }} [{{ p }}]</option>
 								{% endfor %}
 							</select>
 							{% endif %}
@@ -212,12 +212,12 @@
 						</td>
 						<td id="user_project__{{ a.id }}">
 							{% if a.customer.active_project_count == 1 %}
-								{{ a.project.application_identifier }}
+								{{ a.project }}
 								<input type="hidden" name="proposed__chosen_project__{{ a.id }}" value="{{ a.project.id }}" />
 							{% else %}
 							<select name="proposed__chosen_project__{{ a.id }}" id="proposed__chosen_project__{{ a.id }}" class="form-control">
 								{% for p in a.customer.active_projects %}
-								<option value="{{ p.id }}"{% if p == a.project %} selected{% endif %}>{{ p.application_identifier }} [{{ p }}]</option>
+								<option value="{{ p.id }}"{% if p == a.project %} selected{% endif %}>{{ p }} [{{ p }}]</option>
 								{% endfor %}
 							</select>
 							{% endif %}
@@ -300,12 +300,12 @@
 			<th>Project</th>
 			<td id="user_project__{{ consumable_withdraw.id }}">
 				{% if consumable_withdraw.customer.active_project_count == 1 %}
-					{{ consumable_withdraw.project.application_identifier }}
+					{{ consumable_withdraw.project }}
 					<input type="hidden" name="proposed__chosen_project__{{ consumable_withdraw.id }}" value="{{ consumable_withdraw.project.id }}" />
 				{% else %}
 					<select name="proposed__chosen_project__{{ consumable_withdraw.id }}" id="proposed__chosen_project__{{ consumable_withdraw.id }}" class="form-control">
 						{% for p in consumable_withdraw.customer.active_projects %}
-						<option value="{{ p.id }}"{% if p == consumable_withdraw.project %} selected{% endif %}>{{ p.application_identifier }} [{{ p }}]</option>
+						<option value="{{ p.id }}"{% if p == consumable_withdraw.project %} selected{% endif %}>{{ p }}</option>
 						{% endfor %}
 					</select>
 				{% endif %}

@@ -8,7 +8,7 @@
 			<li style="width:48%; text-align:center"><a href="#comment" style="padding: 10px 5px">Post a comment</a></li>
 		</ul>
 	{% else %}
-		<h1 class="pull-left" style="margin-right:20px; margin-top:0; margin-bottom:10px">{{ tool.name }}</h1>
+		<h1 style="margin-right:20px; margin-top:0; margin-bottom:10px">{{ tool.name }}</h1>
 		<ul class="nav nav-pills" id="tabs">
 			<li class="active"><a href="#summary">Summary</a></li>
 			<li><a href="#details">Details</a></li>
@@ -17,7 +17,7 @@
 		</ul>
 	{% endif %}
 </div>
-
+<br/>
 <div class="tab-content">
 	<div class="tab-pane active" id="summary">
 		{# Display tool status... #}
@@ -25,17 +25,43 @@
 			<div class="primary-highlight">
 				<span class="glyphicon glyphicon-user pull-left status-icon"></span>
 				{% with tool.get_current_usage_event as current_usage_event %}
-					<h3>
+					<h4>
 						{% if current_usage_event.operator.id == user.id %}
 							You are using this tool
 						{% else %}
 							{{ current_usage_event.operator }} is using this tool
 						{% endif %}
+					</h4>
+					{% if request.user == current_usage_event.operator %}
+					<div>	
 						{% if current_usage_event.operator.id != current_usage_event.customers.all.0.id %}
-							on behalf of {{ current_usage_event.customers.all.0 }}
+							{% if current_usage_event.customers.all|length > 1 %}
+								for the customers:
+								<table class="table">
+									<thead>
+									<tr>
+										<th>Customer</th>
+										<th>Project</th>
+									</tr>
+									</thead>
+									<tbody>
+								{% for uep in current_usage_event.usageeventproject_set.all %}
+									<tr>
+										<td>{{ uep.customer }}</td>
+										<td>{{ uep.project }}</td>
+									</tr>
+								{% endfor %}
+									</tbody>
+								</table>
+							{% else %}
+								for the customer {{ current_usage_event.customers.all.0 }} charging the project {{ current_usage_event.projects.all.0 }}
+							{% endif %}
+						{% else %}
+							for the project named {{ current_usage_event.projects.all.0 }}
 						{% endif %}
-						for the project named {{ current_usage_event.projects.all.0.application_identifier }} since {{ current_usage_event.start|date:"l @ g:i A" }}.
-					</h3>
+						since {{ current_usage_event.start|date:"l @ g:i A" }}.
+					</div>
+					{% endif %}
 				{% endwith %}
 			</div>
 			{% if time_left %}

@@ -180,7 +180,7 @@ class SafetyIssueUpdateForm(ModelForm):
 class ConsumableWithdrawForm(ModelForm):
 	class Meta:
 		model = ConsumableWithdraw
-		fields = ['customer', 'project', 'consumable', 'quantity']
+		fields = ['customer', 'project', 'consumable', 'quantity', 'notes']
 
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)

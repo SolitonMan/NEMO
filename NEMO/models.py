@@ -80,6 +80,7 @@ class User(models.Model):
 	email = models.EmailField(verbose_name='email address')
 	type = models.ForeignKey(UserType, null=True, on_delete=models.SET_NULL)
 	domain = models.CharField(max_length=100, blank=True, help_text="The Active Directory domain that the account resides on")
+	contact = models.ForeignKey('ContactInformation', on_delete=models.SET_NULL, null=True, blank=True)
 
 	# Physical access fields
 	badge_number = models.PositiveIntegerField(null=True, blank=True, unique=True, help_text="The badge number associated with this user. This number must correctly correspond to a user in order for the tablet-login system (in the lobby) to work properly.")
@@ -200,10 +201,13 @@ class User(models.Model):
 				return access_record.project
 
 	def active_project_count(self):
-		return self.projects.filter(active=True, account__active=True).count()
+		return self.projects.filter(active=True, account__active=True, start_date__lte=timezone.now(), end_date__gte=timezone.now()).count()
 
 	def active_projects(self):
-		return self.projects.filter(active=True, account__active=True)
+		return self.projects.filter(active=True, account__active=True, start_date__lte=timezone.now(), end_date__gte=timezone.now())
+
+	def all_projects(self):
+		return self.projects
 
 	def charging_staff_time(self):
 		return StaffCharge.objects.filter(staff_member=self.id, end=None).exists()
@@ -262,6 +266,8 @@ class Tool(models.Model):
 	location = models.CharField(max_length=100, null=True, blank=True)
 	phone_number = models.CharField(max_length=100)
 	notification_email_address = models.EmailField(blank=True, null=True, help_text="Messages that relate to this tool (such as comments, problems, and shutdowns) will be forwarded to this email address. This can be a normal email address or a mailing list address.")
+	infolink = models.CharField(max_length=1000, null=True, blank=True)
+
 	# Policy fields:
 	requires_area_access = models.ForeignKey('Area', blank=True, on_delete=models.SET_NULL, null=True, help_text="Indicates that this tool is physically located in a billable area and requires an active area access record in order to be operated.")
 	grant_physical_access_level_upon_qualification = models.ForeignKey('PhysicalAccessLevel', null=True, blank=True, on_delete=models.SET_NULL, help_text="The designated physical access level is granted to the user upon qualification for this tool.")
@@ -527,8 +533,8 @@ class TrainingSession(models.Model):
 
 class StaffCharge(CalendarDisplay):
 	staff_member = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='staff_charge_actor')
-	customer = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='staff_charge_customer', null=True)
-	project = models.ForeignKey('Project', on_delete=models.SET_NULL, related_name='staff_charge_project', null=True)
+	customer = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='staff_charge_customer', null=True, blank=True)
+	project = models.ForeignKey('Project', on_delete=models.SET_NULL, related_name='staff_charge_project', null=True, blank=True)
 	start = models.DateTimeField(default=timezone.now)
 	end = models.DateTimeField(null=True, blank=True)
 	staff_member_comment = models.TextField(null=True, blank=True)
@@ -548,6 +554,7 @@ class StaffCharge(CalendarDisplay):
 	validated_date = models.DateTimeField(null=True, blank=True)
 	auto_validated = models.BooleanField(default=False)
 	no_charge_flag = models.BooleanField(default=False)
+	ad_hoc_created = models.BooleanField(default=False)
 
 	def duration(self):
 		return calculate_duration(self.start, self.end, "In progress")
@@ -584,6 +591,7 @@ class StaffChargeProject(models.Model):
 	created = models.DateTimeField(null=True, blank=True)
 	updated = models.DateTimeField(null=True, blank=True)
 	contest_data = GenericRelation('ContestTransactionData')
+	no_charge_flag = models.BooleanField(default=False)
 
 class Area(models.Model):
 	name = models.CharField(max_length=200, help_text='What is the name of this area? The name will be displayed on the tablet login and logout pages.')
@@ -617,6 +625,7 @@ class AreaAccessRecord(CalendarDisplay):
 	validated_date = models.DateTimeField(null=True, blank=True)
 	auto_validated = models.BooleanField(default=False)
 	no_charge_flag = models.BooleanField(default=False)
+	ad_hoc_created = models.BooleanField(default=False)
 
 	def duration(self):
 		return calculate_duration(self.start, self.end, "In progress")
@@ -654,6 +663,7 @@ class AreaAccessRecordProject(models.Model):
 	created = models.DateTimeField(null=True, blank=True)
 	updated = models.DateTimeField(null=True, blank=True)
 	contest_data = GenericRelation('ContestTransactionData')
+	no_charge_flag = models.BooleanField(default=False)
 
 
 class ConfigurationHistory(models.Model):
@@ -694,9 +704,12 @@ class Project(models.Model):
 	account = models.ForeignKey(Account, on_delete=models.SET_NULL, null=True, help_text="All charges for this project will be billed to the selected account.")
 	internal_order = models.CharField(max_length=12, null=True, blank=True)
 	wbs_element = models.CharField(max_length=12, null=True, blank=True)
-	owner = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, help_text="The owner or person responsible for the Project (Internal Order or WBS Element in SIMBA) as imported via SIMBA download nightly")
+	owner = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, help_text="The owner or person responsible for the Project (Internal Order or WBS Element in SIMBA) as imported via SIMBA download nightly", related_name="project_owner")
+	organization = models.ForeignKey('Organization', on_delete=models.SET_NULL, null=True, blank=True)
+	bill_to =  models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, help_text="The person to contact with an invoice", related_name="bill_to_contact")
 	rate_type_id = models.PositiveIntegerField(null=True, blank=True)
 	fa_type_id = models.PositiveIntegerField(null=True, blank=True)
+	billing_type = models.ForeignKey('BillingType', on_delete=models.SET_NULL, null=True, blank=True, help_text="This field will replace the rate_type_id")
 	active = models.BooleanField(default=True, help_text="Users may only charge to a project if it is active. Deactivate the project to block billable activity (such as tool usage and consumable check-outs).")
 	start_date = models.DateField(null=True, blank=True, help_text="The date on which the project, internal order or wbs element becomes active")
 	end_date = models.DateField(null=True, blank=True, help_text="The date on which the project, internal order or wbs element becomes inactive")
@@ -715,6 +728,12 @@ class Project(models.Model):
 			if len(self.internal_order) > 0:
 				return str(self.internal_order)
 		return str(self.account.simba_cost_center)
+
+	def check_date(self, compare_date):
+		return (compare_date.date() >= self.start_date) and (compare_date.date() <= self.end_date)
+
+	def check_date_range(self, start_date, end_date):
+		return self.check_date(start_date) and self.check_date(end_date)
 
 
 def pre_delete_entity(sender, instance, using, **kwargs):
@@ -816,6 +835,7 @@ class UsageEvent(CalendarDisplay):
 	validated_date = models.DateTimeField(null=True, blank=True)
 	auto_validated = models.BooleanField(default=False)
 	no_charge_flag = models.BooleanField(default=False)
+	ad_hoc_created = models.BooleanField(default=False)
 
 	def duration(self):
 		return calculate_duration(self.start, self.end, "In progress")
@@ -852,11 +872,13 @@ class UsageEventProject(models.Model):
 	created = models.DateTimeField(null=True, blank=True)
 	updated = models.DateTimeField(null=True, blank=True)
 	contest_data = GenericRelation('ContestTransactionData')
+	no_charge_flag = models.BooleanField(default=False)
 
 
 class Consumable(models.Model):
 	name = models.CharField(max_length=100)
 	category = models.ForeignKey('ConsumableCategory', on_delete=models.SET_NULL, blank=True, null=True)
+	type = models.ForeignKey('ConsumableType', on_delete=models.SET_NULL, blank=True, null=True)
 	unit = models.ForeignKey('ConsumableUnit', on_delete=models.SET_NULL, blank=True, null=True)
 	quantity = models.IntegerField(help_text="The number of items currently in stock.")
 	visible = models.BooleanField(default=True)
@@ -893,6 +915,16 @@ class ConsumableCategory(models.Model):
 		return self.name
 
 
+class ConsumableType(models.Model):
+	name = models.CharField(max_length=250)
+	class Meta:
+		ordering = ['name']
+		verbose_name_plural = 'Consumable types'
+
+	def __str__(self):
+		return self.name
+
+
 class ConsumableWithdraw(models.Model):
 	customer = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="consumable_user", help_text="The user who will use the consumable item.")
 	merchant = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="consumable_merchant", help_text="The staff member that performed the withdraw.")
@@ -900,6 +932,7 @@ class ConsumableWithdraw(models.Model):
 	quantity = models.PositiveIntegerField()
 	project = models.ForeignKey(Project, on_delete=models.SET_NULL, null=True, help_text="The withdraw will be billed to this project.")
 	project_percent = models.DecimalField(max_digits=4, decimal_places=2, null=True, blank=True)
+	notes = models.TextField(null=True, blank=True)
 	date = models.DateTimeField(default=timezone.now, help_text="The date and time when the user withdrew the consumable.")
 	validated = models.BooleanField(default=False)
 	contested = models.BooleanField(default=False)
@@ -1356,7 +1389,7 @@ class PhysicalAccessLog(models.Model):
 
 class SafetyIssue(models.Model):
 	reporter = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True, related_name='reported_safety_issues')
-	location = models.CharField(max_length=200)
+	location = models.CharField(max_length=200, null=True, blank=True)
 	creation_time = models.DateTimeField(auto_now_add=True)
 	visible = models.BooleanField(default=True, help_text='Should this safety issue be visible to all users? When unchecked, the issue is only visible to staff.')
 	concern = models.TextField()
@@ -1407,8 +1440,14 @@ class ContactInformationCategory(models.Model):
 
 
 class ContactInformation(models.Model):
-	name = models.CharField(max_length=200)
+	name = models.CharField(max_length=200, help_text="The name of the contact information; this can be related to a user or an organization.")
 	image = models.ImageField(blank=True, help_text='Portraits are resized to 266 pixels high and 200 pixels wide. Crop portraits to these dimensions before uploading for optimal bandwidth usage')
+	address1 = models.CharField(max_length=500, blank=True, null=True)
+	address2 = models.CharField(max_length=500, blank=True, null=True)
+	city = models.CharField(max_length=100, blank=True, null=True)
+	state = models.CharField(max_length=50, blank=True, null=True)
+	zipcode = models.CharField(max_length=20,  blank=True, null=True)
+	country = models.CharField(max_length=50, blank=True, null=True)
 	category = models.ForeignKey(ContactInformationCategory, on_delete=models.SET_NULL, null=True)
 	email = models.EmailField(blank=True)
 	office_phone = models.CharField(max_length=40, blank=True)
@@ -1533,4 +1572,36 @@ class GlobalFlag(models.Model):
 	name = models.CharField(max_length=200)
 	active = models.BooleanField(default=False)
 
+	def __str__(self):
+		return self.name
 
+class Organization(models.Model):
+	name = models.CharField(max_length=500)
+	organization_type = models.ForeignKey('OrganizationType', on_delete=models.SET_NULL, null=True, blank=True)
+	billing_type = models.ForeignKey('BillingType', on_delete=models.SET_NULL, null=True, blank=True)
+	url = models.CharField(max_length=500, null=True, blank=True)
+	contact = models.ForeignKey('ContactInformation', on_delete=models.SET_NULL, null=True, blank=True)
+
+	def __str__(self):
+		return self.name
+
+class OrganizationType(models.Model):
+	name = models.CharField(max_length=50)
+	nsf_category = models.ForeignKey('NsfCategory', on_delete=models.SET_NULL, null=True, blank=True)
+	active = models.BooleanField(default=False)
+
+	def __str__(self):
+		return self.name
+
+class BillingType(models.Model):
+	name = models.CharField(max_length=50)
+
+	def __str__(self):
+		return self.name
+
+class NsfCategory(models.Model):
+	name = models.CharField(max_length=50)
+	sort_order = models.PositiveIntegerField(help_text="Sorting for list that is otherwise not inherently logical")
+
+	def __str__(self):
+		return self.name

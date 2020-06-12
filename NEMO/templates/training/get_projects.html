@@ -7,7 +7,7 @@
 	<select name="chosen_project__{{ entry_number }}" class="form-control" id="chosen_project__{{ entry_number }}">
 		<option value="-1">&nbsp;</option>
 		{% for p in projects %}
-			<option value="{{ p.id }}">{{ p.application_identifier }}</option>
+			<option value="{{ p.id }}">{{ p }}</option>
 		{% endfor %}
 	</select>
 {% endif %}

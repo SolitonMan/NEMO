@@ -2,6 +2,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
+from django.utils import timezone
 from django.views.decorators.http import require_GET
 
 from NEMO.models import User, Tool
@@ -21,7 +22,13 @@ def get_projects(request):
 	elif source_template == 'staff_charges':
 		entry_number = int(request.GET['entry_number'])
 		return render(request, 'staff_charges/get_projects.html', {'projects': projects, 'entry_number': entry_number, 'ad_hoc': ad_hoc})
-	return JsonResponse(dict(projects=list(projects.values('id', 'name', 'application_identifier'))))
+
+	projects_out = []
+	for p in projects:
+		send_name = '[' + str(p.project_number) + ']' + str(p.name) + '[' + str(p.get_project()) + ']'
+		projects_out.append({'id':p.id,'name':send_name})
+	#return JsonResponse(dict(projects=list(projects.values('id', 'name', 'project_number'))))
+	return JsonResponse(dict(projects=projects_out))
 
 
 @staff_member_required(login_url=None)

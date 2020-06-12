@@ -2,7 +2,7 @@
 	This user is not assigned to any active projects.<br>
 	A user must be a member of at least one active project to operate a tool.
 {% elif active_projects|length == 1 %}
-	<h4>Tool usage will be billed to the project &quot;{{ active_projects.0.application_identifier }}&quot;.</h4>
+	<h4>Tool usage will be billed to the project &quot;{{ active_projects.0 }}&quot;.</h4>
 	<input type="hidden" id="project_id" value="{{ active_projects.0.id }}">
 	<script>
 		$("#start").show();
@@ -13,7 +13,7 @@
 		<select class="form-control" name="user_projects" id="user_projects" onchange="select_project(this, this.options[this.selectedIndex].value);">
 			<option value="0">Please select a project to use for this tool</option>
 		{% for p in active_projects %}
-			<option class="list-group-item project-choice" value="{{ p.id }}" {% if my_reservation %}{% if p == my_reservation.project %}selected{% endif %}{% endif %}>{{ p.application_identifier }}</option>
+			<option class="list-group-item project-choice" value="{{ p.id }}" {% if my_reservation %}{% if p == my_reservation.project %}selected{% endif %}{% endif %}>{{ p }}</option>
 		{% endfor %}
 		</select>
 	</div>

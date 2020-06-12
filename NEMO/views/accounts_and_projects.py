@@ -23,18 +23,22 @@ def accounts_and_projects(request, kind=None, identifier=None):
 	account_list = None
 	accounts_and_projects = None
 
-	if request.session['pi']:
-		account_list = Account.objects.filter(owner=request.user)
-		accounts_and_projects = set(Account.objects.filter(owner=request.user)) | set(Project.objects.filter(owner=request.user))
-		projects = Project.objects.filter(owner=request.user)
-	if not request.session['pi'] and User.objects.filter(pi_delegates=request.user).exists():
-		account_list = Account.objects.filter(owner__pi_delegates=request.user)
-		accounts_and_projects = set(Account.objects.filter(owner__pi_delegates=request.user)) | set(Project.objects.filter(owner__pi_delegates=request.user))
-		projects = Project.objects.filter(owner__pi_delegates=request.user)
 	if request.user.is_superuser:
 		account_list = Account.objects.all()
 		accounts_and_projects = set(Account.objects.all()) | set(Project.objects.all())
 		projects = Project.objects.all()
+	elif request.session['pi']:
+		account_list = Account.objects.filter(owner=request.user)
+		accounts_and_projects = set(Account.objects.filter(owner=request.user)) | set(Project.objects.filter(owner=request.user))
+		projects = Project.objects.filter(owner=request.user)
+	elif not request.session['pi'] and User.objects.filter(pi_delegates=request.user).exists():
+		account_list = Account.objects.filter(owner__pi_delegates=request.user)
+		accounts_and_projects = set(Account.objects.filter(owner__pi_delegates=request.user)) | set(Project.objects.filter(owner__pi_delegates=request.user))
+		projects = Project.objects.filter(owner__pi_delegates=request.user)
+	else:
+		account_list = None
+		accounts_and_projects = None
+		projects = None
 
 	dictionary = {
 		'account': account,

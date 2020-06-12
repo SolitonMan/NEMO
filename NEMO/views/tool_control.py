@@ -449,7 +449,13 @@ def enable_tool_multi(request):
 					return HttpResponseBadRequest('Please choose a user for whom the tool will be run.')
 			if attribute == "chosen_project":
 				if value is not None and value != "" and value != "-1":
-					project_events[index].project = Project.objects.get(id=value)
+					cp = Project.objects.get(id=value)
+					if cp.check_date(new_usage_event.start):
+						project_events[index].project = Project.objects.get(id=value)
+					else:
+						msg = 'The project ' + str(cp.project_number) + ' cannot be used for a transaction with a start date of ' + str(new_usage_event.start) + ' because the project start date is ' + str(cp.start_date)
+						new_usage_event.delete()
+						return HttpResponseBadRequest(msg)
 				else:
 					new_usage_event.delete()
 					return HttpResponseBadRequest('Please choose a project for charges made during this run.')
@@ -510,7 +516,14 @@ def enable_tool_multi(request):
 					return HttpResponseBadRequest('Please choose a user for whom the tool will be run.')
 			if attribute == "chosen_project":
 				if value is not None and value != "" and value != "-1":
-					project_charges[index].project = Project.objects.get(id=value)
+					cp = Project.objects.get(id=value)
+					if cp.check_date(new_staff_charge.start):
+						project_charges[index].project = Project.objects.get(id=value)
+					else:
+						msg = 'The project ' + str(cp.project_number) + ' cannot be used for a transaction with a start date of ' + str(new_staff_charge) + ' because the project start date is ' + str(cp.start_date)
+						new_staff_charge.delete()
+						new_usage_event.delete()
+						return HttpResponseBadRequest(msg)
 				else:
 					new_staff_charge.delete()
 					new_usage_event.delete()
@@ -576,19 +589,19 @@ def disable_tool(request, tool_id):
 	try:
 		current_reservation = Reservation.objects.get(start__lt=timezone.now(), end__gt=timezone.now(), cancelled=False, missed=False, shortened=False, user=request.user, tool=tool)
 		# Staff are exempt from mandatory reservation shortening when tool usage is complete.
-		if request.user.is_staff is False:
+		# if request.user.is_staff is False:
 			# Shorten the user's reservation to the current time because they're done using the tool.
-			new_reservation = deepcopy(current_reservation)
-			new_reservation.id = None
-			new_reservation.pk = None
-			new_reservation.end = timezone.now() + downtime
-			new_reservation.updated = timezone.now()
-			new_reservation.created = timezone.now()
-			new_reservation.save()
-			current_reservation.shortened = True
-			current_reservation.updated = timezone.now()
-			current_reservation.descendant = new_reservation
-			current_reservation.save()
+		new_reservation = deepcopy(current_reservation)
+		new_reservation.id = None
+		new_reservation.pk = None
+		new_reservation.end = timezone.now() + downtime
+		new_reservation.updated = timezone.now()
+		new_reservation.created = timezone.now()
+		new_reservation.save()
+		current_reservation.shortened = True
+		current_reservation.updated = timezone.now()
+		current_reservation.descendant = new_reservation
+		current_reservation.save()
 	except Reservation.DoesNotExist:
 		pass
 
@@ -905,12 +918,18 @@ def save_usage_event(request):
 		new_usage_event.tool = tool
 		new_usage_event.start = ad_hoc_start
 		new_usage_event.end = ad_hoc_end
+		new_usage_event.ad_hoc_created = True
 		if request.POST.get("operator_comment") is not None:
 			new_usage_event.operator_comment = request.POST.get("operator_comment")
 		project_id = request.POST.get("chosen_project__0", None)
 		if project_id is not None and project_id != "":
 			project_id = int(project_id)
-			new_usage_event.project = Project.objects.get(id=project_id)
+			current_project = Project.objects.get(id=project_id)
+			if current_project.check_date_range(new_usage_event.start, new_usage_event.end):
+				new_usage_event.project = Project.objects.get(id=project_id)
+			else:
+				msg = 'The project ' + str(current_project.project_number) + ' cannot be used with a transaction that has a date range of ' + str(new_usage_event.start) + ' to ' + str(new_usage_event.end) + ' because the project active date range is ' + str(current_project.start_date) + ' to ' + str(current_project.end_date)
+				raise Exception(msg)
 		user_id = request.POST.get("chosen_user__0", None)
 		if user_id is not None and user_id != "":
 			user_id = int(user_id)
@@ -938,7 +957,13 @@ def save_usage_event(request):
 						return HttpResponseBadRequest('Please choose a user for whom the tool will be run.')
 				if attribute == "chosen_project":
 					if value is not None and value != "" and value != "-1":
-						project_events[index].project = Project.objects.get(id=value)
+						cp = Project.objects.get(id=value)
+						if cp.check_date_range(new_usage_event.start, new_usage_event.end):
+							project_events[index].project = Project.objects.get(id=value)
+						else:
+							msg = 'The project ' + str(cp.project_number) + ' cannot be used for a transaction with a date range of ' + str(new_usage_event.start) + ' to ' + str(new_usage_event.end) + ' because the project active date range is ' + str(cp.start_date) + ' to ' + str(cp.end_date)
+							new_usage_event.delete()
+							return HttpResponseBadRequest(msg)
 					else:
 						new_usage_event.delete()
 						return HttpResponseBadRequest('Please choose a project for charges made during this run.')

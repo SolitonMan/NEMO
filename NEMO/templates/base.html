@@ -93,7 +93,7 @@
 							{% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
 							{% navigation_url 'abuse' 'Abuse' %}
 							{% endif %}
-							{% if request.session.technical_staff or request.session.pi or request.session.administrative_staff or request.session.financial_admin or user.is_superuser %}
+							{% if request.session.pi or request.session.administrative_staff or request.session.financial_admin or user.is_superuser %}
 							{% navigation_url 'accounts_and_projects' 'Accounts and projects' %}
 							{% endif %}
 							{% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
@@ -158,7 +158,7 @@
 				{% if user.is_staff and user.charging_staff_time %}
 					<li class="hidden-sm">
 						<p class="navbar-text">
-							<a id="staff_charge_link" href="{% url 'staff_charges' %}" style="color:red; text-decoration: none" data-toggle="tooltip" data-placement="bottom" title="{% with user.get_staff_charge as staff_charge %}You are charging staff time to {{ staff_charge.customers.all.0 }} {% if staff_charge.customers.all.count > 1 %}and others{% endif %} for the project named {{ staff_charge.projects.all.0.application_identifier }} since {{ staff_charge.start }}.{% endwith %}">
+							<a id="staff_charge_link" href="{% url 'staff_charges' %}" style="color:red; text-decoration: none" data-toggle="tooltip" data-placement="bottom" title="{% with user.get_staff_charge as staff_charge %}You are charging staff time to {{ staff_charge.customers.all.0 }} {% if staff_charge.customers.all.count > 1 %}and others{% endif %} since {{ staff_charge.start }}.{% endwith %}">
 								Charging staff time
 							</a>
 						</p>

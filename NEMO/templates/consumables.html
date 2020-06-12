@@ -59,11 +59,11 @@
 					{% if projects|length == 0 %}
 						<option>{% if form.cleaned_data.customer %}No active projects!{% endif %}</option>
 					{% elif projects|length == 1 %}
-						<option value="{{ projects.0.id }}">{{ projects.0.application_identifier }}</option>
+						<option value="{{ projects.0.id }}">{{ projects.0 }}</option>
 					{% elif projects %}
 						<option disabled selected>Choose a project to bill</option>
 						{% for p in projects %}
-							<option value="{{ p.id }}" {% if form.cleaned_data.project.id == p.id %}selected{% endif %}>{{ p.application_identifier }}</option>
+							<option value="{{ p.id }}" {% if form.cleaned_data.project.id == p.id %}selected{% endif %}>{{ p }}</option>
 						{% endfor %}
 					{% endif %}
 				</select>
@@ -109,6 +109,13 @@
 			{% endif %}
 		</div>
 
+		<div class="form-group">
+			<label class="control-label col-sm-2" for="notes">Notes</label>
+			<div class="col-sm-4">
+				<textarea name="notes" id="notes" rows="10" cols="80" placeholder="Please enter any notes related to this withdraw"></textarea>
+			</div>
+		</div>
+
 		<input type="submit" class="btn btn-default" value="Make withdraw">
 	</form>
 
@@ -132,7 +139,7 @@
 				<td>{{ r.customer }}</td>
 				<td>{{ r.consumable }}</td>
 				<td>{{ r.quantity }}</td>
-				<td>{{ r.project.application_identifier }} [{{ r.project }}]</td>
+				<td>{{ r.project }}</td>
 				<td>{{ r.date|date:'Y-m-d' }}</td>
 			</tr>
 		{% endfor %}
@@ -203,7 +210,7 @@
 			if(response.projects.length === 0)
 				$('#project').append($('<option/>', {text: "No active projects!"})).attr('disabled', 'disabled');
 			else if(response.projects.length === 1)
-				$('#project').append($('<option/>', {value: response['projects'][0].id, text: response['projects'][0].application_identifier}));
+				$('#project').append($('<option/>', {value: response['projects'][0].id, text: response['projects'][0].name }));
 			else
 			{
 				$('#project').append($('<option/>', {
@@ -213,7 +220,7 @@
 				}));
 				$.each(response['projects'], function(count, project)
 				{
-					$('#project').append($('<option/>', {value: project.id, text: project.application_identifier}));
+					$('#project').append($('<option/>', {value: project.id, text: project.name}));
 				});
 			}
 		}

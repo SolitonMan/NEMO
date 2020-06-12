@@ -390,13 +390,13 @@ def resolve_staff_charge_contest(request):
 		else:
 			review_form += "<td>&nbsp;</td></tr>"
 		# add project
-		review_form += "<tr><th>Project</th><td>" + scp.project.application_identifier + "</td>"
+		review_form += "<tr><th>Project</th><td>" + str(scp.project) + "</td>"
 		if ContestTransactionData.objects.filter(content_type__pk=scp_type.id, object_id=scp.id, contest_transaction=contest_transaction, field_name="chosen_project").exists():
 			ct = ContestTransactionData.objects.get(content_type__pk=scp_type.id, object_id=scp.id, contest_transaction=contest_transaction, field_name="chosen_project")
 			o_id = int(ct.original_value)
 			p_id = int(ct.proposed_value)
 			p_project = Project.objects.get(id=p_id)
-			review_form += "<td><span style=\"font-weight:bold; color:red;\">" + p_project.application_identifier + "</span><input type=\"hidden\" name=\"proposed__chosen_project__" + str(scp.id) + "\" value=\"" + str(p_id) + "\" /></td></tr>"
+			review_form += "<td><span style=\"font-weight:bold; color:red;\">" + str(p_project) + "</span><input type=\"hidden\" name=\"proposed__chosen_project__" + str(scp.id) + "\" value=\"" + str(p_id) + "\" /></td></tr>"
 		else:
 			review_form += "<td>&nbsp;</td></tr>"
 		# add project_percent
@@ -499,13 +499,13 @@ def resolve_usage_event_contest(request):
 		else:
 			review_form += "<td>&nbsp;</td></tr>"
 		# add project
-		review_form += "<tr><th>Project</th><td>" + uep.project.application_identifier + "</td>"
+		review_form += "<tr><th>Project</th><td>" + str(uep.project) + "</td>"
 		if ContestTransactionData.objects.filter(content_type__pk=uep_type.id, object_id=uep.id, contest_transaction=contest_transaction, field_name="chosen_project").exists():
 			ct = ContestTransactionData.objects.get(content_type__pk=uep_type.id, object_id=uep.id, contest_transaction=contest_transaction, field_name="chosen_project")
 			o_id = int(ct.original_value)
 			p_id = int(ct.proposed_value)
 			p_project = Project.objects.get(id=p_id)
-			review_form += "<td><span style=\"font-weight:bold; color:red;\">" + p_project.application_identifier + "</span><input type=\"hidden\" name=\"proposed__chosen_project__" + str(uep.id) + "\" value=\"" + str(p_id) + "\" /></td></tr>"
+			review_form += "<td><span style=\"font-weight:bold; color:red;\">" + str(p_project) + "</span><input type=\"hidden\" name=\"proposed__chosen_project__" + str(uep.id) + "\" value=\"" + str(p_id) + "\" /></td></tr>"
 		else:
 			review_form += "<td>&nbsp;</td></tr>"
 		# add project_percent
@@ -604,13 +604,13 @@ def resolve_area_access_record_contest(request):
 			review_form += "<td>&nbsp;</td></tr>"
 
 		# add project
-		review_form += "<tr><th>Project</th><td>" + aarp.project.application_identifier + "</td>"
+		review_form += "<tr><th>Project</th><td>" + str(aarp.project) + "</td>"
 		if ContestTransactionData.objects.filter(content_type__pk=aarp_type.id, object_id=aarp.id, contest_transaction=contest_transaction, field_name="chosen_project").exists():
 			ct = ContestTransactionData.objects.get(content_type__pk=aarp_type.id, object_id=aarp.id, contest_transaction=contest_transaction, field_name="chosen_project")
 			o_id = int(ct.original_value)
 			p_id = int(ct.proposed_value)
 			p_project = Project.objects.get(id=p_id)
-			review_form += "<td><span style=\"font-weight:bold; color:red;\">" + p_project.application_identifier + "</span><input type=\"hidden\" name=\"proposed__chosen_project__" + str(aarp.id) + "\" value=\"" + str(p_id) + "\" /></td></tr>"
+			review_form += "<td><span style=\"font-weight:bold; color:red;\">" + str(p_project) + "</span><input type=\"hidden\" name=\"proposed__chosen_project__" + str(aarp.id) + "\" value=\"" + str(p_id) + "\" /></td></tr>"
 		else:
 			review_form += "<td>&nbsp;</td></tr>"
 
@@ -690,13 +690,13 @@ def resolve_consumable_withdraw_contest(request):
 	else:
 		review_form += "<td>&nbsp;</td><td>&nbsp;</td></tr>"
 
-	review_form += "<tr><th>Project</th><td>" + consumable_withdraw.project.application_identifier + "</td>"
+	review_form += "<tr><th>Project</th><td>" + str(consumable_withdraw.project) + "</td>"
 	if ContestTransactionData.objects.filter(content_type__pk=c_type.id, object_id=consumable_withdraw.id, contest_transaction=contest_transaction, field_name="chosen_project").exists():
 		ct = ContestTransactionData.objects.get(content_type__pk=c_type.id, object_id=consumable_withdraw.id, contest_transaction=contest_transaction, field_name="chosen_project")
 		o_id = int(ct.original_value)
 		p_id = int(ct.proposed_value)
 		p_project = Project.objects.get(id=p_id)
-		review_form += "<td>" + str(Project.objects.get(id=o_id).application_identifier) + "</td><td><span style=\"font-weight:bold; color:red;\">" + str(p_project.application_identifier) + "</span><input type=\"hidden\" name=\"proposed__chosen_project__" + str(consumable_withdraw.id) + "\" id=\"proposed__chosen_project__" + str(consumable_withdraw.id) + "\" value=\"" + str(p_id) + "\" /></td></tr>"
+		review_form += "<td>" + str(Project.objects.get(id=o_id)) + "</td><td><span style=\"font-weight:bold; color:red;\">" + str(p_project) + "</span><input type=\"hidden\" name=\"proposed__chosen_project__" + str(consumable_withdraw.id) + "\" id=\"proposed__chosen_project__" + str(consumable_withdraw.id) + "\" value=\"" + str(p_id) + "\" /></td></tr>"
 	else:
 		review_form += "<td>&nbsp;</td><td>&nbsp;</td></tr>"
 

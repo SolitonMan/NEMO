@@ -40,7 +40,7 @@ def billing_information(request, timeframe=''):
 		keyword_arguments = settings.BILLING_SERVICE['keyword_arguments']
 
 		first_of_the_month, last_of_the_month = get_month_timeframe(timeframe)
-		formatted_projects = ','.join(map(str, set(request.user.active_projects().values_list('application_identifier', flat=True))))
+		formatted_projects = ','.join(map(str, set(request.user.active_projects().values_list('project_number', 'name', 'account__simba_cost_center', flat=True))))
 		cost_activity_params = {
 			'created_date_gte': f"'{first_of_the_month.strftime('%m/%d/%Y')}'",
 			'created_date_lt': f"'{last_of_the_month.strftime('%m/%d/%Y')}'",

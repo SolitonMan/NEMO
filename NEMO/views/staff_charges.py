@@ -104,7 +104,13 @@ def begin_staff_charge(request):
 
 				if attribute == "chosen_project":
 					if value is not None and value != "" and value != "-1":
-						project_charges[index].project = Project.objects.get(id=value)	
+						cp = Project.objects.get(id=value)
+						if cp.check_date(charge.start):
+							project_charges[index].project = Project.objects.get(id=value)	
+						else:
+							msg = "The selected project " + str(cp.project_number) + " is not valid for use on a transaction with a start date of " + str(charge.start) + " because the start date of the project is " + str(cp.start_date)
+							charge.delete()
+							return HttpResponseBadRequest(msg)
 					else:
 						charge.delete()
 						return HttpResponseBadRequest('Please choose a project to which to bill your staff charges')
@@ -304,6 +310,7 @@ def ad_hoc_staff_charge(request):
 		charge.staff_member = request.user
 		charge.start = ad_hoc_start
 		charge.end = ad_hoc_end
+		charge.ad_hoc_created = True
 		if request.POST.get("staff_member_comment") is not None:
 			charge.staff_member_comment = request.POST.get("staff_member_comment")
 		charge.created = timezone.now()
@@ -334,7 +341,13 @@ def ad_hoc_staff_charge(request):
 
 				if attribute == "chosen_project":
 					if value is not None and value != "" and value != "-1":
-						project_charges[index].project = Project.objects.get(id=value)	
+						cp = Project.objects.get(id=value)
+						if cp.check_date(charge.start):
+							project_charges[index].project = Project.objects.get(id=value)	
+						else:
+							msg = 'The project ' + str(cp.project_number) + ' cannot be used on a transcation with a start date of ' + str(charge.start) + ' because the project start date is ' + str(cp.start_date)
+							charge.delete()
+							raise Exception()
 					else:
 						charge.delete()
 						msg = 'Please choose a project to which to bill your staff charges for this ad hoc charge.'
@@ -523,6 +536,7 @@ def ad_hoc_overlap_resolution(request):
 		ahc = StaffCharge()
 		ahc.start = request.POST.get("ad_hoc_start")
 		ahc.end = request.POST.get("ad_hoc_end")
+		ahc.ad_hoc_created = True
 		ahc.staff_member = request.user
 		ahc.created = timezone.now()
 		ahc.updated = timezone.now()
@@ -671,6 +685,7 @@ def sc_clone(request, charge_to_clone, new_charge_start, new_charge_end):
 	new_charge.staff_member = request.user
 	new_charge.start = new_charge_start
 	new_charge.end = new_charge_end
+	new_charge.ad_hoc_created = True
 	new_charge.created = timezone.now()
 	new_charge.updated = timezone.now()
 	new_charge.save()

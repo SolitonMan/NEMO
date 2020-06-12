@@ -5,15 +5,12 @@ from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.contrib.auth.models import Permission
 
 from NEMO.actions import lock_selected_interlocks, synchronize_with_tool_usage, unlock_selected_interlocks
-from NEMO.models import Account, ActivityHistory, Alert, Area, AreaAccessRecord, AreaAccessRecordProject, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableUnit, ConsumableCategory, ConsumableWithdraw, ContactInformation, ContactInformationCategory, ContestTransaction, ContestTransactionData, Core, Customization, Door, GlobalFlag, Interlock, InterlockCard, LandingPageChoice, LockBilling, MembershipHistory, News, Notification, PhysicalAccessLevel, PhysicalAccessLog, Project, Reservation, ReservationConfiguration, ReservationProject, Resource, ResourceCategory, SafetyIssue, ScheduledOutage, ScheduledOutageCategory, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskHistory, TaskStatus, Tool, TrainingSession, UsageEvent, UsageEventProject, User, UserType
-#from NEMO.models import Account, ActivityHistory, Alert, Area, AreaAccessRecord, AreaAccessRecordProject, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableUnit, ConsumableCategory, ConsumableWithdraw, ContactInformation, ContactInformationCategory, ContestTransaction, ContestTransactionData, Core, Customization, Door, Interlock, InterlockCard, LandingPageChoice, LockBilling, MembershipHistory, News, Notification, PhysicalAccessLevel, PhysicalAccessLog, Project, Reservation, ReservationConfiguration, ReservationProject, Resource, ResourceCategory, SafetyIssue, ScheduledOutage, ScheduledOutageCategory, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskHistory, TaskStatus, Tool, TrainingSession, UsageEvent, UsageEventProject, User, UserType
+from NEMO.models import Account, ActivityHistory, Alert, Area, AreaAccessRecord, AreaAccessRecordProject, BillingType, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableUnit, ConsumableCategory, ConsumableWithdraw, ContactInformation, ContactInformationCategory, ContestTransaction, ContestTransactionData, Core, Customization, Door, GlobalFlag, Interlock, InterlockCard, LandingPageChoice, LockBilling, MembershipHistory, News, Notification, NsfCategory, Organization, OrganizationType, PhysicalAccessLevel, PhysicalAccessLog, Project, Reservation, ReservationConfiguration, ReservationProject, Resource, ResourceCategory, SafetyIssue, ScheduledOutage, ScheduledOutageCategory, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskHistory, TaskStatus, Tool, TrainingSession, UsageEvent, UsageEventProject, User, UserType
 
 admin.site.site_header = "LEO"
 admin.site.site_title = "LEO"
 admin.site.index_title = "Detailed administration"
-
-def has_delete_permission(request, obj=None):
-	return request.user.is_superuser()
+admin.site.disable_action('delete_selected')
 
 def change_view(self, request, object_id=None, form_url='', extra_context=None):
 	return super().change_view(request, object_id, form_url, extra_context=dict(show_delete=False))
@@ -158,7 +155,7 @@ class ToolAdminForm(forms.ModelForm):
 @register(Tool)
 class ToolAdmin(admin.ModelAdmin):
 	list_display = ('name', 'category', 'core_id', 'visible', 'operational', 'problematic', 'is_configurable')
-	list_filter = ('visible', 'operational', 'category', 'core_id')
+	list_filter = ('visible', 'operational', 'core_id')
 	form = ToolAdminForm
 
 	search_fields = ('name', 'category')
@@ -198,12 +195,18 @@ class ToolAdmin(admin.ModelAdmin):
 			return qs
 		return qs.filter(core_id__in=request.user.core_ids.all())
 
+	def has_delete_permission(self, request, obj=None):
+		return False
+
 
 @register(TrainingSession)
 class TrainingSessionAdmin(admin.ModelAdmin):
 	list_display = ('id', 'trainer', 'trainee', 'tool', 'project', 'type', 'date', 'duration', 'qualified')
-	list_filter = ('qualified', 'date', 'type', 'tool')
+	list_filter = ('qualified', 'date', 'type')
 	date_hierarchy = 'date'
+
+	def has_delete_permission(self, request, obj=None):
+		return False
 
 
 @register(StaffCharge)
@@ -213,11 +216,15 @@ class StaffChargeAdmin(admin.ModelAdmin):
 	date_hierarchy = 'start'
 	ordering = ['-id']
 
+	def has_delete_permission(self, request, obj=None):
+		return False
+
 @register(StaffChargeProject)
 class StaffChargeProjectAdmin(admin.ModelAdmin):
 	list_display = ('id', 'staff_charge', 'customer', 'project', 'project_percent')
-	list_filter = ('staff_charge', 'customer', 'project')
 
+	def has_delete_permission(self, request, obj=None):
+		return False
 
 @register(AreaAccessRecord)
 class AreaAccessRecordAdmin(admin.ModelAdmin):
@@ -225,10 +232,15 @@ class AreaAccessRecordAdmin(admin.ModelAdmin):
 	list_filter = ('area', 'start',)
 	date_hierarchy = 'start'
 
+	def has_delete_permission(self, request, obj=None):
+		return False
+
 @register(AreaAccessRecordProject)
 class AreaAccessRecordProjectAdmin(admin.ModelAdmin):
 	list_display = ('id', 'area_access_record', 'customer', 'project', 'project_percent')
-	list_filter = ('area_access_record', 'customer', 'project')
+
+	def has_delete_permission(self, request, obj=None):
+		return False
 
 
 @register(Configuration)
@@ -261,11 +273,16 @@ class ConfigurationAdmin(admin.ModelAdmin):
 				kwargs['queryset'] = Consumable.objects.filter(category__name__exact='Consumables')
 		return super().formfield_for_manytomany(db_field, request, **kwargs)
 
+	def has_delete_permission(self, request, obj=None):
+		return False
 
 @register(ConfigurationHistory)
 class ConfigurationHistoryAdmin(admin.ModelAdmin):
 	list_display = ('id', 'configuration', 'user', 'modification_time', 'slot')
 	date_hierarchy = 'modification_time'
+
+	def has_delete_permission(self, request, obj=None):
+		return False
 
 
 @register(Account)
@@ -278,6 +295,9 @@ class AccountAdmin(admin.ModelAdmin):
 		""" Audit account and project active status. """
 		super().save_model(request, obj, form, change)
 		record_active_state(request, obj, form, 'active', not change)
+
+	def has_delete_permission(self, request, obj=None):
+		return False
 
 
 class ProjectAdminForm(forms.ModelForm):
@@ -302,8 +322,8 @@ class ProjectAdminForm(forms.ModelForm):
 
 @register(Project)
 class ProjectAdmin(admin.ModelAdmin):
-	list_display = ('id', 'name', 'application_identifier', 'internal_order', 'wbs_element', 'account', 'owner', 'active')
-	search_fields = ('name', 'internal_order', 'wbs_element', 'application_identifier', 'account__name', 'owner', 'account__simba_cost_center')
+	list_display = ('id', 'name', 'project_number', 'account', 'owner', 'bill_to', 'start_date', 'end_date', 'active')
+	search_fields = ('name', 'internal_order', 'wbs_element', 'application_identifier', 'account__name', 'account__simba_cost_center', 'owner__first_name', 'owner__last_name', 'owner__username', 'bill_to__first_name', 'bill_to__last_name', 'bill_to__username')
 	list_filter = ('active',)
 	form = ProjectAdminForm
 
@@ -335,32 +355,50 @@ class ProjectAdmin(admin.ModelAdmin):
 		# Record whether the project is active or not.
 		record_active_state(request, obj, form, 'active', not change)
 
+	def has_delete_permission(self, request, obj=None):
+		return False
+
 
 @register(Reservation)
 class ReservationAdmin(admin.ModelAdmin):
 	list_display = ('id', 'user', 'creator', 'tool', 'project', 'additional_information', 'start', 'end', 'duration', 'cancelled', 'missed')
-	list_filter = ('cancelled', 'missed', 'tool')
+	list_filter = ('cancelled', 'missed')
 	date_hierarchy = 'start'
+
+	def has_delete_permission(self, request, obj=None):
+		return False
+
 
 @register(ReservationConfiguration)
 class ReservationConfigurationAdmin(admin.ModelAdmin):
 	list_display = ('id', 'reservation', 'configuration', 'consumable')
 
+	def has_delete_permission(self, request, obj=None):
+		return False
+
 @register(ReservationProject)
 class ReservationProjectAdmin(admin.ModelAdmin):
 	list_display = ('id', 'reservation', 'project', 'customer')
 
+	def has_delete_permission(self, request, obj=None):
+		return False
+
 @register(UsageEvent)
 class UsageEventAdmin(admin.ModelAdmin):
 	list_display = ('id', 'tool', 'user', 'operator', 'project', 'start', 'end', 'duration', 'run_data')
-	list_filter = ('start', 'end', 'tool')
+	list_filter = ('start', 'end')
 	date_hierarchy = 'start'
 
+	def has_delete_permission(self, request, obj=None):
+		return False
 
 @register(UsageEventProject)
 class UsageEventProjectAdmin(admin.ModelAdmin):
 	list_display = ('id', 'usage_event', 'customer', 'project', 'project_percent')
-	list_filter = ('usage_event', 'customer', 'project')
+
+	def has_delete_permission(self, request, obj=None):
+		return False
+
 
 @register(Consumable)
 class ConsumableAdmin(admin.ModelAdmin):
@@ -368,26 +406,39 @@ class ConsumableAdmin(admin.ModelAdmin):
 	list_filter = ('visible', 'category')
 	search_fields = ('name', 'category')
 
+	def has_delete_permission(self, request, obj=None):
+		return False
+
+
 @register(ConsumableUnit)
 class ConsumableUnitAdmin(admin.ModelAdmin):
 	list_display = ('name', 'abbreviation')
+
+	def has_delete_permission(self, request, obj=None):
+		return False
 
 @register(ConsumableCategory)
 class ConsumableCategoryAdmin(admin.ModelAdmin):
 	list_display = ('name',)
 
+	def has_delete_permission(self, request, obj=None):
+		return False
 
 @register(ConsumableWithdraw)
 class ConsumableWithdrawAdmin(admin.ModelAdmin):
 	list_display = ('id', 'customer', 'merchant', 'consumable', 'quantity', 'project', 'date')
-	list_filter = ('date', 'consumable')
 	date_hierarchy = 'date'
+
+	def has_delete_permission(self, request, obj=None):
+		return False
 
 
 @register(InterlockCard)
 class InterlockCardAdmin(admin.ModelAdmin):
 	list_display = ('server', 'port', 'number', 'even_port', 'odd_port')
 
+	def has_delete_permission(self, request, obj=None):
+		return False
 
 @register(Interlock)
 class InterlockAdmin(admin.ModelAdmin):
@@ -395,23 +446,31 @@ class InterlockAdmin(admin.ModelAdmin):
 	actions = [lock_selected_interlocks, unlock_selected_interlocks, synchronize_with_tool_usage]
 	readonly_fields = ['state', 'most_recent_reply']
 
+	def has_delete_permission(self, request, obj=None):
+		return False
 
 @register(Task)
 class TaskAdmin(admin.ModelAdmin):
 	list_display = ('id', 'urgency', 'tool', 'creator', 'creation_time', 'problem_category', 'cancelled', 'resolved', 'resolution_category')
-	list_filter = ('urgency', 'resolved', 'cancelled', 'safety_hazard', 'creation_time', 'tool')
+	list_filter = ('urgency', 'resolved', 'cancelled', 'safety_hazard', 'creation_time')
 	date_hierarchy = 'creation_time'
 
+	def has_delete_permission(self, request, obj=None):
+		return False
 
 @register(TaskCategory)
 class TaskCategoryAdmin(admin.ModelAdmin):
 	list_display = ('name', 'stage')
 
+	def has_delete_permission(self, request, obj=None):
+		return False
 
 @register(TaskStatus)
 class TaskStatusAdmin(admin.ModelAdmin):
 	list_display = ('name', 'notify_primary_tool_owner', 'notify_backup_tool_owners', 'notify_tool_notification_email', 'custom_notification_email_address')
 
+	def has_delete_permission(self, request, obj=None):
+		return False
 
 @register(TaskHistory)
 class TaskHistoryAdmin(admin.ModelAdmin):
@@ -419,14 +478,18 @@ class TaskHistoryAdmin(admin.ModelAdmin):
 	readonly_fields = ('time',)
 	date_hierarchy = 'time'
 
+	def has_delete_permission(self, request, obj=None):
+		return False
 
 @register(Comment)
 class CommentAdmin(admin.ModelAdmin):
 	list_display = ('id', 'tool', 'author', 'creation_date', 'expiration_date', 'visible', 'hidden_by', 'hide_date')
-	list_filter = ('visible', 'creation_date', 'tool')
+	list_filter = ('visible', 'creation_date')
 	date_hierarchy = 'creation_date'
 	search_fields = ('content',)
 
+	def has_delete_permission(self, request, obj=None):
+		return False
 
 @register(Resource)
 class ResourceAdmin(admin.ModelAdmin):
@@ -434,23 +497,33 @@ class ResourceAdmin(admin.ModelAdmin):
 	list_filter = ('available', 'category')
 	filter_horizontal = ('fully_dependent_tools', 'partially_dependent_tools', 'dependent_areas')
 
+	def has_delete_permission(self, request, obj=None):
+		return False
+
 
 @register(ActivityHistory)
 class ActivityHistoryAdmin(admin.ModelAdmin):
 	list_display = ('__str__', 'content_type', 'object_id', 'action', 'date', 'authorizer')
 	date_hierarchy = 'date'
 
+	def has_delete_permission(self, request, obj=None):
+		return False
 
 @register(MembershipHistory)
 class MembershipHistoryAdmin(admin.ModelAdmin):
 	list_display = ('__str__', 'parent_content_type', 'parent_object_id', 'action', 'child_content_type', 'child_object_id', 'date', 'authorizer')
 	date_hierarchy = 'date'
 
+	def has_delete_permission(self, request, obj=None):
+		return False
+
 
 @register(UserType)
 class UserTypeAdmin(admin.ModelAdmin):
 	list_display = ('name',)
 
+	def has_delete_permission(self, request, obj=None):
+		return False
 
 @register(User)
 class UserAdmin(admin.ModelAdmin):
@@ -463,7 +536,7 @@ class UserAdmin(admin.ModelAdmin):
 	)
 	search_fields = ('first_name', 'last_name', 'username', 'email')
 	list_display = ('first_name', 'last_name', 'username', 'email', 'is_active', 'domain', 'is_staff', 'is_technician', 'is_superuser', 'date_joined', 'last_login')
-	list_filter = ('is_active','groups','projects','last_name','username')
+	list_filter = ('is_active','groups')
 
 	def save_model(self, request, obj, form, change):
 		""" Audit project membership and qualifications when a user is saved. """
@@ -474,6 +547,9 @@ class UserAdmin(admin.ModelAdmin):
 		record_local_many_to_many_changes(request, obj, form, 'core_ids')
 		record_active_state(request, obj, form, 'is_active', not change)
 
+	def has_delete_permission(self, request, obj=None):
+		return False
+
 
 @register(PhysicalAccessLog)
 class PhysicalAccessLogAdmin(admin.ModelAdmin):
@@ -482,6 +558,8 @@ class PhysicalAccessLogAdmin(admin.ModelAdmin):
 	search_fields = ('user',)
 	date_hierarchy = 'time'
 
+	def has_delete_permission(self, request, obj=None):
+		return False
 
 @register(SafetyIssue)
 class SafetyIssueAdmin(admin.ModelAdmin):
@@ -489,6 +567,9 @@ class SafetyIssueAdmin(admin.ModelAdmin):
 	list_filter = ('resolved', 'visible', 'creation_time', 'resolution_time')
 	readonly_fields = ('creation_time', 'resolution_time')
 	search_fields = ('location', 'concern', 'progress', 'resolution',)
+
+	def has_delete_permission(self, request, obj=None):
+		return False
 
 
 @register(Door)
@@ -500,20 +581,30 @@ class DoorAdmin(admin.ModelAdmin):
 class AlertAdmin(admin.ModelAdmin):
 	list_display = ('title', 'creation_time', 'creator', 'debut_time', 'expiration_time', 'user', 'dismissible')
 
+	def has_delete_permission(self, request, obj=None):
+		return False
 
 @register(PhysicalAccessLevel)
 class PhysicalAccessLevelAdmin(admin.ModelAdmin):
 	list_display = ('name', 'area', 'schedule')
+
+	def has_delete_permission(self, request, obj=None):
+		return False
 
 
 @register(ContactInformationCategory)
 class ContactInformationCategoryAdmin(admin.ModelAdmin):
 	list_display = ('name', 'display_order')
 
+	def has_delete_permission(self, request, obj=None):
+		return False
 
 @register(ContactInformation)
 class ContactInformationAdmin(admin.ModelAdmin):
 	list_display = ('name', 'category')
+
+	def has_delete_permission(self, request, obj=None):
+		return False
 
 
 @register(LandingPageChoice)
@@ -521,20 +612,32 @@ class LandingPageChoiceAdmin(admin.ModelAdmin):
 	list_display = ('display_priority', 'name', 'url', 'open_in_new_tab', 'secure_referral', 'hide_from_mobile_devices', 'hide_from_desktop_computers')
 	list_display_links = ('name',)
 
+	def has_delete_permission(self, request, obj=None):
+		return False
+
 
 @register(Customization)
 class CustomizationAdmin(admin.ModelAdmin):
 	list_display = ('name', 'value')
+
+	def has_delete_permission(self, request, obj=None):
+		return False
 
 
 @register(ScheduledOutageCategory)
 class ScheduledOutageCategoryAdmin(admin.ModelAdmin):
 	list_display = ('name',)
 
+	def has_delete_permission(self, request, obj=None):
+		return False
+
 
 @register(ScheduledOutage)
 class ScheduledOutageAdmin(admin.ModelAdmin):
 	list_display = ('id', 'tool', 'resource', 'creator', 'title', 'start', 'end')
+
+	def has_delete_permission(self, request, obj=None):
+		return False
 
 
 @register(News)
@@ -542,20 +645,31 @@ class NewsAdmin(admin.ModelAdmin):
 	list_display = ('id', 'created', 'last_updated', 'archived', 'title')
 	list_filter = ('archived',)
 
+	def has_delete_permission(self, request, obj=None):
+		return False
 
 @register(Notification)
 class NotificationAdmin(admin.ModelAdmin):
 	list_display = ('id', 'user', 'expiration', 'content_type', 'object_id')
+
+	def has_delete_permission(self, request, obj=None):
+		return False
 
 
 @register(ContestTransaction)
 class ContestTransactionAdmin(admin.ModelAdmin):
 	list_display = ('id', 'content_type', 'object_id', 'contest_description', 'contested_date', 'contest_resolution')
 
+	def has_delete_permission(self, request, obj=None):
+		return False
+
 
 @register(ContestTransactionData)
 class ContestTransactionDataAdmin(admin.ModelAdmin):
 	list_display = ('id', 'content_type', 'object_id', 'field_name', 'original_value', 'proposed_value')
+
+	def has_delete_permission(self, request, obj=None):
+		return False
 
 
 @register(LockBilling)
@@ -563,11 +677,71 @@ class LockBillingAdmin(admin.ModelAdmin):
 	list_display = ('id', 'fiscal_year', 'billing_month', 'billing_year', 'is_locked', 'is_closed', 'created', 'updated')
 	list_filter = ('billing_year', 'billing_month')
 
+	def has_delete_permission(self, request, obj=None):
+		return False
+
 @register(GlobalFlag)
 class GlobalFlagAdmin(admin.ModelAdmin):
 	list_display = ('id', 'name', 'active')
 
-admin.site.register(ResourceCategory)
-admin.site.register(Area)
-admin.site.register(Permission)
-admin.site.register(Core)
+	def has_delete_permission(self, request, obj=None):
+		return False
+
+@register(ResourceCategory)
+class ResourceCategoryAdmin(admin.ModelAdmin):
+	list_display = ('id', 'name')
+
+	def has_delete_permission(self, request, obj=None):
+		return False
+
+@register(Area)
+class AreaAdmin(admin.ModelAdmin):
+	list_display = ('id', 'name', 'welcome_message')
+
+	def has_delete_permission(self, request, obj=None):
+		return False
+
+@register(Permission)
+class PermissionAdmin(admin.ModelAdmin):
+	list_display = ('id', 'name', 'content_type', 'codename')
+
+	def has_delete_permission(self, request, obj=None):
+		return False
+
+@register(Core)
+class CoreAdmin(admin.ModelAdmin):
+	list_display = ('id', 'name')
+
+	def has_delete_permission(self, request, obj=None):
+		return False
+
+
+@register(Organization)
+class OrganizationAdmin(admin.ModelAdmin):
+	list_display = ('id', 'name', 'organization_type', 'billing_type', 'url')
+
+	def has_delete_permission(self, request, obj=None):
+		return False
+
+@register(OrganizationType)
+class OrganizationTypeAdmin(admin.ModelAdmin):
+	list_display = ('id', 'name', 'nsf_category', 'active')
+
+	def has_delete_permission(self, request, obj=None):
+		return False
+
+@register(BillingType)
+class BillingTypeAdmin(admin.ModelAdmin):
+	list_display = ('id', 'name')
+
+	def has_delete_permission(self, request, obj=None):
+		return False
+
+@register(NsfCategory)
+class NsfCategoryAdmin(admin.ModelAdmin):
+	list_display = ('id', 'name', 'sort_order')
+
+	def has_delete_permission(self, request, obj=None):
+		return False
+
+

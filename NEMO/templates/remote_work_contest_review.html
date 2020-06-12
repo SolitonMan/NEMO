@@ -41,7 +41,7 @@
 			</td>
 			<td>
 				{% for p in c.projects.all %}
-					{{ p.application_identifier }}<br/>
+					{{ p }}<br/>
 				{% endfor %}
 			</td>
 			<td>{{ c.start }} - {{ c.end }}</td>
@@ -94,7 +94,7 @@
 			<td>
 				{% if u.projects %}
 					{% for p in u.projects.all %}
-						{{ p.application_identifier }}<br/>
+						{{ p }}<br/>
 					{% endfor %}
 				{% else %}
 					{{ u.project }}
@@ -185,7 +185,7 @@
 			<td>
 			{% if a.projects %}
 				{% for p in a.projects.all %}
-					{{ p.application_identifier }}<br/>
+					{{ p }}<br/>
 				{% endfor %}
 			{% else %}
 				{{ a.project }}

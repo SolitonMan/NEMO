@@ -14,16 +14,23 @@
 				<th>Customer</th>
 				<th>Project</th>
 				<th>Percent</th>
+				<th>Assign % evenly</br><input type="checkbox" name="split_percent" id="split_percent" onclick="toggle_split(this);" /></th>
 			</tr>
 		{% for u in uep %}
 			<tr>
 				<td>{{ u.customer.first_name }} {{ u.customer.last_name }}</td>
 				<td>{{ u.project.name }}</td>
 				<td><input type="text" name="project_percent__{{ u.id }}" value="" /></td>
+				<td><input type="radio" name="prime" value="{{ u.id }}" style="display: none;" /></td>
 			</tr>
 		{% endfor %}
 			<tr>
-				<td colspan="3" align="left" valign="top">
+				<td colspan="4" align="right">
+					<button type="button" style="display: none;" class="btn btn-success" name="splitter" id="splitter" onclick="divper(this); return false;">Split %</button>
+				</td>
+			</tr>
+			<tr>
+				<td colspan="4" align="left" valign="top">
 					<label for="operator_comment">Comment / Purpose of Work</label>
 					<textarea name="operator_comment" id="operator_comment" rows="6" cols="50">{{ operator_comment }}</textarea>
 				</td>
@@ -32,12 +39,43 @@
 		<br />
 		<input type="submit" value="Record Tool Usage" class="btn btn-default"/>
 	</form>
-	<script>
+	<script type="text/javascript">
 	function on_submit()
 	{
 		var failure_dialog = ajax_failure_callback("There was an error processing the data.  Please check the form and try again.");
 		ajax_post("{% url 'usage_event_projects_save' %}", serialize("#usage_event_projects"), ajax_success_callback, failure_dialog);
 		return false;
+	}
+
+	function toggle_split(el)
+	{
+		if (el.checked) {
+			// display radio buttons and Split button
+			$("input[type='radio'][name='prime']").show();
+			$("#splitter").show();
+		} else {
+			// hide radio buttons and Split button
+			$("input[type='radio'][name='prime']").hide();
+			$("#splitter").hide();
+		}
+	}
+
+	function divper(el)
+	{
+		// get the project_percent__* input text fields and assign them the appropriate values
+		var split_count = $("input[type='radio'][name='prime']").length;
+		// alert(split_count + " radio buttons found");
+
+		// get radio buttons
+		$("input[type='radio'][name='prime']").each(function() {
+			// alert($(this).val());
+			if ($(this).val() == $("input[type='radio'][name='prime']:checked").val()) {
+				$("input[type='text'][name='project_percent__" + $(this).val() + "']").val(100 - ((split_count - 1) * (Math.floor(10000/split_count) / 100)));
+			} else {
+				$("input[type='text'][name='project_percent__" + $(this).val() + "']").val(Math.floor(10000/split_count) / 100);
+			}
+		});
+
 	}
 
 	function reload_events()
