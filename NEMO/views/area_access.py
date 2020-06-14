@@ -294,30 +294,38 @@ def change_project(request, new_project=None):
 	return redirect(reverse('landing'))
 
 
-@staff_member_required(login_url=None)
+@login_required
 @require_http_methods(['GET', 'POST'])
-def new_area_access_record(request):
+def new_area_access_record(request, customer=None):
 	dictionary = {
 		'customers': User.objects.filter(is_active=True, projects__active=True).distinct()
 	}
 	if request.method == 'GET':
 		try:
-			customer = User.objects.get(id=request.GET['customer'], is_active=True)
-			dictionary['customer'] = customer
-			dictionary['areas'] = list(set([access_level.area for access_level in customer.physical_access_levels.all()]))
-			if customer.active_project_count() == 0:
-				dictionary['error_message'] = '{} does not have any active projects to bill area access'.format(customer)
+			if customer:
+				customer_to_send = User.objects.get(id=customer, is_active=True)
+				dictionary['self_login_flag'] = True
+			else:
+				customer_to_send = User.objects.get(id=request.GET['customer'], is_active=True)
+				dictionary['self_login_flag'] = False
+			dictionary['customer'] = customer_to_send
+			dictionary['areas'] = list(set([access_level.area for access_level in customer_to_send.physical_access_levels.all()]))
+			if customer_to_send.active_project_count() == 0:
+				dictionary['error_message'] = '{} does not have any active projects to bill area access'.format(customer_to_send)
 				return render(request, 'area_access/new_area_access_record.html', dictionary)
 			if not dictionary['areas']:
-				dictionary['error_message'] = '{} does not have access to any billable laboratory areas'.format(customer)
+				dictionary['error_message'] = '{} does not have access to any billable laboratory areas'.format(customer_to_send)
 				return render(request, 'area_access/new_area_access_record.html', dictionary)
+
 			return render(request, 'area_access/new_area_access_record_details.html', dictionary)
 		except:
+			#raise Exception()
 			pass
 		return render(request, 'area_access/new_area_access_record.html', dictionary)
 	if request.method == 'POST':
 		try:
 			user = User.objects.get(id=request.POST['customer'], is_active=True)
+			self_login_flag = user == request.user
 			project = Project.objects.get(id=request.POST['project'])
 			area = Area.objects.get(id=request.POST['area'])
 		except:
@@ -346,7 +354,10 @@ def new_area_access_record(request):
 		record.updated = timezone.now()
 		record.save()
 		dictionary['success'] = '{} is now logged in to the {}.'.format(user, area.name.lower())
-		return render(request, 'area_access/new_area_access_record.html', dictionary)
+		if request.POST['self_login_flag'] == "True":
+			return HttpResponseRedirect(reverse('landing'))
+		else:
+			return render(request, 'area_access/new_area_access_record.html', dictionary)
 
 
 @login_required

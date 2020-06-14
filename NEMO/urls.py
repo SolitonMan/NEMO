@@ -221,6 +221,7 @@ if settings.ALLOW_CONDITIONAL_URLS:
 		# Area access
 		url(r'^area_access/$', area_access.area_access, name='area_access'),
 		url(r'^new_area_access_record/$', area_access.new_area_access_record, name='new_area_access_record'),
+		url(r'^new_area_access_record/(?P<customer>\d+)/$', area_access.new_area_access_record, name='new_area_access_customer'),
 
 		# General area occupancy table, for use with Kiosk and Area Access tablets
 		url(r'^occupancy/$', status_dashboard.occupancy, name='occupancy'),

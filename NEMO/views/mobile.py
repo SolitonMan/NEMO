@@ -1,16 +1,18 @@
 from datetime import datetime, timedelta
 from itertools import chain
+from re import match, search
 
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.http import HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
+from django.utils import timezone
 from django.utils.dateparse import parse_time, parse_date
 from django.views.decorators.http import require_GET, require_POST
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 
-from NEMO.models import Reservation, Tool, Project, ScheduledOutage
+from NEMO.models import Reservation, ReservationProject, Tool, User, Project, ScheduledOutage
 from NEMO.utilities import extract_date, localize, beginning_of_the_day, end_of_the_day
 from NEMO.views.calendar import extract_configuration, determine_insufficient_notice
 from NEMO.views.policy import check_policy_to_save_reservation
@@ -56,6 +58,7 @@ def new_reservation(request, tool_id, date=None):
 	dictionary = tool.get_configuration_information(user=request.user, start=None)
 	dictionary['tool'] = tool
 	dictionary['date'] = date
+	dictionary['users'] = User.objects.filter(is_active=True, projects__active=True, projects__account__active=True).distinct()
 
 	return render(request, 'mobile/new_reservation.html', dictionary)
 
@@ -86,11 +89,60 @@ def make_reservation(request):
 		return render(request, 'mobile/error.html', {'message': policy_problems[0]})
 
 	# All policy checks have passed.
-	try:
-		reservation.project = Project.objects.get(id=request.POST['project_id'])
-	except:
-		if not request.user.is_staff:
-			return render(request, 'mobile/error.html', {'message': 'You must specify a project for your reservation'})
+
+	if request.user.is_staff:
+		mode = request.POST['staff_charge']
+
+		if mode == "self":
+			# make a reservation for the user and don't add a record to the ReservationProject table
+			active_projects = request.user.active_projects()
+
+			if len(active_projects) == 1:
+				reservation.project = active_projects[0]
+			else:
+				try:
+					reservation.project = Project.objects.get(id=request.POST['project_id'])
+				except:
+					msg = 'No project was selected.  Please return to the <a href="/calendar/">calendar</a> to try again.'
+					return render(request, 'mobile/error.html', {'message': msg})
+
+		else:
+			# add ReservationProject entries for the customers submitted by the staff member
+			reservation_projects = {}
+			reservation.save()
+
+			for key, value in request.POST.items():
+				if is_valid_field(key):
+					attribute, separator, index = key.partition("__")
+					index = int(index)
+					if index not in reservation_projects:
+						reservation_projects[index] = ReservationProject()
+						reservation_projects[index].reservation = reservation
+						reservation_projects[index].created = timezone.now()
+						reservation_projects[index].updated = timezone.now()
+					if attribute == "chosen_user":
+						if value is not None and value != "":
+							reservation_projects[index].customer = User.objects.get(id=value)
+						else:
+							reservation.delete()
+							return HttpResponseBadRequest('Please choose a user for whom the tool will be run.')
+					if attribute == "chosen_project":
+						if value is not None and value != "" and value != "-1":
+							reservation_projects[index].project = Project.objects.get(id=value)
+						else:
+							reservation.delete()
+							return HttpResponseBadRequest('Please choose a project for charges made during this run.')
+
+			for r in reservation_projects.values():
+				r.full_clean()
+				r.save()
+
+	else:
+		try:
+			reservation.project = Project.objects.get(id=request.POST['project_id'])
+		except:
+			if not request.user.is_staff:
+				return render(request, 'mobile/error.html', {'message': 'You must specify a project for your reservation'})
 
 	reservation.additional_information, reservation.self_configuration, res_conf = extract_configuration(request)
 	# Reservation can't be short notice if the user is configuring the tool themselves.
@@ -143,3 +195,6 @@ def view_calendar(request, tool_id, date=None):
 	}
 
 	return render(request, 'mobile/view_calendar.html', dictionary)
+
+def is_valid_field(field):
+	return search("^(chosen_user|chosen_project|project_percent)__[0-9]+$", field) is not None
