@@ -1605,3 +1605,34 @@ class NsfCategory(models.Model):
 
 	def __str__(self):
 		return self.name
+
+
+class FICO_COA_Person_Responsible(models.Model):
+	cost_center = models.CharField(max_length=10, null=True, blank=True)
+	internal_order = models.CharField(max_length=12, null=True, blank=True)
+	wbs_element = models.CharField(max_length=12, null=True, blank=True)
+	access_id = models.CharField(max_length=8, null=True, blank=True)
+	grant = models.CharField(max_length=20, null=True, blank=True)
+	fund = models.CharField(max_length=10, null=True, blank=True)
+	grant_valid_to_date = models.DateField(null=True, blank=True)
+	sp_indicator = models.CharField(max_length=1, null=True, blank=True)
+
+
+class FICO_COA(models.Model):
+	business_area = models.CharField(max_length=4, null=True, blank=True)
+	department = models.CharField(max_length=5, null=True, blank=True)
+	cost_center = models.CharField(max_length=10, null=True, blank=True)
+	internal_order = models.CharField(max_length=12, null=True, blank=True)
+	wbs_element = models.CharField(max_length=12, null=True, blank=True)
+	zdescr = models.CharField(max_length=40, null=True, blank=True)
+	start_date = models.DateField(null=True, blank=True)
+	end_date = models.DateField(null=True, blank=True)
+	chargeable_flag = models.CharField(max_length=1, null=True, blank=True)
+
+
+class FICO_GL_ACCT(models.Model):
+	gl_account = models.CharField(max_length=8, null=True, blank=True)
+	gl_account_name = models.CharField(max_length=20, null=True, blank=True)
+	start_date = models.DateField(null=True, blank=True)
+	end_date = models.DateField(null=True, blank=True)
+
