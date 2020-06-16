@@ -129,7 +129,7 @@ def begin_staff_charge(request):
 
 
 def is_valid_field(field):
-	return search("^(chosen_user|chosen_project|project_percent|overlap_choice)__[0-9]+$", field) is not None
+	return search("^(chosen_user|chosen_project|project_percent|overlap_choice|event_comment)__[0-9]+$", field) is not None
 
 def month_is_locked(check_date):
 	month = int(check_date.month)
@@ -815,6 +815,13 @@ def staff_charge_projects_save(request, modal_flag):
 			if is_valid_field(key):
 				attribute, separator, scpid = key.partition("__")
 				scpid = int(scpid)
+
+				if attribute == "event_comment":
+					scp = StaffChargeProject.objects.get(id=scpid)
+					scp.comment = value
+					scp.updated = timezone.now()
+					scp.save()
+
 				if attribute == "project_percent":
 					scp = StaffChargeProject.objects.get(id=scpid)
 					scp.project_percent = value

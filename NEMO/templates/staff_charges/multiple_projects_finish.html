@@ -17,18 +17,27 @@
 			<tr>
 				<th>Customer</th>
 				<th>Project</th>
+				<th>Comment</th>
 				<th>Percent</th>
+				<th>Assign % evenly</br><input type="checkbox" name="split_percent" id="split_percent" onclick="toggle_split(this);" /></th>
 			</tr>
 		{% for s in scp %}
 			<tr>
 				<td>{{ s.customer.first_name }} {{ s.customer.last_name }}</td>
 				<td>{{ s.project.name }}</td>
+				<td><input type="text" name="event_comment__{{ s.id }}" value="" /></td>
 				<td><input type="text" name="project_percent__{{ s.id }}" value="" /></td>
+				<td><input type="radio" name="prime" value="{{ s.id }}" style="display: none;" /></td>
 			</tr>
 		{% endfor %}
 			<tr>
-				<td colspan="3" align="left" valign="top">
-					<label for="staff_member_comment">Comment / Purpose of Charge</label>
+				<td colspan="5" align="right">
+					<button type="button" style="display: none;" class="btn btn-success" name="splitter" id="splitter" onclick="divper(this); return false;">Split %</button>
+				</td>
+			</tr>
+			<tr>
+				<td colspan="5" align="left" valign="top">
+					<label class="control-label col-sm-2" for="staff_member_comment">Comment / Purpose of Charge</label>
 					<textarea name="staff_member_comment" id="staff_member_comment" rows="6" cols="50">{{ staff_member_comment }}</textarea>
 				</td>
 			</tr>
@@ -46,6 +55,36 @@
 		var failure_dialog = ajax_failure_callback("There was an error processing the data.  Please check the form and try again.");
 		ajax_post("{% url 'staff_charge_projects_save' 0 %}", serialize("#staff_charge_projects"), reload_staff_charges, failure_dialog);
 		return false;
+	}
+
+	function toggle_split(el)
+	{
+		if (el.checked) {
+			// display radio buttons and Split button
+			$("input[type='radio'][name='prime']").show();
+			$("#splitter").show();
+		} else {
+			// hide radio buttons and Split button
+			$("input[type='radio'][name='prime']").hide();
+			$("#splitter").hide();
+		}
+	}
+
+	function divper(el)
+	{
+		// get the project_percent__* input text fields and assign them the appropriate values
+		var split_count = $("input[type='radio'][name='prime']").length;
+
+		// get radio buttons
+		$("input[type='radio'][name='prime']").each(function() {
+			// alert($(this).val());
+			if ($(this).val() == $("input[type='radio'][name='prime']:checked").val()) {
+				$("input[type='text'][name='project_percent__" + $(this).val() + "']").val(100 - ((split_count - 1) * (Math.floor(10000/split_count) / 100)));
+			} else {
+				$("input[type='text'][name='project_percent__" + $(this).val() + "']").val(Math.floor(10000/split_count) / 100);
+			}
+		});
+
 	}
 
 	function reload_staff_charges()

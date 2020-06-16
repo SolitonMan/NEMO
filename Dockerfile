@@ -18,6 +18,9 @@ RUN pip install django-easy-audit
 # Install schedule library for interlock pulsing
 RUN pip install schedule
 
+# Install xmltodict to support simple parsing
+RUN pip install xmltodict
+
 # Install DEBUG support
 #RUN pip install django-debug-toolbar
 #RUN pip install django-debug-toolbar-request-history

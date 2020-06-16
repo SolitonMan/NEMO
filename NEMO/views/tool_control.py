@@ -562,7 +562,7 @@ def enable_tool_multi(request):
 
 
 def is_valid_field(field):
-	return search("^(chosen_user|chosen_project|project_percent)__[0-9]+$", field) is not None
+	return search("^(chosen_user|chosen_project|project_percent|event_comment)__[0-9]+$", field) is not None
 
 
 @staff_member_required(login_url=None)
@@ -750,6 +750,13 @@ def usage_event_projects_save(request):
 			if is_valid_field(key):
 				attribute, separator, uepid = key.partition("__")
 				uepid = int(uepid)
+
+				if attribute == "event_comment":
+					uep = UsageEventProject.objects.get(id=uepid)
+					uep.comment = value
+					uep.updated = timezone.now()
+					uep.save()
+
 				if attribute == "project_percent":
 					uep = UsageEventProject.objects.get(id=uepid)
 					uep.project_percent = value

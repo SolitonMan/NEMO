@@ -7,7 +7,7 @@ from rest_framework import routers
 
 from NEMO.models import GlobalFlag
 from NEMO.scheduler import start_scheduler
-from NEMO.views import abuse, accounts_and_projects, alerts, api, area_access, authentication, calendar, configuration_agenda, consumables, contact_staff, customization, email, feedback, get_projects, history, jumbotron, kiosk, landing, maintenance, mobile, usage, news, qualifications, remote_work, resources, safety, sidebar, staff_charges, status_dashboard, tasks, tool_control, training, tutorials, users
+from NEMO.views import abuse, accounts_and_projects, alerts, api, area_access, authentication, calendar, configuration_agenda, consumables, contact_staff, customization, email, feedback, get_projects, history, interlock, jumbotron, kiosk, landing, maintenance, mobile, usage, news, qualifications, remote_work, resources, safety, sidebar, staff_charges, status_dashboard, tasks, tool_control, training, tutorials, users
 
 # Use our custom login page instead of Django's built-in one.
 admin.site.login = login_required(admin.site.login)
@@ -234,6 +234,11 @@ if settings.ALLOW_CONDITIONAL_URLS:
 		# Abuse:
 		url(r'^abuse/$', abuse.abuse, name='abuse'),
 		url(r'^abuse/user_drill_down/$', abuse.user_drill_down, name='user_drill_down'),
+
+		# Interlock Control:
+		url(r'^interlocks/$', interlock.interlocks, name='interlocks'),
+		url(r'^pulse_interlock/(?P<interlock_id>\d+)/$', interlock.pulse_interlock, name='pulse_interlock'),
+		url(r'^pulse_all/$', interlock.pulse_all, name='pulse_all_interlocks'),
 
 		# User management:
 		url(r'^users/$', users.users, name='users'),

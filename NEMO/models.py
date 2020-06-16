@@ -3,6 +3,7 @@ import json
 import socket
 import struct
 import requests
+import xmltodict
 from datetime import timedelta
 from logging import getLogger
 
@@ -571,7 +572,7 @@ class StaffCharge(CalendarDisplay):
 		if ep.exists():
 			d = "<table class=\"table\"><thead><tr><th>Customer</th><th>Project</th></tr></thead><tbody>"
 			for e in ep:
-				d += "<tr><td>" + e.customer.get_full_name() + "</td><td>" + e.project.name + "</td></tr>"
+				d += "<tr><td>" + e.customer.get_full_name() + "</td><td>" + str(e.project) + "</td></tr>"
 			d += "</tbody></table>"
 		else:
 			d = ""
@@ -588,6 +589,7 @@ class StaffChargeProject(models.Model):
 	project = models.ForeignKey('Project', on_delete=models.CASCADE, null=True)
 	customer = models.ForeignKey('User', on_delete=models.CASCADE, null=True)
 	project_percent = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+	comment = models.TextField(null=True, blank=True)
 	created = models.DateTimeField(null=True, blank=True)
 	updated = models.DateTimeField(null=True, blank=True)
 	contest_data = GenericRelation('ContestTransactionData')
@@ -697,9 +699,33 @@ class Account(models.Model):
 		return str(self.name + ' [I:' + str(self.ibis_account) + '][S:' + str(self.simba_cost_center) + ']')
 
 
+def get_new_project_number():
+	projects = Project.objects.all()
+	today = datetime.date.today()
+	year_current = today.strftime("%y")
+	max_number = 0
+
+	for p in projects:
+		# check if the project's number is from the current year
+		if year_current == p.project_number[:2]:
+			if int(max_number) < int(p.project_number[3:]):
+				max_number = int(p.project_number[3:])
+
+	max_number = int(max_number) + 1
+
+	if len(str(max_number)) == 1:
+		max_number = "00" + str(max_number)
+	elif len(str(max_number)) == 2:
+		max_number = "0" + str(max_number)
+	else:
+		max_number = str(max_number)
+
+	return str(year_current) + "-" + str(max_number)
+
+
 class Project(models.Model):
 	name = models.CharField(max_length=100)
-	project_number = models.CharField(max_length=20, null=True, blank=True)
+	project_number = models.CharField(max_length=20, null=True, blank=True, default=get_new_project_number)
 	application_identifier = models.CharField(max_length=100)
 	account = models.ForeignKey(Account, on_delete=models.SET_NULL, null=True, help_text="All charges for this project will be billed to the selected account.")
 	internal_order = models.CharField(max_length=12, null=True, blank=True)
@@ -785,7 +811,7 @@ class Reservation(CalendarDisplay):
 		if ep.exists():
 			d = "<table class=\"table\"><thead><tr><th>Customer</th><th>Project</th></tr></thead><tbody>"
 			for e in ep:
-				d += "<tr><td>" + e.customer.get_full_name() + "</td><td>" + e.project.name + "</td></tr>"
+				d += "<tr><td>" + e.customer.get_full_name() + "</td><td>" + str(e.project) + "</td></tr>"
 			d += "</tbody></table>"
 		else:
 			d = ""
@@ -852,7 +878,7 @@ class UsageEvent(CalendarDisplay):
 		if ep.exists():
 			d = "<table class=\"table\"><thead><tr><th>Customer</th><th>Project</th></tr></thead><tbody>"
 			for e in ep:
-				d += "<tr><td>" + e.customer.get_full_name() + "</td><td>" + e.project.name + "</td></tr>"
+				d += "<tr><td>" + e.customer.get_full_name() + "</td><td>" + str(e.project) + "</td></tr>"
 			d += "</tbody></table>"
 		else:
 			d = ""
@@ -869,6 +895,7 @@ class UsageEventProject(models.Model):
 	project = models.ForeignKey('Project', on_delete=models.CASCADE)
 	project_percent = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
 	customer = models.ForeignKey('User', on_delete=models.CASCADE)
+	comment = models.TextField(null=True, blank=True)
 	created = models.DateTimeField(null=True, blank=True)
 	updated = models.DateTimeField(null=True, blank=True)
 	contest_data = GenericRelation('ContestTransactionData')
@@ -1084,6 +1111,21 @@ class Interlock(models.Model):
 			return False
 			
 		return self.state == 2
+
+	def remote_state(self):
+		uri = 'http://' + str(self.card.server) + '/state.xml'
+		req = None
+
+		try:
+			req = requests.get(uri, timeout=0.01)
+			data = xmltodict.parse(req.text)
+			s = 'relay' + str(self.card.number) + 'state'
+			req = data['datavalues'][s]
+
+		except requests.exceptions.RequestException as e:
+			return e
+
+		return str(req)
 
 	class Meta:
 		unique_together = ('card', 'channel')

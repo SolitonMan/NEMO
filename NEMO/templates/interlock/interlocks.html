@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% load custom_tags_and_filters %}
+
+{% block title %}Interlock Control{% endblock %}
+
+{% block content %}
+	<h1>Interlock Control</h1>
+	<div style="width: 100%; align: right;">
+		<button class="btn btn-success" onclick="pulse_all();">Pulse All Interlocks</button>
+	</div>
+	<table class="table">
+		<thead>
+		<tr>
+			<th>Server</th>
+			<th>Card Number</th>
+			<th>Tool</th>
+			<th>In Use?</th>
+			<th>LEO State</th>
+			<th>Remote State</th>
+			<th>&nbsp;</th>
+		</tr>
+		</thead>
+		<tbody>
+		{% for i in interlocks %}
+		<tr>
+			<td>{{ i.card.server }}</td>
+			<td>{{ i.card.number }}</td>
+			<td>{{ i.tool.name }}</td>
+			<td>{{ i.tool.in_use }}</td>
+			<td>{{ i.state }}</td>
+			<td>{{ i.remote_state }}</td>
+			<td><button class="btn btn-success" onclick="pulse_one({{i.id}})">Pulse</button></td>
+		</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+
+	<script type="text/javascript">
+	function pulse_one(interlock_id)
+	{
+		var failure_dialog = ajax_failure_callback("The request to pulse the interlock failed");
+		var data = {
+			"interlock_id": interlock_id,
+		}
+		var url = "/pulse_interlock/" + interlock_id;
+		ajax_get(url, data, ajax_success_callback, failure_dialog);
+		return false;
+	}
+
+	function pulse_all()
+	{
+		var failure_dialog = ajax_failure_callback("The request to pulse all interlocks failed");
+		ajax_get("{% url 'pulse_all_interlocks' %}", {}, ajax_success_callback, failure_dialog);
+	}
+	</script>
+{% endblock %}
