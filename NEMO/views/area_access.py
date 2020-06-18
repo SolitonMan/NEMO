@@ -380,7 +380,14 @@ def self_log_in(request):
 		try:
 			a = Area.objects.get(id=request.POST['area'])
 			p = Project.objects.get(id=request.POST['project'])
+			
 			if a in dictionary['areas'] and p in dictionary['projects']:
+				if AreaAccessRecord.objects.filter(customer=request.user, end=None).count() > 0:
+					areas = AreaAccessRecord.objects.filter(customer=request.user, end=None)
+					for a in areas:
+						a.end = timezone.now()
+						a.save()
+
 				AreaAccessRecord.objects.create(area=a, customer=request.user, project=p, created=timezone.now(), updated=timezone.now())
 		except:
 			pass

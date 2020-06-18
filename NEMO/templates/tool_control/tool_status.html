@@ -217,6 +217,39 @@
 							<a id="delayed_logoff_help" class="pointer" tabindex="0" data-toggle="popover" data-placement="bottom" data-trigger="focus" data-content="Some tools may require downtime after you finish using them. (For example, to perform automated cleaning or pump-down). Once you click &quot;Stop using the {{ tool }}&quot; the tool interlock will immediately disable the tool and it will remain unusable for the specified duration. Leave the duration blank to indicate that no post-usage downtime is required.">What's this?</a>
 						</div>
 					{% endif %}
+
+					{% with tool.get_current_usage_event as current_usage_event %}
+
+						{% if current_usage_event.no_charge_flag %}
+
+							{% if current_usage_event.customers.all|length > 0 %}
+								<table class="table">
+									<thead>
+									<tr>
+										<th>Customer</th>
+										<th>Project</th>
+										<th>Cost per Sample</th>
+										<th># of Samples</th>
+										<th>Notes</th>
+									</tr>
+									</thead>
+									<tbody>
+								{% for uep in current_usage_event.usageeventproject_set.all %}
+									<tr>
+										<td>{{ uep.customer }}<input type="hidden" value="{{ uep.customer.id }}" name="chosen_user__{{ uep.id }}" /></td>
+										<td>{{ uep.project }}<input type="hidden" value="{{ uep.project.id }}" name="chosen_project__{{ uep.id }}" /></td>
+										<td><input type="text" name="fixed_cost__{{uep.id}}" id="fixed_cost__{{uep.id}}" value="" /></td>
+										<td><input type="text" name="num_samples__{{uep.id}}" id="num_samples__{{uep.id}}" value="" /></td>
+										<td><input type="text" name="sample_notes__{{uep.id}}" id="sample_notes__{{uep.id}}" /></td>
+									</tr>
+								{% endfor %}
+									</tbody>
+								</table>
+							{% endif %}
+
+						{% endif %}
+
+					{% endwith %}
 					<div class="form-group" style="align: left; vertical-algin: top;">
 						<label class="control-label col-sm-2" for="operator_comment">Comment / Description of Run</label>
 						<textarea name="operator_comment" id="operator_comment" rows="6" cols="50" placeholder="Please enter a brief description of the work performed, or make any notes you'd find useful for reference"></textarea>
@@ -225,6 +258,10 @@
 				{% endif %}
 			{% else %}
 				{% if user.is_staff %}
+					<h4>How would you like to use this tool?</h4>
+					<div class="radio"><label><input type="radio" name="billing_mode" value="false" id="billing_mode" checked>Standard billing (time & materials)</label></div>
+					<div class="radio"><label><input type="radio" name="billing_mode" value="true" id="billing_mode">Fixed per sample rate (totals to be entered manually)</label></div>
+	
 					<h4>What would you like to do?</h4>
 					<div class="radio"><label><input type="radio" onchange="use_tool_for_self({{ tool.id }}){% if my_reservation %};set_start_button(0);{% endif %}" name="staff_charge" value="false" {% if my_reservation %}{% if my_reservation_projects is None %} checked{% endif %}{% endif %}>Use this tool for my own project</label></div>
 					<div class="radio"><label><input type="radio" onchange="use_tool_for_other({{ tool.id }}){% if my_reservation %};set_start_button(1);{% endif %}" name="staff_charge" value="false" {% if my_reservation %}{% if my_reservation_projects %} checked{% endif %}{% endif %}>Use this tool on behalf of another user</label></div>

@@ -443,10 +443,11 @@ class Configuration(models.Model):
 
 	def current_settings_as_list(self):
 		if len(self.current_settings) == 0 or len(self.current_settings) is None:
-			if len(self.available_settings_as_list()[0]) > 0:
+			if len(self.available_settings_as_list()) > 0:
 				self.current_settings = self.available_settings_as_list()[0]
 			else:
-				self.current_settings = self.consumable.all()[0]
+				c = self.consumable.all()[0]
+				self.current_settings = str(c.id)
 
 		if len(self.current_settings) is not None and len(self.current_settings) > 0:
 			return [x.strip() for x in self.current_settings.split(',')]
@@ -958,7 +959,7 @@ class ConsumableWithdraw(models.Model):
 	consumable = models.ForeignKey(Consumable, on_delete=models.SET_NULL, null=True)
 	quantity = models.PositiveIntegerField()
 	project = models.ForeignKey(Project, on_delete=models.SET_NULL, null=True, help_text="The withdraw will be billed to this project.")
-	project_percent = models.DecimalField(max_digits=4, decimal_places=2, null=True, blank=True)
+	project_percent = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
 	notes = models.TextField(null=True, blank=True)
 	date = models.DateTimeField(default=timezone.now, help_text="The date and time when the user withdrew the consumable.")
 	validated = models.BooleanField(default=False)

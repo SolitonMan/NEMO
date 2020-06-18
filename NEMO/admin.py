@@ -404,7 +404,7 @@ class UsageEventProjectAdmin(admin.ModelAdmin):
 class ConsumableAdmin(admin.ModelAdmin):
 	list_display = ('id', 'name', 'quantity', 'category', 'visible', 'reminder_threshold', 'reminder_email', 'core_id')
 	list_filter = ('visible', 'category')
-	search_fields = ('name', 'category')
+	search_fields = ('name', 'category__name')
 
 	def has_delete_permission(self, request, obj=None):
 		return False

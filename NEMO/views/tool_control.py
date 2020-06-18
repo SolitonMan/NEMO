@@ -22,7 +22,7 @@ from django.utils.safestring import mark_safe
 from django.urls import reverse
 
 from NEMO.forms import CommentForm, nice_errors, ToolForm
-from NEMO.models import AreaAccessRecord, AreaAccessRecordProject, Comment, Configuration, ConfigurationHistory, LockBilling, Project, Reservation, ReservationConfiguration, ReservationProject, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskStatus, Tool, UsageEvent, UsageEventProject, User
+from NEMO.models import AreaAccessRecord, AreaAccessRecordProject, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableWithdraw, LockBilling, Project, Reservation, ReservationConfiguration, ReservationProject, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskStatus, Tool, UsageEvent, UsageEventProject, User
 from NEMO.utilities import extract_times, quiet_int
 from NEMO.views.policy import check_policy_to_disable_tool, check_policy_to_enable_tool, check_policy_to_enable_tool_for_multi
 from NEMO.views.staff_charges import month_is_locked, month_is_closed, get_billing_date_range
@@ -287,7 +287,7 @@ def get_billing_date_range():
 
 @login_required
 @require_POST
-def enable_tool(request, tool_id, user_id, project_id, staff_charge):
+def enable_tool(request, tool_id, user_id, project_id, staff_charge, billing_mode):
 	""" Enable a tool for a user. The user must be qualified to do so based on the lab usage policy. """
 
 	if not settings.ALLOW_CONDITIONAL_URLS:
@@ -298,6 +298,7 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge):
 	user = get_object_or_404(User, id=user_id)
 	project = get_object_or_404(Project, id=project_id)
 	staff_charge = staff_charge == 'true'
+	billing_mode = billing_mode == 'true'
 	response = check_policy_to_enable_tool(tool, operator, user, project, staff_charge, request)
 	if response.status_code != HTTPStatus.OK:
 		return response
@@ -305,30 +306,6 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge):
 	# All policy checks passed so enable the tool for the user.
 	if tool.interlock and not tool.interlock.unlock():
 		raise Exception("The interlock command for this tool failed. The error message returned: " + str(tool.interlock.most_recent_reply))
-
-
-	# check for reservation and configuration and configure for tool appropriately
-	"""
-	try:
-		current_reservation = Reservation.objects.get(start__lte=timezone.now(), end__gt=timezone.now(), user=request.user, tool=tool, cancelled=False, missed=False)
-
-		# update project
-		project = current_reservation.project
-
-		# adjust configuration if any
-		res_conf = ReservationConfiguration.objects.filter(reservation=current_reservation)
-
-		for rc in res_conf:
-			config = Configuration.objects.get(id=rc.configuration.id)
-			if rc.setting is None or rc.setting == '':
-				config.current_settings = str(rc.consumable.id)
-			else:
-				config.current_settings = str(rc.setting)
-			config.save()
-		tool.update_post_usage_questions()
-	except Reservation.DoesNotExist:
-		pass
-	"""
 
 
 	# Create a new usage event to track how long the user uses the tool.
@@ -339,6 +316,8 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge):
 	new_usage_event.tool = tool
 	new_usage_event.created = timezone.now()
 	new_usage_event.updated = timezone.now()
+	if billing_mode:
+		new_usage_event.no_charge_flag = True
 	new_usage_event.save()
 
 	# create a usage event project record for consistency with other usage event charges
@@ -370,6 +349,12 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge):
 		scp.save()
 
 	if tool.requires_area_access and AreaAccessRecord.objects.filter(area=tool.requires_area_access,customer=operator,end=None).count() == 0:
+		if AreaAccessRecord.objects.filter(customer=operator,end=None).count() > 0:
+			areas = AreaAccessRecord.objects.filter(customer=operator,end=None)
+			for a in areas:
+				a.end = timezone.now()
+				a.save()
+
 		aar = AreaAccessRecord()
 		aar.area = tool.requires_area_access
 		aar.customer = operator
@@ -420,7 +405,11 @@ def enable_tool_multi(request):
 		tool.update_post_usage_questions()
 	except Reservation.DoesNotExist:
 		pass
+
 	# initiate a UsageEvent
+	billing_mode = request.POST.get('billing_mode')
+	billing_mode = billing_mode == 'true'
+
 	new_usage_event = UsageEvent()
 	new_usage_event.operator = operator
 	new_usage_event.tool = tool
@@ -428,6 +417,8 @@ def enable_tool_multi(request):
 	new_usage_event.user = None
 	new_usage_event.created = timezone.now()
 	new_usage_event.updated = timezone.now()
+	if billing_mode:
+		new_usage_event.no_charge_flag = True
 	new_usage_event.save()	
 
 	project_events = {}
@@ -535,6 +526,12 @@ def enable_tool_multi(request):
 			p.save()
 		 
 	if tool.requires_area_access and AreaAccessRecord.objects.filter(area=tool.requires_area_access,customer=operator,end=None).count() == 0:
+		if AreaAccessRecord.objects.filter(customer=operator,end=None).count() > 0:
+			areas = AreaAccessRecord.objects.filter(customer=operator,end=None)
+			for a in areas:
+				a.end = timezone.now()
+				a.save()
+
 		aar = AreaAccessRecord()
 		aar.area = tool.requires_area_access
 		aar.start = timezone.now()
@@ -562,7 +559,7 @@ def enable_tool_multi(request):
 
 
 def is_valid_field(field):
-	return search("^(chosen_user|chosen_project|project_percent|event_comment)__[0-9]+$", field) is not None
+	return search("^(chosen_user|chosen_project|project_percent|event_comment|fixed_cost|num_samples|sample_notes)__[0-9]+$", field) is not None
 
 
 @staff_member_required(login_url=None)
@@ -635,6 +632,47 @@ def disable_tool(request, tool_id):
 
 	current_usage_event.updated = timezone.now()
 	current_usage_event.save()
+
+	# check for no charge flag, which at this point can only exist for a fixed cost run
+	if current_usage_event.no_charge_flag:
+		# add a consumable record for a fixed cost per sample run
+		consumable_records = {}
+		sample_num = {}
+		quantity_num = {}
+
+		for key, value in request.POST.items():
+			if is_valid_field(key):
+				attribute, separator, index = key.partition("__")
+				index = int(index)
+				if index not in consumable_records:
+					consumable_records[index] = ConsumableWithdraw()
+					consumable_records[index].consumable = Consumable.objects.filter(core_id=tool.core_id, name="Fixed Cost Sample")[0]
+					consumable_records[index].usage_event = current_usage_event
+					consumable_records[index].merchant = current_usage_event.operator
+					consumable_records[index].date = timezone.now()
+					consumable_records[index].project_percent = 100.0
+					consumable_records[index].updated = timezone.now()
+				if attribute == "chosen_user":
+					consumable_records[index].customer = User.objects.get(id=value)
+				if attribute == "chosen_project":
+					consumable_records[index].project = Project.objects.get(id=value)
+				if attribute == "sample_notes":
+					consumable_records[index].notes = value
+				if attribute == "num_samples":
+					sample_num[index] = value
+				if attribute == "fixed_cost":
+					quantity_num[index] = value
+
+		for key in consumable_records:
+			num_to_save = int(sample_num[key]) - 1
+			amount = int(quantity_num[key])
+			consumable_records[key].quantity = amount
+			consumable_records[key].save()
+
+			for i in range(num_to_save):
+				consumable_records[key].pk = None
+				consumable_records[key].save()
+			
 
 	if request.user.charging_staff_time():
 		existing_staff_charge = request.user.get_staff_charge()
