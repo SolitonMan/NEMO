@@ -258,10 +258,14 @@
 				{% endif %}
 			{% else %}
 				{% if user.is_staff %}
+
+					{% for g in user.groups.all %}
+						{% if g.name == "Fixed Cost Billing" %}
 					<h4>How would you like to use this tool?</h4>
 					<div class="radio"><label><input type="radio" name="billing_mode" value="false" id="billing_mode" checked>Standard billing (time & materials)</label></div>
 					<div class="radio"><label><input type="radio" name="billing_mode" value="true" id="billing_mode">Fixed per sample rate (totals to be entered manually)</label></div>
-	
+						{% endif %}
+					{% endfor %}
 					<h4>What would you like to do?</h4>
 					<div class="radio"><label><input type="radio" onchange="use_tool_for_self({{ tool.id }}){% if my_reservation %};set_start_button(0);{% endif %}" name="staff_charge" value="false" {% if my_reservation %}{% if my_reservation_projects is None %} checked{% endif %}{% endif %}>Use this tool for my own project</label></div>
 					<div class="radio"><label><input type="radio" onchange="use_tool_for_other({{ tool.id }}){% if my_reservation %};set_start_button(1);{% endif %}" name="staff_charge" value="false" {% if my_reservation %}{% if my_reservation_projects %} checked{% endif %}{% endif %}>Use this tool on behalf of another user</label></div>

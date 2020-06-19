@@ -693,6 +693,49 @@ def disable_tool_multi(request, tool_id, usage_event, dynamic_form):
 	downtime = timedelta(minutes=quiet_int(request.POST.get('downtime')))
 	tool = Tool.objects.get(id=tool_id)
 
+	# set local variable for processing
+	current_usage_event = usage_event
+
+	# check for no charge flag, which at this point can only exist for a fixed cost run
+	if current_usage_event.no_charge_flag:
+		# add a consumable record for a fixed cost per sample run
+		consumable_records = {}
+		sample_num = {}
+		quantity_num = {}
+
+		for key, value in request.POST.items():
+			if is_valid_field(key):
+				attribute, separator, index = key.partition("__")
+				index = int(index)
+				if index not in consumable_records:
+					consumable_records[index] = ConsumableWithdraw()
+					consumable_records[index].consumable = Consumable.objects.filter(core_id=tool.core_id, name="Fixed Cost Sample")[0]
+					consumable_records[index].usage_event = current_usage_event
+					consumable_records[index].merchant = current_usage_event.operator
+					consumable_records[index].date = timezone.now()
+					consumable_records[index].project_percent = 100.0
+					consumable_records[index].updated = timezone.now()
+				if attribute == "chosen_user":
+					consumable_records[index].customer = User.objects.get(id=value)
+				if attribute == "chosen_project":
+					consumable_records[index].project = Project.objects.get(id=value)
+				if attribute == "sample_notes":
+					consumable_records[index].notes = value
+				if attribute == "num_samples":
+					sample_num[index] = value
+				if attribute == "fixed_cost":
+					quantity_num[index] = value
+
+		for key in consumable_records:
+			num_to_save = int(sample_num[key]) - 1
+			amount = int(quantity_num[key])
+			consumable_records[key].quantity = amount
+			consumable_records[key].save()
+
+			for i in range(num_to_save):
+				consumable_records[key].pk = None
+				consumable_records[key].save()
+
 	try:
 		if uep.count() == 1:
 			uep = UsageEventProject.objects.get(usage_event=usage_event)
