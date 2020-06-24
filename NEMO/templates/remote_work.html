@@ -17,7 +17,7 @@
 	<form class="form-inline" role="form">
 		<div class="form-group">
 			<label class="control-label">View charges for
-				{% if request.user.is_superuser %}
+				{% if request.user.is_superuser or user_is_core_admin %}
 				<select name="operator" class="form-control">
 					<option {% if selected_staff == "all staff" %}selected{% endif %}>all staff</option>
 					{% for s in staff_list %}
@@ -82,15 +82,15 @@
 				</td>
 				<td>{{ c.start }} - <br/>{{ c.end }}</td>
 				<td>{{ c.duration|smooth_timedelta }}</td>
-				<td>{% if not c.validated %}<button {% if c.contested is True and cr.contest_resolved is False %}disabled{% endif %} class="btn btn-success" onclick="validate_charge('{% url 'validate_staff_charge' c.id %}', this, '#staff_charge_row_{{ forloop.counter }}')">Validate</button>{% endif %}</td>
-				<td>
+				<td>{% if show_buttons %}{% if not c.validated %}<button {% if c.contested is True and cr.contest_resolved is False %}disabled{% endif %} class="btn btn-success" onclick="validate_charge('{% url 'validate_staff_charge' c.id %}', this, '#staff_charge_row_{{ forloop.counter }}')">Validate</button>{% endif %}{% endif %}</td>
+				<td>{% if show_buttons %}
 				{% if not c.validated %}
 				<form action="{% url 'contest_staff_charge' c.id %}" method="POST">
 					{% csrf_token %}
 					<input type="hidden" name="staff_charge_id" value="{{ c.id }}" />
 					<input type="submit" class="btn btn-warning" value="Contest" {% if c.contested is True and cr.contest_resolved is False %} style="pointer-events:auto;" disabled title="{{ cr.contest_description }}"{% endif %} />
 				</form>
-				{% endif %}
+				{% endif %}{% endif %}
 				</td>
 			</tr>
 			{% if c.contested is True and cr.contest_resolved is True and cr.contest_resolution is False %}
@@ -119,15 +119,15 @@
                                 </td>
 				<td>{{ c.start }} - <br/>{{ c.end }}</td>
 				<td>{{ c.duration|smooth_timedelta }}</td>
-				<td>{% if not c.validated %}<button {% if c.contested is True %}disabled{% endif %} class="btn btn-success" onclick="validate_charge('{% url 'validate_staff_charge' c.id %}', this, '#staff_charge_row_{{ forloop.counter }}')">Validate</button>{% endif %}</td>
-				<td>
+				<td>{% if show_buttons %}{% if not c.validated %}<button {% if c.contested is True %}disabled{% endif %} class="btn btn-success" onclick="validate_charge('{% url 'validate_staff_charge' c.id %}', this, '#staff_charge_row_{{ forloop.counter }}')">Validate</button>{% endif %}{% endif %}</td>
+				<td>{% if show_buttons %}
 				{% if not c.validated %}
 				<form action="{% url 'contest_staff_charge' c.id %}" method="POST">
 					{% csrf_token %}
 					<input type="hidden" name="staff_charge_id" value="{{ c.id }}" />
 					<input type="submit" class="btn btn-warning" value="Contest" />
 				</form>
-				{% endif %}
+				{% endif %}{% endif %}
 				</td>
 			</tr>
 			{% endif %}
@@ -183,15 +183,15 @@
 				<td>{{ u.start }} - <br/>{{ u.end }}</td>
 				<td>{{ u.duration|smooth_timedelta }}</td>
 				<td>{{ u.tool }}</td>
-				<td>{% if not u.validated %}<button {% if u.contested is True and cr.contest_resolved is False %}disabled{% endif %} class="btn btn-success" onclick="validate_charge('{% url 'validate_usage_event' u.id %}', this, '#usage_event_row_{{ forloop.counter }}')">Validate</button>{% endif %}</td>
-				<td>
+				<td>{% if show_buttons %}{% if not u.validated %}<button {% if u.contested is True and cr.contest_resolved is False %}disabled{% endif %} class="btn btn-success" onclick="validate_charge('{% url 'validate_usage_event' u.id %}', this, '#usage_event_row_{{ forloop.counter }}')">Validate</button>{% endif %}{% endif %}</td>
+				<td>{% if show_buttons %}
 				{% if not u.validated %}
 					<form action="{% url 'contest_usage_event' u.id %}" method="POST">
 					{% csrf_token %}
 					<input type="hidden" name="usage_event_id" value="{{ u.id }}" />
 					<input type="submit" class="btn btn-warning" value="Contest" {% if u.contested is True and cr.contest_resolved is False %} style="pointer-events:auto;" disabled title="{{ cr.contest_description }}"{% endif %}/>
 					</form>
-				{% endif %}
+				{% endif %}{% endif %}
 				</td>
 			</tr>
 			{% if u.contested is True and cr.contest_resolved is True and cr.contest_resolution is False %}
@@ -226,15 +226,15 @@
 				<td>{{ u.start }} - <br/>{{ u.end }}</td>
 				<td>{{ u.duration|smooth_timedelta }}</td>
 				<td>{{ u.tool }}</td>
-				<td>{% if not u.validated %}<button {% if u.contested is True %}disabled{% endif %} class="btn btn-success" onclick="validate_charge('{% url 'validate_usage_event' u.id %}', this, '#usage_event_row_{{ forloop.counter }}')">Validate</button>{% endif %}</td>
-				<td>
+				<td>{% if show_buttons %}{% if not u.validated %}<button {% if u.contested is True %}disabled{% endif %} class="btn btn-success" onclick="validate_charge('{% url 'validate_usage_event' u.id %}', this, '#usage_event_row_{{ forloop.counter }}')">Validate</button>{% endif %}{% endif %}</td>
+				<td>{% if show_buttons %}
 				{% if not u.validated %}
 					<form action="{% url 'contest_usage_event' u.id %}" method="POST">
 					{% csrf_token %}
 					<input type="hidden" name="usage_event_id" value="{{ u.id }}" />
 					<input type="submit" class="btn btn-warning" value="Contest" />
 					</form>
-				{% endif %}
+				{% endif %}{% endif %}
 				</td>
 			</tr>
 			{% endif %}
@@ -274,15 +274,15 @@
 				<td>{{ w.consumable }}</td>
 				<td>{{ w.quantity }} {% if w.consumable.unit is not None %}{{ w.consumable.unit }}{% endif %}</td>
 				<td>{{ w.date }}</td>
-				<td>{% if not w.validated %}<button {% if w.contested is True and cr.contest_resolved is False %}disabled{% endif %} class="btn btn-success" onclick="validate_charge('{% url 'validate_consumable_withdraw' w.id %}', this, '#consumable_withdraw_row_{{ forloop.counter }}')">Validate</button>{% endif %}</td>
-				<td>
+				<td>{% if show_buttons %}{% if not w.validated %}<button {% if w.contested is True and cr.contest_resolved is False %}disabled{% endif %} class="btn btn-success" onclick="validate_charge('{% url 'validate_consumable_withdraw' w.id %}', this, '#consumable_withdraw_row_{{ forloop.counter }}')">Validate</button>{% endif %}{% endif %}</td>
+				<td>{% if show_buttons %}
 				{% if not w.validated %}
 					<form action="{% url 'contest_consumable_withdraw' w.id %}" method="POST">
 					{% csrf_token %}
 					<input type="hidden" name="consumable_withdraw_id" value="{{ w.id }}" />
 					<input type="submit" class="btn btn-warning" value="Contest" {% if w.contested is True and cr.contest_resolved is False %} style="pointer-events:auto;" disabled title="{{ cr.contest_description }}"{% endif %}/>
 					</form>
-				{% endif %}
+				{% endif %}{% endif %}
 				</td>
 			</tr>
 			{% if w.contested is True and cr.contest_resolved is True and cr.contest_resolution is False %}
@@ -301,15 +301,15 @@
 				<td>{{ w.consumable }}</td>
 				<td>{{ w.quantity }} {% if w.consumable.unit is not None %}{{ w.consumable.unit }}{% endif %}</td>
 				<td>{{ w.date }}</td>
-				<td>{% if not w.validated %}<button {% if w.contested is True %}disabled{% endif %} class="btn btn-success" onclick="validate_charge('{% url 'validate_consumable_withdraw' w.id %}', this, '#consumable_withdraw_row_{{ forloop.counter }}')">Validate</button>{% endif %}</td>
-				<td>
+				<td>{% if show_buttons %}{% if not w.validated %}<button {% if w.contested is True %}disabled{% endif %} class="btn btn-success" onclick="validate_charge('{% url 'validate_consumable_withdraw' w.id %}', this, '#consumable_withdraw_row_{{ forloop.counter }}')">Validate</button>{% endif %}{% endif %}</td>
+				<td>{% if show_buttons %}
 				{% if not w.validated %}
 					<form action="{% url 'contest_consumable_withdraw' w.id %}" method="POST">
 					{% csrf_token %}
 					<input type="hidden" name="consumable_withdraw_id" value="{{ w.id }}" />
 					<input type="submit" class="btn btn-warning" value="Contest" />
 					</form>
-				{% endif %}
+				{% endif %}{% endif %}
 				</td>
 			</tr>
 			{% endif %}
@@ -365,15 +365,15 @@
 			<td>{{ a.start }} - {{ a.end }}</td>
 			<td>{{ a.duration|smooth_timedelta }}</td>
 			<td>{{ a.area }}</td>
-			<td>{% if not a.validated %}<button {% if a.contested is True and cr.contest_resolved is False %}disabled{% endif %} class="btn btn-success" onclick="validate_charge('{% url 'validate_area_access_record' a.id %}', this, '#area_access_record_row_{{ forloop.counter }}')">Validate</button>{% endif %}</td>
-			<td>
+			<td>{% if show_buttons %}{% if not a.validated %}<button {% if a.contested is True and cr.contest_resolved is False %}disabled{% endif %} class="btn btn-success" onclick="validate_charge('{% url 'validate_area_access_record' a.id %}', this, '#area_access_record_row_{{ forloop.counter }}')">Validate</button>{% endif %}{% endif %}</td>
+			<td>{% if show_buttons %}
 			{% if not a.validated %}
 				<form action="{% url 'contest_area_access_record' a.id %}" method="POST">
 				{% csrf_token %}
 				<input type="hidden" name="area_access_record_id" value="{{ a.id }}" />
 				<input type="submit" class="btn btn-warning" value="Contest" {% if a.contested is True and cr.contest_resolved is False %} style="pointer-events:auto;" disabled title="{{ cr.contest_description }}"{% endif %}/>
 				</form>
-			{% endif %}
+			{% endif %}{% endif %}
 			</td>
 		</tr>
 			{% if a.contested is True and cr.contest_resolved is True and cr.contest_resolution is False %}
@@ -408,15 +408,15 @@
 			<td>{{ a.start }} - {{ a.end }}</td>
 			<td>{{ a.duration|smooth_timedelta }}</td>
 			<td>{{ a.area }}</td>
-			<td>{% if not a.validated %}<button {% if a.contested is True %}disabled{% endif %} class="btn btn-success" onclick="validate_charge('{% url 'validate_area_access_record' a.id %}', this, '#area_access_record_row_{{ forloop.counter }}')">Validate</button>{% endif %}</td>
-			<td>
+			<td>{% if show_buttons %}{% if not a.validated %}<button {% if a.contested is True %}disabled{% endif %} class="btn btn-success" onclick="validate_charge('{% url 'validate_area_access_record' a.id %}', this, '#area_access_record_row_{{ forloop.counter }}')">Validate</button>{% endif %}{% endif %}</td>
+			<td>{% if show_buttons %}
 			{% if not a.validated %}
 				<form action="{% url 'contest_area_access_record' a.id %}" method="POST">
 				{% csrf_token %}
 				<input type="hidden" name="area_access_record_id" value="{{ a.id }}" />
 				<input type="submit" class="btn btn-warning" value="Contest" />
 				</form>
-			{% endif %}
+			{% endif %}{% endif %}
 			</td>
 		 </tr>
 			{% endif %}

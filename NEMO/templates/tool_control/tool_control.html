@@ -167,12 +167,58 @@
 
 		function disable_tool(url, confirm, downtime)
 		{
+			var numberRegex = /^[+-]?\d+(\.\d+)?([eE][+-]?\d+)?$/;
+			var intRegex = /^\d+$/;
+			var bLoop = true;
 			$("#stop").prop("disabled", true);
+
+			// if billing mode is fixed, check for filled out sample and count field
+			if ($("[id^='fixed_cost']").length) {
+				$("[id^='fixed_cost']").each(function() {
+					if ($(this).val() == "") {
+						alert("You must enter a value for the per sample cost.");
+						$(this).focus();
+						bLoop = false;
+						return false;
+					}
+					if (!numberRegex.test($(this).val())) {
+						alert("Please enter a number for the per sample cost.");
+						$(this).focus();
+						bLoop = false;
+						return false;
+					}
+				});
+
+				if (!bLoop) {
+					$("#stop").prop("disabled", false);
+					return false;
+				}
+
+				$("[id^='num_samples']").each(function() {
+					if ($(this).val() == "") {
+						alert("You must enter a value for the number of samples.");
+						$(this).focus();
+						bLoop = false;
+						return false;
+					}
+					if (!intRegex.test($(this).val())) {
+						alert("Please enter an integer value for the number of samples.");
+						$(this).focus();
+						bLoop = false;
+						return false;
+					}
+				});
+			}
+
+			if (!bLoop) {
+				$("#stop").prop("disabled", false);
+				return false;
+			}
+
 			let contents = serialize("#tool_control");
 			let failure_dialog = ajax_failure_callback("Couldn't change tool status");
 			let enable_stop_button = function() { $("#stop").prop("disabled", false); };
 			ajax_post(url, contents, ajax_success_callback, failure_dialog, refresh_tool_status, enable_stop_button);
-			//ajax_post(url, contents, undefined, failure_dialog, refresh_tool_status, enable_stop_button);
 		}
 
 		function set_start_button(bMulti) {

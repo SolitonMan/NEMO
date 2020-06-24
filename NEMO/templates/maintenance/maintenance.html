@@ -126,7 +126,7 @@
 	function enable_tool(tool_id, project_id)
 	{
 		$("#interlock").prop('disabled', true);
-		var url = "/enable_tool/" + tool_id + "/user/" + {{ user.id }} + "/project/" + project_id + "/staff_charge/false/billing_mode/0/";
+		var url = "/enable_tool/" + tool_id + "/user/" + {{ user.id }} + "/project/" + project_id + "/staff_charge/false/billing_mode/false/";
 		var failure_dialog = ajax_failure_callback("Unable to enable tool");
 		ajax_post(url, undefined, reload_maintenance_page, failure_dialog);
 	}

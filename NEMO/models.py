@@ -112,6 +112,7 @@ class User(models.Model):
 
 	# Core relationship
 	core_ids = models.ManyToManyField('Core', related_name="user_core", blank=True)
+	credit_cost_collector = models.ForeignKey('CreditCostCollector', on_delete=models.SET_NULL, null=True, blank=True, related_name='user_credit_account')
 
 	## multiple project and user UsageEvents
 	#events = model.ManyToManyField(UsageEvent, through='UsageEventProject')
@@ -287,6 +288,7 @@ class Tool(models.Model):
 
 	# Core info
 	core_id = models.ForeignKey('Core', related_name="tool_core", on_delete=models.SET_NULL, help_text="The core facility of which this tool is part.", null=True)
+	credit_cost_collector = models.ForeignKey('CreditCostCollector', related_name='tool_credit_account', on_delete=models.SET_NULL, null=True, blank=True)
 
 	class Meta:
 		ordering = ['name']
@@ -602,6 +604,7 @@ class Area(models.Model):
 
 	# add core id
 	core_id = models.ForeignKey('Core', on_delete=models.SET_NULL, related_name='area_core', null=True)
+	credit_cost_collector = models.ForeignKey('CreditCostCollector', on_delete=models.SET_NULL, related_name='area_cost_collector', null=True, blank=True)
 
 	class Meta:
 		ordering = ['name']
@@ -726,9 +729,11 @@ def get_new_project_number():
 
 class Project(models.Model):
 	name = models.CharField(max_length=100)
+	ibis_account = models.CharField(max_length=25, unique=True, null=True, blank=True)
 	project_number = models.CharField(max_length=20, null=True, blank=True, default=get_new_project_number)
-	application_identifier = models.CharField(max_length=100)
+	application_identifier = models.CharField(max_length=100, null=True, blank=True)
 	account = models.ForeignKey(Account, on_delete=models.SET_NULL, null=True, help_text="All charges for this project will be billed to the selected account.")
+	simba_cost_center = models.CharField(max_length=12, null=True, blank=True)
 	internal_order = models.CharField(max_length=12, null=True, blank=True)
 	wbs_element = models.CharField(max_length=12, null=True, blank=True)
 	owner = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, help_text="The owner or person responsible for the Project (Internal Order or WBS Element in SIMBA) as imported via SIMBA download nightly", related_name="project_owner")
@@ -914,7 +919,8 @@ class Consumable(models.Model):
 	reminder_email = models.EmailField(help_text="An email will be sent to this address when the quantity of this item falls below the reminder threshold.")
 
 	# add core_id to manage inventory for the appropriate core
-	core_id = models.ForeignKey('Core', on_delete=models.SET_NULL, null=True, related_name='consumable_core')
+	core_id = models.ForeignKey('Core', on_delete=models.SET_NULL, null=True, blank=True, related_name='consumable_core')
+	credit_cost_collector = models.ForeignKey('CreditCostCollector', on_delete=models.SET_NULL, null=True, blank=True, related_name='consumable_cost_collector')
 	
 	class Meta:
 		ordering = ['name']
@@ -1600,6 +1606,10 @@ class Core(models.Model):
 	def __str__(self):
 		return str(self.name)
 
+class CreditCostCollector(models.Model):
+	name = models.CharField(max_length=500)
+	core = models.ForeignKey('Core', on_delete=models.SET_NULL, null=True, blank=True)
+	project = models.ForeignKey('Project', on_delete=models.SET_NULL, null=True, blank=True) 
 
 class LockBilling(models.Model):
 	fiscal_year = models.CharField(max_length=20, help_text="indicator for the fiscal year in the format 20192020")

@@ -17,6 +17,10 @@ from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, Consuma
 from NEMO.utilities import month_list, get_month_timeframe
 
 
+def get_dummy_projects():
+	projects = Project.objects.filter(Q(account__simba_cost_center__iregex=r'^[a-zA-Z]') | Q(internal_order__iregex=r'^[a-zA-Z]') | Q(wbs_element__iregex=r'^[a-zA-Z]'))
+	return projects
+
 #@staff_member_required(login_url=None)
 @login_required
 @require_GET
@@ -34,15 +38,29 @@ def remote_work(request):
 	staff_charges = StaffCharge.objects.filter(start__gte=first_of_the_month, start__lte=last_of_the_month).exclude(end=None)
 	area_access_records = AreaAccessRecord.objects.filter(start__gte=first_of_the_month, start__lte=last_of_the_month).exclude(end=None)
 	consumable_withdraws = ConsumableWithdraw.objects.filter(date__gte=first_of_the_month, date__lte=last_of_the_month)
-	if operator:
-		usage_events = usage_events.exclude(~Q(operator_id=operator.id))
-		staff_charges = staff_charges.exclude(~Q(staff_member_id=operator.id))
-		area_access_records = area_access_records.exclude(~Q(staff_charge__staff_member_id=operator.id))
-		consumable_withdraws = consumable_withdraws.exclude(~Q(merchant_id=operator.id))
+	if operator and operator == request.user:
+		usage_events = usage_events.exclude(~Q(operator_id=operator.id)).exclude(projects__in=get_dummy_projects()).exclude(project__in=get_dummy_projects())
+		staff_charges = staff_charges.exclude(~Q(staff_member_id=operator.id)).exclude(projects__in=get_dummy_projects()).exclude(project__in=get_dummy_projects())
+		area_access_records = area_access_records.exclude(~Q(staff_charge__staff_member_id=operator.id)).exclude(projects__in=get_dummy_projects()).exclude(project__in=get_dummy_projects())
+		consumable_withdraws = consumable_withdraws.exclude(~Q(merchant_id=operator.id)).exclude(project__in=get_dummy_projects())
+
+	show_buttons = operator == request.user or request.user.is_superuser or request.user.groups.filter(name="Core Admin").exists()
+
+	if (operator is None or operator != request.user) and request.user.groups.filter(name="Core Admin").exists():
+		usage_events = usage_events.filter(tool__core_id__in=request.user.core_ids.all()).filter(Q(projects__in=get_dummy_projects()) | Q(project__in=get_dummy_projects()))
+		staff_charges = staff_charges.filter(staff_member__core_ids__in=request.user.core_ids.all()).filter(Q(projects__in=get_dummy_projects()) | Q(project__in=get_dummy_projects()))
+		area_access_records = area_access_records.filter(area__core_id__in=request.user.core_ids.all()).filter(Q(projects__in=get_dummy_projects()) | Q(project__in=get_dummy_projects()))
+		consumable_withdraws = consumable_withdraws.filter(consumable__core_id__in=request.user.core_ids.all(), project__in=get_dummy_projects())
+
 
 	uep = UsageEventProject.objects.filter(usage_event__in=usage_events)
 	scp = StaffChargeProject.objects.filter(staff_charge__in=staff_charges)
 	aarp = AreaAccessRecordProject.objects.filter(area_access_record__in=area_access_records)
+
+	staff_list = User.objects.filter(is_staff=True).order_by('last_name', 'first_name')
+
+	if operator is None and request.user.groups.filter(name="Core Admin").exists():
+		staff_list = staff_list.filter(core_ids__in=request.user.core_ids.all())
 
 	dictionary = {
 		'usage': usage_events,
@@ -56,6 +74,8 @@ def remote_work(request):
 		'uep': uep,
 		'scp': scp,
 		'aarp': aarp,
+		'show_buttons': show_buttons,
+		'user_is_core_admin': request.user.groups.filter(name="Core Admin").exists(),
 	}
 	return render(request, 'remote_work.html', dictionary)
 

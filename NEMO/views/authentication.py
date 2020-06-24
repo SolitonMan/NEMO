@@ -130,6 +130,11 @@ def login_user(request):
 	password = request.POST.get('password', '')
 	user = authenticate(request, username=username, password=password)
 	if user:
+		# enforce the is_active flag
+		if not user.is_active:
+			dictionary['user_name_or_password_incorrect'] = True
+			return render(request, 'login.html', dictionary)
+
 		login(request, user)
 		try:
 

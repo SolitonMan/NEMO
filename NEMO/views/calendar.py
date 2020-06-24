@@ -865,7 +865,7 @@ def proxy_reservation(request):
 	elif request.session['technical_staff']:
 		users = User.objects.filter(is_active=True, projects__active=True, is_staff=False).distinct()
 	else:
-		users = request.user
+		users = User.objects.filter(id=request.user.id)
 
 	return render(request, 'calendar/proxy_reservation.html', {'users': users })
 

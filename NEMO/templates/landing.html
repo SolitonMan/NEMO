@@ -33,6 +33,7 @@
         }
 
 	</script>
+	<div id="landing_notifications">
 	<div class="row">
 		{% if validation_needed %}
 			<div class="col-lg-4">
@@ -120,6 +121,8 @@
 			</div>
 		{% endif %}
 	</div>
+	</div>
+	<div id="landing_choices">
 		{% for choice in landing_page_choices %}
 			{% if forloop.counter0|divisibleby:4 %}<div class="row">{% endif %}
 				<div class="col-md-3 text-center" style="margin-bottom:30px">
@@ -153,5 +156,6 @@
 				<code>Administration -> Customization</code>
 			</span>
 		{% endfor %}
+	</div>
 {% endblock %}
 {% block extra_whitespace %}{# Hide extra whitespace #}{% endblock %}

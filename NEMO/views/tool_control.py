@@ -814,6 +814,7 @@ def usage_event_projects_save(request):
 						event.end=null
 						event.updated = timezone.now()
 						event.save()
+						ConsumableWithdraw.objects.filter(usage_event=event).delete()
 						raise Exception()
 					else:
 						prc = prc + float(value)
@@ -823,6 +824,7 @@ def usage_event_projects_save(request):
 			event.end=null
 			event.updated = timezone.now()
 			event.save()
+			ConsumableWithdraw.objects.filter(usage_event=event).delete()
 			raise Exception()
 
 		dynamic_form = DynamicForm(tool.post_usage_questions)
