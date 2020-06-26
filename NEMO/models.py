@@ -729,11 +729,9 @@ def get_new_project_number():
 
 class Project(models.Model):
 	name = models.CharField(max_length=100)
-	ibis_account = models.CharField(max_length=25, unique=True, null=True, blank=True)
 	project_number = models.CharField(max_length=20, null=True, blank=True, default=get_new_project_number)
 	application_identifier = models.CharField(max_length=100, null=True, blank=True)
 	account = models.ForeignKey(Account, on_delete=models.SET_NULL, null=True, help_text="All charges for this project will be billed to the selected account.")
-	simba_cost_center = models.CharField(max_length=12, null=True, blank=True)
 	internal_order = models.CharField(max_length=12, null=True, blank=True)
 	wbs_element = models.CharField(max_length=12, null=True, blank=True)
 	owner = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, help_text="The owner or person responsible for the Project (Internal Order or WBS Element in SIMBA) as imported via SIMBA download nightly", related_name="project_owner")
@@ -1094,8 +1092,12 @@ class Interlock(models.Model):
 		if cmdst == 2:
 			cmdst = 0
 
-		uri = 'http://' + str(self.card.server) + '/state.xml?relay' + str(self.card.number) + 'State=' + str(cmdst)
+		#uri = 'http://' + str(self.card.server) + '/state.xml?relay' + str(self.card.number) + 'State=' + str(cmdst)
+		uri = 'http://' + str(self.card.server) + '/state.xml?relay1State=' + str(cmdst)
 		req = requests.get(uri, timeout=0.01)
+
+		uri = 'http://' + str(self.card.server) + '/state.xml?relay2State=' + str(cmdst)
+		req2 = requests.get(uri, timeout=0.01)
 
 		self.most_recent_reply = "Executed " + uri + " successfully."
 		self.state = command_type
@@ -1103,12 +1105,14 @@ class Interlock(models.Model):
 		return self.state == command_type
 
 	def pulse(self):
-		uri = 'http://' + str(self.card.server) + '/state.xml?relay' + str(self.card.number) + 'State=2'
+		uri1 = 'http://' + str(self.card.server) + '/state.xml?relay1State=2'
+		uri2 = 'http://' + str(self.card.server) + '/state.xml?relay2State=2'
 
 		try:
-			req = requests.get(uri, timeout=0.01)
+			req1 = requests.get(uri1, timeout=0.01)
+			req2 = requests.get(uri2, timeout=0.01)
 
-			self.most_recent_reply = "Pulsed " + uri + " successfully."
+			self.most_recent_reply = "Pulsed " + uri1 + " successfully."
 			# print(self.most_recent_reply)
 			self.state = 2
 			self.save()
@@ -1490,7 +1494,7 @@ class ContactInformationCategory(models.Model):
 
 class ContactInformation(models.Model):
 	name = models.CharField(max_length=200, help_text="The name of the contact information; this can be related to a user or an organization.")
-	image = models.ImageField(blank=True, help_text='Portraits are resized to 266 pixels high and 200 pixels wide. Crop portraits to these dimensions before uploading for optimal bandwidth usage')
+	image = models.ImageField(null=True, blank=True, help_text='Portraits are resized to 266 pixels high and 200 pixels wide. Crop portraits to these dimensions before uploading for optimal bandwidth usage')
 	address1 = models.CharField(max_length=500, blank=True, null=True)
 	address2 = models.CharField(max_length=500, blank=True, null=True)
 	city = models.CharField(max_length=100, blank=True, null=True)
@@ -1498,10 +1502,10 @@ class ContactInformation(models.Model):
 	zipcode = models.CharField(max_length=20,  blank=True, null=True)
 	country = models.CharField(max_length=50, blank=True, null=True)
 	category = models.ForeignKey(ContactInformationCategory, on_delete=models.SET_NULL, null=True)
-	email = models.EmailField(blank=True)
-	office_phone = models.CharField(max_length=40, blank=True)
-	office_location = models.CharField(max_length=200, blank=True)
-	mobile_phone = models.CharField(max_length=40, blank=True)
+	email = models.EmailField(blank=True, null=True)
+	office_phone = models.CharField(max_length=40, blank=True, null=True)
+	office_location = models.CharField(max_length=200, blank=True, null=True)
+	mobile_phone = models.CharField(max_length=40, blank=True, null=True)
 	mobile_phone_is_sms_capable = models.BooleanField(default=True, verbose_name='Mobile phone is SMS capable', help_text="Is the mobile phone capable of receiving text messages? If so, a link will be displayed for users to click to send a text message to the recipient when viewing the 'Contact information' page.")
 
 	class Meta:

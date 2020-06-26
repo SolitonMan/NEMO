@@ -36,7 +36,12 @@
 		<div class="form-group">
 			<label class="control-label col-sm-2" for="first_name"><strong>First name</strong></label>
 			<div class="col-sm-4">
+				{% if request.user.is_superuser %}
 				<input id="first_name" name="first_name" type="text" autocomplete="off" class="form-control" value="{{ form.first_name.value|default_if_none:"" }}" autofocus required>
+				{% else %}
+				{{ form.first_name.value|default_if_none:"" }}
+				<input id="first_name" name="first_name" type="hidden" value="{{ form.first_name.value|default_if_none:"" }}">
+				{% endif %}
 			</div>
 			{% if form.first_name.errors %}
 				<div class="col-sm-6 form-control-static danger-highlight">
@@ -47,7 +52,12 @@
 		<div class="form-group">
 			<label class="control-label col-sm-2" for="last_name"><strong>Last name</strong></label>
 			<div class="col-sm-4">
+				{% if request.user.is_superuser %}
 				<input id="last_name" name="last_name" type="text" autocomplete="off" class="form-control" value="{{ form.last_name.value|default_if_none:"" }}" required>
+				{% else %}
+				{{ form.last_name.value|default_if_none:"" }}
+				<input id="last_name" name="last_name" type="hidden"  value="{{ form.last_name.value|default_if_none:"" }}">
+				{% endif %}
 			</div>
 			{% if form.last_name.errors %}
 				<div class="col-sm-6 form-control-static danger-highlight">
@@ -58,7 +68,12 @@
 		<div class="form-group">
 			<label class="control-label col-sm-2" for="username"><strong>User name</strong></label>
 			<div class="col-sm-4">
+				{% if request.user.is_superuser %}
 				<input id="username" name="username" type="text" autocomplete="off" class="form-control" value="{{ form.username.value|default_if_none:"" }}" required>
+				{% else %}
+				{{ form.username.value|default_if_none:"" }}
+				<input id="username" name="username" type="hidden" value="{{ form.username.value|default_if_none:"" }}">
+				{% endif %}
 			</div>
 			{% if form.username.errors %}
 				<div class="col-sm-6 form-control-static danger-highlight">
@@ -69,7 +84,12 @@
 		<div class="form-group">
 			<label class="control-label col-sm-2" for="email"><strong>E-mail address</strong></label>
 			<div class="col-sm-4">
+				{% if request.user.is_superuser %}
 				<input id="email" name="email" type="text" autocomplete="off" class="form-control" value="{{ form.email.value|default_if_none:"" }}">
+				{% else %}
+				{{ form.email.value|default_if_none:"" }}
+				<input id="email" name="email" type="hidden" value="{{ form.email.value|default_if_none:"" }}">
+				{% endif %}
 			</div>
 			{% if form.email.errors %}
 				<div class="col-sm-6 form-control-static danger-highlight">
@@ -80,17 +100,31 @@
 		<div class="form-group">
 			<label class="control-label col-sm-2" for="type"><strong>Type</strong></label>
 			<div class="col-sm-4">
+				{% if request.user.is_superuser %}
 				<select id="type" name="type" class="form-control" required>
 					{% for t in form.fields.type.choices %}
 						<option value="{{ t.0 }}" {% if t.0 == form.type.value|to_int %}selected{% endif %}>{{ t.1 }}</option>
 					{% endfor %}
 				</select>
+				{% else %}
+				{% for t in form.fields.type.choices %}
+					{% if t.0 == form.type.value|to_int %}
+						{{ t.1 }}
+						<input type="hidden" name="type" value="{{ t.0 }}">
+					{% endif %}
+				{% endfor %}
+				{% endif %}
 			</div>
 		</div>
 		<div class="form-group">
 			<label class="control-label col-sm-2" for="badge_number">Badge number</label>
 			<div class="col-sm-4">
+				{% if request.user.is_superuser %}
 				<input id="badge_number" name="badge_number" autocomplete="off" type="text" class="form-control" value="{{ form.badge_number.value|default_if_none:"" }}">
+				{% else %}
+				{{ form.badge_number.value|default_if_none:"" }}
+				<input id="badge_number" name="badge_number" type="hidden" value="{{ form.badge_number.value|default_if_none:"" }}">
+				{% endif %}
 			</div>
 			{% if form.badge_number.errors %}
 				<div class="col-sm-6 form-control-static danger-highlight">
@@ -98,6 +132,7 @@
 				</div>
 			{% endif %}
 		</div>
+		{% if request.user.is_superuser %}
 		<div class="form-group">
 			<label class="control-label col-sm-2" for="access_expiration">Access expiration</label>
 			<div class="col-sm-2">
@@ -126,6 +161,7 @@
 				</div>
 			</div>
 		</div>
+		{% endif %}
 		{% if form.instance.id %}
 			<div class="form-group">
 				<div class="control-label col-sm-2">Date joined</div>
@@ -158,6 +194,7 @@
 				</div>
 			{% endif %}
 		</div>
+		{% if request.user.is_superuser %}
 		<div class="form-group">
 			<label class="control-label col-sm-2" for="add_a_project">Projects</label>
 			<div class="col-sm-4">
@@ -169,6 +206,7 @@
 				This user has no assigned projects.
 			</div>
 		</div>
+		{% endif %}
 		<div class="form-group">
 			<label class="control-label col-sm-2" for="add_a_tool_qualification">Tool qualifications</label>
 			<div class="col-sm-4">
