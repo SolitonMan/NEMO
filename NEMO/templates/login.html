@@ -27,9 +27,11 @@
 	<link rel="stylesheet" type="text/css" href="{% static "bootstrap/css/bootstrap.css" %}"/>
 	<link rel="stylesheet" type="text/css" href="{% static "bootstrap/css/bootstrap-theme.css" %}"/>
 </head>
-<body>
+<body style="background-color: #199BD7;">
+	<div align="center" width="100%">
+	<img src="{% url 'media' "PSU-LEO_header.png" %}" alt="LEO Logo" >
+	</div><br/><br/>
 	<div class="container">
-		<div class="col-md-8 col-md-offset-2" style="text-align:center; margin-bottom:30px"><h1>Laboratory Equipment Operations</h1></div>
 
 		<form method="post" class="form-horizontal" autocomplete="off" id="login_form" onsubmit="return check_submit();">
 			{% csrf_token %}

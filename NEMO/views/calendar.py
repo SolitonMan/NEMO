@@ -863,7 +863,7 @@ def proxy_reservation(request):
 	elif request.session['core_admin'] or request.session['administrative_staff']:
 		users = User.objects.filter(is_active=True, projects__active=True, core_ids__in=request.user.core_ids.all()).distinct()
 	elif request.session['technical_staff']:
-		users = User.objects.filter(is_active=True, projects__active=True, is_staff=False).distinct()
+		users = User.objects.filter(is_active=True, projects__active=True).distinct()
 	else:
 		users = User.objects.filter(id=request.user.id)
 

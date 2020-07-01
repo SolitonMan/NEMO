@@ -234,6 +234,9 @@ class User(models.Model):
 			pass
 		return current_reservation
 
+	def set_password(self, raw_password):
+		return false;
+
 	class Meta:
 		ordering = ['first_name']
 		permissions = (
@@ -748,7 +751,7 @@ class Project(models.Model):
 		ordering = ['name']
 
 	def __str__(self):
-		return str('[' + self.project_number + '] ' + self.name + ' [' + self.get_project() + ']')
+		return str('[' + self.project_number + '] ' + self.name + ' [' + self.get_project() + '][IBIS:' + str(self.account.ibis_account) + ']')
 
 	def get_project(self):
 		if self.wbs_element is not None:

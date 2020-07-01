@@ -95,18 +95,19 @@ def start_scheduler():
 	now = datetime.now()
 	dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
 
-	scheduler = Scheduler()
-	if scheduler is not None:
-		print("start_scheduler called at " + dt_string)
-		scheduler.every(1).minutes.do(pulse_interlocks)
-		scheduler.every().day.at("22:00").do(daily_validate_transactions)
-		scheduler.every(15).minutes.do(print_status)
-		scheduler.run_continuously()
+	flag = GlobalFlag.objects.get(name="SchedulerStarted")
 
-		flag = GlobalFlag.objects.get(name="SchedulerStarted")
-		if flag is not None:
-			flag.active = True
-			flag.save()
+	if flag is not None:
+		if not flag.active:
+			scheduler = Scheduler()
+			if scheduler is not None:
+				print("start_scheduler called at " + dt_string)
+				scheduler.every(1).minutes.do(pulse_interlocks)
+				scheduler.every().day.at("22:00").do(daily_validate_transactions)
+				scheduler.every(15).minutes.do(print_status)
+				scheduler.run_continuously()
+				flag.active = True
+				flag.save()
 
 
 def stop_scheduler():
