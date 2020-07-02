@@ -235,7 +235,7 @@ class User(models.Model):
 		return current_reservation
 
 	def set_password(self, raw_password):
-		return false;
+		return False;
 
 	class Meta:
 		ordering = ['first_name']

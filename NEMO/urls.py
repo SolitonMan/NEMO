@@ -299,19 +299,12 @@ if settings.DEBUG:
 	except ImportError:
 		pass
 
+"""
 if settings.USE_SCHEDULE is not None:
 	if settings.USE_SCHEDULE == True:
-#		if GlobalFlag.objects.filter(name="SchedulerStarted").exists():
-#			flag = GlobalFlag.objects.get(name="SchedulerStarted")
-#			if flag.active == False:
-			start_scheduler()
-				#flag.active = True
-				#flag.save()
-#			else:
-#				print("SchedulerStarted is True")
-#		else:
-#			print("SchedulerStarted flag does not exist")
-#	else:
-#		print("USE_SCHEDULE is False")
-#else:
-#	print("USE_SCHEDULE does not exist")
+		start_scheduler()
+	else:
+		print("Scheduler not in user")
+else:
+	print("settings.USE_SCHEDULE not found")
+"""

@@ -242,12 +242,12 @@ def check_policy_to_save_reservation(request, cancelled_reservation, new_reserva
 		else:
 			policy_problems.append(str(new_reservation.user) + " does not belong to the project named " + str(new_reservation.project) + ".")
 
-	# Check that a staff member is part of the core to which tool belongs
-	active_core_id = request.session.get("active_core_id")
-	if str(active_core_id) != "0" and str(active_core_id) != "None":
-		if str(new_reservation.tool.core_id.id) not in str(active_core_id) and not user.is_superuser:
-			msg = "Your core is not the same as the core of " + str(new_reservation.tool.core_id.name) + " to which the " + str(new_reservation.tool.name) + " belongs.  You cannot make a reservation for this tool."
-			policy_problems.append(msg)
+#	# Check that a staff member is part of the core to which tool belongs
+#	active_core_id = request.session.get("active_core_id")
+#	if str(active_core_id) != "0" and str(active_core_id) != "None":
+#		if str(new_reservation.tool.core_id.id) not in str(active_core_id) and not user.is_superuser:
+#			msg = "Your core is not the same as the core of " + str(new_reservation.tool.core_id.name) + " to which the " + str(new_reservation.tool.name) + " belongs.  You cannot make a reservation for this tool."
+#			policy_problems.append(msg)
 
 	# If the user is a staff member or there's an explicit policy override then the policy check is finished.
 	if user.is_staff or explicit_policy_override:

@@ -5,6 +5,8 @@ import time
 
 from NEMO.models import Interlock, Tool, UsageEvent, StaffCharge, AreaAccessRecord, ConsumableWithdraw, GlobalFlag
 
+#end_run = None
+
 def pulse_interlocks():
 	# print("pulse_interlocks() called")
 
@@ -105,20 +107,46 @@ def start_scheduler():
 				scheduler.every(1).minutes.do(pulse_interlocks)
 				scheduler.every().day.at("22:00").do(daily_validate_transactions)
 				scheduler.every(15).minutes.do(print_status)
+				#end_run = 
 				scheduler.run_continuously()
 				flag.active = True
 				flag.save()
+			else:
+				print("There was a problem creatings the Scheduler")
+		else:
+			print("The scheduler has already been started")
+	else:
+		print("No global flag named SchedulerStarted has been found")
 
-
+"""
 def stop_scheduler():
 	now = datetime.now()
 	dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
 
+	if end_run is not None:
+		end_run.set()
+
 	print("stop_scheduler called at " + dt_string)
 
+def force_scheduler():
+	stop_scheduler()
+
+	print("force_scheduler called at " + dt_string)
+	scheduler = Scheduler()
+	if scheduler is not None:
+		scheduler.every(1).minutes.do(pulse_interlocks)
+		scheduler.every().day.at("22:00").do(daily_validate_transactions)
+		scheduler.every(15).minutes.do(print_status)
+		end_run = scheduler.run_continuously()
+
+		flag = GlobalFlag.objects.get(name="SchedulerStarted")
+		if flag is not None:
+			flag.active = True
+			flag.save()
 
 
-"""
+
+
 def start_schedule():
 	print("Starting schedule at " + str(datetime.now()))
 	schedule.every(1).minutes.do(pulse_interlocks)

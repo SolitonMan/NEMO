@@ -29,7 +29,7 @@ def calendar(request, tool_id=None, qualified_only=None, core_only=None):
 	""" Present the calendar view to the user. """
 
 	if request.device == 'mobile':
-		if tool_id and tool_id > 0:
+		if tool_id and int(tool_id) > 0:
 			return redirect('view_calendar', tool_id)
 		else:
 			return redirect('choose_tool', 'view_calendar')

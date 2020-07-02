@@ -3,10 +3,11 @@ import requests
 from django.contrib.admin.views.decorators import staff_member_required
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotFound, HttpResponseServerError, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
 from NEMO.models import InterlockCard, Interlock, Tool, User
-from NEMO.scheduler import pulse_interlocks
+from NEMO.scheduler import pulse_interlocks #, force_scheduler
 
 @staff_member_required(login_url=None)
 def interlocks(request):
@@ -35,3 +36,10 @@ def pulse_all(request):
 	pulse_interlocks()
 	return HttpResponse("Pulse all interlocks initiated.  All interlocks not currently in use will be pulsed.")
 
+"""
+@staff_member_required(login_url=None)
+def force_scheduler(request):
+	if request.user.is_superuser:
+		force_scheduler(request)
+		HttpResponseRedirect(reverse('landing'))
+"""
