@@ -1,5 +1,6 @@
 from datetime import timedelta, datetime
 from http import HTTPStatus
+from logging import getLogger
 from re import match, search
 
 from django.contrib.admin.views.decorators import staff_member_required
@@ -27,7 +28,7 @@ from NEMO.widgets.tool_tree import ToolTree
 @require_GET
 def calendar(request, tool_id=None, qualified_only=None, core_only=None):
 	""" Present the calendar view to the user. """
-
+	
 	if request.device == 'mobile':
 		if tool_id and int(tool_id) > 0:
 			return redirect('view_calendar', tool_id)
@@ -266,10 +267,13 @@ def specific_user_feed(request, user, start, end):
 @login_required
 @require_POST
 def create_reservation(request):
+	logger = getLogger(__name__)
+
 	""" Create a reservation for a user. """
 	try:
 		start, end = extract_times(request.POST)
 	except Exception as e:
+		logger.exception(str(e))
 		return HttpResponseBadRequest(str(e))
 	tool = get_object_or_404(Tool, name=request.POST.get('tool_name'))
 	explicit_policy_override = False
@@ -280,14 +284,18 @@ def create_reservation(request):
 			user = request.user
 		try:
 			explicit_policy_override = request.POST['explicit_policy_override'] == 'true'
-		except:
+		except Exception as e:
+			logger.exception(str(e))
 			pass
 	else:
 		user = request.user
 
 	# check if this is an update to a new reservation, specifically for the case of a reservation for a configurable tool
 	if request.POST.get('reservation_id') is not None:
-		new_reservation = Reservation.objects.get(id=int(request.POST.get('reservation_id')))
+		try:
+			new_reservation = Reservation.objects.get(id=int(request.POST.get('reservation_id')))
+		except Exception as e:
+			logger.exception(str(e))
 	else:
 		# Create the new reservation:
 		new_reservation = Reservation()
@@ -348,40 +356,63 @@ def create_reservation(request):
 
 			else:
 				# add ReservationProject entries for the customers submitted by the staff member
-				reservation_projects = {}
+				# a check before saving
+				try:
+					policy_problems = None
+					overridable = None
+					policy_problems, overridable = check_policy_to_save_reservation(request, None, new_reservation, user, explicit_policy_override)
+					if policy_problems is not None and policy_problems != []:
+						return render(request, 'calendar/policy_dialog.html', {'policy_problems': policy_problems, 'overridable': overridable and request.user.is_staff})
+				except Exception as ex:
+					logger.exception(str(ex))
+					return HttpResponseBadRequest('A problem occurred while checking for conflicting reservations')
+
 				new_reservation.save()
 
-				for key, value in request.POST.items():
-					if is_valid_field(key):
-						attribute, separator, index = key.partition("__")
-						index = int(index)
-						if index not in reservation_projects:
-							reservation_projects[index] = ReservationProject()
-							reservation_projects[index].reservation = new_reservation
-							reservation_projects[index].created = timezone.now()
-							reservation_projects[index].updated = timezone.now()
-						if attribute == "chosen_user":
-							if value is not None and value != "":
-								reservation_projects[index].customer = User.objects.get(id=value)
-							else:
-								new_reservation.delete()
-								return HttpResponseBadRequest('Please choose a user for whom the tool will be run.')
-						if attribute == "chosen_project":
-							if value is not None and value != "" and value != "-1":
-								reservation_projects[index].project = Project.objects.get(id=value)
-							else:
-								new_reservation.delete()
-								return HttpResponseBadRequest('Please choose a project for charges made during this run.')
+				if not ReservationProject.objects.filter(reservation=new_reservation).exists():
+					reservation_projects = {}	
+					for key, value in request.POST.items():
+						if is_valid_field(key):
+							attribute, separator, index = key.partition("__")
+							index = int(index)
+							if index not in reservation_projects:
+								reservation_projects[index] = ReservationProject()
+								reservation_projects[index].reservation = new_reservation
+								reservation_projects[index].created = timezone.now()
+								reservation_projects[index].updated = timezone.now()
+							if attribute == "chosen_user":
+								if value is not None and value != "":
+									reservation_projects[index].customer = User.objects.get(id=value)
+								else:
+									new_reservation.delete()
+									return HttpResponseBadRequest('Please choose a user for whom the tool will be run.')
+							if attribute == "chosen_project":
+								if value is not None and value != "" and value != "-1":
+									reservation_projects[index].project = Project.objects.get(id=value)
+								else:
+									new_reservation.delete()
+									return HttpResponseBadRequest('Please choose a project for charges made during this run.')
 
-				for r in reservation_projects.values():
-					r.full_clean()
-					r.save()
+					for r in reservation_projects.values():
+						r.full_clean()
+						r.save()
 
 
 	configured = (request.POST.get('configured') == "true")
 	# If a reservation is requested and the tool does not require configuration...
 	if not tool.is_configurable():
 		new_reservation.updated = timezone.now()
+		# a check before saving
+		try:
+			policy_problems = None
+			overridable = None
+			policy_problems, overridable = check_policy_to_save_reservation(request, None, new_reservation, user, explicit_policy_override)
+			if policy_problems is not None and policy_problems != []:
+				return render(request, 'calendar/policy_dialog.html', {'policy_problems': policy_problems, 'overridable': overridable and request.user.is_staff})
+		except Exception as ex:
+			logger.exception(str(ex))
+			return HttpResponseBadRequest('An error occurred while attempting to verify the timing of your reservation')
+
 		new_reservation.save()
 		return HttpResponse()
 
@@ -401,6 +432,18 @@ def create_reservation(request):
 		if new_reservation.self_configuration:
 			new_reservation.short_notice = False
 		new_reservation.updated = timezone.now()
+
+		# a check before saving
+		try:
+			policy_problems = None
+			overridable = None
+			policy_problems, overridable = check_policy_to_save_reservation(request, None, new_reservation, user, explicit_policy_override)
+			if policy_problems is not None and policy_problems != []:
+				return render(request, 'calendar/policy_dialog.html', {'policy_problems': policy_problems, 'overridable': overridable and request.user.is_staff})
+		except Exception as ex:
+			logger.exception(str(ex))
+			return HttpResponseBadRequest('An error occurred while attempting to verify the timing of your reservation')
+
 		new_reservation.save()
 		for rc in res_conf:
 			if rc is not None:
@@ -417,7 +460,7 @@ def extract_configuration(request):
 	conf = []
 	for key, value in request.POST.items():
 		entry = parse_configuration_entry(key, value)
-		if entry:
+		if entry is not None:
 			cleaned_configuration.append(entry)
 	# Sort by configuration display priority and join the results:
 	result = ''

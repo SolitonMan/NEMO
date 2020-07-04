@@ -245,7 +245,9 @@
 
 				{% if staff_charge_projects %}
 
-					$("#tool_control").append("<input type=\"hidden\" name=\"override_staff_charge\" id=\"override_staff_charge\" value=\"false\" />");				
+					if (!$("#override_staff_charge").length) {
+						$("#tool_control").append("<input type=\"hidden\" name=\"override_staff_charge\" id=\"override_staff_charge\" value=\"false\" />");				
+					}
 					if (!staff_reserved_for_customer) {
 
 						var scp = {{ staff_charge_projects }};

@@ -229,7 +229,9 @@ class User(models.Model):
 	def current_reservation_for_tool(self, tool):
 		current_reservation = None
 		try:
-			current_reservation = Reservation.objects.get(start__lte=timezone.now(), end__gt=timezone.now(), cancelled=False, missed=False, user=self, tool=tool)
+			if Reservation.objects.filter(start__lte=timezone.now(), end__gt=timezone.now(), cancelled=False, missed=False, user=self, tool=tool).exists():
+				current_reservation = Reservation.objects.filter(start__lte=timezone.now(), end__gt=timezone.now(), cancelled=False, missed=False, user=self, tool=tool)[0]
+				#current_reservation = Reservation.objects.get(start__lte=timezone.now(), end__gt=timezone.now(), cancelled=False, missed=False, user=self, tool=tool)
 		except Reservation.DoesNotExist:
 			pass
 		return current_reservation
@@ -1032,12 +1034,24 @@ class ContestTransactionData(models.Model):
 		return str(self.id)
 
 
+class InterlockType(models.Model):
+	name = models.CharField(max_length=100)
+
+	class Meta:
+		ordering = ['name']
+
+	def __str__(self):
+		 return str(self.name)
+
+
 class InterlockCard(models.Model):
 	server = models.CharField(max_length=100)
 	port = models.PositiveIntegerField()
 	number = models.PositiveIntegerField()
 	even_port = models.PositiveIntegerField()
 	odd_port = models.PositiveIntegerField()
+	type = models.ForeignKey('InterlockType', on_delete=models.SET_NULL, null=True)
+	
 
 	class Meta:
 		ordering = ['server', 'number']
@@ -1094,6 +1108,13 @@ class Interlock(models.Model):
 		cmdst = command_type
 		if cmdst == 2:
 			cmdst = 0
+
+		# check if interlock is WebRelay (X-301) or WebSwitch
+		if self.card.type.name == "X-301":
+			if command_type == 1:
+				cmdst = 0
+			else:
+				cmdst = 1
 
 		#uri = 'http://' + str(self.card.server) + '/state.xml?relay' + str(self.card.number) + 'State=' + str(cmdst)
 		uri = 'http://' + str(self.card.server) + '/state.xml?relay1State=' + str(cmdst)

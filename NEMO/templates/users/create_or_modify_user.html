@@ -24,7 +24,7 @@
 				{% if form.instance.id %}
 					<a href="{% url 'users' %}">Search for another user</a><br>
 					<a href="{% url 'history' 'user' form.instance.id %}">View user history</a><br>
-					{% if form.is_active.value %}<a href="{% url 'deactivate_user' form.instance.id %}">Safely deactivate this user</a><br>{% endif %}
+					{% if request.user.is_superuser %}{% if form.is_active.value %}<a href="{% url 'deactivate_user' form.instance.id %}">Safely deactivate this user</a><br>{% endif %}{% endif %}
 				{% endif %}
 			</div>
 		</div>
@@ -161,6 +161,8 @@
 				</div>
 			</div>
 		</div>
+		{% else %}
+		<input id="is_active" name="is_active" type="hidden" value="{{ form.is_active.value }}">
 		{% endif %}
 		{% if form.instance.id %}
 			<div class="form-group">

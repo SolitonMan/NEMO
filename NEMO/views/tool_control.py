@@ -146,8 +146,8 @@ def tool_status(request, tool_id):
 	}
 
 	try:
-		#current_reservation = Reservation.objects.get(start__lt=timezone.now(), end__gt=timezone.now(), cancelled=False, missed=False, shortened=False, user=request.user, tool=tool)
-		current_reservation = request.user.current_reservation_for_tool(tool)
+		current_reservation = Reservation.objects.get(start__lt=timezone.now(), end__gt=timezone.now(), cancelled=False, missed=False, shortened=False, user=request.user, tool=tool)
+		#current_reservation = request.user.current_reservation_for_tool(tool)
 		if current_reservation is not None:
 			dictionary['time_left'] = current_reservation.end
 			dictionary['my_reservation'] = current_reservation
@@ -398,7 +398,8 @@ def enable_tool_multi(request):
 		for rc in res_conf:
 			config = Configuration.objects.get(id=rc.configuration.id)
 			if rc.setting is None or rc.setting == '':
-				config.current_settings = str(rc.consumable.id)
+				if rc.consumable is not None:
+					config.current_settings = str(rc.consumable.id)
 			else:
 				config.current_settings = str(rc.setting)
 			config.save()
