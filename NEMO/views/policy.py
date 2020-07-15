@@ -84,7 +84,7 @@ def check_policy_to_enable_tool(tool, operator, user, project, staff_charge, req
 	active_core_id = request.session.get("active_core_id")
 	if str(active_core_id) != "0" and str(active_core_id) != "None":
 		msg = "The " + tool.name + " is part of the core " + tool.core_id.name + ". You cannot operate a tool that is part of a different core."
-		if str(tool.core_id.id) not in str(active_core_id) and not operator.is_superuser:
+		if str(tool.core_id.id) not in str(active_core_id) and tool not in operator.qualifications.all() and not operator.is_superuser:
 			return HttpResponseBadRequest(msg)
 
 

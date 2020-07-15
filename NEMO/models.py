@@ -16,6 +16,7 @@ from django.core.mail import send_mail
 from django.db import models
 from django.db.models import Q
 from django.db.models.signals import pre_delete
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotFound, HttpResponseServerError, HttpResponseRedirect
 from django.urls import reverse
 from django.utils import timezone
 
@@ -564,6 +565,7 @@ class StaffCharge(CalendarDisplay):
 	auto_validated = models.BooleanField(default=False)
 	no_charge_flag = models.BooleanField(default=False)
 	ad_hoc_created = models.BooleanField(default=False)
+	active_flag = models.BooleanField(default=True)
 
 	def duration(self):
 		return calculate_duration(self.start, self.end, "In progress")
@@ -602,6 +604,7 @@ class StaffChargeProject(models.Model):
 	updated = models.DateTimeField(null=True, blank=True)
 	contest_data = GenericRelation('ContestTransactionData')
 	no_charge_flag = models.BooleanField(default=False)
+	active_flag = models.BooleanField(default=True)
 
 class Area(models.Model):
 	name = models.CharField(max_length=200, help_text='What is the name of this area? The name will be displayed on the tablet login and logout pages.')
@@ -637,6 +640,7 @@ class AreaAccessRecord(CalendarDisplay):
 	auto_validated = models.BooleanField(default=False)
 	no_charge_flag = models.BooleanField(default=False)
 	ad_hoc_created = models.BooleanField(default=False)
+	active_flag = models.BooleanField(default=True)
 
 	def duration(self):
 		return calculate_duration(self.start, self.end, "In progress")
@@ -675,6 +679,7 @@ class AreaAccessRecordProject(models.Model):
 	updated = models.DateTimeField(null=True, blank=True)
 	contest_data = GenericRelation('ContestTransactionData')
 	no_charge_flag = models.BooleanField(default=False)
+	active_flag = models.BooleanField(default=True)
 
 
 class ConfigurationHistory(models.Model):
@@ -735,7 +740,7 @@ def get_new_project_number():
 class Project(models.Model):
 	name = models.CharField(max_length=100)
 	project_number = models.CharField(max_length=20, null=True, blank=True, default=get_new_project_number)
-	application_identifier = models.CharField(max_length=100, null=True, blank=True)
+	application_identifier = models.CharField(max_length=500, null=True, blank=True)
 	account = models.ForeignKey(Account, on_delete=models.SET_NULL, null=True, help_text="All charges for this project will be billed to the selected account.")
 	internal_order = models.CharField(max_length=12, null=True, blank=True)
 	wbs_element = models.CharField(max_length=12, null=True, blank=True)
@@ -753,7 +758,7 @@ class Project(models.Model):
 		ordering = ['name']
 
 	def __str__(self):
-		return str('[' + self.project_number + '] ' + self.name + ' [' + self.get_project() + '][IBIS:' + str(self.account.ibis_account) + ']')
+		return '[' + str(self.project_number) + '] ' + str(self.application_identifier) + ' [' + str(self.get_project()) + '][IBIS:' + str(self.account.ibis_account) + ']'
 
 	def get_project(self):
 		if self.wbs_element is not None:
@@ -871,6 +876,7 @@ class UsageEvent(CalendarDisplay):
 	auto_validated = models.BooleanField(default=False)
 	no_charge_flag = models.BooleanField(default=False)
 	ad_hoc_created = models.BooleanField(default=False)
+	active_flag = models.BooleanField(default=True)
 
 	def duration(self):
 		return calculate_duration(self.start, self.end, "In progress")
@@ -909,6 +915,7 @@ class UsageEventProject(models.Model):
 	updated = models.DateTimeField(null=True, blank=True)
 	contest_data = GenericRelation('ContestTransactionData')
 	no_charge_flag = models.BooleanField(default=False)
+	active_flag = models.BooleanField(default=True)
 
 
 class Consumable(models.Model):
@@ -979,6 +986,7 @@ class ConsumableWithdraw(models.Model):
 	validated_date = models.DateTimeField(null=True, blank=True)
 	auto_validated = models.BooleanField(default=False)
 	no_charge_flag = models.BooleanField(default=False)
+	active_flag = models.BooleanField(default=True)
 
 	# adding related field for UsageEvent for the situation where a consumable is used during tool usage and then the charge is contested
 	usage_event = models.ForeignKey('UsageEvent', on_delete=models.SET_NULL, related_name="consumable_usage_event", null=True, blank=True)
@@ -1008,6 +1016,7 @@ class ContestTransaction(models.Model):
 	contest_resolved_date = models.DateTimeField(null=True, blank=True)
 	contest_resolution = models.BooleanField(default=False)
 	contest_rejection_reason = models.TextField(null=True, blank=True)
+	no_charge_flag = models.BooleanField(default=False)
 
 	class Meta:
 		ordering = ['content_type','-object_id']
@@ -1029,6 +1038,20 @@ class ContestTransactionData(models.Model):
 
 	class Meta:
 		ordering = ['content_type','-object_id']
+
+	def __str__(self):
+		return str(self.id)
+
+
+class ContestTransactionNewData(models.Model):
+	content_type = models.ForeignKey(ContentType, on_delete=models.SET_NULL, null=True)
+	contest_transaction = models.ForeignKey('ContestTransaction', on_delete=models.SET_NULL, null=True)
+	field_name = models.CharField(max_length=50)
+	field_value = models.CharField(max_length=250)
+	field_group = models.CharField(max_length=20)
+
+	class Meta:
+		ordering = ['content_type','contest_transaction']
 
 	def __str__(self):
 		return str(self.id)
@@ -1084,49 +1107,66 @@ class Interlock(models.Model):
 		return self.__issue_command(self.State.LOCKED)
 
 	def __issue_command(self, command_type):
-		if settings.DEBUG:
+#		if settings.DEBUG:
+#			# use a temp variable to account for the need to use 0 as the LOCKED command
+#			cmdst = command_type
+#			if cmdst == 2:
+#				cmdst = 0
+#
+#			uri = 'http://' + str(self.card.server) + '/state.xml?relay' + str(self.card.number) + 'State=' + str(cmdst)
+#			#print(uri)
+#			req = requests.get(uri)
+#
+#			self.most_recent_reply = "Interlock interface mocked out because settings.DEBUG = True. Interlock last set on " + format_datetime(timezone.now()) + "."
+#			self.state = command_type
+#			self.save()
+#			return True
+
+		interlocks_logger = getLogger("NEMO.interlocks")
+
+		try:
+			# build uri to toggle relay then call requests.get()
+	
 			# use a temp variable to account for the need to use 0 as the LOCKED command
 			cmdst = command_type
 			if cmdst == 2:
 				cmdst = 0
 
-			uri = 'http://' + str(self.card.server) + '/state.xml?relay' + str(self.card.number) + 'State=' + str(cmdst)
-			#print(uri)
-			req = requests.get(uri)
+			# check if interlock is WebRelay (X-301) or WebSwitch
+			if self.card.type.name == "X-301":
+				if command_type == 1:
+					cmdst = 0
+				else:
+					cmdst = 1
 
-			self.most_recent_reply = "Interlock interface mocked out because settings.DEBUG = True. Interlock last set on " + format_datetime(timezone.now()) + "."
+			#uri = 'http://' + str(self.card.server) + '/state.xml?relay' + str(self.card.number) + 'State=' + str(cmdst)
+			uri = 'http://' + str(self.card.server) + '/state.xml?relay1State=' + str(cmdst)
+			req = requests.get(uri, timeout=3.0)
+
+			uri2 = 'http://' + str(self.card.server) + '/state.xml?relay2State=' + str(cmdst)
+			req2 = requests.get(uri2, timeout=3.0)
+
+			self.most_recent_reply = "Executed " + uri + " successfully."
 			self.state = command_type
 			self.save()
-			return True
+			return self.state == command_type
+		except requests.ConnectionError as e:
+			self.most_recent_reply = "The request failed with the following message: " + str(e)
+			self.save()
+			return False
+		except requests.Timeout as e:
+			self.most_recent_reply = "The request failed with the following message: " + str(e)
+			self.save()
+			return False
+		except requests.RequestException as e:
+			self.most_recent_reply = "The request failed with the following message: " + str(e)
+			self.save()
+			return False
+		except Exception as e:
+			self.most_recent_reply = "The request failed with the following message: " + str(e)
+			self.save()
+			return False
 
-		interlocks_logger = getLogger("NEMO.interlocks")
-
-		
-		# build uri to toggle relay then call requests.get()
-
-		# use a temp variable to account for the need to use 0 as the LOCKED command
-		cmdst = command_type
-		if cmdst == 2:
-			cmdst = 0
-
-		# check if interlock is WebRelay (X-301) or WebSwitch
-		if self.card.type.name == "X-301":
-			if command_type == 1:
-				cmdst = 0
-			else:
-				cmdst = 1
-
-		#uri = 'http://' + str(self.card.server) + '/state.xml?relay' + str(self.card.number) + 'State=' + str(cmdst)
-		uri = 'http://' + str(self.card.server) + '/state.xml?relay1State=' + str(cmdst)
-		req = requests.get(uri, timeout=0.01)
-
-		uri = 'http://' + str(self.card.server) + '/state.xml?relay2State=' + str(cmdst)
-		req2 = requests.get(uri, timeout=0.01)
-
-		self.most_recent_reply = "Executed " + uri + " successfully."
-		self.state = command_type
-		self.save()
-		return self.state == command_type
 
 	def pulse(self):
 		uri1 = 'http://' + str(self.card.server) + '/state.xml?relay1State=2'

@@ -83,7 +83,11 @@ def merge(tools, tasks, unavailable_resources, usage_events, scheduled_outages):
 		result[event.tool.id]['operator'] = str(event.operator)
 		result[event.tool.id]['user'] = str(event.operator)
 		if event.user != event.operator:
-			result[event.tool.id]['user'] += " on behalf of " + str(event.user)
+			if event.usageeventproject_set.count() == 1:
+				for u in event.usageeventproject_set.all():
+					result[event.tool.id]['user'] += " on behalf of " + str(u.customer)
+			else:
+				result[event.tool.id]['user'] += " on behalf of multiple customers"
 		result[event.tool.id]['in_use'] = True
 		result[event.tool.id]['in_use_since'] = event.start
 	for resource in unavailable_resources:

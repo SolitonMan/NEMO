@@ -15,6 +15,7 @@
 			<th>Card Number</th>
 			<th>Tool</th>
 			<th>In Use?</th>
+			<th>Interlock Type</th>
 			<th>LEO State</th>
 			<th>Remote State</th>
 			<th>&nbsp;</th>
@@ -27,6 +28,7 @@
 			<td>{{ i.card.number }}</td>
 			<td>{{ i.tool.name }}</td>
 			<td>{{ i.tool.in_use }}</td>
+			<td>{{ i.card.type.name }}</td>
 			<td>{{ i.state }}</td>
 			<td>{{ i.remote_state }}</td>
 			<td><button class="btn btn-success" onclick="pulse_one({{i.id}})">Pulse</button></td>

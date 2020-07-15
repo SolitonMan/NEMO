@@ -11,41 +11,494 @@
 		{% csrf_token %}
 		<input type="hidden" value="{{ usage_event.id }}" name="usage_event_id" />
 		<input type="hidden" value="{{ contest_type }}" name="contest_type" />
-		{% autoescape off %}
-		{{ review_form }}
-		{% endautoescape %}
 
-		{% if usage_event.consumable_usage_event.all.count > 0 %}
-	<h3>Related Consumable Withdraws</h3>
-	<p>The following items were automatically created by the system via the use of a tool that is configured to use consumables as part of its run.  They are listed here in case changes might be needed based on the contest resolution for this usage event.</p>
-
-	<table class="table">
-		<thead>
-		<tr>
-			<th>Staff member</th>
-			<th>Customer</th>
-			<th>Consumable</th>
-			<th>Quantity</th>
-			<th>Project</th>
-			<th>Percent</th>
-			<th>Withdraw date</th>
-		</tr>
-		</thead>
-		<tbody>
-			{% for c in usage_event.consumable_usage_event.all %}
-		<tr>
-			<td>{{ c.merchant }}</td>
-			<td>{{ c.customer }}</td>
-			<td>{{ c.consumable }}</td>
-			<td>{{ c.quantity }}</td>
-			<td>{{ c.project }}</td>
-			<td>{{ c.project_percent }}</td>
-			<td>{{ c.date }}</td>
-		</tr>
+		<table class="table">
+			<tr>
+				<th>Contest Description</th>
+				<td colspan="3">{{ contest_transaction.contest_description }}</td>
+			</tr>
+			<tr>
+				<th>Operator</th>
+				<td>{{ usage_event.operator }}</td>
+				<td>&nbsp;</td>
+				<td>&nbsp;</td>
+			</tr>
+			<tr>
+				<th>Tool</th>
+				<td>{{ usage_event.tool }}</td>
+				<td colspan="2">&nbsp;</td>
+			</tr>
+			<tr>
+				<th>Start</th>
+				<td>{{ event_start_date }}</td>
+				<td>
+					{% if proposed_event_start_date is not None %}
+					<span style="font-weight:bold; color:red;">{{ proposed_event_start_date }}</span>
+					<input type="hidden" name="proposed__start__{{ usage_event_id }}" value="{{ proposed_event_start_date }}" />
+					{% endif %}
+				</td>
+				<td>&nbsp;</td>
+			</tr>
+			<tr>
+				<th>End</th>
+				<td>{{ event_end_date }}</td>
+				<td>
+					{% if proposed_event_end_date is not None %}
+					<span style="font-weight:bold; color:red;">{{ proposed_event_end_date }}</span>
+					<input type="hidden" name="proposed__end__{{ usage_event_id }}" value="{{ proposed_event_end_date }}" />
+					{% endif %}
+				</td>
+				<td>&nbsp;</td>
+			</tr>
+			<tr>
+			<td colspan="4">
+			<table class="table">
+			{% if usage_event_projects %}
+			{% for uep in usage_event_projects %}
+				<tr>
+					<th>Customer</th>
+					<td>{{ uep.customer }}</td>
+					{% update_variable False as current_flag %}
+					{% for ucp in uep.contest_data.all %}
+						{% if ucp.field_name == "chosen_user" %}
+							{% for pu in proposed_users %}
+								{% if ucp.proposed_value|add:0 == pu.id %}
+									{% update_variable True as current_flag %}
+					<td>
+						<span style="font-weight:bold; color:red;">{{ pu }}</span>
+						<input type="hidden" name="proposed__chosen_user__{{ uep.id }}" value="{{ ucp.proposed_value }}" />
+					</td>
+								{% endif %}
+							{% endfor %}
+						{% endif %}						
+					{% endfor %}
+					{% if current_flag == False %}
+					<td>&nbsp;</td>
+					{% endif %}
+				</tr>
+				<tr>
+					<th>Project</th>
+					<td>{{ uep.project }}</td>
+					{% update_variable False as current_flag %}
+					{% for ucp in uep.contest_data.all %}
+						{% if ucp.field_name == "chosen_project" %}
+							{% for pp in proposed_projects %}
+								{% if ucp.proposed_value|add:0 == pp.id %}
+									{% update_variable True as current_flag %}
+					<td>
+						<span style="font-weight:bold; color:red;">{{ pp }}</span>
+						<input type="hidden" name="proposed__chosen_project__{{ uep.id }}" value="{{ ucp.proposed_value }}" />
+					</td>
+								{% endif %}
+							{% endfor %}
+						{% endif %}						
+					{% endfor %}
+					{% if current_flag == False %}
+					<td>&nbsp;</td>
+					{% endif %}
+				</tr>
+				<tr>
+					<th>Percent</th>
+					<td>{{ uep.project_percent }}</td>
+					{% update_variable False as current_flag %}
+					{% for ucp in uep.contest_data.all %}
+						{% if ucp.field_name == "project_percent" %}
+							{% update_variable True as current_flag %}
+					<td>
+						<span style="font-weight:bold; color:red;">{{ ucp.proposed_value }}</span>
+						<input type="hidden" name="proposed__project_percent__{{ uep.id }}" value="{{ ucp.proposed_value }}" />
+					</td>
+						{% endif %}						
+					{% endfor %}
+					{% if current_flag == False %}
+					<td>&nbsp;</td>
+					{% endif %}
+				</tr>
 			{% endfor %}
-		</tbody>
-	</table>
+			{% endif %}
+			</table>
+			</td>
+			</tr>
+		</table>
+		{% if usage_event.consumable_usage_event.all.count > 0 %}
+		<h3>Related Consumable Withdraws</h3>
+		<p>The following items were automatically created by the system via the use of a tool that is configured to use consumables as part of its run.  They are listed here in case changes might be needed based on the contest resolution for this usage event.</p>
+
+		<table class="table">
+			<thead>
+			<tr>
+				<th>Staff member</th>
+				<th>Customer</th>
+				<th>Consumable</th>
+				<th>Quantity</th>
+				<th>Project</th>
+				<th>Percent</th>
+				<th>Withdraw date</th>
+			</tr>
+			</thead>
+			<tbody>
+				{% for c in usage_event.consumable_usage_event.all %}
+			<tr>
+				<td>{{ c.merchant }}</td>
+				<td>{{ c.customer }}</td>
+				<td>{{ c.consumable }}</td>
+				<td>{{ c.quantity }}</td>
+				<td>{{ c.project }}</td>
+				<td>{{ c.project_percent }}</td>
+				<td>{{ c.date }}</td>
+			</tr>
+				{% endfor %}
+			</tbody>
+		</table>
 		{% endif %}
+	{% endif %}
+
+
+	{% if staff_charge %}
+	<h1>Staff Charge Contest Resolution</h1>
+
+	<form action="{% url 'save_contest_resolution' %}" method="POST" onsubmit="return on_submit()">
+		{% csrf_token %}
+		<input type="hidden" name="staff_charge_id" value="{{ staff_charge.id }}" />
+		<input type="hidden" value="{{ contest_type }}" name="contest_type" />
+
+		<table class="table">
+			<tr>
+				<th>Contest Description</th>
+				<td colspan="3">{{ contest_transaction.contest_description }}</td>
+			</tr>
+			<tr>
+				<th>Staff Member</th>
+				<td>{{ staff_charge.staff_member }}</td>
+				<td>&nbsp;</td>
+				<td>&nbsp;</td>
+			</tr>
+			<tr>
+				<th>Start</th>
+				<td>{{ event_start_date }}</td>
+				<td>
+					{% if proposed_event_start_date is not None %}
+					<span style="font-weight:bold; color:red;">{{ proposed_event_start_date }}</span>
+					<input type="hidden" name="proposed__start__{{ staff_charge_id }}" value="{{ proposed_event_start_date }}" />
+					{% endif %}
+				</td>
+				<td>&nbsp;</td>
+			</tr>
+			<tr>
+				<th>End</th>
+				<td>{{ event_end_date }}</td>
+				<td>
+					{% if proposed_event_end_date is not None %}
+					<span style="font-weight:bold; color:red;">{{ proposed_event_end_date }}</span>
+					<input type="hidden" name="proposed__end__{{ staff_charge_id }}" value="{{ proposed_event_end_date }}" />
+					{% endif %}
+				</td>
+				<td>&nbsp;</td>
+			</tr>
+			<tr>
+			<td colspan="4">
+			<table class="table">
+			{% if staff_charge_projects %}
+			{% for scp in staff_charge_projects %}
+				<tr>
+					<th>Customer</th>
+					<td>{{ scp.customer }}</td>
+					{% update_variable False as current_flag %}
+					{% for sccd in scp.contest_data.all %}
+						{% if sccd.field_name == "chosen_user" %}
+							{% for pu in proposed_users %}
+								{% if sccd.proposed_value|add:0 == pu.id %}
+									{% update_variable True as current_flag %}
+					<td>
+						<span style="font-weight:bold; color:red;">{{ pu }}</span>
+						<input type="hidden" name="proposed__chosen_user__{{ scp.id }}" value="{{ sccd.proposed_value }}" />
+					</td>
+								{% endif %}
+							{% endfor %}
+						{% endif %}						
+					{% endfor %}
+					{% if current_flag == False %}
+					<td>&nbsp;</td>
+					{% endif %}
+				</tr>
+				<tr>
+					<th>Project</th>
+					<td>{{ scp.project }}</td>
+					{% update_variable False as current_flag %}
+					{% for sccd in scp.contest_data.all %}
+						{% if sccd.field_name == "chosen_project" %}
+							{% for pp in proposed_projects %}
+								{% if sccd.proposed_value|add:0 == pp.id %}
+									{% update_variable True as current_flag %}
+					<td>
+						<span style="font-weight:bold; color:red;">{{ pp }}</span>
+						<input type="hidden" name="proposed__chosen_project__{{ scp.id }}" value="{{ sccd.proposed_value }}" />
+					</td>
+								{% endif %}
+							{% endfor %}
+						{% endif %}						
+					{% endfor %}
+					{% if current_flag == False %}
+					<td>&nbsp;</td>
+					{% endif %}
+				</tr>
+				<tr>
+					<th>Percent</th>
+					<td>{{ scp.project_percent }}</td>
+					{% update_variable False as current_flag %}
+					{% for sccd in uep.contest_data.all %}
+						{% if sccd.field_name == "project_percent" %}
+							{% update_variable True as current_flag %}
+					<td>
+						<span style="font-weight:bold; color:red;">{{ sccd.proposed_value }}</span>
+						<input type="hidden" name="proposed__project_percent__{{ scp.id }}" value="{{ sccd.proposed_value }}" />
+					</td>
+						{% endif %}						
+					{% endfor %}
+					{% if current_flag == False %}
+					<td>&nbsp;</td>
+					{% endif %}
+				</tr>
+			{% endfor %}
+			</table>
+			{% endif %}	
+			</td>
+			</tr>
+		</table>
+	{% endif %}
+
+	{% if consumable_withdraw %}
+	<h1>Consumable Withdraw Contest Resolution</h1>
+
+	<form action="{% url 'save_contest_resolution' %}" method="POST" onsubmit="return on_submit()">
+		{% csrf_token %}
+		<input type="hidden"  name="consumable_withdraw_id" value="{{ consumable_withdraw.id }}" />
+		<input type="hidden" value="{{ contest_type }}" name="contest_type" />
+
+		<table class="table">
+			<tr>
+				<th>Contest Description</th>
+				<td colspan="3">{{ contest_transaction.contest_description }}</td>
+			</tr>
+			<tr>
+				<th>Staff Member</th>
+				<td>{{ consumable_withdraw.merchant }}</td>
+				<td>&nbsp;</td>
+				<td>&nbsp;</td>
+			</tr>
+			<tr>
+				<th>Consumable</th>
+				<td>{{ consumable_withdraw.consumable }}</td>
+				{% if proposed_consumable %}
+				<td>
+					<span style="font-weight:bold; color:red;">{{ proposed_consumable }}</span>
+					<input type="hidden" name="proposed__consumable__{{ consumable_withdraw.id }}" id="proposed__consumable__{{ consumable_withdraw.id }}" value="{{ proposed_consumable.id }}" />
+				</td>
+				<td>&nbsp;</td>
+				{% else %}
+				<td>&nbsp;</td>
+				<td>&nbsp;</td>
+				{% endif %}
+			</tr>
+			<tr>
+				<th>Quantity</th>
+				<td>{{ consumable_withdraw.quantity }}</td>
+				{% if proposed_quantity %}
+				<td>
+					<span style="font-weight:bold; color:red;">{{ proposed_quantity }}</span>
+					<input type="hidden" name="proposed__quantity__{{ consumable_withdraw.id }}" id="proposed__quantity__{{ consumable_withdraw.id }}" value="{{ proposed_quantity }}" />
+				</td>
+				<td>&nbsp;</td>
+				{% else %}
+				<td>&nbsp;</td>
+				<td>&nbsp;</td>
+				{% endif %}
+			</tr>
+			<tr>
+				<th>Customer</th>
+				<td>{{ consumable_withdraw.customer }}</td>
+				{% if proposed_customer %}
+				<td>
+					<span style="font-weight:bold; color:red;">{{ proposed_customer }}</span>
+					<input type="hidden" name="proposed__chosen_user__{{ consumable_withdraw.id }}" id="proposed__chosen_user__{{ consumable_withdraw.id }}" value="{{ proposed_customer.id }}" />
+				</td>
+				<td>&nbsp;</td>
+				{% else %}
+				<td>&nbsp;</td>
+				<td>&nbsp;</td>
+				{% endif %}
+			</tr>
+			<tr>
+				<th>Project</th>
+				<td>{{ consumable_withdraw.project }}</td>
+				{% if proposed_project %}
+				<td>
+					<span style="font-weight:bold; color:red;">{{ proposed_project }}</span>
+					<input type="hidden" name="proposed__chosen_project__{{ consumable_withdraw.id }}" id="proposed__chosen_project__{{ consumable_withdraw.id }}" value="{{ proposed_project.id }}" />
+				</td>
+				<td>&nbsp;</td>
+				{% else %}
+				<td>&nbsp;</td>
+				<td>&nbsp;</td>
+				{% endif %}
+			</tr>
+			<tr>
+				<th>Percent</th>
+				<td>{{ consumable_withdraw.project_percent }}</td>
+				{% if proposed_percent %}
+				<td>
+					<span style="font-weight:bold; color:red;">{{ proposed_percent }}</span>
+					<input type="hidden" name="proposed__project_percent__{{ consumable_withdraw.id }}" id="proposed__project_percent__{{ consumable_withdraw.id }}" value="{{ proposed_percent }}" />
+				</td>
+				<td>&nbsp;</td>
+				{% else %}
+				<td>&nbsp;</td>
+				<td>&nbsp;</td>
+				{% endif %}
+			</tr>
+			<tr>
+				<th>Withdraw date</th>
+				<td>{{ consumable_withdraw.date }}</td>
+				<td>&nbsp;</td>
+				<td>&nbsp;</td>
+			</tr>
+		</table>
+	{% endif %}
+
+
+	{% if area_access_record %}
+	<h1>Area Access Record Contest Resolution</h1>
+
+	<form action="{% url 'save_contest_resolution' %}" method="POST" onsubmit="return on_submit()">
+		{% csrf_token %}
+		<input type="hidden" name="area_access_record_id" value="{{ area_access_record.id }}" />
+		<input type="hidden" value="{{ contest_type }}" name="contest_type" />
+
+		
+		<table class="table">
+			<tr>
+				<th>Contest Description</th>
+				<td colspan="3">{{ contest_transaction.contest_description }}</td>
+			</tr>
+			<tr>
+				<th>Area</th>
+				<td>{{ area_access_record.area }}</td>
+				{% if proposed_area %}
+				<td>
+					<span style="font-weight:bold; color:red;">{{ proposed_area }}</span>
+					<input type="hidden" name="proposed__area__{{ area_access_record.id }}" id="proposed__area__{{ area_access_record.id }}" value="{{ proposed_area.id }}" />
+				</td>
+				<td>&nbsp;</td>
+				{% else %}
+				<td>&nbsp;</td>
+				<td>&nbsp;</td>
+				{% endif %}
+			</tr>
+			{% if area_access_record.staff_charge %}
+			<tr>
+				<th>Staff Member</th>
+				<td>{{ area_access_record.staff_charge.staff_member }}</td>
+				<td>&nbsp;</td>
+				<td>&nbsp;</td>
+			</tr>
+			{% endif %}
+			
+			<tr>
+				<th>Start</th>
+				<td>{{ event_start_date }}</td>
+				<td>
+					{% if proposed_event_start_date is not None %}
+					<span style="font-weight:bold; color:red;">{{ proposed_event_start_date }}</span>
+					<input type="hidden" name="proposed__start__{{ area_access_record.id }}" value="{{ proposed_event_start_date }}" />
+					{% endif %}
+				</td>
+				<td>&nbsp;</td>
+			</tr>
+			<tr>
+				<th>End</th>
+				<td>{{ event_end_date }}</td>
+				<td>
+					{% if proposed_event_end_date is not None %}
+					<span style="font-weight:bold; color:red;">{{ proposed_event_end_date }}</span>
+					<input type="hidden" name="proposed__end__{{ area_access_record.id }}" value="{{ proposed_event_end_date }}" />
+					{% endif %}
+				</td>
+				<td>&nbsp;</td>
+			</tr>
+			<tr>
+			<td colspan="4">
+			<table class="table">
+			{% if area_access_record_projects %}
+			{% for aarp in area_access_record_projects %}
+				<tr>
+					<th>Customer</th>
+					<td>{{ aarp.customer }}</td>
+					{% update_variable False as current_flag %}
+					{% for aarcd in aarp.contest_data.all %}
+						{% if aarcd.field_name == "chosen_user" %}
+							{% for pu in proposed_users %}
+								{% if aarcd.proposed_value|add:0 == pu.id %}
+									{% update_variable True as current_flag %}
+					<td>
+						<span style="font-weight:bold; color:red;">{{ pu }}</span>
+						<input type="hidden" name="proposed__chosen_user__{{ aarp.id }}" value="{{ aarcd.proposed_value }}" />
+					</td>
+								{% endif %}
+							{% endfor %}
+						{% endif %}						
+					{% endfor %}
+					{% if current_flag == False %}
+					<td>&nbsp;</td>
+					{% endif %}
+				</tr>
+				<tr>
+					<th>Project</th>
+					<td>{{ aarp.project }}</td>
+					{% update_variable False as current_flag %}
+					{% for aarcd in aarp.contest_data.all %}
+						{% if aarcd.field_name == "chosen_project" %}
+							{% for pp in proposed_projects %}
+								{% if aarcd.proposed_value|add:0 == pp.id %}
+									{% update_variable True as current_flag %}
+					<td>
+						<span style="font-weight:bold; color:red;">{{ pp }}</span>
+						<input type="hidden" name="proposed__chosen_project__{{ aarp.id }}" value="{{ aarcd.proposed_value }}" />
+					</td>
+								{% endif %}
+							{% endfor %}
+						{% endif %}						
+					{% endfor %}
+					{% if current_flag == False %}
+					<td>&nbsp;</td>
+					{% endif %}
+				</tr>
+				<tr>
+					<th>Percent</th>
+					<td>{{ aarp.project_percent }}</td>
+					{% update_variable False as current_flag %}
+					{% for aarcd in uep.contest_data.all %}
+						{% if aarcd.field_name == "project_percent" %}
+							{% update_variable True as current_flag %}
+					<td>
+						<span style="font-weight:bold; color:red;">{{ aarcd.proposed_value }}</span>
+						<input type="hidden" name="proposed__project_percent__{{ aarp.id }}" value="{{ aarcd.proposed_value }}" />
+					</td>
+						{% endif %}						
+					{% endfor %}
+					{% if current_flag == False %}
+					<td>&nbsp;</td>
+					{% endif %}
+				</tr>
+			{% endfor %}
+			</table>
+			{% endif %}	
+			</td>
+			</tr>
+		</table>
+	{% endif %}
+	
+
+
 	<p>Do you wish to confirm this contest?
 	<input type="radio" name="resolve_contest" id="resolve_contest" value="0" />No
 	<input type="radio" name="resolve_contest" id="resolve_contest" value="1" />Yes
@@ -61,91 +514,7 @@
 
 	<input type="submit" value="Save Resolution" class="btn btn-success" />
 	<input type="button" value="Cancel Resolution" class="btn btn-warning" onclick="location.href='{% url 'review_contested_items' %}';" />
-	{% endif %}
-	{% if staff_charge %}
-	<h1>Staff Charge Contest Resolution</h1>
 
-	<form action="{% url 'save_contest_resolution' %}" method="POST" onsubmit="return on_submit()">
-		{% csrf_token %}
-		<input type="hidden" name="staff_charge_id" value="{{ staff_charge.id }}" />
-		<input type="hidden" value="{{ contest_type }}" name="contest_type" />
-	{% autoescape off %}
-	{{ review_form }}
-	{% endautoescape %}
-
-	<p>Do you wish to confirm this contest?
-	<input type="radio" name="resolve_contest" id="resolve_contest" value="0" />No
-	<input type="radio" name="resolve_contest" id="resolve_contest" value="1" />Yes
-	</p>
-	<p>
-	If you choose not to accept the contest, please explain briefly why it's being rejected<br/>
-	<textarea name="reject_contest_reason" id="reject_contest_reason" rows="10" cols="60"></textarea>
-	</p>
-	<p>
-        Mark this transaction as no charge <input type="checkbox" name="no_charge_transaction" id="no_charge_transaction" value="1" /><br/>
-        Note that selecting this option will only work if the "Yes" option above is chosen.
-        </p>
-	
-	<input type="submit" value="Save Resolution" class="btn btn-success" />
-	<input type="button" value="Cancel Resolution" class="btn btn-warning" onclick="location.href='{% url 'review_contested_items' %}';" />
-	{% endif %}
-
-
-	{% if consumable_withdraw %}
-	<h1>Consumable Withdraw Contest Resolution</h1>
-
-	<form action="{% url 'save_contest_resolution' %}" method="POST" onsubmit="return on_submit()">
-		{% csrf_token %}
-		<input type="hidden"  name="consumable_withdraw_id" value="{{ consumable_withdraw.id }}" />
-		<input type="hidden" value="{{ contest_type }}" name="contest_type" />
-	{% autoescape off %}
-	{{ review_form }}
-	{% endautoescape %}
-
-	<p>Do you wish to confirm this contest?
-	<input type="radio" name="resolve_contest" id="resolve_contest" value="0" />No
-	<input type="radio" name="resolve_contest" id="resolve_contest" value="1" />Yes
-	</p>
-	<p>
-	If you choose not to accept the contest, please explain briefly why it's being rejected<br/>
-	<textarea name="reject_contest_reason" id="reject_contest_reason" rows="10" cols="60"></textarea>
-	</p>
-	<p>
-        Mark this transaction as no charge <input type="checkbox" name="no_charge_transaction" id="no_charge_transaction" value="1" /><br/>
-        Note that selecting this option will only work if the "Yes" option above is chosen.
-        </p>
-
-	<input type="submit" value="Save Resolution" class="btn btn-success" />
-	<input type="button" value="Cancel Resolution" class="btn btn-warning" onclick="location.href='{% url 'review_contested_items' %}';" />
-	{% endif %}
-
-	{% if area_access_record %}
-	<h1>Area Access Record Contest Resolution</h1>
-
-	<form action="{% url 'save_contest_resolution' %}" method="POST" onsubmit="return on_submit()">
-		{% csrf_token %}
-		<input type="hidden" name="area_access_record_id" value="{{ area_access_record.id }}" />
-		<input type="hidden" value="{{ contest_type }}" name="contest_type" />
-	{% autoescape off %}
-	{{ review_form }}
-	{% endautoescape %}
-
-	<p>Do you wish to confirm this contest?
-	<input type="radio" name="resolve_contest" id="resolve_contest" value="0" />No
-	<input type="radio" name="resolve_contest" id="resolve_contest" value="1" />Yes
-	</p>
-	<p>
-	If you choose not to accept the contest, please explain briefly why it's being rejected<br/>
-	<textarea name="reject_contest_reason" id="reject_contest_reason" rows="10" cols="60"></textarea>
-	</p>
-	<p>
-        Mark this transaction as no charge <input type="checkbox" name="no_charge_transaction" id="no_charge_transaction" value="1" /><br/>
-        Note that selecting this option will only work if the "Yes" option above is chosen.
-        </p>
-
-	<input type="submit" value="Save Resolution" class="btn btn-success" />
-	<input type="button" value="Cancel Resolution" class="btn btn-warning" onclick="location.href='{% url 'review_contested_items' %}';" />
-	{% endif %}
 
 	<script type="text/javascript">
 	function on_submit()
@@ -170,3 +539,4 @@
 	</script>
 	</form>	
 {% endblock %}
+

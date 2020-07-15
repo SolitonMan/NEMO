@@ -322,9 +322,9 @@ class ProjectAdminForm(forms.ModelForm):
 
 @register(Project)
 class ProjectAdmin(admin.ModelAdmin):
-	list_display = ('id', 'name', 'project_number', 'account', 'owner', 'bill_to', 'start_date', 'end_date', 'active')
+	list_display = ('id', 'name', 'project_number', 'internal_order', 'account', 'owner', 'bill_to', 'start_date', 'end_date', 'active')
 	search_fields = ('name', 'internal_order', 'wbs_element', 'application_identifier', 'account__name', 'account__simba_cost_center', 'owner__first_name', 'owner__last_name', 'owner__username', 'bill_to__first_name', 'bill_to__last_name', 'bill_to__username', 'project_number')
-	list_filter = ('active',)
+	list_filter = ('active','project_number')
 	form = ProjectAdminForm
 
 	def save_model(self, request, obj, form, change):
@@ -747,6 +747,11 @@ class NsfCategoryAdmin(admin.ModelAdmin):
 @register(CreditCostCollector)
 class CreditCostCollectorAdmin(admin.ModelAdmin):
 	list_display = ('id', 'name', 'project', 'core')
+
+	def formfield_for_foreignkey(self, db_field, request, **kwargs):
+		if db_field.name == "project":
+			kwargs["queryset"] = Project.objects.order_by('project_number')
+		return super(CreditCostCollectorAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 	def has_delete_permission(self, request, obj=None):
 		return False

@@ -203,12 +203,12 @@
 				<input id="add_a_project" type="text" autocomplete="off" class="form-control" placeholder="Add a project">
 			</div>
 		</div>
+		{% endif %}
 		<div class="form-group">
 			<div id="project-list" class="col-sm-offset-2 col-sm-4">
 				This user has no assigned projects.
 			</div>
 		</div>
-		{% endif %}
 		<div class="form-group">
 			<label class="control-label col-sm-2" for="add_a_tool_qualification">Tool qualifications</label>
 			<div class="col-sm-4">
@@ -294,7 +294,7 @@
 		}
 		function add_project(project_name, project_id)
 		{
-			add_to_list("#project-list", "remove_project", project_id, project_name, "Remove this user from " + project_name, "projects");
+			add_to_list("#project-list", "remove_project", project_id, project_name, "Remove this user from " + project_name, "projects"{% if not request.user.is_superuser %}, true{% endif %});
 		}
 		function remove_project(project_id)
 		{

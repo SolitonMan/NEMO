@@ -13,6 +13,10 @@ from NEMO.utilities import localize, naive_local_current_datetime
 @require_GET
 def configuration_agenda(request, time_period='today'):
 	tools = Tool.objects.exclude(configuration__isnull=True).exclude(configuration__exclude_from_configuration_agenda=True).values_list('id', flat=True)
+
+	if not request.user.is_superuser:
+		tools = tools.filter(core_id__in=request.user.core_ids.all())
+
 	start = None
 	end = None
 	if time_period == 'today':

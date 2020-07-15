@@ -17,18 +17,20 @@
 	<form name="contest" id="contest" action="{% url 'save_contest' %}" method="POST" onsubmit="return on_submit();">
 	{% csrf_token %}
 	<input type="hidden" name="contest_type" value="{{ contest_type }}" />
+	<p style="border: 2px solid black; padding: 5px; background-color: #f2dede;">
+		<input type="checkbox" name="no_charge_flag" id="no_charge_flag" onclick="set_no_charge_form();" style="margin: 8px;" /><b>No charge for this transaction</b> (This option will disable all of the fields except for Contest Reason and Contest Description, which are required.  No other changes are necessary if the sole purpose of the contest is to not charge for this transaction)
+	</p>
+	<br/>
+
 	{% if usage_event is not None %}
 	<input type="hidden" name="usage_event_id" value="{{ usage_event.id }}" />
 	<table class="table">
 		<tr>
 			<th>Tool</th>
 			<td>
-				<select id="tool_select" name="proposed__tool_id__{{ usage_event.id }}" class="form-control">
-				{% for t in tools %}
-					<option value="{{ t.id }}"{% if t.id == usage_event.tool.id %} selected{% endif %}>{{ t.name }}</option>
-				{% endfor %}
-				</select>
+				{{ usage_event.tool.name }}
 				<input type="hidden" name="original__tool_id__{{ usage_event.id }}" value="{{ usage_event.tool.id }}" />
+				<input type="hidden" name="proposed__tool_id__{{ usage_event.id }}" value="{{ usage_event.tool.id }}" />
 			</td>
 		</tr>
 		<tr>
@@ -55,9 +57,10 @@
 		</tr>
 		<tr>
 			<td colspan="2">
-				<table class="table">
+				<table class="table" id="customer_project_entries">
 					<thead>
 					<tr>
+						<th>Delete</th>
 						<th>Customer</th>
 						<th>Project</th>
 						<th>Percent</th>
@@ -66,6 +69,9 @@
 					<tbody>
 					{% for u in uep %}
 					<tr id="row_{{ u.id }}">
+						<td>
+							<input type="checkbox" name="delete_customer__{{ u.id }}" id="delete_customer__{{ u.id }}" value="1" onclick="mark_for_delete({{ u.id }});" />
+						</td>
 						<td>
 							<input type="button" class="btn btn-default" value="{{ u.customer }}" name="button__chosen_user__{{ u.id }}" id="button__chosen_user__{{ u.id }}" onclick="change_customer({{ u.id }});" />
 							<input type="hidden" value="{{ u.customer.id }}" name="original__chosen_user__{{ u.id }}" id="original__chosen_user__{{ u.id }}" />
@@ -85,11 +91,14 @@
 						</td>
 						<td>
 							<input type="text" class="form-control" name="proposed__project_percent__{{ u.id }}" id="proposed__project_percent__{{ u.id }}" value="{{ u.project_percent }}" />
-							<input type="hidden" name="original__project_percent__{{ u.id }}" value="{{ u.project_percent }}" />
-							<input type="hidden" name="original__chosen_project__{{ u.id }}" value="{{ u.project.id }}" />
+							<input type="hidden" id="original__project_percent__{{ u.id }}" name="original__project_percent__{{ u.id }}" value="{{ u.project_percent }}" />
+							<input type="hidden" id="original__chosen_project__{{ u.id }}" name="original__chosen_project__{{ u.id }}" value="{{ u.project.id }}" />
 						</td>
 					</tr>	
 					{% endfor %}
+					<tr>
+						<td colspan="4" style="text-align:center"><a href="javascript:void(0)" id="add_customer_link">Add another customer</a></td>
+					</tr>
 					</tbody>
 				</table>
 			</td>
@@ -128,9 +137,10 @@
 		</tr>
 		<tr>
 			<td colspan="2">
-				<table class="table">
+				<table class="table" id="customer_project_entries">
 					<thead>
 					<tr>
+						<th>Delete</th>
 						<th>Customer</th>
 						<th>Project</th>
 						<th>Percent</th>
@@ -139,6 +149,9 @@
 					<tbody>
 					{% for s in scp %}
 					<tr id="row_{{ s.id }}">
+						<td>
+							<input type="checkbox" name="delete_customer__{{ s.id }}" id="delete_customer__{{ s.id }}" value="1" onclick="mark_for_delete({{ s.id }});" />
+						</td>
 						<td>
 							<input type="button" class="btn btn-default" value="{{ s.customer }}" name="button__chosen_user__{{ s.id }}" id="button__chosen_user__{{ s.id }}" onclick="change_customer({{ s.id }});" />
 							<input type="hidden" value="{{ s.customer.id }}" name="original__chosen_user__{{ s.id }}" id="original__chosen_user__{{ s.id }}" />
@@ -158,11 +171,14 @@
 						</td>
 						<td>
 							<input type="text" class="form-control" name="proposed__project_percent__{{ s.id }}" id="proposed__project_percent__{{ s.id }}" value="{{ s.project_percent }}" />
-							<input type="hidden" name="original__project_percent__{{ s.id }}" value="{{ s.project_percent }}" />
-							<input type="hidden" name="original__chosen_project__{{ s.id }}" value="{{ s.project.id }}" />
+							<input type="hidden" id="original__project_percent__{{ s.id }}" name="original__project_percent__{{ s.id }}" value="{{ s.project_percent }}" />
+							<input type="hidden" id="original__chosen_project__{{ s.id }}" name="original__chosen_project__{{ s.id }}" value="{{ s.project.id }}" />
 						</td>
 					</tr>
 					{% endfor %}
+					<tr>
+						<td colspan="4" style="text-align:center"><a href="javascript:void(0)" id="add_customer_link">Add another customer</a></td>
+					</tr>
 					</tbody>
 				</table>
 			</td>
@@ -194,9 +210,10 @@
 		</tr>
 		<tr>
 			<td colspan="2">
-				<table class="table">
+				<table class="table" id="customer_project_entries">
 					<thead>
 					<tr>
+						<th>Delete</th>
 						<th>Customer</th>
 						<th>Project</th>
 						<th>Percent</th>
@@ -205,6 +222,9 @@
 					<tbody>
 					{% for a in aarp %}
 					<tr id="row_{{ a.id }}">
+						<td>
+							<input type="checkbox" name="delete_customer__{{ a.id }}" id="delete_customer__{{ a.id }}" value="1" onclick="mark_for_delete({{ a.id }});" />
+						</td>
 						<td>
 							<input type="button" class="btn btn-default" value="{{ a.customer }}" name="button__chosen_user__{{ a.id }}" id="button__chosen_user__{{ a.id }}" onclick="change_customer({{ a.id }});" />
 							<input type="hidden" value="{{ a.customer.id }}" name="original__chosen_user__{{ a.id }}" id="original__chosen_user__{{ a.id }}" />
@@ -224,11 +244,14 @@
 						</td>
 						<td>
 							<input type="text" class="form-control" name="proposed__project_percent__{{ a.id }}" id="proposed__project_percent__{{ a.id }}" value="{{ a.project_percent }}" />
-							<input type="hidden" name="original__project_percent__{{ a.id }}" value="{{ a.project_percent }}" />
-							<input type="hidden" name="original__chosen_project__{{ a.id }}" value="{{ a.project.id }}" />
+							<input type="hidden" id="original__project_percent__{{ a.id }}" name="original__project_percent__{{ a.id }}" value="{{ a.project_percent }}" />
+							<input type="hidden" id="original__chosen_project__{{ a.id }}" name="original__chosen_project__{{ a.id }}" value="{{ a.project.id }}" />
 						</td>
 					</tr>
 					{% endfor %}
+					<tr>
+						<td colspan="4" style="text-align:center"><a href="javascript:void(0)" id="add_customer_link">Add another customer</a></td>
+					</tr>
 					</tbody>
 				</table>
 			</td>
@@ -314,7 +337,7 @@
 		<tr>
 			<th>Percent</th>
 			<td>
-				<input type="hidden" name="original__project_percent__{{ consumable_withdraw.id }}" value="{{ consumable_withdraw.project_percent }}" />
+				<input type="hidden" id="original__project_percent__{{ consumable_withdraw.id }}" name="original__project_percent__{{ consumable_withdraw.id }}" value="{{ consumable_withdraw.project_percent }}" />
 				<input type="text" class="form-control" id="proposed__project_percent__{{ consumable_withdraw.id }}" name="proposed__project_percent__{{ consumable_withdraw.id }}" value="{{ consumable_withdraw.project_percent }}" />
 			</td>
 		</tr>
@@ -358,6 +381,7 @@
 	</form>
 
 	<script type="text/javascript">
+	var current_entry_number = 0;
 	function set_other(sel)
 	{
 		option = sel.options[sel.selectedIndex].value;
@@ -365,6 +389,85 @@
 			$("#other_reason").show();
 		} else {
 			$("#other_reason").hide();
+		}
+	}
+	function mark_for_delete(eid)
+	{
+		var s = "#delete_customer__" + eid;
+		if ($(s).is(":checked")) {
+			// disable inputs
+			s = "#row_" + eid + " input";
+			$(s).each(function() {
+				if ($(this).prop("type") != "checkbox") {
+					$(this).prop("disabled", true);
+				}
+			});
+			s = "#row_" + eid + " select";
+			$(s).each(function() {
+				$(this).prop("disabled", true);
+			});
+
+			// remove values
+			s = "input[name*='proposed__project_percent__']";
+			$(s).each(function() {
+				$(this).val("");
+			});
+		} else {
+			// re-enable inputs
+			s = "#row_" + eid + " input";
+			$(s).each(function() {
+				$(this).prop("disabled", false);
+			});
+			s = "#row_" + eid + " select";
+			$(s).each(function() {
+				$(this).prop("disabled", false);
+			});
+
+			// replace project percent values if no items are marked for delete
+			if (!$("input[name*='delete_customer__']").is(":checked")) {
+				s = "input[name*='proposed__project_percent__']";
+				$(s).each(function() {
+					iid = $(this).prop("name").split("__")[2];
+					original_val = "#original__project_percent__" + iid;
+					$(this).val($(original_val).val());
+				});
+			}
+		}
+	}
+	function set_no_charge_form()
+	{
+		if ($("#no_charge_flag").is(":checked")) {
+			$("input").each(function() {
+				if ($(this).prop("name") != "no_charge_flag" && $(this).prop("name") != "other_reason") {
+					if ($(this).prop("type") != "hidden" && $(this).prop("type") != "submit") {
+						$(this).prop("disabled", true);
+					}
+				}
+			});
+
+			$("select").each(function() {
+				if ($(this).prop("name") != "contest_reason") { 
+					$(this).prop("disabled", true);
+				}
+			});
+
+			$("#add_customer_link").unbind("click");
+		} else {
+			$("input").each(function() {
+				if ($(this).prop("name") != "no_charge_flag" && $(this).prop("name") != "other_reason") {
+					if (!($(this).prop("type") == "hidden" && $(this).prop("type") != "submit")) {
+						$(this).prop("disabled", false);
+					}
+				}
+			});
+
+			$("select").each(function() {
+				if ($(this).prop("name") != "contest_reason") {
+					$(this).prop("disabled", false);
+				}
+			});
+
+			$("#add_customer_link").bind("click", add_customer);
 		}
 	}
 	function on_submit()
@@ -375,11 +478,17 @@
 			alert("Please select a reason for contesting this {{ contest_type }}.");
 			$("#contest_reason").focus();
 			bSubmit = false;
+			return false;
 		}
 		if ($("#contest_description").val() == "") {
 			alert("Please enter a contest description.");
 			$("#contest_description").focus();
 			bSubmit = false;
+			return false;
+		}
+
+		if ($("#no_charge_flag").is(":checked")) {
+			return true;
 		}
 
 		{% if usage_event is not None %}
@@ -418,10 +527,12 @@
 
 		$("select[name*='proposed__chosen_project__']").each(
 			function(index, element) {
-				if ($(element).val() == "") {
-					alert("Please select a project for each entry");
-					$(element).focus();
-					bSubmit = false;
+				if ($(element).prop("disabled", false)) {
+					if ($(element).val() == "") {
+						alert("Please select a project for each entry");
+						$(element).focus();
+						bSubmit = false;
+					}
 				}
 			}
 		);
@@ -430,12 +541,14 @@
 
 		$("input[name*='proposed__project_percent__']").each(
 			function(index, element) {
-				if ($(element).val() == "" || isNaN(parseFloat($(element).val()))) {
-					alert("Please enter a numerical value for each project percent field");
-					$(element).focus();
-					bSubmit = false;
-				} else {
-					percent += parseFloat($(element).val());
+				if ($(element).prop("disabled", false)) {
+					if ($(element).val() == "" || isNaN(parseFloat($(element).val()))) {
+						alert("Please enter a numerical value for each project percent field");
+						$(element).focus();
+						bSubmit = false;
+					} else {
+						percent += parseFloat($(element).val());
+					}
 				}
 			}
 		);
@@ -495,12 +608,14 @@
 
 		$("input[name*='proposed__project_percent__']").each(
 			function(index, element) {
-				if ($(element).val() == "" || isNaN(parseFloat($(element).val()))) {
-					alert("Please enter a numerical value for each project percent field");
-					$(element).focus();
-					bSubmit = false;
-				} else {
-					percent += parseFloat($(element).val());
+				if ($(element).prop("disabled", false)) {
+					if ($(element).val() == "" || isNaN(parseFloat($(element).val()))) {
+						alert("Please enter a numerical value for each project percent field");
+						$(element).focus();
+						bSubmit = false;
+					} else {
+						percent += parseFloat($(element).val());
+					}
 				}
 			}
 		);
@@ -559,12 +674,14 @@
 
 		$("input[name*='proposed__project_percent__']").each(
 			function(index, element) {
-				if ($(element).val() == "" || isNaN(parseFloat($(element).val()))) {
-					alert("Please enter a numerical value for each project percent field");
-					$(element).focus();
-					bSubmit = false;
-				} else {
-					percent += parseFloat($(element).val());
+				if ($(element).prop("disabled", false)) {
+					if ($(element).val() == "" || isNaN(parseFloat($(element).val()))) {
+						alert("Please enter a numerical value for each project percent field");
+						$(element).focus();
+						bSubmit = false;
+					} else {
+						percent += parseFloat($(element).val());
+					}
 				}
 			}
 		);
@@ -614,12 +731,14 @@
 
 		$("input[name*='proposed__project_percent__']").each(
 			function(index, element) {
-				if ($(element).val() == "" || isNaN(parseFloat($(element).val()))) {
-					alert("Please enter a numerical value for each project percent field");
-					$(element).focus();
-					bSubmit = false;
-				} else {
-					percent += parseFloat($(element).val());
+				if ($(element).prop("disabled", false)) {
+					if ($(element).val() == "" || isNaN(parseFloat($(element).val()))) {
+						alert("Please enter a numerical value for each project percent field");
+						$(element).focus();
+						bSubmit = false;
+					} else {
+						percent += parseFloat($(element).val());
+					}
 				}
 			}
 		);
@@ -645,6 +764,24 @@
 		selector = "#proposed__project_percent__" + i;
 		$(selector).val("");
 	}
+	function add_customer() {
+		// need to account for differences between this and creating a staff charge or usage event record
+		var failure_dialog = ajax_failure_callback("Cannot add new entry", "The web browser was not able to communicate with the server.");
+		ajax_get("{% url 'contest_transaction_entry' %}", { "entry_number": current_entry_number }, add_entry_success_callback, failure_dialog);
+		function add_entry_success_callback(response, status, xml_http_request)
+		{
+			$("#customer_project_entries tr:last").before(response);
+			var identifier = "newentry_" + current_entry_number;
+			enable_autocompletion(identifier);
+			current_entry_number++;
+
+			// since a new customer is joining, set all project percentages to blank
+			s = "input[name*='proposed__project_percent__']";
+			$(s).each(function() {
+				$(this).val("");
+			});
+		}
+	}
 	function enable_autocompletion(i)
 	{
 		var selector = "#proposed__chosen_user__" + i;
@@ -663,10 +800,9 @@
 	{
 		var parameters =
 		{
-			"source_template": "staff_charges",
+			"source_template": "contest_transaction",
 			"user_id": user_id,
 			"entry_number": row,
-			"ad_hoc": true,
 		};
 		var target_element = "#user_project__" + row;
 		var url = "{% url 'get_projects' %}?" + jQuery.param(parameters);
@@ -705,6 +841,8 @@
 		{% if consumable_withdraw is not None %}
 		enable_autocompletion({{ consumable_withdraw.id }});
 		{% endif %}
+
+		$("#add_customer_link").bind("click", add_customer);
 	}
 	$(on_load);
 	</script>

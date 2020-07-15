@@ -257,17 +257,19 @@ function toggle_details(element)
 	return false;
 }
 
-function add_to_list(list_selector, on_click, id, text, removal_title, input_name)
+function add_to_list(list_selector, on_click, id, text, removal_title, input_name, no_delete=false)
 {
 	let div_id = input_name + "_" + id;
 	let div_id_selector = "#" + div_id;
-	let addition =
-		'<div id="' + div_id + '">' +
-		'<a href="javascript:' + on_click + '(' + id + ')" class="grey hover-black" title="' + removal_title + '">' +
-		'<span class="glyphicon glyphicon-remove-circle"></span>' +
-		'</a> ' + text +
-		'<input type="hidden" name="' + input_name + '" value="' + id + '"><br>' +
-		'</div>';
+	let addition = '<div id="' + div_id + '">';
+	if (!no_delete) {
+		addition += '<a href="javascript:' + on_click + '(' + id + ')" class="grey hover-black" title="' + removal_title + '">';
+		addition += '<span class="glyphicon glyphicon-remove-circle"></span>';
+		addition += '</a> ';
+	}
+	addition += text;
+	addition += '<input type="hidden" name="' + input_name + '" value="' + id + '"><br>';
+	addition += '</div>';
 	if($(list_selector).find('input').length === 0) // If the list is empty then replace the empty message with the list item.
 		$(list_selector).html(addition);
 	else if($(div_id_selector).length === 0) // Only add the element if it's not already in the list.

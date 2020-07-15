@@ -11,6 +11,7 @@ from NEMO.models import Alert, AreaAccessRecord, ConsumableWithdraw, LandingPage
 from NEMO.views.alerts import delete_expired_alerts
 from NEMO.views.area_access import able_to_self_log_in_to_area
 from NEMO.views.notifications import delete_expired_notifications, get_notificaiton_counts
+from NEMO.views.remote_work import get_dummy_projects
 
 
 @login_required
@@ -45,7 +46,7 @@ def landing(request):
 					contested_items = True
 
 
-	if UsageEvent.objects.filter(operator=request.user, validated=False, contested=False).exists() or StaffCharge.objects.filter(staff_member=request.user, validated=False, contested=False).exists():
+	if UsageEvent.objects.filter(operator=request.user, validated=False, contested=False).exclude(projects__in=get_dummy_projects()).exists() or StaffCharge.objects.filter(staff_member=request.user, validated=False, contested=False).exclude(projects__in=get_dummy_projects()).exists():
 		validation_needed = True
 	else:
 		validation_needed = False

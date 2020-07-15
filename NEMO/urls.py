@@ -280,6 +280,7 @@ if settings.ALLOW_CONDITIONAL_URLS:
 		url(r'^resolve_area_access_record_contest/$', remote_work.resolve_area_access_record_contest, name='resolve_area_access_record_contest'),
 		url(r'^resolve_consumable_withdraw_contest/$', remote_work.resolve_consumable_withdraw_contest, name='resolve_consumable_withdraw_contest'),
 		url(r'^save_contest_resolution/$', remote_work.save_contest_resolution, name='save_contest_resolution'),
+		url(r'^contest_transaction_entry/$', remote_work.contest_transaction_entry, name='contest_transaction_entry'),
 
 		# Site customization:
 		url(r'^customization/$', customization.customization, name='customization'),

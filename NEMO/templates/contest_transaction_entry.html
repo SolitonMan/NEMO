@@ -1,0 +1,15 @@
+<tr id="row_newentry_{{ entry_number }}">
+	<td style="vertical-align: middle">
+		<input type="checkbox" name="delete_customer__newentry_{{ entry_number }}" id="delete_customer__newentry_{{ entry_number }}" value="1" onclick="mark_for_delete('newentry_{{ entry_number }}');">
+	</td>
+	<td>
+		<input type="text" class="form-control" id="proposed__chosen_user__newentry_{{ entry_number }}" name="proposed__chosen_user__newentry_{{ entry_number }}" data-row="newentry_{{ entry_number }}">
+		<input type="button" class="btn btn-default" style="display:none" id="button__chosen_user__newentry_{{ entry_number }}" onclick="change_customer('newentry_{{ entry_number }}')">
+	</td>
+	<td id="user_project__newentry_{{ entry_number }}" style="vertical-align: middle">
+
+	</td>
+	<td>
+		<input type="text" class="form-control" name="proposed__project_percent__newentry_{{ entry_number }}" id="proposed__project_percent__newentry_{{ entry_number }}" value="" />
+	</td>
+</tr>

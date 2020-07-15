@@ -633,6 +633,7 @@ def modify_reservation(request, start_delta, end_delta):
 				res_conf.reservation = new_reservation
 				res_conf.configuration = rc.configuration
 				res_conf.consumable = rc.consumable
+				res_conf.setting = rc.setting
 				res_conf.updated = timezone.now()
 				res_conf.save()
 
