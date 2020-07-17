@@ -15,7 +15,7 @@ from django.utils import timezone
 from django.utils.dateformat import DateFormat
 from django.views.decorators.http import require_GET, require_POST
 
-from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, Consumable, ConsumableWithdraw, ContestTransaction, ContestTransactionData, LockBilling, Project, UsageEvent, UsageEventProject, StaffCharge, StaffChargeProject, Tool, User
+from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, Consumable, ConsumableWithdraw, ContestTransaction, ContestTransactionData, ContestTransactionNewData, LockBilling, Project, UsageEvent, UsageEventProject, StaffCharge, StaffChargeProject, Tool, User
 from NEMO.utilities import month_list, get_month_timeframe
 
 
@@ -218,12 +218,17 @@ def is_valid_field(field):
 @require_POST
 def save_contest(request):
 	contest_type = request.POST.get("contest_type")
+	no_charge_flag = request.POST.get("no_charge_flag")
 	submission = {}
 
 	for key, value in request.POST.items():
 		if is_valid_field(key):
 			flag, field, id = key.split("__")
-			id = int(id)
+			try:
+				id = int(id)
+			except:
+				id = str(id)
+
 			if id not in submission:
 				submission[id] = {}
 				submission[id][field] = {}
@@ -246,14 +251,28 @@ def save_contest(request):
 		staff_charge.updated = timezone.now()
 		staff_charge.save()
 
-		for id in submission:
-			for field in submission[id]:
-				if submission[id][field]["proposed"] != submission[id][field]["original"]:
-					if field in ("start", "end"):
-						content_object = StaffCharge.objects.get(id=id)
-					else:
-						content_object = StaffChargeProject.objects.get(id=id)
-					ContestTransactionData.objects.create(content_object=content_object, contest_transaction=contest_transaction, field_name=field, original_value=submission[id][field]["original"], proposed_value=submission[id][field]["proposed"])
+		staff_charge_type = ContentType.objects.get_for_model(staff_charge)
+
+		if no_charge_flag:
+			contest_transaction.no_charge_flag = True
+			contest_transaction.save()
+		else:
+			for id in submission:
+				idstr = str(id)
+				
+				if idstr[:8] == "newentry":
+					fg = str(contest_transaction.id) + "_" + idstr[9:]
+					for field in submission[id]:
+						ContestTransactionNewData.objects.create(content_type=staff_charge_type, contest_transaction=contest_transaction, field_name=field, field_value=submission[id][field]["proposed"], field_group=fg)
+
+				else:
+					for field in submission[id]:
+						if submission[id][field]["proposed"] != submission[id][field]["original"]:
+							if field in ("start", "end"):
+								content_object = StaffCharge.objects.get(id=id)
+							else:
+								content_object = StaffChargeProject.objects.get(id=id)
+							ContestTransactionData.objects.create(content_object=content_object, contest_transaction=contest_transaction, field_name=field, original_value=submission[id][field]["original"], proposed_value=submission[id][field]["proposed"])
 
 	if contest_type == "Usage Event":
 		usage_event_id = request.POST.get("usage_event_id")
@@ -267,15 +286,27 @@ def save_contest(request):
 		usage_event.updated = timezone.now()
 		usage_event.save()
 
-		for id in submission:
-			for field in submission[id]:
-				if submission[id][field]["proposed"] != submission[id][field]["original"]:
-					if field in ("tool_id", "start", "end"):
-						content_object = UsageEvent.objects.get(id=id)
-					else:
-						content_object = UsageEventProject.objects.get(id=id)
-					
-					ContestTransactionData.objects.create(content_object=content_object, contest_transaction=contest_transaction, field_name=field, original_value=submission[id][field]["original"], proposed_value=submission[id][field]["proposed"])
+		usage_event_type = ContentType.objects.get_for_model(usage_event)
+
+		if no_charge_flag:
+			contest_transaction.no_charge_flag = True
+			contest_transaction.save()
+		else:
+			for id in submission:
+				idstr = str(id)
+
+				if idstr[:8] == "newentry":
+					fg = str(contest_transaction.id) + "_" + idstr[9:]
+					for field in submission[id]:
+						ContestTransactionNewData.objects.create(content_type=usage_event_type, contest_transaction=contest_transaction, field_name=field, field_value=submission[id][field]["proposed"], field_group=fg)
+				else:
+					for field in submission[id]:
+						if submission[id][field]["proposed"] != submission[id][field]["original"]:
+							if field in ("tool_id", "start", "end"):
+								content_object = UsageEvent.objects.get(id=id)
+							else:
+								content_object = UsageEventProject.objects.get(id=id)
+							ContestTransactionData.objects.create(content_object=content_object, contest_transaction=contest_transaction, field_name=field, original_value=submission[id][field]["original"], proposed_value=submission[id][field]["proposed"])
 
 	if contest_type == "Area Access Record":
 		area_access_record_id = request.POST.get("area_access_record_id")
@@ -289,14 +320,27 @@ def save_contest(request):
 		area_access_record.updated = timezone.now()
 		area_access_record.save()
 
-		for id in submission:
-			for field in submission[id]:
-				if submission[id][field]["proposed"] != submission[id][field]["original"]:
-					if field in ("area", "start", "end"):
-						content_object = AreaAccessRecord.objects.get(id=id)
-					else:
-						content_object = AreaAccessRecordProject.objects.get(id=id)
-					ContestTransactionData.objects.create(content_object=content_object, contest_transaction=contest_transaction, field_name=field, original_value=submission[id][field]["original"], proposed_value=submission[id][field]["proposed"])
+		area_access_record_type = ContentType.objects.get_for_model(area_access_record)
+
+		if no_charge_flag:
+			contest_transaction.no_charge_flag = True
+			contest_transaction.save()
+		else:
+			for id in submission:
+				idstr = str(id)
+
+				if idstr[:8] == "newentry":
+					fg = str(contest_transaction.id) + "_" + idstr[9:]
+					for field in submission[id]:
+						ContestTransactionNewData.objects.create(content_type=area_access_record_type, contest_transaction=contest_transaction, field_name=field, field_value=submission[id][field]["proposed"], field_group=fg)
+				else:
+					for field in submission[id]:
+						if submission[id][field]["proposed"] != submission[id][field]["original"]:
+							if field in ("area", "start", "end"):
+								content_object = AreaAccessRecord.objects.get(id=id)
+							else:
+								content_object = AreaAccessRecordProject.objects.get(id=id)
+							ContestTransactionData.objects.create(content_object=content_object, contest_transaction=contest_transaction, field_name=field, original_value=submission[id][field]["original"], proposed_value=submission[id][field]["proposed"])
 
 	if contest_type == "Consumable Withdraw":
 		consumable_withdraw_id = request.POST.get("consumable_withdraw_id")
@@ -404,6 +448,20 @@ def resolve_staff_charge_contest(request):
 		dictionary['proposed_projects'] = proposed_projects
 	else:
 		dictionary['proposed_projects'] = None
+	if ContestTransactionNewData.objects.filter(contest_transaction=contest_transaction).exists():
+		newdata = {}
+
+		for ctnd in ContestTransactionNewData.objects.filter(contest_transaction=contest_transaction):
+			if ctnd.field_group not in newdata:
+				newdata[ctnd.field_group] = {}
+			if ctnd.field_name == "project_percent":
+				newdata[ctnd.field_group][ctnd.field_name] = ctnd.field_value
+			if ctnd.field_name == "chosen_user":
+				newdata[ctnd.field_group][ctnd.field_name] = User.objects.get(id=int(ctnd.field_value))
+			if ctnd.field_name == "chosen_project":
+				newdata[ctnd.field_group][ctnd.field_name] = Project.objects.get(id=int(ctnd.field_value))
+
+		dictionary['newdata'] = newdata
 	
 	return render(request, 'remote_work_contest_resolve.html', dictionary)
 
@@ -471,6 +529,20 @@ def resolve_usage_event_contest(request):
 		dictionary['proposed_projects'] = proposed_projects
 	else:
 		dictionary['proposed_projects'] = None
+	if ContestTransactionNewData.objects.filter(contest_transaction=contest_transaction).exists():
+		newdata = {}
+
+		for ctnd in ContestTransactionNewData.objects.filter(contest_transaction=contest_transaction):
+			if ctnd.field_group not in newdata:
+				newdata[ctnd.field_group] = {}
+			if ctnd.field_name == "project_percent":
+				newdata[ctnd.field_group][ctnd.field_name] = ctnd.field_value
+			if ctnd.field_name == "chosen_user":
+				newdata[ctnd.field_group][ctnd.field_name] = User.objects.get(id=int(ctnd.field_value))
+			if ctnd.field_name == "chosen_project":
+				newdata[ctnd.field_group][ctnd.field_name] = Project.objects.get(id=int(ctnd.field_value))
+
+		dictionary['newdata'] = newdata
 
 	return render(request, 'remote_work_contest_resolve.html', dictionary)
 
@@ -535,6 +607,20 @@ def resolve_area_access_record_contest(request):
 		dictionary['proposed_projects'] = proposed_projects
 	else:
 		dictionary['proposed_projects'] = None
+	if ContestTransactionNewData.objects.filter(contest_transaction=contest_transaction).exists():
+		newdata = {}
+
+		for ctnd in ContestTransactionNewData.objects.filter(contest_transaction=contest_transaction):
+			if ctnd.field_group not in newdata:
+				newdata[ctnd.field_group] = {}
+			if ctnd.field_name == "project_percent":
+				newdata[ctnd.field_group][ctnd.field_name] = ctnd.field_value
+			if ctnd.field_name == "chosen_user":
+				newdata[ctnd.field_group][ctnd.field_name] = User.objects.get(id=int(ctnd.field_value))
+			if ctnd.field_name == "chosen_project":
+				newdata[ctnd.field_group][ctnd.field_name] = Project.objects.get(id=int(ctnd.field_value))
+
+		dictionary['newdata'] = newdata
 
 	return render(request, 'remote_work_contest_resolve.html', dictionary)
 
@@ -596,7 +682,7 @@ def save_contest_resolution(request):
 	contest_resolved = request.POST.get("resolve_contest")
 	contest_transaction = None
 	changes = None
-	no_charge_transaction = request.POST.get("no_charge_transaction", None)
+	no_charge_flag = request.POST.get("no_charge_flag", None)
 
 	if contest_type == "Staff Charge":
 		staff_charge_id = request.POST.get("staff_charge_id")
@@ -626,36 +712,39 @@ def save_contest_resolution(request):
 		# admin has accepted change, update appopriate records and set base transaction validated to True
 		if contest_type == "Staff Charge":
 			changes = ContestTransactionData.objects.filter(contest_transaction=contest_transaction)
+			additions = ContestTransactionNewData.objects.filter(contest_transaction=contest_transaction)
 			staff_charge.validated = True
 			staff_charge.validated_date = timezone.now()
 			staff_charge.contested = False
 			staff_charge.updated = timezone.now()
-			if no_charge_transaction is not None:
-				if int(no_charge_transaction) == 1:
+			if no_charge_flag:
+				if int(no_charge_flag) == 1:
 					staff_charge.no_charge_flag = True
 			staff_charge.save()
 
 
 		if contest_type == "Usage Event":
 			changes = ContestTransactionData.objects.filter(contest_transaction=contest_transaction)
+			additions = ContestTransactionNewData.objects.filter(contest_transaction=contest_transaction)
 			usage_event.validated = True
 			usage_event.validated_date = timezone.now()
 			usage_event.contested = False
 			usage_event.updated = timezone.now()
-			if no_charge_transaction is not None:
-				if int(no_charge_transaction) == 1:
+			if no_charge_flag:
+				if int(no_charge_flag) == 1:
 					usage_event.no_charge_flag = True
 			usage_event.save()
 
 
 		if contest_type == "Area Access Record":
 			changes = ContestTransactionData.objects.filter(contest_transaction=contest_transaction)
+			additions = ContestTransactionNewData.objects.filter(contest_transaction=contest_transaction)
 			area_access_record.validated = True
 			area_access_record.validated_date = timezone.now()
 			area_access_record.contested = False
 			area_access_record.updated = timezone.now()
-			if no_charge_transaction is not None:
-				if int(no_charge_transaction) == 1:
+			if no_charge_flag:
+				if int(no_charge_flag) == 1:
 					area_access_record.no_charge_flag = True
 			area_access_record.save()
 
@@ -666,8 +755,8 @@ def save_contest_resolution(request):
 			consumable_withdraw.validated_date = timezone.now()
 			consumable_withdraw.contested = False
 			consumable_withdraw.updated = timezone.now()
-			if no_charge_transaction is not None:
-				if int(no_charge_transaction) == 1:
+			if no_charge_flag:
+				if int(no_charge_flag) == 1:
 					consumable_withdraw.no_charge_flag = True
 			consumable_withdraw.save()
 
@@ -707,11 +796,73 @@ def save_contest_resolution(request):
 				if field_name == "tool_id":
 					c.content_object.tool = Tool.objects.get(id=int(c.proposed_value))
 
+				if no_charge_flag is not None:
+					if int(no_charge_flag) == 1:
+						c.content_object.no_charge_flag = True
+
 				c.content_object.updated = timezone.now()
 				c.content_object.save()
 
 		contest_transaction.save()
 
+		if additions is not None:
+			new_records = {}
+			for a in additions:
+				# create a dictionary to group the additions together based on field_group
+				if a.field_group not in new_records:
+					new_records[a.field_group] = {}
+					new_records[a.field_group][a.field_name] = a.field_value
+				if a.field_name not in new_records[a.field_group]:
+					new_records[a.field_group][a.field_name] = a.field_value
+
+			for key in new_records:
+
+				if contest_type == "Staff Charge":
+					content_object = StaffChargeProject()
+					content_object.staff_charge = staff_charge
+
+				if contest_type == "Usage Event":
+					content_object = UsageEventProject()
+					content_object.usage_event = usage_event
+
+				if contest_type == "Area Access Record":
+					content_object = AreaAccessRecordProject()
+					content_object.area_access_record = area_access_record
+
+
+				for fld,value in new_records[key].items():
+
+					field_name = fld
+
+					if field_name == "start":
+						content_object.start = value
+	
+					if field_name == "end":
+						content_object.end = value
+	
+					if field_name == "area":
+						content_object.area = Area.objects.get(id=int(value))
+
+					if field_name == "consumable":
+						content_object.consumable = Consumable.objects.get(id=int(value))
+
+					if field_name == "quantity":
+						content_object.quantity = int(value)
+
+					if field_name == "chosen_user":
+						content_object.customer = User.objects.get(id=int(value))
+
+					if field_name == "chosen_project":
+						content_object.project = Project.objects.get(id=int(value))
+
+					if field_name == "project_percent":
+						content_object.project_percent = float(value)
+
+					if field_name == "tool_id":
+						content_object.tool = Tool.objects.get(id=int(value))
+
+				content_object.updated = timezone.now()
+				content_object.save()
 
 	else:
 		# resolve contest but flag as rejected so submitter has another chance to contest

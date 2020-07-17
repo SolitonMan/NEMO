@@ -5,7 +5,7 @@ from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.contrib.auth.models import Permission
 
 from NEMO.actions import lock_selected_interlocks, synchronize_with_tool_usage, unlock_selected_interlocks
-from NEMO.models import Account, ActivityHistory, Alert, Area, AreaAccessRecord, AreaAccessRecordProject, BillingType, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableUnit, ConsumableCategory, ConsumableWithdraw, ContactInformation, ContactInformationCategory, ContestTransaction, ContestTransactionData, Core, CreditCostCollector, Customization, Door, GlobalFlag, Interlock, InterlockCard, LandingPageChoice, LockBilling, MembershipHistory, News, Notification, NsfCategory, Organization, OrganizationType, PhysicalAccessLevel, PhysicalAccessLog, Project, Reservation, ReservationConfiguration, ReservationProject, Resource, ResourceCategory, SafetyIssue, ScheduledOutage, ScheduledOutageCategory, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskHistory, TaskStatus, Tool, TrainingSession, UsageEvent, UsageEventProject, User, UserType
+from NEMO.models import Account, ActivityHistory, Alert, Area, AreaAccessRecord, AreaAccessRecordProject, BillingType, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableUnit, ConsumableCategory, ConsumableWithdraw, ContactInformation, ContactInformationCategory, ContestTransaction, ContestTransactionData, ContestTransactionNewData, Core, CreditCostCollector, Customization, Door, GlobalFlag, Interlock, InterlockCard, LandingPageChoice, LockBilling, MembershipHistory, News, Notification, NsfCategory, Organization, OrganizationType, PhysicalAccessLevel, PhysicalAccessLog, Project, Reservation, ReservationConfiguration, ReservationProject, Resource, ResourceCategory, SafetyIssue, ScheduledOutage, ScheduledOutageCategory, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskHistory, TaskStatus, Tool, TrainingSession, UsageEvent, UsageEventProject, User, UserType
 
 admin.site.site_header = "LEO"
 admin.site.site_title = "LEO"
@@ -322,8 +322,8 @@ class ProjectAdminForm(forms.ModelForm):
 
 @register(Project)
 class ProjectAdmin(admin.ModelAdmin):
-	list_display = ('id', 'name', 'project_number', 'internal_order', 'account', 'owner', 'bill_to', 'start_date', 'end_date', 'active')
-	search_fields = ('name', 'internal_order', 'wbs_element', 'application_identifier', 'account__name', 'account__simba_cost_center', 'owner__first_name', 'owner__last_name', 'owner__username', 'bill_to__first_name', 'bill_to__last_name', 'bill_to__username', 'project_number')
+	list_display = ('id', 'name', 'project_number', 'internal_order', 'account', 'organization', 'owner', 'bill_to', 'end_date', 'active')
+	search_fields = ('name', 'organization__name', 'internal_order', 'wbs_element', 'application_identifier', 'account__name', 'account__simba_cost_center', 'owner__first_name', 'owner__last_name', 'owner__username', 'bill_to__first_name', 'bill_to__last_name', 'bill_to__username', 'project_number')
 	list_filter = ('active','project_number')
 	form = ProjectAdminForm
 
@@ -667,6 +667,14 @@ class ContestTransactionAdmin(admin.ModelAdmin):
 @register(ContestTransactionData)
 class ContestTransactionDataAdmin(admin.ModelAdmin):
 	list_display = ('id', 'content_type', 'object_id', 'field_name', 'original_value', 'proposed_value')
+
+	def has_delete_permission(self, request, obj=None):
+		return False
+
+
+@register(ContestTransactionNewData)
+class ContestTransactionNewDataAdmin(admin.ModelAdmin):
+	list_display = ('id', 'content_type', 'field_name', 'field_value', 'field_group', 'contest_transaction')
 
 	def has_delete_permission(self, request, obj=None):
 		return False

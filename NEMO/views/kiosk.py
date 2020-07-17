@@ -1,6 +1,7 @@
 from copy import deepcopy
 from datetime import timedelta
 from http import HTTPStatus
+from logging import getLogger
 
 from django.contrib.auth.decorators import login_required, permission_required
 from django.shortcuts import render
@@ -20,6 +21,8 @@ from NEMO.widgets.dynamic_form import DynamicForm
 @permission_required('NEMO.kiosk')
 @require_POST
 def enable_tool(request):
+	logger = getLogger(__name__)
+
 	tool = Tool.objects.get(id=request.POST['tool_id'])
 	customer = User.objects.get(id=request.POST['customer_id'])
 	project = Project.objects.get(id=request.POST['project_id'])
@@ -34,7 +37,8 @@ def enable_tool(request):
 
 	# All policy checks passed so enable the tool for the user.
 	if tool.interlock and not tool.interlock.unlock():
-		raise Exception("The interlock command for this tool failed. The error message returned: " + str(tool.interlock.most_recent_reply))
+		logger.error("The interlock command for this tool failed. The error message returned: " + str(tool.interlock.most_recent_reply))
+		#raise Exception("The interlock command for this tool failed. The error message returned: " + str(tool.interlock.most_recent_reply))
 
 	# Create a new usage event to track how long the user uses the tool.
 	new_usage_event = UsageEvent()
@@ -55,6 +59,8 @@ def enable_tool(request):
 @permission_required('NEMO.kiosk')
 @require_POST
 def disable_tool(request):
+	logger = getLogger(__name__)
+
 	tool = Tool.objects.get(id=request.POST['tool_id'])
 	customer = User.objects.get(id=request.POST['customer_id'])
 	downtime = timedelta(minutes=quiet_int(request.POST.get('downtime')))
@@ -83,6 +89,7 @@ def disable_tool(request):
 
 	# All policy checks passed so disable the tool for the user.
 	if tool.interlock and not tool.interlock.lock():
+		logger.error("The interlock command for this tool failed. The error message returned: " + str(tool.interlock.most_recent_reply))
 		raise Exception("The interlock command for this tool failed. The error message returned: " + str(tool.interlock.most_recent_reply))
 	# End the current usage event for the tool and save it.
 	current_usage_event = tool.get_current_usage_event()

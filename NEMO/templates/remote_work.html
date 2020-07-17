@@ -93,6 +93,13 @@
 				{% endif %}{% endif %}
 				</td>
 			</tr>
+			{% if c.staff_member_comment %}
+			<tr>
+				<td colspan="10">
+				<label>Comments: </label>{{ c.staff_member_comment }}
+				</td>
+			</tr>	
+			{% endif %}
 			{% if c.contested is True and cr.contest_resolved is True and cr.contest_resolution is False %}
 			<tr>
 				<td colspan="10">The above transaction contest was rejected because: <span style="">{{ cr.contest_rejection_reason }}</td>
@@ -130,6 +137,13 @@
 				{% endif %}{% endif %}
 				</td>
 			</tr>
+			{% if c.staff_member_comment %}
+			<tr>
+				<td colspan="10">
+					<label>Comment: </label> {{ c.staff_member_comment }}
+				</td>
+			</tr>
+			{% endif %}
 			{% endif %}
 		{% endfor %}
 		</tbody>
@@ -194,6 +208,13 @@
 				{% endif %}{% endif %}
 				</td>
 			</tr>
+			{% if u.operator_comment %}
+			<tr>
+				<td colspan="10">
+					<label>Comment: </label>{{ u.operator_comment }}
+				</td>
+			</tr>
+			{% endif %}
 			{% if u.contested is True and cr.contest_resolved is True and cr.contest_resolution is False %}
 			<tr>
 				<td colspan="10">The above transaction's contest was rejected.  The reason was: <span class="danger-highlight">{{  cr.contest_rejection_reason }}</span></td>
@@ -237,6 +258,13 @@
 				{% endif %}{% endif %}
 				</td>
 			</tr>
+			{% if u.operator_comment %}
+			<tr>
+				<td colspan="10">
+					<label>Comment: </label>{{ u.operator_comment }}
+				</td>
+			</tr>
+			{% endif %}
 			{% endif %}
 		{% endfor %}
 		</tbody>
@@ -285,6 +313,13 @@
 				{% endif %}{% endif %}
 				</td>
 			</tr>
+			{% if w.notes %}
+			<tr>
+				<td colspan="10">
+					<label>Comments: </label>{{ w.notes }}
+				</td>
+			</tr>
+			{% endif %}
 			{% if w.contested is True and cr.contest_resolved is True and cr.contest_resolution is False %}
 			<tr>
 				<td colspan="10">The above transaction's contest was rejected.  The reason was: <span class="danger-highlight">{{  cr.contest_rejection_reason }}</span></td>
@@ -312,6 +347,11 @@
 				{% endif %}{% endif %}
 				</td>
 			</tr>
+			{% if w.notes %}
+			<tr>
+				<label>Comments: </label>{{ w.notes }}
+			</tr>
+			{% endif %}
 			{% endif %}
 		{% endfor %}
 		</tbody>

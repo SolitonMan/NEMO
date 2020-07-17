@@ -288,6 +288,8 @@ def get_billing_date_range():
 @login_required
 @require_POST
 def enable_tool(request, tool_id, user_id, project_id, staff_charge, billing_mode):
+	logger = getLogger(__name__)
+
 	""" Enable a tool for a user. The user must be qualified to do so based on the lab usage policy. """
 
 	if not settings.ALLOW_CONDITIONAL_URLS:
@@ -305,7 +307,8 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge, billing_mod
 
 	# All policy checks passed so enable the tool for the user.
 	if tool.interlock and not tool.interlock.unlock():
-		raise Exception("The interlock command for this tool failed. The error message returned: " + str(tool.interlock.most_recent_reply))
+		logger.error("The interlock command for this tool failed. The error message returned: " + str(tool.interlock.most_recent_reply))
+		#raise Exception("The interlock command for this tool failed. The error message returned: " + str(tool.interlock.most_recent_reply))
 
 
 	# Create a new usage event to track how long the user uses the tool.
@@ -382,6 +385,8 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge, billing_mod
 @staff_member_required(login_url=None)
 @require_POST
 def enable_tool_multi(request):
+	logger = getLogger(__name__)
+
 	""" Enable a tool for a single operator to charge to multiple customers.  """
 	id = 0
 	try:
@@ -463,7 +468,8 @@ def enable_tool_multi(request):
 
 	# All policy checks passed so enable the tool for the user.
 	if tool.interlock and not tool.interlock.unlock():
-		raise Exception("The interlock command for this tool failed. The error message returned: " + str(tool.interlock.most_recent_reply))
+		logger.error("The interlock command for this tool failed. The error message returned: " + str(tool.interlock.most_recent_reply))
+		#raise Exception("The interlock command for this tool failed. The error message returned: " + str(tool.interlock.most_recent_reply))
 
 	# record staff charges
 	if request.user.charging_staff_time():
@@ -607,7 +613,7 @@ def disable_tool(request, tool_id):
 	if tool.interlock and not tool.interlock.lock():
 		error_message = f"The interlock command for the {tool} failed. The error message returned: {tool.interlock.most_recent_reply}"
 		logger.error(error_message)
-		return HttpResponseServerError(error_message)
+		#return HttpResponseServerError(error_message)
 
 	# End the current usage event for the tool
 	current_usage_event = tool.get_current_usage_event()

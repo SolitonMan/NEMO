@@ -4,6 +4,7 @@
 {% block title %}{% if usage_event %}Usage Event{% endif %}{% if staff_charge %}Staff Charge{% endif %}{% if consumable_withdraw %}Consumable Withdraw{% endif %}{% if area_access_record %}Area Access Record{% endif %} Contest Resolution{% endblock %}
 
 {% block content %}
+
 	{% if usage_event %}
 	<h1>Usage Event Contest Resolution</h1>
 
@@ -11,6 +12,15 @@
 		{% csrf_token %}
 		<input type="hidden" value="{{ usage_event.id }}" name="usage_event_id" />
 		<input type="hidden" value="{{ contest_type }}" name="contest_type" />
+		<input type="hidden" value="{{ contest_transaction.id ]}" name="contest_transaction_id" />
+
+		{% if contest_transaction.no_charge_flag %}
+		<input type="hidden" value="{{ contest_transaction.no_charge_flag }}" name="no_charge_flag" />
+		<p>
+			<h2>No Charge Transaction Requested</h2>
+			<div>The requestor seeks to have this transaction marked as no charge for the reason listed in the Contest Description.  To approve this request select the Yes option below for the "Do you wish to confirm this contest?" question.  The "Mark this transaction as no charge" is automatically checked for no charge contests.  Selecting No for the confirmation will make the no charge option irrelevant, as the contest request will be sent back to the user for validation or a new contest.</div>
+		</p><br/>
+		{% endif %}
 
 		<table class="table">
 			<tr>
@@ -116,6 +126,46 @@
 				</tr>
 			{% endfor %}
 			{% endif %}
+			{% if newdata %}
+			{% for fg, v in newdata.items %}
+				<tr>
+					<th><span style="font-weight:bold; color:red;">Customer</span></th>
+					<td>
+						{% for key, value in v.items %}
+							{% if key == "chosen_user" %}
+						<span style="font-weight:bold; color:red;">{{ value }}</span>
+						<input type="hidden" name="proposed__chosen_user__{{ fg }}" value="{{ value.id }}" />
+							{% endif %}
+						{% endfor %}
+					</td>
+					<td>&nbsp;</td>
+				</tr>
+				<tr>
+					<th><span style="font-weight:bold; color:red;">Project</span></th>
+					<td>
+						{% for key, value in v.items %}
+							{% if key == "chosen_project" %}
+						<span style="font-weight:bold; color:red;">{{ value }}</span>
+						<input type="hidden" name="proposed__chosen_project__{{ fg }}" value="{{ value.id }}" />
+							{% endif %}
+						{% endfor %}
+					</td>
+					<td>&nbsp;</td>
+				</tr>
+				<tr>
+					<th><span style="font-weight:bold; color:red;">Percent</span></th>
+					<td>
+						{% for key, value in v.items %}
+							{% if key == "project_percent" %}
+						<span style="font-weight:bold; color:red;">{{ value }}</span>
+						<input type="hidden" name="proposed__project_percent__{{ fg }}" value="{{ value }}" />
+							{% endif %}
+						{% endfor %}
+					</td>
+					<td>&nbsp;</td>
+				</tr>
+			{% endfor %}	
+			{% endif %}
 			</table>
 			</td>
 			</tr>
@@ -161,6 +211,15 @@
 		{% csrf_token %}
 		<input type="hidden" name="staff_charge_id" value="{{ staff_charge.id }}" />
 		<input type="hidden" value="{{ contest_type }}" name="contest_type" />
+
+		{% if contest_transaction.no_charge_flag %}
+		<input type="hidden" value="{{ contest_transaction.no_charge_flag }}" name="no_charge_flag" />
+		<p>
+			<h2>No Charge Transaction Requested</h2>
+			<div>The requestor seeks to have this transaction marked as no charge for the reason listed in the Contest Description.  To approve this request select the Yes option below for the "Do you wish to confirm this contest?" question.  The "Mark this transaction as no charge" is automatically checked for no charge contests.  Selecting No for the confirmation will make the no charge option irrelevant, as the contest request will be sent back to the user for validation or a new contest.</div>
+		</p><br/>
+		{% endif %}
+
 
 		<table class="table">
 			<tr>
@@ -246,7 +305,7 @@
 					<th>Percent</th>
 					<td>{{ scp.project_percent }}</td>
 					{% update_variable False as current_flag %}
-					{% for sccd in uep.contest_data.all %}
+					{% for sccd in scp.contest_data.all %}
 						{% if sccd.field_name == "project_percent" %}
 							{% update_variable True as current_flag %}
 					<td>
@@ -260,8 +319,48 @@
 					{% endif %}
 				</tr>
 			{% endfor %}
+			{% endif %}
+			{% if newdata %}
+			{% for fg, v in newdata.items %}
+				<tr>
+					<th><span style="font-weight:bold; color:red;">Customer</span></th>
+					<td>
+						{% for key, value in v.items %}
+							{% if key == "chosen_user" %}
+						<span style="font-weight:bold; color:red;">{{ value }}</span>
+						<input type="hidden" name="proposed__chosen_user__{{ fg }}" value="{{ value.id }}" />
+							{% endif %}
+						{% endfor %}
+					</td>
+					<td>&nbsp;</td>
+				</tr>
+				<tr>
+					<th><span style="font-weight:bold; color:red;">Project</span></th>
+					<td>
+						{% for key, value in v.items %}
+							{% if key == "chosen_project" %}
+						<span style="font-weight:bold; color:red;">{{ value }}</span>
+						<input type="hidden" name="proposed__chosen_project__{{ fg }}" value="{{ value.id }}" />
+							{% endif %}
+						{% endfor %}
+					</td>
+					<td>&nbsp;</td>
+				</tr>
+				<tr>
+					<th><span style="font-weight:bold; color:red;">Percent</span></th>
+					<td>
+						{% for key, value in v.items %}
+							{% if key == "project_percent" %}
+						<span style="font-weight:bold; color:red;">{{ value }}</span>
+						<input type="hidden" name="proposed__project_percent__{{ fg }}" value="{{ value }}" />
+							{% endif %}
+						{% endfor %}
+					</td>
+					<td>&nbsp;</td>
+				</tr>
+			{% endfor %}
+			{% endif %}
 			</table>
-			{% endif %}	
 			</td>
 			</tr>
 		</table>
@@ -274,6 +373,15 @@
 		{% csrf_token %}
 		<input type="hidden"  name="consumable_withdraw_id" value="{{ consumable_withdraw.id }}" />
 		<input type="hidden" value="{{ contest_type }}" name="contest_type" />
+
+		{% if contest_transaction.no_charge_flag %}
+		<input type="hidden" value="{{ contest_transaction.no_charge_flag }}" name="no_charge_flag" />
+		<p>
+			<h2>No Charge Transaction Requested</h2>
+			<div>The requestor seeks to have this transaction marked as no charge for the reason listed in the Contest Description.  To approve this request select the Yes option below for the "Do you wish to confirm this contest?" question.  The "Mark this transaction as no charge" is automatically checked for no charge contests.  Selecting No for the confirmation will make the no charge option irrelevant, as the contest request will be sent back to the user for validation or a new contest.</div>
+		</p><br/>
+		{% endif %}
+
 
 		<table class="table">
 			<tr>
@@ -374,7 +482,14 @@
 		<input type="hidden" name="area_access_record_id" value="{{ area_access_record.id }}" />
 		<input type="hidden" value="{{ contest_type }}" name="contest_type" />
 
-		
+		{% if contest_transaction.no_charge_flag %}
+		<input type="hidden" value="{{ contest_transaction.no_charge_flag }}" name="no_charge_flag" />
+		<p>
+			<h2>No Charge Transaction Requested</h2>
+			<div>The requestor seeks to have this transaction marked as no charge for the reason listed in the Contest Description.  To approve this request select the Yes option below for the "Do you wish to confirm this contest?" question.  The "Mark this transaction as no charge" is automatically checked for no charge contests.  Selecting No for the confirmation will make the no charge option irrelevant, as the contest request will be sent back to the user for validation or a new contest.</div>
+		</p><br/>
+		{% endif %}
+
 		<table class="table">
 			<tr>
 				<th>Contest Description</th>
@@ -476,7 +591,7 @@
 					<th>Percent</th>
 					<td>{{ aarp.project_percent }}</td>
 					{% update_variable False as current_flag %}
-					{% for aarcd in uep.contest_data.all %}
+					{% for aarcd in aarp.contest_data.all %}
 						{% if aarcd.field_name == "project_percent" %}
 							{% update_variable True as current_flag %}
 					<td>
@@ -490,8 +605,48 @@
 					{% endif %}
 				</tr>
 			{% endfor %}
-			</table>
-			{% endif %}	
+			{% endif %}
+			{% if newdata %}
+			{% for fg, v in newdata.items %}
+				<tr>
+					<th><span style="font-weight:bold; color:red;">Customer</span></th>
+					<td>
+						{% for key, value in v %}
+							{% if key == "chosen_user" %}
+						<span style="font-weight:bold; color:red;">{{ value }}</span>
+						<input type="hidden" name="proposed__chosen_user__{{ fg }}" value="{{ value.id }}" />
+							{% endif %}
+						{% endfor %}
+					</td>
+					<td>&nbsp;</td>
+				</tr>
+				<tr>
+					<th><span style="font-weight:bold; color:red;">Project</span></th>
+					<td>
+						{% for key, value in v %}
+							{% if key == "chosen_project" %}
+						<span style="font-weight:bold; color:red;">{{ value }}</span>
+						<input type="hidden" name="proposed__chosen_project__{{ fg }}" value="{{ value.id }}" />
+							{% endif %}
+						{% endfor %}
+					</td>
+					<td>&nbsp;</td>
+				</tr>
+				<tr>
+					<th><span style="font-weight:bold; color:red;">Percent</span></th>
+					<td>
+						{% for key, value in v %}
+							{% if key == "project_percent" %}
+						<span style="font-weight:bold; color:red;">{{ value }}</span>
+						<input type="hidden" name="proposed__project_percent__{{ fg }}" value="{{ value }}" />
+							{% endif %}
+						{% endfor %}
+					</td>
+					<td>&nbsp;</td>
+				</tr>
+			{% endfor %}
+			{% endif %}
+			</table>	
 			</td>
 			</tr>
 		</table>
@@ -508,7 +663,7 @@
 	<textarea name="reject_contest_reason" id="reject_contest_reason" rows="10" cols="60"></textarea>
 	</p>
 	<p>
-	Mark this transaction as no charge <input type="checkbox" name="no_charge_transaction" id="no_charge_transaction" value="1" /><br/>
+	Mark this transaction as no charge <input type="checkbox" name="no_charge_transaction" id="no_charge_transaction" value="1" {% if contest_transaction.no_charge_flag %}checked{% endif %} /><br/>
 	Note that selecting this option will only work if the "Yes" option above is chosen.  
 	</p>
 
@@ -539,4 +694,3 @@
 	</script>
 	</form>	
 {% endblock %}
-
