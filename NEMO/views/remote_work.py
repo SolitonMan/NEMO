@@ -1,5 +1,6 @@
 import json
 
+from logging import getLogger
 from re import search
 
 from django.conf import settings
@@ -38,10 +39,10 @@ def remote_work(request):
 			operator = get_object_or_404(User, id=operator)
 	else:
 		operator = request.user
-	usage_events = UsageEvent.objects.filter(start__gte=first_of_the_month, start__lte=last_of_the_month).exclude(end=None)
-	staff_charges = StaffCharge.objects.filter(start__gte=first_of_the_month, start__lte=last_of_the_month).exclude(end=None)
-	area_access_records = AreaAccessRecord.objects.filter(start__gte=first_of_the_month, start__lte=last_of_the_month).exclude(end=None)
-	consumable_withdraws = ConsumableWithdraw.objects.filter(date__gte=first_of_the_month, date__lte=last_of_the_month)
+	usage_events = UsageEvent.objects.filter(start__gte=first_of_the_month, start__lte=last_of_the_month, active_flag=True).exclude(end=None)
+	staff_charges = StaffCharge.objects.filter(start__gte=first_of_the_month, start__lte=last_of_the_month, active_flag=True).exclude(end=None)
+	area_access_records = AreaAccessRecord.objects.filter(start__gte=first_of_the_month, start__lte=last_of_the_month, active_flag=True).exclude(end=None)
+	consumable_withdraws = ConsumableWithdraw.objects.filter(date__gte=first_of_the_month, date__lte=last_of_the_month, active_flag=True)
 	if operator and operator == request.user:
 		usage_events = usage_events.exclude(~Q(operator_id=operator.id)).exclude(projects__in=get_dummy_projects()).exclude(project__in=get_dummy_projects())
 		staff_charges = staff_charges.exclude(~Q(staff_member_id=operator.id)).exclude(projects__in=get_dummy_projects()).exclude(project__in=get_dummy_projects())
@@ -57,9 +58,9 @@ def remote_work(request):
 		consumable_withdraws = consumable_withdraws.filter(consumable__core_id__in=request.user.core_ids.all(), project__in=get_dummy_projects())
 
 
-	uep = UsageEventProject.objects.filter(usage_event__in=usage_events)
-	scp = StaffChargeProject.objects.filter(staff_charge__in=staff_charges)
-	aarp = AreaAccessRecordProject.objects.filter(area_access_record__in=area_access_records)
+	uep = UsageEventProject.objects.filter(usage_event__in=usage_events, active_flag=True)
+	scp = StaffChargeProject.objects.filter(staff_charge__in=staff_charges, active_flag=True)
+	aarp = AreaAccessRecordProject.objects.filter(area_access_record__in=area_access_records, active_flag=True)
 
 	staff_list = User.objects.filter(is_staff=True).order_by('last_name', 'first_name')
 
@@ -142,7 +143,7 @@ def contest_staff_charge(request, staff_charge_id):
 	}
 	staff_charge = get_object_or_404(StaffCharge, id=staff_charge_id)
 	dictionary['staff_charge'] = staff_charge
-	dictionary['scp'] = StaffChargeProject.objects.filter(staff_charge=staff_charge)
+	dictionary['scp'] = StaffChargeProject.objects.filter(staff_charge=staff_charge, active_flag=True)
 	return render(request, 'remote_work_contest.html', dictionary)
 
 
@@ -159,7 +160,7 @@ def contest_usage_event(request, usage_event_id):
 	}
 	usage_event = get_object_or_404(UsageEvent, id=usage_event_id)
 	dictionary['usage_event'] = usage_event
-	dictionary['uep'] = UsageEventProject.objects.filter(usage_event=usage_event)
+	dictionary['uep'] = UsageEventProject.objects.filter(usage_event=usage_event, active_flag=True)
 	if request.user.is_superuser:
 		tools = Tool.objects.all()
 	else:
@@ -181,11 +182,11 @@ def contest_area_access_record(request, area_access_record_id):
 	}
 	area_access_record = get_object_or_404(AreaAccessRecord, id=area_access_record_id)
 	dictionary['area_access_record'] = area_access_record
-	dictionary['aarp'] = AreaAccessRecordProject.objects.filter(area_access_record=area_access_record)
+	dictionary['aarp'] = AreaAccessRecordProject.objects.filter(area_access_record=area_access_record, active_flag=True)
 	if request.user.is_superuser:
 		areas = Area.objects.all()
 	else:
-		areas = Area.objects.filter(area__in=request.user.physical_access_levels.area)
+		areas = Area.objects.filter(id__in=request.user.physical_access_levels.area.id.all())
 	dictionary['areas'] = areas
 	return render(request, 'remote_work_contest.html', dictionary)
 
@@ -211,15 +212,18 @@ def contest_consumable_withdraw(request, consumable_withdraw_id):
 
 
 def is_valid_field(field):
-	return search("^(proposed|original)__(area|consumable|quantity|chosen_user|chosen_project|project_percent|tool_id|start|end)__(newentry_)?[0-9]+$", field) is not None
+	return search("^(proposed|original)__(area|consumable|quantity|chosen_user|chosen_project|project_percent|tool_id|start|end)__(newentry_)?[0-9_]+$", field) is not None
 
 #@staff_member_required(login_url=None)
 @login_required
 @require_POST
 def save_contest(request):
+	logger = getLogger(__name__)
+
 	contest_type = request.POST.get("contest_type")
 	no_charge_flag = request.POST.get("no_charge_flag")
 	submission = {}
+	deletion = {}
 
 	for key, value in request.POST.items():
 		if is_valid_field(key):
@@ -237,7 +241,20 @@ def save_contest(request):
 				submission[id][field] = {}
 
 			submission[id][field][flag] = value
+		else:
+			if key[:15] == "delete_customer":
+				flag, id = key.split("__")
 
+				try:
+					id = int(id)
+				except:
+					id = str(id)
+
+				if id not in deletion:
+					deletion[id] = True
+
+	logger.error(str(submission))
+	logger.error(str(deletion))
 	
 	if contest_type == "Staff Charge":
 		staff_charge_id = request.POST.get("staff_charge_id")
@@ -264,15 +281,37 @@ def save_contest(request):
 					fg = str(contest_transaction.id) + "_" + idstr[9:]
 					for field in submission[id]:
 						ContestTransactionNewData.objects.create(content_type=staff_charge_type, contest_transaction=contest_transaction, field_name=field, field_value=submission[id][field]["proposed"], field_group=fg)
-
 				else:
-					for field in submission[id]:
-						if submission[id][field]["proposed"] != submission[id][field]["original"]:
-							if field in ("start", "end"):
-								content_object = StaffCharge.objects.get(id=id)
-							else:
-								content_object = StaffChargeProject.objects.get(id=id)
-							ContestTransactionData.objects.create(content_object=content_object, contest_transaction=contest_transaction, field_name=field, original_value=submission[id][field]["original"], proposed_value=submission[id][field]["proposed"])
+					if idstr in deletion:
+						if deletion[idstr]:		# mark the record to deactive the scp
+							ContestTransactionData.objects.create(content_object=StaffChargeProject.objects.get(id=id), contest_transaction=contest_transaction, field_name="delete", original_value="delete", proposed_value="delete")
+							for field in submission[id]:
+								if submission[id][field]["proposed"] != submission[id][field]["original"]:
+									if field in ("start", "end"):
+										content_object = StaffCharge.objects.get(id=id)
+										ContestTransactionData.objects.create(content_object=content_object, contest_transaction=contest_transaction, field_name=field, original_value=submission[id][field]["original"], proposed_value=submission[id][field]["proposed"])
+						else:
+							for field in submission[id]:
+								if submission[id][field]["proposed"] != submission[id][field]["original"]:
+									if field in ("start", "end"):
+										content_object = StaffCharge.objects.get(id=id)
+									else:
+										content_object = StaffChargeProject.objects.get(id=id)
+									ContestTransactionData.objects.create(content_object=content_object, contest_transaction=contest_transaction, field_name=field, original_value=submission[id][field]["original"], proposed_value=submission[id][field]["proposed"])
+						del deletion[idstr]
+					else:
+						for field in submission[id]:
+							if submission[id][field]["proposed"] != submission[id][field]["original"]:
+								if field in ("start", "end"):
+									content_object = StaffCharge.objects.get(id=id)
+								else:
+									content_object = StaffChargeProject.objects.get(id=id)
+								ContestTransactionData.objects.create(content_object=content_object, contest_transaction=contest_transaction, field_name=field, original_value=submission[id][field]["original"], proposed_value=submission[id][field]["proposed"])
+
+			for id in deletion:
+				if deletion[id]:
+					ContestTransactionData.objects.create(content_object=StaffChargeProject.objects.get(id=id), contest_transaction=contest_transaction, field_name="delete", original_value="delete", proposed_value="delete")
+
 
 	if contest_type == "Usage Event":
 		usage_event_id = request.POST.get("usage_event_id")
@@ -300,13 +339,36 @@ def save_contest(request):
 					for field in submission[id]:
 						ContestTransactionNewData.objects.create(content_type=usage_event_type, contest_transaction=contest_transaction, field_name=field, field_value=submission[id][field]["proposed"], field_group=fg)
 				else:
-					for field in submission[id]:
-						if submission[id][field]["proposed"] != submission[id][field]["original"]:
-							if field in ("tool_id", "start", "end"):
-								content_object = UsageEvent.objects.get(id=id)
-							else:
-								content_object = UsageEventProject.objects.get(id=id)
-							ContestTransactionData.objects.create(content_object=content_object, contest_transaction=contest_transaction, field_name=field, original_value=submission[id][field]["original"], proposed_value=submission[id][field]["proposed"])
+					if idstr in deletion:
+						if deletion[idstr]:
+							ContestTransactionData.objects.create(content_object=UsageEventProject.objects.get(id=id), contest_transaction=contest_transaction, field_name="delete", original_value="delete", proposed_value="delete")
+							for field in submission[id]:
+								if submission[id][field]["proposed"] != submission[id][field]["original"]:
+									if field in ("tool_id", "start", "end"):
+										content_object = UsageEvent.objects.get(id=id)
+										ContestTransactionData.objects.create(content_object=content_object, contest_transaction=contest_transaction, field_name=field, original_value=submission[id][field]["original"], proposed_value=submission[id][field]["proposed"])
+						else:
+							for field in submission[id]:
+								if submission[id][field]["proposed"] != submission[id][field]["original"]:
+									if field in ("tool_id", "start", "end"):
+										content_object = UsageEvent.objects.get(id=id)
+									else:
+										content_object = UsageEventProject.objects.get(id=id)
+									ContestTransactionData.objects.create(content_object=content_object, contest_transaction=contest_transaction, field_name=field, original_value=submission[id][field]["original"], proposed_value=submission[id][field]["proposed"])
+						del deletion[idstr]
+					else:
+						for field in submission[id]:
+							if submission[id][field]["proposed"] != submission[id][field]["original"]:
+								if field in ("tool_id", "start", "end"):
+									content_object = UsageEvent.objects.get(id=id)
+								else:
+									content_object = UsageEventProject.objects.get(id=id)
+								ContestTransactionData.objects.create(content_object=content_object, contest_transaction=contest_transaction, field_name=field, original_value=submission[id][field]["original"], proposed_value=submission[id][field]["proposed"])
+
+			for id in deletion:
+				if deletion[id]:
+					ContestTransactionData.objects.create(content_object=UsageEventProject.objects.get(id=id), contest_transaction=contest_transaction, field_name="delete", original_value="delete", proposed_value="delete")
+
 
 	if contest_type == "Area Access Record":
 		area_access_record_id = request.POST.get("area_access_record_id")
@@ -334,13 +396,36 @@ def save_contest(request):
 					for field in submission[id]:
 						ContestTransactionNewData.objects.create(content_type=area_access_record_type, contest_transaction=contest_transaction, field_name=field, field_value=submission[id][field]["proposed"], field_group=fg)
 				else:
-					for field in submission[id]:
-						if submission[id][field]["proposed"] != submission[id][field]["original"]:
-							if field in ("area", "start", "end"):
-								content_object = AreaAccessRecord.objects.get(id=id)
-							else:
-								content_object = AreaAccessRecordProject.objects.get(id=id)
-							ContestTransactionData.objects.create(content_object=content_object, contest_transaction=contest_transaction, field_name=field, original_value=submission[id][field]["original"], proposed_value=submission[id][field]["proposed"])
+					if idstr in deletion:
+						if deletion[idstr]:
+							ContestTransactionData.objects.create(content_object=AreaAccessRecordProject.objects.get(id=id), contest_transaction=contest_transaction, field_name="delete", original_value="delete", proposed_value="delete")
+							for field in submission[id]:
+								if submission[id][field]["proposed"] != submission[id][field]["original"]:
+									if field in ("area", "start", "end"):
+										content_object = AreaAccessRecord.objects.get(id=id)
+										ContestTransactionData.objects.create(content_object=content_object, contest_transaction=contest_transaction, field_name=field, original_value=submission[id][field]["original"], proposed_value=submission[id][field]["proposed"])
+						else:
+							for field in submission[id]:
+								if submission[id][field]["proposed"] != submission[id][field]["original"]:
+									if field in ("area", "start", "end"):
+										content_object = AreaAccessRecord.objects.get(id=id)
+									else:
+										content_object = AreaAccessRecordProject.objects.get(id=id)
+								ContestTransactionData.objects.create(content_object=content_object, contest_transaction=contest_transaction, field_name=field, original_value=submission[id][field]["original"], proposed_value=submission[id][field]["proposed"])
+						del deletion[idstr]
+					else:
+						for field in submission[id]:
+							if submission[id][field]["proposed"] != submission[id][field]["original"]:
+								if field in ("area", "start", "end"):
+									content_object = AreaAccessRecord.objects.get(id=id)
+								else:
+									content_object = AreaAccessRecordProject.objects.get(id=id)
+								ContestTransactionData.objects.create(content_object=content_object, contest_transaction=contest_transaction, field_name=field, original_value=submission[id][field]["original"], proposed_value=submission[id][field]["proposed"])
+
+			for id in deletion:
+				if deletion[id]:
+					ContestTransactionData.objects.create(content_object=AreaAccessRecordProject.objects.get(id=id), contest_transaction=contest_transaction, field_name="delete", original_value="delete", proposed_value="delete")
+
 
 	if contest_type == "Consumable Withdraw":
 		consumable_withdraw_id = request.POST.get("consumable_withdraw_id")
@@ -354,11 +439,15 @@ def save_contest(request):
 		consumable_withdraw.updated = timezone.now()
 		consumable_withdraw.save()
 
-		for id in submission:
-			for field in submission[id]:
-				if submission[id][field]["proposed"] != submission[id][field]["original"]:
-					content_object = ConsumableWithdraw.objects.get(id=id)
-					ContestTransactionData.objects.create(content_object=content_object,  contest_transaction=contest_transaction, field_name=field, original_value=submission[id][field]["original"], proposed_value=submission[id][field]["proposed"])
+		if no_charge_flag:
+			contest_transaction.no_charge_flag = True
+			contest_transaction.save()
+		else:
+			for id in submission:
+				for field in submission[id]:
+					if submission[id][field]["proposed"] != submission[id][field]["original"]:
+						content_object = ConsumableWithdraw.objects.get(id=id)
+						ContestTransactionData.objects.create(content_object=content_object,  contest_transaction=contest_transaction, field_name=field, original_value=submission[id][field]["original"], proposed_value=submission[id][field]["proposed"])
 
 	return HttpResponseRedirect('/remote_work/')
 
@@ -368,21 +457,21 @@ def review_contested_items(request):
 	dictionary = {}
 
 	if request.user.is_superuser:
-		dictionary['staff_charges'] = StaffCharge.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False)
-		dictionary['usage'] = UsageEvent.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False)
-		dictionary['area_access_records'] = AreaAccessRecord.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False)
-		dictionary['consumable_withdraws'] = ConsumableWithdraw.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False)
+		dictionary['staff_charges'] = StaffCharge.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, active_flag=True)
+		dictionary['usage'] = UsageEvent.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, active_flag=True)
+		dictionary['area_access_records'] = AreaAccessRecord.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, active_flag=True)
+		dictionary['consumable_withdraws'] = ConsumableWithdraw.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, active_flag=True)
 	else:
 		if request.user.is_staff:
 			group_name="Core Admin"
 			if request.user.groups.filter(name=group_name).exists():
-				dictionary['staff_charges'] = StaffCharge.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, staff_member__core_ids__in=request.user.core_ids.all()).exclude(staff_member=request.user)
-				dictionary['usage'] = UsageEvent.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, operator__core_ids__in=request.user.core_ids.all()).exclude(operator=request.user)
-				dictionary['area_access_records'] = AreaAccessRecord.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, staff_charge__staff_member__core_ids__in=request.user.core_ids.all()).exclude(staff_charge__staff_member=request.user)
-				dictionary['consumable_withdraws'] = ConsumableWithdraw.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, consumable__core_id__in=request.user.core_ids.all()).exclude(customer=request.user)
+				dictionary['staff_charges'] = StaffCharge.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, staff_member__core_ids__in=request.user.core_ids.all(), active_flag=True).exclude(staff_member=request.user)
+				dictionary['usage'] = UsageEvent.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, operator__core_ids__in=request.user.core_ids.all(), active_flag=True).exclude(operator=request.user)
+				dictionary['area_access_records'] = AreaAccessRecord.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, staff_charge__staff_member__core_ids__in=request.user.core_ids.all(), active_flag=True).exclude(staff_charge__staff_member=request.user)
+				dictionary['consumable_withdraws'] = ConsumableWithdraw.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, consumable__core_id__in=request.user.core_ids.all(), active_flag=True).exclude(customer=request.user)
 			else:
-				dictionary['usage'] = UsageEvent.objects.filter(Q(validated=False, contested=True, contest_record__contest_resolved=False), Q(tool__primary_owner=request.user) | Q(tool__backup_owners__in=[request.user])).exclude(operator=request.user)
-				dictionary['consumable_withdraws'] = ConsumableWithdraw.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, consumable__core_id__in=request.user.core_ids.all()).exclude(customer=request.user)
+				dictionary['usage'] = UsageEvent.objects.filter(Q(validated=False, contested=True, contest_record__contest_resolved=False, active_flag=True), Q(tool__primary_owner=request.user) | Q(tool__backup_owners__in=[request.user])).exclude(operator=request.user)
+				dictionary['consumable_withdraws'] = ConsumableWithdraw.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, consumable__core_id__in=request.user.core_ids.all(), active_flag=True).exclude(customer=request.user)
 		
 	return render(request, 'remote_work_contest_review.html', dictionary)
 
@@ -428,26 +517,55 @@ def resolve_staff_charge_contest(request):
 		dictionary['proposed_event_end_date'] = ContestTransactionData.objects.filter(content_type__pk=staff_charge_type.id, object_id=staff_charge.id, contest_transaction=contest_transaction, field_name="end")[0].proposed_value
 	else:
 		dictionary['proposed_event_end_date'] = None
-	if StaffChargeProject.objects.filter(staff_charge=staff_charge).exists():
-		dictionary['staff_charge_projects'] = StaffChargeProject.objects.filter(staff_charge=staff_charge)
+	if StaffChargeProject.objects.filter(staff_charge=staff_charge, active_flag=True).exists():
+		project_data = {}
+		staff_charge_projects = StaffChargeProject.objects.filter(staff_charge=staff_charge, active_flag=True)
+		dictionary['staff_charge_projects'] = staff_charge_projects
+	
+		# process records to enable a single dictionary entry for each result
+		for scp in staff_charge_projects:
+			scp_type = ContentType.objects.get_for_model(scp)
+			if scp.id not in project_data:
+				project_data[scp.id] = {}
+			for fn in StaffChargeProject._meta.get_fields():
+				if fn.name not in project_data[scp.id]:
+					project_data[scp.id][fn.name] = getattr(scp, fn.name)
+
+					if fn.name == "customer":
+						project_data[scp.id]["original_customer"] = getattr(scp, fn.name)
+						project_data[scp.id]["original_customer_id"] = int(getattr(scp, fn.name).id)
+
+					if fn.name == "project":
+						project_data[scp.id]["original_project"] = getattr(scp, fn.name)
+						project_data[scp.id]["original_project_id"] = int(getattr(scp, fn.name).id)
+
+			contest_data = None
+			if ContestTransactionData.objects.filter(content_type__pk=scp_type.id, object_id=scp.id).exists():
+				contest_data =  ContestTransactionData.objects.filter(content_type__pk=scp_type.id, object_id=scp.id)
+			if contest_data:
+				for cd in contest_data:
+					if cd.field_name == "delete":
+						project_data[scp.id]["delete_flag"] = True
+
+					if cd.field_name == "chosen_user":
+						project_data[scp.id]["proposed_customer"] = User.objects.get(id=int(cd.proposed_value))
+						project_data[scp.id]["proposed_customer_id"] = int(cd.proposed_value)
+
+					if cd.field_name == "chosen_project":
+						project_data[scp.id]["proposed_project"] = Project.objects.get(id=int(cd.proposed_value))
+						project_data[scp.id]["proposed_project_id"] = int(cd.proposed_value)
+
+					if cd.field_name == "project_percent":
+						project_data[scp.id]["proposed_project_percent"] = cd.proposed_value
+
+			if "delete_flag" not in project_data[scp.id]:
+				project_data[scp.id]["delete_flag"] = False
+
+		dictionary['project_data'] = project_data
 	else:
 		dictionary['staff_charge_projects'] = None
-	if ContestTransactionData.objects.filter(contest_transaction=contest_transaction, field_name="chosen_user").exists():
-		proposed_user_ids = []
-		for ctd in ContestTransactionData.objects.filter(contest_transaction=contest_transaction, field_name="chosen_user"):
-			proposed_user_ids.append(int(ctd.proposed_value))
-		proposed_users = User.objects.filter(id__in=proposed_user_ids)
-		dictionary['proposed_users'] = proposed_users
-	else:
-		dictionary['proposed_users'] = None
-	if ContestTransactionData.objects.filter(contest_transaction=contest_transaction, field_name="chosen_project").exists():
-		proposed_project_ids = []
-		for ctd in ContestTransactionData.objects.filter(contest_transaction=contest_transaction, field_name="chosen_project"):
-			proposed_project_ids.append(int(ctd.proposed_value))
-		proposed_projects = Project.objects.filter(id__in=proposed_project_ids)
-		dictionary['proposed_projects'] = proposed_projects
-	else:
-		dictionary['proposed_projects'] = None
+		dictionary['project_data'] = None
+
 	if ContestTransactionNewData.objects.filter(contest_transaction=contest_transaction).exists():
 		newdata = {}
 
@@ -509,26 +627,55 @@ def resolve_usage_event_contest(request):
 		dictionary['proposed_event_end_date'] = ContestTransactionData.objects.filter(content_type__pk=usage_event_type.id, object_id=usage_event.id, contest_transaction=contest_transaction, field_name="end")[0].proposed_value
 	else:
 		dictionary['proposed_event_end_date'] = None
-	if UsageEventProject.objects.filter(usage_event=usage_event).exists():
-		dictionary['usage_event_projects'] = UsageEventProject.objects.filter(usage_event=usage_event)
+	if UsageEventProject.objects.filter(usage_event=usage_event, active_flag=True).exists():
+		project_data = {}
+		usage_event_projects = UsageEventProject.objects.filter(usage_event=usage_event, active_flag=True)
+		dictionary['usage_event_projects'] = usage_event_projects
+
+		for uep in usage_event_projects:
+			uep_type = ContentType.objects.get_for_model(uep)
+			if uep.id not in project_data:
+				project_data[uep.id] = {}
+			for fn in UsageEventProject._meta.get_fields():
+				if fn.name not in project_data[uep.id]:
+					project_data[uep.id][fn.name] = getattr(uep, fn.name)
+
+					if fn.name == "customer":
+						project_data[uep.id]["original_customer"] = getattr(uep, fn.name)
+						project_data[uep.id]["original_customer_id"] = int(getattr(uep, fn.name).id)
+
+					if fn.name == "project":
+						project_data[uep.id]["original_project"] = getattr(uep, fn.name)
+						project_data[uep.id]["original_project_id"] = int(getattr(uep, fn.name).id)
+
+			contest_data = None
+			if ContestTransactionData.objects.filter(content_type__pk=uep_type.id, object_id=uep.id).exists():
+				contest_data =  ContestTransactionData.objects.filter(content_type__pk=uep_type.id, object_id=uep.id)
+			if contest_data:
+				for cd in contest_data:
+					if cd.field_name == "delete":
+						project_data[uep.id]["delete_flag"] = True
+
+					if cd.field_name == "chosen_user":
+						project_data[uep.id]["proposed_customer"] = User.objects.get(id=int(cd.proposed_value))
+						project_data[uep.id]["proposed_customer_id"] = int(cd.proposed_value)
+
+					if cd.field_name == "chosen_project":
+						project_data[uep.id]["proposed_project"] = Project.objects.get(id=int(cd.proposed_value))
+						project_data[uep.id]["proposed_project_id"] = int(cd.proposed_value)
+
+					if cd.field_name == "project_percent":
+						project_data[uep.id]["proposed_project_percent"] = cd.proposed_value
+
+			if "delete_flag" not in project_data[uep.id]:
+				project_data[uep.id]["delete_flag"] = False
+
+		dictionary['project_data'] = project_data
 	else:
 		dictionary['usage_event_projects'] = None
-	if ContestTransactionData.objects.filter(contest_transaction=contest_transaction, field_name="chosen_user").exists():
-		proposed_user_ids = []
-		for ctd in ContestTransactionData.objects.filter(contest_transaction=contest_transaction, field_name="chosen_user"):
-			proposed_user_ids.append(int(ctd.proposed_value))
-		proposed_users = User.objects.filter(id__in=proposed_user_ids)
-		dictionary['proposed_users'] = proposed_users
-	else:
-		dictionary['proposed_users'] = None
-	if ContestTransactionData.objects.filter(contest_transaction=contest_transaction, field_name="chosen_project").exists():
-		proposed_project_ids = []
-		for ctd in ContestTransactionData.objects.filter(contest_transaction=contest_transaction, field_name="chosen_project"):
-			proposed_project_ids.append(int(ctd.proposed_value))
-		proposed_projects = Project.objects.filter(id__in=proposed_project_ids)
-		dictionary['proposed_projects'] = proposed_projects
-	else:
-		dictionary['proposed_projects'] = None
+		dictionary['project_data'] = None
+
+
 	if ContestTransactionNewData.objects.filter(contest_transaction=contest_transaction).exists():
 		newdata = {}
 
@@ -587,26 +734,54 @@ def resolve_area_access_record_contest(request):
 		dictionary['proposed_event_end_date'] = ContestTransactionData.objects.filter(content_type__pk=aar_type.id, object_id=area_access_record.id, contest_transaction=contest_transaction, field_name="end")[0].proposed_value
 	else:
 		dictionary['proposed_event_end_date'] = None
-	if AreaAccessRecordProject.objects.filter(area_access_record=area_access_record).exists():
-		dictionary['area_access_record_projects'] = AreaAccessRecordProject.objects.filter(area_access_record=area_access_record)
+	if AreaAccessRecordProject.objects.filter(area_access_record=area_access_record, active_flag=True).exists():
+		project_data = {}
+		area_access_record_projects = AreaAccessRecordProject.objects.filter(area_access_record=area_access_record, active_flag=True)
+		dictionary['area_access_record_projects'] = area_access_record_projects
+
+		for aarp in area_access_record_projects:
+			aarp_type = ContentType.objects.get_for_model(aarp)
+			if aarp.id not in project_data:
+				project_data[aarp.id] = {}
+			for fn in AreaAccessRecordProject._meta.get_fields():
+				if fn.name not in project_data[aarp.id]:
+					project_data[aarp.id][fn.name] = getattr(aarp, fn.name)
+
+					if fn.name == "customer":
+						project_data[aarp.id]["original_customer"] = getattr(aarp, fn.name)
+						project_data[aarp.id]["original_customer_id"] = int(getattr(aarp, fn.name).id)
+
+					if fn.name == "project":
+						project_data[aarp.id]["original_project"] = getattr(aarp, fn.name)
+						project_data[aarp.id]["original_project_id"] = int(getattr(aarp, fn.name).id)
+
+			contest_data = None
+			if ContestTransactionData.objects.filter(content_type__pk=aarp_type.id, object_id=aarp.id).exists():
+				contest_data =  ContestTransactionData.objects.filter(content_type__pk=aarp_type.id, object_id=aarp.id)
+			if contest_data:
+				for cd in contest_data:
+					if cd.field_name == "delete":
+						project_data[aarp.id]["delete_flag"] = True
+
+					if cd.field_name == "chosen_user":
+						project_data[aarp.id]["proposed_customer"] = User.objects.get(id=int(cd.proposed_value))
+						project_data[aarp.id]["proposed_customer_id"] = int(cd.proposed_value)
+
+					if cd.field_name == "chosen_project":
+						project_data[aarp.id]["proposed_project"] = Project.objects.get(id=int(cd.proposed_value))
+						project_data[aarp.id]["proposed_project_id"] = int(cd.proposed_value)
+
+					if cd.field_name == "project_percent":
+						project_data[aarp.id]["proposed_project_percent"] = cd.proposed_value
+
+			if "delete_flag" not in project_data[aarp.id]:
+				project_data[aarp.id]["delete_flag"] = False
+
+		dictionary['project_data'] = project_data
 	else:
 		dictionary['area_access_record_projects'] = None
-	if ContestTransactionData.objects.filter(contest_transaction=contest_transaction, field_name="chosen_user").exists():
-		proposed_user_ids = []
-		for ctd in ContestTransactionData.objects.filter(contest_transaction=contest_transaction, field_name="chosen_user"):
-			proposed_user_ids.append(int(ctd.proposed_value))
-		proposed_users = User.objects.filter(id__in=proposed_user_ids)
-		dictionary['proposed_users'] = proposed_users
-	else:
-		dictionary['proposed_users'] = None
-	if ContestTransactionData.objects.filter(contest_transaction=contest_transaction, field_name="chosen_project").exists():
-		proposed_project_ids = []
-		for ctd in ContestTransactionData.objects.filter(contest_transaction=contest_transaction, field_name="chosen_project"):
-			proposed_project_ids.append(int(ctd.proposed_value))
-		proposed_projects = Project.objects.filter(id__in=proposed_project_ids)
-		dictionary['proposed_projects'] = proposed_projects
-	else:
-		dictionary['proposed_projects'] = None
+		dictionary['project_data'] = None
+
 	if ContestTransactionNewData.objects.filter(contest_transaction=contest_transaction).exists():
 		newdata = {}
 
@@ -682,7 +857,7 @@ def save_contest_resolution(request):
 	contest_resolved = request.POST.get("resolve_contest")
 	contest_transaction = None
 	changes = None
-	no_charge_flag = request.POST.get("no_charge_flag", None)
+	no_charge_flag = request.POST.get("no_charge_transaction", None)
 
 	if contest_type == "Staff Charge":
 		staff_charge_id = request.POST.get("staff_charge_id")
@@ -720,6 +895,10 @@ def save_contest_resolution(request):
 			if no_charge_flag:
 				if int(no_charge_flag) == 1:
 					staff_charge.no_charge_flag = True
+
+					for scp in staff_charge.staffchargeproject_set.all():
+						scp.no_charge_flag = True
+						scp.save()
 			staff_charge.save()
 
 
@@ -733,6 +912,10 @@ def save_contest_resolution(request):
 			if no_charge_flag:
 				if int(no_charge_flag) == 1:
 					usage_event.no_charge_flag = True
+
+					for uep in usage_event.usageeventproject_set.all():
+						uep.no_charge_flag = True
+						uep.save()
 			usage_event.save()
 
 
@@ -746,11 +929,16 @@ def save_contest_resolution(request):
 			if no_charge_flag:
 				if int(no_charge_flag) == 1:
 					area_access_record.no_charge_flag = True
+
+					for aarp in area_access_record.areaaccessrecordproject_set.all():
+						aarp.no_charge_flag = True
+						aarp.save()
 			area_access_record.save()
 
 
 		if contest_type == "Consumable Withdraw":
 			changes = ContestTransactionData.objects.filter(contest_transaction=contest_transaction)
+			additions = None
 			consumable_withdraw.validated = True
 			consumable_withdraw.validated_date = timezone.now()
 			consumable_withdraw.contested = False
@@ -768,6 +956,9 @@ def save_contest_resolution(request):
 		if changes is not None:
 			for c in changes:
 				field_name = c.field_name
+
+				if field_name == "delete":
+					c.content_object.active_flag = False
 
 				if field_name == "start":
 					c.content_object.start = c.proposed_value
@@ -873,25 +1064,6 @@ def save_contest_resolution(request):
 		contest_transaction.contest_rejection_reason = request.POST.get("reject_contest_reason")
 		contest_transaction.save()
 
-	"""
-	output = "<a href='/review_contested_items/'>Return to contest review</a><br/>\n"
-
-	for key, value in request.POST.items():
-		output += key + " = " + value + "<br/>\n"
-
-	output += "<hr><br/>"
-
-	if changes is not None:
-		for c in changes:
-			for f in c._meta.get_fields():
-				output += f.name + " = " + str(getattr(c, f.name)) + "<br/>\n"
-
-	output += "<hr><br/>"
-
-	output += "<a href='/review_contested_items/'>Return to contest review</a><br/>\n"
-
-	return HttpResponse(output)
-	"""
 
 	return HttpResponseRedirect('/review_contested_items/')
 

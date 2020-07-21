@@ -295,17 +295,8 @@ if settings.DEBUG:
 		# Django debug toolbar
 		import debug_toolbar
 		urlpatterns += [
-			url(r'^__debug__/', debug_toolbar.urls),
+			url(r'^__debug__/', include(debug_toolbar.urls)),
 		]
 	except ImportError:
 		pass
 
-"""
-if settings.USE_SCHEDULE is not None:
-	if settings.USE_SCHEDULE == True:
-		start_scheduler()
-	else:
-		print("Scheduler not in user")
-else:
-	print("settings.USE_SCHEDULE not found")
-"""

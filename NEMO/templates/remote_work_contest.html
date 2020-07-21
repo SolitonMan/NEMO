@@ -394,6 +394,17 @@
 	function mark_for_delete(eid)
 	{
 		var s = "#delete_customer__" + eid;
+
+		// check for a new entry, which can just be deleted
+		var seid = String(eid);
+		var nc = seid.substring(0, 8);
+
+		if (nc == "newentry") {
+			var row = "#row_" + seid;
+			$(row).remove();
+			return;
+		}
+
 		if ($(s).is(":checked")) {
 			// disable inputs
 			s = "#row_" + eid + " input";
@@ -423,7 +434,7 @@
 				$(this).prop("disabled", false);
 			});
 
-			// replace project percent values if no items are marked for delete
+			/* replace project percent values if no items are marked for delete
 			if (!$("input[name*='delete_customer__']").is(":checked")) {
 				s = "input[name*='proposed__project_percent__']";
 				$(s).each(function() {
@@ -432,6 +443,12 @@
 					$(this).val($(original_val).val());
 				});
 			}
+			*/
+			// remove values
+			s = "input[name*='proposed__project_percent__']";
+			$(s).each(function() {
+				$(this).val("");
+			});
 		}
 	}
 	function set_no_charge_form()
@@ -527,7 +544,7 @@
 
 		$("select[name*='proposed__chosen_project__']").each(
 			function(index, element) {
-				if ($(element).prop("disabled", false)) {
+				if (!$(element).prop("disabled")) {
 					if ($(element).val() == "") {
 						alert("Please select a project for each entry");
 						$(element).focus();
@@ -541,7 +558,7 @@
 
 		$("input[name*='proposed__project_percent__']").each(
 			function(index, element) {
-				if ($(element).prop("disabled", false)) {
+				if (!$(element).prop("disabled")) {
 					if ($(element).val() == "" || isNaN(parseFloat($(element).val()))) {
 						alert("Please enter a numerical value for each project percent field");
 						$(element).focus();
@@ -608,7 +625,7 @@
 
 		$("input[name*='proposed__project_percent__']").each(
 			function(index, element) {
-				if ($(element).prop("disabled", false)) {
+				if (!$(element).prop("disabled")) {
 					if ($(element).val() == "" || isNaN(parseFloat($(element).val()))) {
 						alert("Please enter a numerical value for each project percent field");
 						$(element).focus();
@@ -674,7 +691,7 @@
 
 		$("input[name*='proposed__project_percent__']").each(
 			function(index, element) {
-				if ($(element).prop("disabled", false)) {
+				if (!$(element).prop("disabled")) {
 					if ($(element).val() == "" || isNaN(parseFloat($(element).val()))) {
 						alert("Please enter a numerical value for each project percent field");
 						$(element).focus();
@@ -731,7 +748,7 @@
 
 		$("input[name*='proposed__project_percent__']").each(
 			function(index, element) {
-				if ($(element).prop("disabled", false)) {
+				if (!$(element).prop("disabled")) {
 					if ($(element).val() == "" || isNaN(parseFloat($(element).val()))) {
 						alert("Please enter a numerical value for each project percent field");
 						$(element).focus();

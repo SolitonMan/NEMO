@@ -666,7 +666,7 @@ class ContestTransactionAdmin(admin.ModelAdmin):
 
 @register(ContestTransactionData)
 class ContestTransactionDataAdmin(admin.ModelAdmin):
-	list_display = ('id', 'content_type', 'object_id', 'field_name', 'original_value', 'proposed_value')
+	list_display = ('id', 'content_type', 'object_id', 'contest_transaction', 'field_name', 'original_value', 'proposed_value')
 
 	def has_delete_permission(self, request, obj=None):
 		return False

@@ -33,7 +33,7 @@ def landing(request):
 
 	contested_items = False
 	if request.user.is_superuser:
-		if UsageEvent.objects.filter(contested=True, validated=False, contest_record__contest_resolved=False).exclude(operator=request.user).exists() or StaffCharge.objects.filter(contested=True, validated=False, contest_record__contest_resolved=False).exclude(staff_member=request.user).exists() or AreaAccessRecord.objects.filter(contested=True, validated=False, contest_record__contest_resolved=False).exclude(staff_charge__staff_member=request.user).exists() or ConsumableWithdraw.objects.filter(contested=True, validated=False, contest_record__contest_resolved=False).exclude(customer=request.user).exists():
+		if UsageEvent.objects.filter(contested=True, validated=False, contest_record__contest_resolved=False).exists() or StaffCharge.objects.filter(contested=True, validated=False, contest_record__contest_resolved=False).exists() or AreaAccessRecord.objects.filter(contested=True, validated=False, contest_record__contest_resolved=False).exists() or ConsumableWithdraw.objects.filter(contested=True, validated=False, contest_record__contest_resolved=False).exists():
 			contested_items = True
 	else:
 		if request.user.is_staff:
