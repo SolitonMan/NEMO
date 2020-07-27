@@ -169,8 +169,8 @@ def deactivate(request, user_id):
 	dictionary = {
 		'user_to_deactivate': get_object_or_404(User, id=user_id),
 		'reservations': Reservation.objects.filter(user=user_id, cancelled=False, missed=False, end__gt=timezone.now()),
-		'staff_charges': StaffCharge.objects.filter(customer=user_id, end=None),
-		'tool_usage': UsageEvent.objects.filter(user=user_id, end=None).prefetch_related('tool'),
+		'staff_charges': StaffCharge.objects.filter(customer=user_id, end=None, active_flag=True),
+		'tool_usage': UsageEvent.objects.filter(user=user_id, end=None, active_flag=True).prefetch_related('tool'),
 	}
 	user_to_deactivate = dictionary['user_to_deactivate']
 	if request.method == 'GET':

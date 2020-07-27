@@ -37,7 +37,7 @@ def daily_validate_transactions():
 	print("Running validation for transactions older than " + str(validation_date))
 
 	# validate usage events
-	usage_events = UsageEvent.objects.filter(end__lte=validation_date, validated=False, contested=False)
+	usage_events = UsageEvent.objects.filter(end__lte=validation_date, validated=False, contested=False, active_flag=True)
 
 	print("Found " + str(usage_events.count()) + " usage event transactions to validate.")
 
@@ -45,7 +45,7 @@ def daily_validate_transactions():
 		u.auto_validate()
 
 	# validate staff charges
-	staff_charges = StaffCharge.objects.filter(end__lte=validation_date, validated=False, contested=False)
+	staff_charges = StaffCharge.objects.filter(end__lte=validation_date, validated=False, contested=False, active_flag=True)
 
 	print("Found " + str(staff_charges.count()) + " staff charge transactions to validate.")
 
@@ -53,7 +53,7 @@ def daily_validate_transactions():
 		s.auto_validate()
 
 	# validate area access records
-	area_access_records = AreaAccessRecord.objects.filter(end__lte=validation_date, validated=False, contested=False)
+	area_access_records = AreaAccessRecord.objects.filter(end__lte=validation_date, validated=False, contested=False, active_flag=True)
 
 	print("Found " + str(area_access_records.count()) + " area access record transactions to validate.")
 
@@ -61,7 +61,7 @@ def daily_validate_transactions():
 		a.auto_validate()
 
 	# validate consumable withdraws
-	consumable_withdraws = ConsumableWithdraw.objects.filter(date__lte=validation_date, validated=False, contested=False)
+	consumable_withdraws = ConsumableWithdraw.objects.filter(date__lte=validation_date, validated=False, contested=False, active_flag=True)
 
 	print("Found " + str(consumable_withdraws.count()) + " consumable withdraw transactions to validate.")
 

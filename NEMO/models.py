@@ -185,7 +185,7 @@ class User(models.Model):
 		return self.first_name
 
 	def in_area(self):
-		return AreaAccessRecord.objects.filter(customer=self, staff_charge=None, end=None).exists()
+		return AreaAccessRecord.objects.filter(customer=self, staff_charge=None, end=None, active_flag=True).exists()
 
 	def area_access_record(self):
 		try:
@@ -213,7 +213,7 @@ class User(models.Model):
 		return self.projects
 
 	def charging_staff_time(self):
-		return StaffCharge.objects.filter(staff_member=self.id, end=None).exists()
+		return StaffCharge.objects.filter(staff_member=self.id, end=None, active_flag=True).exists()
 
 	def get_staff_charge(self):
 		try:
@@ -223,7 +223,7 @@ class User(models.Model):
 
 	def get_overridden_staff_charges(self):
 		try:
-			return StaffCharge.objects.filter(staff_member=self.id, charge_end_override=True, override_confirmed=False)
+			return StaffCharge.objects.filter(staff_member=self.id, charge_end_override=True, override_confirmed=False, active_flag=True)
 		except StaffCharge.DoesNotExist:
 			return None 
 
@@ -338,11 +338,11 @@ class Tool(models.Model):
 		return self.nonrequired_resource_set.filter(available=False)
 
 	def in_use(self):
-		result = UsageEvent.objects.filter(tool=self.id, end=None).exists()
+		result = UsageEvent.objects.filter(tool=self.id, end=None, active_flag=True).exists()
 		return result
 
 	def delayed_logoff_in_progress(self):
-		result = UsageEvent.objects.filter(tool=self.id, end__gt=timezone.now()).exists()
+		result = UsageEvent.objects.filter(tool=self.id, end__gt=timezone.now(), active_flag=True).exists()
 		return result
 
 	def get_delayed_logoff_usage_event(self):
@@ -578,7 +578,7 @@ class StaffCharge(CalendarDisplay):
 		self.save()
 
 	def description(self):
-		ep = StaffChargeProject.objects.filter(staff_charge=self)
+		ep = StaffChargeProject.objects.filter(staff_charge=self, active_flag=True)
 		if ep.exists():
 			d = "<table class=\"table\"><thead><tr><th>Customer</th><th>Project</th></tr></thead><tbody>"
 			for e in ep:
@@ -653,7 +653,7 @@ class AreaAccessRecord(CalendarDisplay):
 		self.save()
 
 	def description(self):
-		ep = AreaAccessRecordProject.objects.filter(area_access_record=self)
+		ep = AreaAccessRecordProject.objects.filter(area_access_record=self, active_flag=True)
 		if ep.exists():
 			d = "<table class=\"table\"><thead><tr><th>Customer</th><th>Project</th></tr></thead><tbody>"
 			for e in ep:
@@ -889,7 +889,7 @@ class UsageEvent(CalendarDisplay):
 		self.save()
 
 	def description(self):
-		ep = UsageEventProject.objects.filter(usage_event=self)
+		ep = UsageEventProject.objects.filter(usage_event=self, active_flag=True)
 		if ep.exists():
 			d = "<table class=\"table\"><thead><tr><th>Customer</th><th>Project</th></tr></thead><tbody>"
 			for e in ep:

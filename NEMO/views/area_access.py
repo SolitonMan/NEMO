@@ -29,7 +29,7 @@ def area_access(request):
 		start, end = parse_start_and_end_date(request.GET['start'], request.GET['end'])
 		dictionary['start'] = start
 		dictionary['end'] = end
-		dictionary['access_records'] = AreaAccessRecord.objects.filter(start__gte=start, start__lt=end, staff_charge=None)
+		dictionary['access_records'] = AreaAccessRecord.objects.filter(start__gte=start, start__lt=end, staff_charge=None, active_flag=True)
 	except:
 		pass
 	return render(request, 'area_access/area_access.html', dictionary)
@@ -382,8 +382,8 @@ def self_log_in(request):
 			p = Project.objects.get(id=request.POST['project'])
 			
 			if a in dictionary['areas'] and p in dictionary['projects']:
-				if AreaAccessRecord.objects.filter(customer=request.user, end=None).count() > 0:
-					areas = AreaAccessRecord.objects.filter(customer=request.user, end=None)
+				if AreaAccessRecord.objects.filter(customer=request.user, end=None, active_flag=True).count() > 0:
+					areas = AreaAccessRecord.objects.filter(customer=request.user, end=None, active_flag=True)
 					for a in areas:
 						a.end = timezone.now()
 						a.save()

@@ -117,7 +117,7 @@ def choices(request):
 		return render(request, 'kiosk/acknowledgement.html', dictionary)
 	dictionary = {
 		'customer': customer,
-		'usage_events': UsageEvent.objects.filter(operator=customer.id, end=None).order_by('tool__name').prefetch_related('tool', 'project'),
+		'usage_events': UsageEvent.objects.filter(operator=customer.id, end=None, active_flag=True).order_by('tool__name').prefetch_related('tool', 'project'),
 		'tools': Tool.objects.filter(visible=True, location=request.GET['location']),
 		'tool_summary': create_tool_summary(),
 		'categories': [t[0] for t in Tool.objects.filter(visible=True).order_by('category').values_list('category').distinct()],

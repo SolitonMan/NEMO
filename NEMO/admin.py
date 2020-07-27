@@ -205,6 +205,11 @@ class TrainingSessionAdmin(admin.ModelAdmin):
 	list_filter = ('qualified', 'date', 'type')
 	date_hierarchy = 'date'
 
+	def formfield_for_foreignkey(self, db_field, request, **kwargs):
+		if db_field.name == "project":
+			kwargs["queryset"] = Project.objects.order_by('project_number')
+		return super(TrainingSessionAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
 	def has_delete_permission(self, request, obj=None):
 		return False
 
@@ -216,12 +221,22 @@ class StaffChargeAdmin(admin.ModelAdmin):
 	date_hierarchy = 'start'
 	ordering = ['-id']
 
+	def formfield_for_foreignkey(self, db_field, request, **kwargs):
+		if db_field.name == "project":
+			kwargs["queryset"] = Project.objects.order_by('project_number')
+		return super(StaffChargeAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
 	def has_delete_permission(self, request, obj=None):
 		return False
 
 @register(StaffChargeProject)
 class StaffChargeProjectAdmin(admin.ModelAdmin):
 	list_display = ('id', 'staff_charge', 'customer', 'project', 'project_percent')
+
+	def formfield_for_foreignkey(self, db_field, request, **kwargs):
+		if db_field.name == "project":
+			kwargs["queryset"] = Project.objects.order_by('project_number')
+		return super(StaffChargeProjectAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 	def has_delete_permission(self, request, obj=None):
 		return False
@@ -232,12 +247,22 @@ class AreaAccessRecordAdmin(admin.ModelAdmin):
 	list_filter = ('area', 'start',)
 	date_hierarchy = 'start'
 
+	def formfield_for_foreignkey(self, db_field, request, **kwargs):
+		if db_field.name == "project":
+			kwargs["queryset"] = Project.objects.order_by('project_number')
+		return super(AreaAccessRecordAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
 	def has_delete_permission(self, request, obj=None):
 		return False
 
 @register(AreaAccessRecordProject)
 class AreaAccessRecordProjectAdmin(admin.ModelAdmin):
 	list_display = ('id', 'area_access_record', 'customer', 'project', 'project_percent')
+
+	def formfield_for_foreignkey(self, db_field, request, **kwargs):
+		if db_field.name == "project":
+			kwargs["queryset"] = Project.objects.order_by('project_number')
+		return super(AreaAccessRecordProjectAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 	def has_delete_permission(self, request, obj=None):
 		return False
@@ -355,6 +380,11 @@ class ProjectAdmin(admin.ModelAdmin):
 		# Record whether the project is active or not.
 		record_active_state(request, obj, form, 'active', not change)
 
+	def formfield_for_foreignkey(self, db_field, request, **kwargs):
+		if db_field.name == "account":
+			kwargs["queryset"] = Account.objects.order_by('name')
+		return super(ProjectAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
 	def has_delete_permission(self, request, obj=None):
 		return False
 
@@ -364,6 +394,11 @@ class ReservationAdmin(admin.ModelAdmin):
 	list_display = ('id', 'user', 'creator', 'tool', 'project', 'additional_information', 'start', 'end', 'duration', 'cancelled', 'missed')
 	list_filter = ('cancelled', 'missed')
 	date_hierarchy = 'start'
+
+	def formfield_for_foreignkey(self, db_field, request, **kwargs):
+		if db_field.name == "project":
+			kwargs["queryset"] = Project.objects.order_by('project_number')
+		return super(ReservationAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 	def has_delete_permission(self, request, obj=None):
 		return False
@@ -380,6 +415,11 @@ class ReservationConfigurationAdmin(admin.ModelAdmin):
 class ReservationProjectAdmin(admin.ModelAdmin):
 	list_display = ('id', 'reservation', 'project', 'customer')
 
+	def formfield_for_foreignkey(self, db_field, request, **kwargs):
+		if db_field.name == "project":
+			kwargs["queryset"] = Project.objects.order_by('project_number')
+		return super(ReservationProjectAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
 	def has_delete_permission(self, request, obj=None):
 		return False
 
@@ -389,12 +429,22 @@ class UsageEventAdmin(admin.ModelAdmin):
 	list_filter = ('start', 'end')
 	date_hierarchy = 'start'
 
+	def formfield_for_foreignkey(self, db_field, request, **kwargs):
+		if db_field.name == "project":
+			kwargs["queryset"] = Project.objects.order_by('project_number')
+		return super(UsageEventAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
 	def has_delete_permission(self, request, obj=None):
 		return False
 
 @register(UsageEventProject)
 class UsageEventProjectAdmin(admin.ModelAdmin):
 	list_display = ('id', 'usage_event', 'customer', 'project', 'project_percent')
+
+	def formfield_for_foreignkey(self, db_field, request, **kwargs):
+		if db_field.name == "project":
+			kwargs["queryset"] = Project.objects.order_by('project_number')
+		return super(UsageEventProjectAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 	def has_delete_permission(self, request, obj=None):
 		return False
@@ -428,6 +478,11 @@ class ConsumableCategoryAdmin(admin.ModelAdmin):
 class ConsumableWithdrawAdmin(admin.ModelAdmin):
 	list_display = ('id', 'customer', 'merchant', 'consumable', 'quantity', 'project', 'date')
 	date_hierarchy = 'date'
+
+	def formfield_for_foreignkey(self, db_field, request, **kwargs):
+		if db_field.name == "project":
+			kwargs["queryset"] = Project.objects.order_by('project_number')
+		return super(ConsumableWithdrawAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 	def has_delete_permission(self, request, obj=None):
 		return False
@@ -704,7 +759,7 @@ class ResourceCategoryAdmin(admin.ModelAdmin):
 
 @register(Area)
 class AreaAdmin(admin.ModelAdmin):
-	list_display = ('id', 'name', 'welcome_message')
+	list_display = ('id', 'name', 'welcome_message', 'core_id')
 
 	def has_delete_permission(self, request, obj=None):
 		return False

@@ -25,10 +25,10 @@ def staff_charges(request):
 	staff_charge = request.user.get_staff_charge()
 	if staff_charge:
 		try:
-			area_access_record = AreaAccessRecord.objects.get(staff_charge=staff_charge.id, end=None)
-			return render(request, 'staff_charges/end_area_charge.html', {'area': area_access_record.area, 'staff_charge': staff_charge, 'scp': StaffChargeProject.objects.filter(staff_charge=staff_charge)})
+			area_access_record = AreaAccessRecord.objects.get(staff_charge=staff_charge.id, end=None, active_flag=True)
+			return render(request, 'staff_charges/end_area_charge.html', {'area': area_access_record.area, 'staff_charge': staff_charge, 'scp': StaffChargeProject.objects.filter(staff_charge=staff_charge, active_flag=True)})
 		except AreaAccessRecord.DoesNotExist:
-			scp = StaffChargeProject.objects.filter(staff_charge=staff_charge)
+			scp = StaffChargeProject.objects.filter(staff_charge=staff_charge, active_flag=True)
 			return render(request, 'staff_charges/change_status.html', {'areas': Area.objects.all(), 'scp': scp, 'staff_charge': staff_charge})
 	error = None
 	customer = None
@@ -46,18 +46,18 @@ def staff_charges(request):
 	params = {'users': users, 'error': error}
 
 	# if the user has any open charges pass the information to the form
-	overridden_charges = StaffCharge.objects.filter(staff_member=request.user, charge_end_override=True, override_confirmed=False)
+	overridden_charges = StaffCharge.objects.filter(staff_member=request.user, charge_end_override=True, override_confirmed=False, active_flag=True)
 
 	if overridden_charges.count() > 0:
 		params['override_charges'] = overridden_charges
-		scp = StaffChargeProject.objects.filter(staff_charge__in=overridden_charges)
+		scp = StaffChargeProject.objects.filter(staff_charge__in=overridden_charges, active_flag=True)
 
 		if scp.count() > 0:
 			params['scp'] = scp
 
 	# get all staff charges for this user so ad hoc charges can be made with an appropriate reference
 	earliest = timezone.now().date() - timedelta(days=30)
-	my_staff_charges = StaffCharge.objects.filter(staff_member=request.user, start__range=(earliest, timezone.now().date()))
+	my_staff_charges = StaffCharge.objects.filter(staff_member=request.user, start__range=(earliest, timezone.now().date()), active_flag=True)
 	if my_staff_charges:
 		params['current_user_charges'] = my_staff_charges
 
@@ -152,8 +152,9 @@ def get_billing_date_range():
 	else:
 		max_month = datetime.today().month - 2
 
-	start = str(max_month+1) + '/1/' + str(max_year)
-	end = str(datetime.today().strftime('%m/%d/%Y'))
+	start = str(max_month) + '/25/' + str(max_year)
+	#end = str(datetime.today().strftime('%m/%d/%Y'))
+	end = str(max_month + 1) + '/24/' + str(max_year)
 
 	dictionary = {
 		'start': start,
@@ -222,29 +223,29 @@ def ad_hoc_staff_charge(request):
 			msg = 'The start date and end date are required to save an ad hoc staff charge. The values must be valid datetimes.'
 			raise Exception(msg)
 
-		if StaffCharge.objects.filter(staff_member=request.user, start__range=(ad_hoc_start, ad_hoc_end), end__gt=ad_hoc_end).exists() or StaffCharge.objects.filter(staff_member=request.user, end__range=(ad_hoc_start, ad_hoc_end), start__lt=ad_hoc_start).exists() or StaffCharge.objects.filter(staff_member=request.user, start__lt=ad_hoc_start, end__gt=ad_hoc_end).exists() or StaffCharge.objects.filter(staff_member=request.user, start__gt=ad_hoc_start, end__lt=ad_hoc_end).exists():
+		if StaffCharge.objects.filter(staff_member=request.user, start__range=(ad_hoc_start, ad_hoc_end), end__gt=ad_hoc_end, active_flag=True).exists() or StaffCharge.objects.filter(staff_member=request.user, end__range=(ad_hoc_start, ad_hoc_end), start__lt=ad_hoc_start, active_flag=True).exists() or StaffCharge.objects.filter(staff_member=request.user, start__lt=ad_hoc_start, end__gt=ad_hoc_end, active_flag=True).exists() or StaffCharge.objects.filter(staff_member=request.user, start__gt=ad_hoc_start, end__lt=ad_hoc_end, active_flag=True).exists():
 
-			if StaffCharge.objects.filter(staff_member=request.user, start__range=(ad_hoc_start, ad_hoc_end), end__gt=ad_hoc_end, charge_end_override=True, override_confirmed=False).exists() or StaffCharge.objects.filter(staff_member=request.user, end__range=(ad_hoc_start, ad_hoc_end), start__lt=ad_hoc_start, charge_end_override=True, override_confirmed=False).exists() or StaffCharge.objects.filter(staff_member=request.user, start__lt=ad_hoc_start, end__gt=ad_hoc_end, charge_end_override=True, override_confirmed=False).exists() or StaffCharge.objects.filter(staff_member=request.user, start__gt=ad_hoc_start, end__lt=ad_hoc_end, charge_end_override=True, override_confirmed=False).exists():
+			if StaffCharge.objects.filter(staff_member=request.user, start__range=(ad_hoc_start, ad_hoc_end), end__gt=ad_hoc_end, charge_end_override=True, override_confirmed=False, active_flag=True).exists() or StaffCharge.objects.filter(staff_member=request.user, end__range=(ad_hoc_start, ad_hoc_end), start__lt=ad_hoc_start, charge_end_override=True, override_confirmed=False, active_flag=True).exists() or StaffCharge.objects.filter(staff_member=request.user, start__lt=ad_hoc_start, end__gt=ad_hoc_end, charge_end_override=True, override_confirmed=False, active_flag=True).exists() or StaffCharge.objects.filter(staff_member=request.user, start__gt=ad_hoc_start, end__lt=ad_hoc_end, charge_end_override=True, override_confirmed=False, active_flag=True).exists():
 				msg = 'You have outstanding staff charges that were overridden and are overlapping with the ad hoc charge you have submitted.  Please resolve any relevant outstanding overridden charges before adding an ad hoc charge during that time period.'
 				raise Exception(msg)
 
-			if StaffCharge.objects.filter(staff_member=request.user, start__range=(ad_hoc_start, ad_hoc_end), end__gt=ad_hoc_end).exists():
-				staff_charges_start = StaffCharge.objects.filter(staff_member=request.user, start__range=(ad_hoc_start, ad_hoc_end), end__gt=ad_hoc_end)
+			if StaffCharge.objects.filter(staff_member=request.user, start__range=(ad_hoc_start, ad_hoc_end), end__gt=ad_hoc_end, active_flag=True).exists():
+				staff_charges_start = StaffCharge.objects.filter(staff_member=request.user, start__range=(ad_hoc_start, ad_hoc_end), end__gt=ad_hoc_end, active_flag=True)
 			else:
 				staff_charges_start = None
 
-			if StaffCharge.objects.filter(staff_member=request.user, end__range=(ad_hoc_start, ad_hoc_end), start__lt=ad_hoc_start).exists():
-				staff_charges_end = StaffCharge.objects.filter(staff_member=request.user, end__range=(ad_hoc_start, ad_hoc_end), start__lt=ad_hoc_start)
+			if StaffCharge.objects.filter(staff_member=request.user, end__range=(ad_hoc_start, ad_hoc_end), start__lt=ad_hoc_start, active_flag=True).exists():
+				staff_charges_end = StaffCharge.objects.filter(staff_member=request.user, end__range=(ad_hoc_start, ad_hoc_end), start__lt=ad_hoc_start, active_flag=True)
 			else:
 				staff_charges_end = None
 
-			if StaffCharge.objects.filter(staff_member=request.user, start__lt=ad_hoc_start, end__gt=ad_hoc_end).exists():
-				staff_charges_middle = StaffCharge.objects.filter(staff_member=request.user, start__lt=ad_hoc_start, end__gt=ad_hoc_end)
+			if StaffCharge.objects.filter(staff_member=request.user, start__lt=ad_hoc_start, end__gt=ad_hoc_end, active_flag=True).exists():
+				staff_charges_middle = StaffCharge.objects.filter(staff_member=request.user, start__lt=ad_hoc_start, end__gt=ad_hoc_end, active_flag=True)
 			else:
 				staff_charges_middle = None
 
-			if StaffCharge.objects.filter(staff_member=request.user, start__gt=ad_hoc_start, end__lt=ad_hoc_end).exists():
-				staff_charges_over = StaffCharge.objects.filter(staff_member=request.user, start__gt=ad_hoc_start, end__lt=ad_hoc_end)
+			if StaffCharge.objects.filter(staff_member=request.user, start__gt=ad_hoc_start, end__lt=ad_hoc_end, active_flag=True).exists():
+				staff_charges_over = StaffCharge.objects.filter(staff_member=request.user, start__gt=ad_hoc_start, end__lt=ad_hoc_end, active_flag=True)
 			else:
 				staff_charges_over = None
 
@@ -372,7 +373,7 @@ def ad_hoc_staff_charge(request):
 			p.full_clean()
 			p.save()
 
-		params['staff_charges'] = StaffCharge.objects.filter(id=charge.id)
+		params['staff_charges'] = StaffCharge.objects.filter(id=charge.id, active_flag=True)
 
 	except Exception as inst:
 		# collect form submission values for display
@@ -408,16 +409,16 @@ def ad_hoc_staff_charge(request):
 		params['users'] = users
 
 		# if the user has any open charges pass the information to the form
-		overridden_charges = StaffCharge.objects.filter(staff_member=request.user, charge_end_override=True, override_confirmed=False)
+		overridden_charges = StaffCharge.objects.filter(staff_member=request.user, charge_end_override=True, override_confirmed=False, active_flag=True)
 
 		if overridden_charges.count() > 0:
 			params['override_charges'] = overridden_charges
-			scp = StaffChargeProject.objects.filter(staff_charge__in=overridden_charges)
+			scp = StaffChargeProject.objects.filter(staff_charge__in=overridden_charges, active_flag=True)
 			if scp.count() > 0:
 				params['scp'] = scp
 
 		# get all staff charges for this user so ad hoc charges can be made with an appropriate reference
-		my_staff_charges = StaffCharge.objects.filter(staff_member=request.user)
+		my_staff_charges = StaffCharge.objects.filter(staff_member=request.user, active_flag=True)
 		if my_staff_charges:
 			params['current_user_charges'] = my_staff_charges
 
@@ -470,16 +471,16 @@ def ad_hoc_staff_charge(request):
 		params = {'users': users}
 
 		# if the user has any open charges pass the information to the form
-		overridden_charges = StaffCharge.objects.filter(staff_member=request.user, charge_end_override=True, override_confirmed=False)
+		overridden_charges = StaffCharge.objects.filter(staff_member=request.user, charge_end_override=True, override_confirmed=False, active_flag=True)
 
 		if overridden_charges.count() > 0:
 			params['override_charges'] = overridden_charges
-			scp = StaffChargeProject.objects.filter(staff_charge__in=overridden_charges)
+			scp = StaffChargeProject.objects.filter(staff_charge__in=overridden_charges, active_flag=True)
 			if scp.count() > 0:
 				params['scp'] = scp
 
 		# get all staff charges for this user so ad hoc charges can be made with an appropriate reference
-		my_staff_charges = StaffCharge.objects.filter(staff_member=request.user)
+		my_staff_charges = StaffCharge.objects.filter(staff_member=request.user, active_flag=True)
 		if my_staff_charges:
 			params['current_user_charges'] = my_staff_charges
 
@@ -561,7 +562,7 @@ def ad_hoc_overlap_resolution(request):
 			scp.save()
 
 		# get the StaffCharges that overlap the ad hoc charge
-		overlaps = StaffCharge.objects.filter(id__in=overlap_ids).order_by("start")
+		overlaps = StaffCharge.objects.filter(id__in=overlap_ids, active_flag=True).order_by("start")
 	
 		# resolve the difference based on the choice to keep existing or new
 		for o in overlaps:
@@ -604,9 +605,9 @@ def ad_hoc_overlap_resolution(request):
 					c2 = sc_clone(request, ad_hoc_charge, o.end, ad_hoc_charge.end)
 
 					replaced = '|' + str(ad_hoc_charge.id) + '|'
-					if StaffCharge.objects.filter(ad_hoc_replaced=True, ad_hoc_related__contains=replaced, start__range=(ad_hoc_charge.start, ad_hoc_charge.end)).count() > 0:
+					if StaffCharge.objects.filter(ad_hoc_replaced=True, ad_hoc_related__contains=replaced, start__range=(ad_hoc_charge.start, ad_hoc_charge.end), active_flag=True).count() > 0:
 						# update necessary records to new replaced ids - should be c1 since the processing is happening from earliest to latest
-						replacements = StaffCharge.objects.filter(ad_hoc_replaced=True, ad_hoc_related__contains=replaced, start__range=(ad_hoc_charge.start, ad_hoc_charge.end))
+						replacements = StaffCharge.objects.filter(ad_hoc_replaced=True, ad_hoc_related__contains=replaced, start__range=(ad_hoc_charge.start, ad_hoc_charge.end), active_flag=True)
 						for r in replacements:
 							to_replace = r.ad_hoc_related
 							new_replace = '|' + str(c1.id) + '|'
@@ -656,7 +657,7 @@ def ad_hoc_overlap_resolution(request):
 	
 		sc_changed.append(ad_hoc_charge.id)
 	
-		sc_output = StaffCharge.objects.filter(id__in=sc_changed)
+		sc_output = StaffCharge.objects.filter(id__in=sc_changed, active_flag=True)
 	
 		params = {
 			'output': None,
@@ -693,7 +694,7 @@ def sc_clone(request, charge_to_clone, new_charge_start, new_charge_end):
 	new_charge_id = int(new_charge.id)
 	nc = StaffCharge.objects.get(id=new_charge_id)
 
-	scp = StaffChargeProject.objects.filter(staff_charge=charge_to_clone)
+	scp = StaffChargeProject.objects.filter(staff_charge=charge_to_clone, active_flag=True)
 
 	if scp.count() > 0:
 		for s in scp:
@@ -724,7 +725,7 @@ def end_staff_charge(request, modal_flag):
 
 	try:
 		# close out the project entries for this run
-		scp = StaffChargeProject.objects.filter(staff_charge=charge)
+		scp = StaffChargeProject.objects.filter(staff_charge=charge, active_flag=True)
 
 		if scp.count() == 1:
 			# set project_percent to 100
@@ -736,14 +737,14 @@ def end_staff_charge(request, modal_flag):
 			charge.updated = timezone.now()
 			charge.save()
 
-			if AreaAccessRecord.objects.filter(staff_charge=charge).exists():
+			if AreaAccessRecord.objects.filter(staff_charge=charge, active_flag=True).exists():
 				aar = AreaAccessRecord.objects.get(staff_charge=charge)
 				if aar.end is None:
 					aar.end = timezone.now()
 					aar.updated = timezone.now()
 					aar.save()
 
-				aarp = AreaAccessRecordProject.objects.filter(area_access_record=aar)
+				aarp = AreaAccessRecordProject.objects.filter(area_access_record=aar, active_flag=True)
 
 				if aarp is not None:
 					for a in aarp:
@@ -791,7 +792,7 @@ def staff_charge_projects_save(request, modal_flag):
 				attribute, separator, scpid = key.partition("__")
 				scpid = int(scpid)
 				if not charge.id:
-					s = StaffChargeProject.objects.filter(id=scpid)
+					s = StaffChargeProject.objects.filter(id=scpid, active_flag=True)
 					charge = s[0].staff_charge
 
 				if attribute == "project_percent":
@@ -840,12 +841,12 @@ def staff_charge_projects_save(request, modal_flag):
 		# create placeholder charge variable so processing with existing charge can continue further on
 		check_charge = charge
 
-		while StaffCharge.objects.filter(related_override_charge=check_charge).count() > 0:
-			old_charge = StaffCharge.objects.get(related_override_charge=check_charge)
-			old_scp = StaffChargeProject.objects.filter(staff_charge=old_charge)
+		while StaffCharge.objects.filter(related_override_charge=check_charge, active_flag=True).count() > 0:
+			old_charge = StaffCharge.objects.get(related_override_charge=check_charge, active_flag=True)
+			old_scp = StaffChargeProject.objects.filter(staff_charge=old_charge, active_flag=True)
 
 			for s in old_scp:
-				new_scp = StaffChargeProject.objects.get(staff_charge=check_charge, project=s.project, customer = s.customer)
+				new_scp = StaffChargeProject.objects.get(staff_charge=check_charge, project=s.project, customer = s.customer, active_flag=True)
 				s.project_percent=new_scp.project_percent
 				s.updated = timezone.now()
 				s.save()
@@ -853,17 +854,17 @@ def staff_charge_projects_save(request, modal_flag):
 			check_charge = old_charge
 
 		# check for area access records related to this staff charge and assign percentages
-		if AreaAccessRecord.objects.filter(staff_charge=charge).exists():
-			aar = AreaAccessRecord.objects.filter(staff_charge=charge)
+		if AreaAccessRecord.objects.filter(staff_charge=charge, active_flag=True).exists():
+			aar = AreaAccessRecord.objects.filter(staff_charge=charge, active_flag=True)
 			for area_access in aar:
 				if area_access.end is None:
 					area_access.end = charge.end
 					area_access.save()
 
-				aarp = AreaAccessRecordProject.objects.filter(area_access_record=area_access)
+				aarp = AreaAccessRecordProject.objects.filter(area_access_record=area_access, active_flag=True)
 
 				for a in aarp:
-					scp = StaffChargeProject.objects.get(staff_charge=charge, project=a.project, customer=a.customer)
+					scp = StaffChargeProject.objects.get(staff_charge=charge, project=a.project, customer=a.customer, active_flag=True)
 					if scp:
 						a.project_percent = scp.project_percent
 						a.updated = timezone.now()
@@ -902,7 +903,7 @@ def update_related_charges(request, new_charge=None, old_charge=None):
 		old_charge.updated = timezone.now()
 		old_charge.save()
 
-		old_scp = StaffChargeProject.objects.filter(staff_charge=old_charge)
+		old_scp = StaffChargeProject.objects.filter(staff_charge=old_charge, active_flag=True)
 		
 		for s in old_scp:
 			new_scp = StaffChargeProject.objects.get(staff_charge=new_charge, project=s.project, customer = s.customer)
@@ -910,8 +911,8 @@ def update_related_charges(request, new_charge=None, old_charge=None):
 			s.updated = timezone.now()
 			s.save()
 
-		if StaffCharge.objects.filter(related_override_charge=old_charge).exists():
-			related_charge = StaffCharge.objects.get(related_override_charge=old_charge)
+		if StaffCharge.objects.filter(related_override_charge=old_charge, active_flag=True).exists():
+			related_charge = StaffCharge.objects.get(related_override_charge=old_charge, active_flag=True)
 			return update_related_charges(request, old_charge, related_charge)
 
 		else:
@@ -946,7 +947,7 @@ def continue_staff_charge(request, staff_charge_id):
 		staff_charge.save()
 
 		# copy the StaffChargeProject records
-		scp = StaffChargeProject.objects.filter(staff_charge=staff_charge)
+		scp = StaffChargeProject.objects.filter(staff_charge=staff_charge, active_flag=True)
 		
 		if scp.count() > 0:
 			for s in scp:
@@ -970,7 +971,7 @@ def begin_staff_area_charge(request):
 	charge = request.user.get_staff_charge()
 	if not charge:
 		return HttpResponseBadRequest('You do not have a staff charge in progress, so you cannot begin an area access charge.')
-	if AreaAccessRecord.objects.filter(staff_charge=charge, end=None).count() > 0:
+	if AreaAccessRecord.objects.filter(staff_charge=charge, end=None, active_flag=True).count() > 0:
 		return HttpResponseBadRequest('You cannot create an area access charge when one is already in progress.')
 	try:
 		area = Area.objects.get(id=request.POST['area'])
@@ -983,7 +984,7 @@ def begin_staff_area_charge(request):
 	area_access.updated = timezone.now()
 	area_access.save()
 
-	scp = StaffChargeProject.objects.filter(staff_charge=charge)
+	scp = StaffChargeProject.objects.filter(staff_charge=charge, active_flag=True)
 
 	for s in scp:
 		aarp = AreaAccessRecordProject()

@@ -179,7 +179,7 @@ def reservation_event_feed(request, start, end):
 
 
 def usage_event_feed(request, start, end):
-	usage_events = UsageEvent.objects
+	usage_events = UsageEvent.objects.filter(active_flag=True)
 	# Exclude events for which the following is true:
 	# The event starts and ends before the time-window, and...
 	# The event starts and ends after the time-window.
@@ -197,7 +197,7 @@ def usage_event_feed(request, start, end):
 	if personal_schedule:
 		usage_events = usage_events.filter(user=request.user)
 		# Display area access along side tool usage when 'personal schedule' is selected.
-		area_access_events = AreaAccessRecord.objects.filter(customer__id=request.user.id)
+		area_access_events = AreaAccessRecord.objects.filter(customer__id=request.user.id, active_flag=True)
 		area_access_events = area_access_events.exclude(start__lt=start, end__lt=start)
 		area_access_events = area_access_events.exclude(start__gt=end, end__gt=end)
 
@@ -211,7 +211,7 @@ def usage_event_feed(request, start, end):
 		missed_reservations = missed_reservations.exclude(start__gt=end, end__gt=end)
 
 	if usage_events is not None:
-		usage_event_projects = UsageEventProject.objects.filter(usage_event__in=usage_events)
+		usage_event_projects = UsageEventProject.objects.filter(usage_event__in=usage_events, active_flag=True)
 	else:
 		usage_event_projects = None
 
@@ -236,12 +236,12 @@ def specific_user_feed(request, user, start, end):
 	# Exclude events for which the following is true:
 	# The event starts and ends before the time-window, and...
 	# The event starts and ends after the time-window.
-	usage_events = UsageEvent.objects.filter(user=user)
+	usage_events = UsageEvent.objects.filter(user=user, active_flag=True)
 	usage_events = usage_events.exclude(start__lt=start, end__lt=start)
 	usage_events = usage_events.exclude(start__gt=end, end__gt=end)
 
 	# Find all area access events for a user.
-	area_access_events = AreaAccessRecord.objects.filter(customer=user)
+	area_access_events = AreaAccessRecord.objects.filter(customer=user, active_flag=True)
 	area_access_events = area_access_events.exclude(start__lt=start, end__lt=start)
 	area_access_events = area_access_events.exclude(start__gt=end, end__gt=end)
 
@@ -782,8 +782,8 @@ def email_reservation_reminders(request):
 @require_GET
 def email_usage_reminders(request):
 	projects_to_exclude = request.GET.getlist("projects_to_exclude[]")
-	busy_users = AreaAccessRecord.objects.filter(end=None, staff_charge=None).exclude(project__id__in=projects_to_exclude)
-	busy_tools = UsageEvent.objects.filter(end=None).exclude(project__id__in=projects_to_exclude)
+	busy_users = AreaAccessRecord.objects.filter(end=None, staff_charge=None, active_flag=True).exclude(project__id__in=projects_to_exclude)
+	busy_tools = UsageEvent.objects.filter(end=None, active_flag=True).exclude(project__id__in=projects_to_exclude)
 
 	# Make lists of all the things a user is logged in to.
 	# We don't want to send 3 separate emails if a user is logged into three things.
@@ -818,7 +818,7 @@ def email_usage_reminders(request):
 
 	message = get_media_file_contents('staff_charge_reminder_email.html')
 	if message:
-		busy_staff = StaffCharge.objects.filter(end=None)
+		busy_staff = StaffCharge.objects.filter(end=None, active_flag=True)
 		for staff_charge in busy_staff:
 			subject = "Active staff charge since " + format_datetime(staff_charge.start)
 			rendered_message = Template(message).render(Context({'staff_charge': staff_charge}))
@@ -886,7 +886,7 @@ def cancel_unused_reservations(request):
 			if r.user.is_staff:
 				continue
 			# If there was no tool enable or disable event since the threshold timestamp then we assume the reservation has been missed.
-			if not (UsageEvent.objects.filter(tool=tool, start__gte=threshold).exists() or UsageEvent.objects.filter(tool=tool, end__gte=threshold).exists()):
+			if not (UsageEvent.objects.filter(tool=tool, start__gte=threshold, active_flag=True).exists() or UsageEvent.objects.filter(tool=tool, end__gte=threshold, active_flag=True).exists()):
 				# Mark the reservation as missed and notify the user & laboratory staff.
 				r.missed = True
 				r.updated = timezone.now()

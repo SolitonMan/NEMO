@@ -28,8 +28,6 @@ def get_dummy_projects():
 @login_required
 @require_GET
 def remote_work(request):
-	if settings.DEBUG == False:
-		return HttpResponseRedirect(reverse('landing'))
 	first_of_the_month, last_of_the_month = get_month_timeframe(request.GET.get('date'))
 	operator = request.GET.get('operator')
 	if operator:
@@ -39,23 +37,24 @@ def remote_work(request):
 			operator = get_object_or_404(User, id=operator)
 	else:
 		operator = request.user
-	usage_events = UsageEvent.objects.filter(start__gte=first_of_the_month, start__lte=last_of_the_month, active_flag=True).exclude(end=None)
-	staff_charges = StaffCharge.objects.filter(start__gte=first_of_the_month, start__lte=last_of_the_month, active_flag=True).exclude(end=None)
-	area_access_records = AreaAccessRecord.objects.filter(start__gte=first_of_the_month, start__lte=last_of_the_month, active_flag=True).exclude(end=None)
+	usage_events = UsageEvent.objects.filter(end__gte=first_of_the_month, end__lte=last_of_the_month, active_flag=True).exclude(end=None)
+	staff_charges = StaffCharge.objects.filter(end__gte=first_of_the_month, end__lte=last_of_the_month, active_flag=True).exclude(end=None)
+	area_access_records = AreaAccessRecord.objects.filter(end__gte=first_of_the_month, end__lte=last_of_the_month, active_flag=True).exclude(end=None)
 	consumable_withdraws = ConsumableWithdraw.objects.filter(date__gte=first_of_the_month, date__lte=last_of_the_month, active_flag=True)
-	if operator and operator == request.user:
+
+	if request.user.groups.filter(name="Core Admin").exists():
+		usage_events = usage_events.filter(tool__core_id__in=request.user.core_ids.all())
+		staff_charges = staff_charges.filter(staff_member__core_ids__in=request.user.core_ids.all())
+		area_access_records = area_access_records.filter(area__core_id__in=request.user.core_ids.all())
+		consumable_withdraws = consumable_withdraws.filter(consumable__core_id__in=request.user.core_ids.all())
+
+	if operator:
 		usage_events = usage_events.exclude(~Q(operator_id=operator.id)).exclude(projects__in=get_dummy_projects()).exclude(project__in=get_dummy_projects())
 		staff_charges = staff_charges.exclude(~Q(staff_member_id=operator.id)).exclude(projects__in=get_dummy_projects()).exclude(project__in=get_dummy_projects())
 		area_access_records = area_access_records.exclude(~Q(staff_charge__staff_member_id=operator.id)).exclude(projects__in=get_dummy_projects()).exclude(project__in=get_dummy_projects())
 		consumable_withdraws = consumable_withdraws.exclude(~Q(merchant_id=operator.id)).exclude(project__in=get_dummy_projects())
 
 	show_buttons = operator == request.user or request.user.is_superuser or request.user.groups.filter(name="Core Admin").exists()
-
-	if (operator is None or operator != request.user) and request.user.groups.filter(name="Core Admin").exists():
-		usage_events = usage_events.filter(tool__core_id__in=request.user.core_ids.all()).filter(Q(projects__in=get_dummy_projects()) | Q(project__in=get_dummy_projects()))
-		staff_charges = staff_charges.filter(staff_member__core_ids__in=request.user.core_ids.all()).filter(Q(projects__in=get_dummy_projects()) | Q(project__in=get_dummy_projects()))
-		area_access_records = area_access_records.filter(area__core_id__in=request.user.core_ids.all()).filter(Q(projects__in=get_dummy_projects()) | Q(project__in=get_dummy_projects()))
-		consumable_withdraws = consumable_withdraws.filter(consumable__core_id__in=request.user.core_ids.all(), project__in=get_dummy_projects())
 
 
 	uep = UsageEventProject.objects.filter(usage_event__in=usage_events, active_flag=True)
@@ -260,6 +259,12 @@ def save_contest(request):
 		staff_charge_id = request.POST.get("staff_charge_id")
 		staff_charge = get_object_or_404(StaffCharge, id=staff_charge_id)
 		staff_charge.contested = True
+
+		# "resolve" any previous contests for this item
+		for c in staff_charge.contest_record.all():
+			c.contest_resolution = True
+			c.save()
+
 		description = request.POST.get("contest_reason")
 		description += " DESCRIPTION:" + request.POST.get("contest_description")
 		# create ContestTransaction record
@@ -317,6 +322,12 @@ def save_contest(request):
 		usage_event_id = request.POST.get("usage_event_id")
 		usage_event = get_object_or_404(UsageEvent, id=usage_event_id)
 		usage_event.contested = True
+
+		# "resolve" any previous contests
+		for c in usage_event.contest_record.all():
+			c.contest_resolution = True
+			c.save()
+
 		description = request.POST.get("contest_reason")
 		description += " DESCRIPTION:" + request.POST.get("contest_description")
 		# create ContestTransaction record
@@ -374,6 +385,12 @@ def save_contest(request):
 		area_access_record_id = request.POST.get("area_access_record_id")
 		area_access_record = get_object_or_404(AreaAccessRecord, id=area_access_record_id)
 		area_access_record.contested = True
+
+		# "resolve" any previous contests
+		for c in area_access_record.contest_record.all():
+			c.contest_resolution = True
+			c.save()
+
 		description = request.POST.get("contest_reason")
 		description += " DESCRIPTION:" + request.POST.get("contest_description")
 		# create ContestTransaction record
@@ -431,6 +448,12 @@ def save_contest(request):
 		consumable_withdraw_id = request.POST.get("consumable_withdraw_id")
 		consumable_withdraw = get_object_or_404(ConsumableWithdraw, id=consumable_withdraw_id)
 		consumable_withdraw.contested = True
+
+		# "resolve" any outstanding contests
+		for c in consumable_withdraw.contest_record.all():
+			c.contest_resolution = True
+			c.save()
+
 		description = request.POST.get("contest_reason")
 		description += " DESCRIPTION:" + request.POST.get("contest_description")
 		# create ContestTransaction record

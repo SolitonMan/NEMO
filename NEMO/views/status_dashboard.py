@@ -19,7 +19,7 @@ def status_dashboard(request):
 	if interest is None:
 		dictionary = {
 			'tool_summary': create_tool_summary(),
-			'nanofab_occupants': AreaAccessRecord.objects.filter(end=None, staff_charge=None).prefetch_related('customer', 'project', 'area'),
+			'nanofab_occupants': AreaAccessRecord.objects.filter(end=None, staff_charge=None, active_flag=True).prefetch_related('customer', 'project', 'area'),
 			'user_current_logins': request.user.in_area()
 		}
 		if request.user.is_superuser:
@@ -42,7 +42,7 @@ def status_dashboard(request):
 		return render(request, 'status_dashboard/tools.html', dictionary)
 	elif interest == "occupancy":
 		dictionary = {
-			'nanofab_occupants': AreaAccessRecord.objects.filter(end=None, staff_charge=None).prefetch_related('customer', 'project', 'area'),
+			'nanofab_occupants': AreaAccessRecord.objects.filter(end=None, staff_charge=None, active_flag=True).prefetch_related('customer', 'project', 'area'),
 		}
 		return render(request, 'status_dashboard/occupancy.html', dictionary)
 
@@ -51,7 +51,7 @@ def create_tool_summary():
 	tools = Tool.objects.filter(visible=True)
 	tasks = Task.objects.filter(cancelled=False, resolved=False, tool__visible=True).prefetch_related('tool')
 	unavailable_resources = Resource.objects.filter(available=False).prefetch_related('fully_dependent_tools', 'partially_dependent_tools')
-	usage_events = UsageEvent.objects.filter(end=None, tool__visible=True).prefetch_related('operator', 'user', 'tool')
+	usage_events = UsageEvent.objects.filter(end=None, tool__visible=True, active_flag=True).prefetch_related('operator', 'user', 'tool')
 	scheduled_outages = ScheduledOutage.objects.filter(start__lte=timezone.now(), end__gt=timezone.now())
 	tool_summary = merge(tools, tasks, unavailable_resources, usage_events, scheduled_outages)
 	tool_summary = list(tool_summary.values())
@@ -61,7 +61,7 @@ def create_tool_summary():
 
 def merge(tools, tasks, unavailable_resources, usage_events, scheduled_outages):
 	result = {}
-	tools_with_delayed_logoff_in_effect = [x.tool.id for x in UsageEvent.objects.filter(end__gt=timezone.now())]
+	tools_with_delayed_logoff_in_effect = [x.tool.id for x in UsageEvent.objects.filter(end__gt=timezone.now(), active_flag=True)]
 	for tool in tools:
 		result[tool.id] = {
 			'name': tool.name,
@@ -113,6 +113,6 @@ def occupancy(request):
 		return HttpResponse()
 	dictionary = {
 		'area': area,
-		'occupants': AreaAccessRecord.objects.filter(area__name=area, end=None, staff_charge=None).prefetch_related('customer'),
+		'occupants': AreaAccessRecord.objects.filter(area__name=area, end=None, staff_charge=None, active_flag=True).prefetch_related('customer'),
 	}
 	return render(request, 'occupancy.html', dictionary)

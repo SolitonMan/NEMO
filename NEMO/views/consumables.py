@@ -15,7 +15,7 @@ def consumables(request):
 
 	dictionary = {
 		'users': User.objects.filter(is_active=True),
-		'recent': ConsumableWithdraw.objects.filter(merchant=request.user).order_by('-date')[:10]
+		'recent': ConsumableWithdraw.objects.filter(merchant=request.user, active_flag=True).order_by('-date')[:10]
 	}
 
 	if request.user.is_superuser:

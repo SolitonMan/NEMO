@@ -112,7 +112,7 @@ def tool_control(request, tool_id=None, qualified_only=None, core_only=None):
 	if request.user.charging_staff_time():
 		# retrieve staff charges to provide a current listing of customers
 		staff_charge = request.user.get_staff_charge()
-		staff_charge_projects = StaffChargeProject.objects.filter(staff_charge=staff_charge.id)
+		staff_charge_projects = StaffChargeProject.objects.filter(staff_charge=staff_charge.id, active_flag=True)
 
 		scp_out = "["
 
@@ -257,34 +257,6 @@ def determine_tool_status(tool):
 	tool.save()
 
 
-"""
-commenting out these functions for now to try importing from another view
-def month_is_locked(check_date):
-	month = int(check_date.month)
-	year = int(check_date.year)
-	return LockBilling.objects.filter(is_locked=True, billing_month=month, billing_year=year).exists()
-
-def month_is_closed(check_date):
-	month = int(check_date.month)
-	year = int(check_date.year)
-	return LockBilling.objects.filter(is_closed=True, billing_month=month, billing_year=year).exists()
-
-def get_billing_date_range():
-	max_year = int(LockBilling.objects.filter(is_locked=True).aggregate(Max('billing_year'))['billing_year__max'])
-	max_month = int(LockBilling.objects.filter(billing_year=max_year, is_locked=True).aggregate(Max('billing_month'))['billing_month__max'])
-
-	start = str(max_month+1) + '/1/' + str(max_year)
-	end = str(datetime.today().strftime('%m/%d/%Y'))
-
-	dictionary = {
-		'start': start,
-		'end': end,
-	}
-
-	return dictionary
-"""
-
-
 @login_required
 @require_POST
 def enable_tool(request, tool_id, user_id, project_id, staff_charge, billing_mode):
@@ -351,9 +323,9 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge, billing_mod
 		scp.updated = timezone.now()
 		scp.save()
 
-	if tool.requires_area_access and AreaAccessRecord.objects.filter(area=tool.requires_area_access,customer=operator,end=None).count() == 0:
-		if AreaAccessRecord.objects.filter(customer=operator,end=None).count() > 0:
-			areas = AreaAccessRecord.objects.filter(customer=operator,end=None)
+	if tool.requires_area_access and AreaAccessRecord.objects.filter(area=tool.requires_area_access,customer=operator,end=None, active_flag=True).count() == 0:
+		if AreaAccessRecord.objects.filter(customer=operator,end=None, active_flag=True).count() > 0:
+			areas = AreaAccessRecord.objects.filter(customer=operator,end=None, active_flag=True)
 			for a in areas:
 				a.end = timezone.now()
 				a.save()
@@ -528,13 +500,13 @@ def enable_tool_multi(request):
 					return HttpResponseBadRequest('Please choose a project for charges made during this run.')
 
 	for p in project_charges.values():
-		if not StaffChargeProject.objects.filter(staff_charge=p.staff_charge, customer=p.customer, project=p.project).exists():
+		if not StaffChargeProject.objects.filter(staff_charge=p.staff_charge, customer=p.customer, project=p.project, active_flag=True).exists():
 			p.full_clean(exclude='project_percent')
 			p.save()
 		 
-	if tool.requires_area_access and AreaAccessRecord.objects.filter(area=tool.requires_area_access,customer=operator,end=None).count() == 0:
-		if AreaAccessRecord.objects.filter(customer=operator,end=None).count() > 0:
-			areas = AreaAccessRecord.objects.filter(customer=operator,end=None)
+	if tool.requires_area_access and AreaAccessRecord.objects.filter(area=tool.requires_area_access,customer=operator,end=None, active_flag=True).count() == 0:
+		if AreaAccessRecord.objects.filter(customer=operator,end=None, active_flag=True).count() > 0:
+			areas = AreaAccessRecord.objects.filter(customer=operator,end=None, active_flag=True)
 			for a in areas:
 				a.end = timezone.now()
 				a.save()
@@ -551,7 +523,7 @@ def enable_tool_multi(request):
 		aar.save()
 
 		if new_staff_charge:
-			scp = StaffChargeProject.objects.filter(staff_charge=new_staff_charge)
+			scp = StaffChargeProject.objects.filter(staff_charge=new_staff_charge, active_flag=True)
 
 			for s in scp:
 				aarp = AreaAccessRecordProject()
@@ -630,7 +602,7 @@ def disable_tool(request, tool_id):
 		# multi user event possibility, check
 		current_usage_event.updated = timezone.now()
 		current_usage_event.save()
-		if UsageEventProject.objects.filter(usage_event=current_usage_event).exists():
+		if UsageEventProject.objects.filter(usage_event=current_usage_event, active_flag=True).exists():
 			return disable_tool_multi(request, tool_id, current_usage_event, dynamic_form)
 
 
@@ -692,11 +664,11 @@ def disable_tool(request, tool_id):
 @staff_member_required(login_url=None)
 def disable_tool_multi(request, tool_id, usage_event, dynamic_form):
 	# process request for multiple users and staff charges
-	if not UsageEventProject.objects.filter(usage_event=usage_event).exists():
+	if not UsageEventProject.objects.filter(usage_event=usage_event, active_flag=True).exists():
 		tool = Tool.objects.get(id=tool_id)
 		return HttpResponseBadRequest("Unable to find projects for {0} being run by {1}".format(str(tool), str(usage_event.operator)))
 
-	uep = UsageEventProject.objects.filter(usage_event=usage_event)
+	uep = UsageEventProject.objects.filter(usage_event=usage_event, active_flag=True)
 	downtime = timedelta(minutes=quiet_int(request.POST.get('downtime')))
 	tool = Tool.objects.get(id=tool_id)
 
@@ -811,7 +783,7 @@ def usage_event_projects_save(request):
 				attribute, separator, uepid = key.partition("__")
 				uepid = int(uepid)
 				if not event.id:
-					u = UsageEventProject.objects.filter(id=uepid)
+					u = UsageEventProject.objects.filter(id=uepid, active_flag=True)
 					event = u[0].usage_event
 					tool = event.tool
 
@@ -821,7 +793,7 @@ def usage_event_projects_save(request):
 						event.end=null
 						event.updated = timezone.now()
 						event.save()
-						ConsumableWithdraw.objects.filter(usage_event=event).delete()
+						ConsumableWithdraw.objects.filter(usage_event=event, active_flag=True).delete()
 						raise Exception()
 					else:
 						prc = prc + float(value)
@@ -831,7 +803,7 @@ def usage_event_projects_save(request):
 			event.end=null
 			event.updated = timezone.now()
 			event.save()
-			ConsumableWithdraw.objects.filter(usage_event=event).delete()
+			ConsumableWithdraw.objects.filter(usage_event=event, active_flag=True).delete()
 			raise Exception()
 
 		dynamic_form = DynamicForm(tool.post_usage_questions)
@@ -1003,11 +975,11 @@ def save_usage_event(request):
 		else:
 			operator = request.user
 
-		if UsageEvent.objects.filter(tool=tool, start__range=(ad_hoc_start, ad_hoc_end)).exists() or UsageEvent.objects.filter(tool=tool, end__range=(ad_hoc_start, ad_hoc_end)).exists() or UsageEvent.objects.filter(tool=tool, start__lte=ad_hoc_start, end__gte=ad_hoc_end).exists():
+		if UsageEvent.objects.filter(tool=tool, start__range=(ad_hoc_start, ad_hoc_end), active_flag=True).exists() or UsageEvent.objects.filter(tool=tool, end__range=(ad_hoc_start, ad_hoc_end), active_flag=True).exists() or UsageEvent.objects.filter(tool=tool, start__lte=ad_hoc_start, end__gte=ad_hoc_end, active_flag=True).exists():
 			msg = 'A usage event already exists that overlaps start = ' + str(ad_hoc_start) + ' and end = ' + str(ad_hoc_end) + ' for the ' + tool.name + '.  Please review your entries and either select new start and/or end times, or else speak with an administrator to help resolve the conflict.'
-			error_params['usage_start_conflict'] = UsageEvent.objects.filter(tool=tool, start__range=(ad_hoc_start, ad_hoc_end))
-			error_params['usage_end_conflict'] = UsageEvent.objects.filter(tool=tool, end__range=(ad_hoc_start, ad_hoc_end))
-			error_params['usage_whole_conflict'] = UsageEvent.objects.filter(tool=tool, start__lte=ad_hoc_start, end__gte=ad_hoc_end)
+			error_params['usage_start_conflict'] = UsageEvent.objects.filter(tool=tool, start__range=(ad_hoc_start, ad_hoc_end), active_flag=True)
+			error_params['usage_end_conflict'] = UsageEvent.objects.filter(tool=tool, end__range=(ad_hoc_start, ad_hoc_end), active_flag=True)
+			error_params['usage_whole_conflict'] = UsageEvent.objects.filter(tool=tool, start__lte=ad_hoc_start, end__gte=ad_hoc_end, active_flag=True)
 			raise Exception(msg)
 
 		new_usage_event = UsageEvent()

@@ -20,7 +20,7 @@ def landing(request):
 
 	delete_expired_alerts()
 	delete_expired_notifications()
-	usage_events = UsageEvent.objects.filter(operator=request.user.id, end=None).prefetch_related('tool', 'project')
+	usage_events = UsageEvent.objects.filter(operator=request.user.id, end=None, active_flag=True).prefetch_related('tool', 'project')
 
 	aar = request.user.area_access_record()
 	if aar is not None:
@@ -33,20 +33,20 @@ def landing(request):
 
 	contested_items = False
 	if request.user.is_superuser:
-		if UsageEvent.objects.filter(contested=True, validated=False, contest_record__contest_resolved=False).exists() or StaffCharge.objects.filter(contested=True, validated=False, contest_record__contest_resolved=False).exists() or AreaAccessRecord.objects.filter(contested=True, validated=False, contest_record__contest_resolved=False).exists() or ConsumableWithdraw.objects.filter(contested=True, validated=False, contest_record__contest_resolved=False).exists():
+		if UsageEvent.objects.filter(contested=True, validated=False, contest_record__contest_resolved=False, active_flag=True).exists() or StaffCharge.objects.filter(contested=True, validated=False, contest_record__contest_resolved=False, active_flag=True).exists() or AreaAccessRecord.objects.filter(contested=True, validated=False, contest_record__contest_resolved=False, active_flag=True).exists() or ConsumableWithdraw.objects.filter(contested=True, validated=False, contest_record__contest_resolved=False, active_flag=True).exists():
 			contested_items = True
 	else:
 		if request.user.is_staff:
 			group_name="Core Admin"
 			if request.user.groups.filter(name=group_name).exists():
-				if StaffCharge.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, staff_member__core_ids__in=request.user.core_ids.all()).exclude(staff_member=request.user).exists() or UsageEvent.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, operator__core_ids__in=request.user.core_ids.all()).exclude(operator=request.user).exists() or AreaAccessRecord.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, staff_charge__staff_member__core_ids__in=request.user.core_ids.all()).exclude(staff_charge__staff_member=request.user).exists() or ConsumableWithdraw.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, consumable__core_id__in=request.user.core_ids.all()).exclude(customer=request.user).exists():
+				if StaffCharge.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, staff_member__core_ids__in=request.user.core_ids.all(), active_flag=True).exclude(staff_member=request.user).exists() or UsageEvent.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, operator__core_ids__in=request.user.core_ids.all(), active_flag=True).exclude(operator=request.user).exists() or AreaAccessRecord.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, staff_charge__staff_member__core_ids__in=request.user.core_ids.all(), active_flag=True).exclude(staff_charge__staff_member=request.user).exists() or ConsumableWithdraw.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, consumable__core_id__in=request.user.core_ids.all(), active_flag=True).exclude(customer=request.user).exists():
 					contested_items = True
 			else:
-				if UsageEvent.objects.filter(Q(validated=False, contested=True, contest_record__contest_resolved=False), Q(tool__primary_owner=request.user) | Q(tool__backup_owners__in=[request.user])).exclude(operator=request.user).exists() or ConsumableWithdraw.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, consumable__core_id__in=request.user.core_ids.all()).exclude(customer=request.user).exists():
+				if UsageEvent.objects.filter(Q(validated=False, contested=True, contest_record__contest_resolved=False, active_flag=True), Q(tool__primary_owner=request.user) | Q(tool__backup_owners__in=[request.user])).exclude(operator=request.user).exists() or ConsumableWithdraw.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, consumable__core_id__in=request.user.core_ids.all(), active_flag=True).exclude(customer=request.user).exists():
 					contested_items = True
 
 
-	if UsageEvent.objects.filter(operator=request.user, validated=False, contested=False).exclude(projects__in=get_dummy_projects()).exists() or StaffCharge.objects.filter(staff_member=request.user, validated=False, contested=False).exclude(projects__in=get_dummy_projects()).exists():
+	if UsageEvent.objects.filter(operator=request.user, validated=False, contested=False, active_flag=True).exclude(projects__in=get_dummy_projects()).exists() or StaffCharge.objects.filter(staff_member=request.user, validated=False, contested=False, active_flag=True).exclude(projects__in=get_dummy_projects()).exists():
 		validation_needed = True
 	else:
 		validation_needed = False

@@ -63,7 +63,7 @@
 		<tbody>
 		{% for c in staff_charges %}
 			{% if c.contest_record is not None %}
-			{% with c.contest_record.all.last as cr %}
+			{% with c.contest_record.all.first as cr %}
 			<tr {% if c.contested is True and cr.contest_resolved is True and cr.contest_resolution is False and c.validated is False %}class="danger-highlight"{% endif %} {% if c.contested is True and cr.contest_resolved is False and c.validated is False %}class="warning-highlight"{% endif %} {% if c.validated %}class="success-highlight"{% endif %} id="staff_charge_row_{{ forloop.counter }}">
 				<td>{{ c.id }}</td>
 				<td>{{ c.staff_member }}</td>
@@ -171,7 +171,7 @@
 		<tbody>
 		{% for u in usage %}
 			{% if u.contest_record is not None %}
-			{% with u.contest_record.all.last as cr %}
+			{% with u.contest_record.all.first as cr %}
 			<tr {% if u.contested is True and cr.contest_resolved is True and cr.contest_resolution is False and u.validated is False %}class="danger-highlight"{% endif %} {% if u.contested is True and cr.contest_resolved is False %}class="warning-highlight"{% endif %} {% if u.validated %}class="success-highlight"{% endif %} id="usage_event_row_{{ forloop.counter }}">
 				<td>{{ u.id }}</td>
 				<td>{{ u.operator }}</td>
@@ -292,7 +292,7 @@
 		<tbody>
 		{% for w in consumable_withdraws %}
 			{% if w.contest_record is not None %}
-			{% with w.contest_record.all.last as cr %}
+			{% with w.contest_record.all.first as cr %}
 			<tr {% if w.contested is True and cr.contest_resolved is True and cr.contest_resolution is False and w.validated is False %}class="danger-highlight"{% endif %} {% if w.contested is True and cr.contest_resolved is False %}class="warning-highlight"{% endif %} {% if w.validated %}class="success-highlight"{% endif %} id="consumable_withdraw_row_{{ forloop.counter }}">
 				<td>{{ w.id }}</td>
 				<td>{{ w.merchant }}</td>
@@ -379,7 +379,7 @@
 		<tbody>
 		{% for a in area_access_records %}
 			{% if a.contest_record is not None %}
-			{% with a.contest_record.all.last as cr %}
+			{% with a.contest_record.all.first as cr %}
 		<tr {% if a.contested is True and cr.contest_resolved is True and cr.contest_resolution is False and a.validated is False %}class="danger-highlight"{% endif %} {% if a.contested is True and cr.contest_resolved is False %}class="warning-highlight"{% endif %} {% if a.validated %}class="success-highlight"{% endif %} id="area_access_record_row_{{ forloop.counter }}">
 			<td>{{ a.id }}</td>
 			<td>{{ a.staff_charge.staff_member }}</td>

@@ -44,7 +44,7 @@ def check_policy_to_enable_tool(tool, operator, user, project, staff_charge, req
 
 	# The tool operator may not activate tools in a particular area unless they are logged in to the area.
 	# If they have access to the area, log them in automatically and let them know the log in to the area has occurrred
-	if tool.requires_area_access and AreaAccessRecord.objects.filter(area=tool.requires_area_access,customer=operator,end=None).count() == 0:
+	if tool.requires_area_access and AreaAccessRecord.objects.filter(area=tool.requires_area_access,customer=operator,end=None, active_flag=True).count() == 0:
 		if operator.physical_access_levels.filter(area=tool.requires_area_access).count() == 0 and not operator.is_staff:
 			# return bad response that user doesn't have permission to the area
 			return HttpResponseBadRequest("You don't have permission to be logged in to the {} to operate this tool.  Please contact a system administrator to request access.".format(tool.requires_area_access.name.lower()))
@@ -119,7 +119,7 @@ def check_policy_to_enable_tool_for_multi(tool, operator, user, project, request
 
 	# The tool operator may not activate tools in a particular area unless they are logged in to the area.
 	# If they have access to the area, log them in automatically and let them know the log in to the area has occurrred
-	if tool.requires_area_access and AreaAccessRecord.objects.filter(area=tool.requires_area_access,customer=operator,end=None).count() == 0:
+	if tool.requires_area_access and AreaAccessRecord.objects.filter(area=tool.requires_area_access,customer=operator,end=None, active_flag=True).count() == 0:
 		if operator.physical_access_levels.filter(area=tool.requires_area_access).count() == 0 and not operator.is_staff:
 			# return bad response that user doesn't have permission to the area
 			return HttpResponseBadRequest("You don't have permission to be logged in to the {} to operate this tool.  Please contact a system administrator to request access.".format(tool.requires_area_access.name.lower()))
@@ -160,10 +160,10 @@ def check_policy_to_enable_tool_for_multi(tool, operator, user, project, request
 
 def check_policy_to_disable_tool(tool, operator, downtime, request):
 	# Prevent tool disabling from a user in a different core
-	active_core_id = request.session.get("active_core_id")
-	if str(active_core_id) != "0" and str(active_core_id) != "None":
-		if str(tool.core_id.id) not in str(active_core_id) and not operator.is_superuser:
-			return HttpResponseBadRequest("You cannot disable a tool that is part of a different Core.")
+	#active_core_id = request.session.get("active_core_id")
+	#if str(active_core_id) != "0" and str(active_core_id) != "None":
+	#	if str(tool.core_id.id) not in str(active_core_id) and not operator.is_superuser:
+	#		return HttpResponseBadRequest("You cannot disable a tool that is part of a different Core.")
 
 	""" Check that the user is allowed to disable the tool. """
 	current_usage_event = tool.get_current_usage_event()

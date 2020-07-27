@@ -14,12 +14,12 @@ from NEMO.utilities import get_month_timeframe, month_list
 def usage(request):
 	first_of_the_month, last_of_the_month = get_month_timeframe(request.GET.get('timeframe'))
 	dictionary = {
-		'area_access': AreaAccessRecord.objects.filter(customer=request.user, end__gt=first_of_the_month, end__lte=last_of_the_month),
-		'consumables': ConsumableWithdraw.objects.filter(customer=request.user, date__gt=first_of_the_month, date__lte=last_of_the_month),
+		'area_access': AreaAccessRecord.objects.filter(customer=request.user, end__gt=first_of_the_month, end__lte=last_of_the_month, active_flag=True),
+		'consumables': ConsumableWithdraw.objects.filter(customer=request.user, date__gt=first_of_the_month, date__lte=last_of_the_month, active_flag=True),
 		'missed_reservations': Reservation.objects.filter(user=request.user, missed=True, end__gt=first_of_the_month, end__lte=last_of_the_month),
-		'staff_charges': StaffCharge.objects.filter(customer=request.user, end__gt=first_of_the_month, end__lte=last_of_the_month),
+		'staff_charges': StaffCharge.objects.filter(customer=request.user, end__gt=first_of_the_month, end__lte=last_of_the_month, active_flag=True),
 		'training_sessions': TrainingSession.objects.filter(trainee=request.user, date__gt=first_of_the_month, date__lte=last_of_the_month),
-		'usage_events': UsageEvent.objects.filter(user=request.user, end__gt=first_of_the_month, end__lte=last_of_the_month),
+		'usage_events': UsageEvent.objects.filter(user=request.user, end__gt=first_of_the_month, end__lte=last_of_the_month, active_flag=True),
 		'month_list': month_list(),
 		'timeframe': request.GET.get('timeframe') or first_of_the_month.strftime('%B, %Y'),
 		'billing_active_by_default': True if hasattr(settings, 'BILLING_SERVICE') and settings.BILLING_SERVICE['available'] else False
