@@ -432,6 +432,7 @@ def enable_tool_multi(request):
 			if hasattr(project_events[index], 'customer') and hasattr(project_events[index], 'project'):
 				response = check_policy_to_enable_tool_for_multi(tool, operator, project_events[index].customer, project_events[index].project, request)
 				if response.status_code != HTTPStatus.OK:
+					new_usage_event.delete()
 					return response
 
 	for p in project_events.values():
