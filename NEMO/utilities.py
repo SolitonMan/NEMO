@@ -55,8 +55,8 @@ def parse_parameter_string(parameter_dictionary, parameter_key, maximum_length=3
 		return default_return
 
 
-def month_list(since=datetime(year=2013, month=11, day=1)):
-	month_count = (timezone.now().year - since.year) * 12 + (timezone.now().month - since.month) + 1
+def month_list(since=datetime(year=2020, month=7, day=1)):
+	month_count = (timezone.now().year - since.year) * 12 + (timezone.now().month - since.month) + 2
 	result = list(rrule(MONTHLY, dtstart=since, count=month_count))
 	result = localize(result)
 	result.reverse()
@@ -70,11 +70,18 @@ def get_month_timeframe(date):
 		start = timezone.now()
 #	first_of_the_month = localize(datetime(start.year, start.month, 1))
 #	last_of_the_month = localize(datetime(start.year, start.month, monthrange(start.year, start.month)[1], 23, 59, 59, 0))
-	if start.month > 1:
-		first_of_the_month = localize(datetime(start.year, start.month-1, 25))
+
+	start_month = start.month
+	start_day = start.day
+
+	if start_day > 24:
+		start_month += 1
+
+	if start_month > 1:
+		first_of_the_month = localize(datetime(start.year, start_month-1, 25))
 	else:
-		first_of_the_month = localize(datetime(start.year, 12, 25))
-	last_of_the_month = localize(datetime(start.year, start.month, 24, 23, 59, 59, 0))
+		first_of_the_month = localize(datetime(start.year-1, 12, 25))
+	last_of_the_month = localize(datetime(start.year, start_month, 24, 23, 59, 59, 0))
 
 	return first_of_the_month, last_of_the_month
 

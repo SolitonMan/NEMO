@@ -131,6 +131,13 @@ label
 	color: red;
 }
 
+.conflict-highlight
+{
+	color: black;
+	font-weight: bold;
+	background-color: red;
+}
+
 .grey
 {
 	color: grey;

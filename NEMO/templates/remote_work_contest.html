@@ -12,7 +12,7 @@
 {% block content %}
 	<h1>Contest {{ contest_type }}</h1>
 
-	<p>You have selected the {{ contest_type }} detailed below to contest.  Please select a general reason this item should be contested and enter a description of the specifics.  Once this form is submitted the {{ contest_type }} will be placed in contested status until an administrator can review the record and address it as needed.</p>
+	<p>You have selected the {{ contest_type }} detailed below to contest.  Please update the relevant fields to indicate what the corrected values for this transaction should be, then select a general reason this item should be contested and enter a description of the specifics.  If you're requesting this transaction not be charged, select the checkbox and choose the reason and enter a description - no other changes are necessary in that case.  Once this form is submitted the {{ contest_type }} will be placed in contested status until an administrator can review the record and address it as needed.</p>
 
 	<form name="contest" id="contest" action="{% url 'save_contest' %}" method="POST" onsubmit="return on_submit();">
 	{% csrf_token %}
@@ -39,7 +39,7 @@
 				<div class="datetimepicker-container">
 					<input type="text" class="form-control" name="proposed__start__{{ usage_event.id }}" id="proposed__start__{{ usage_event.id }}" value="{{ usage_event.start|date:'Y-m-d H:i:s' }}" />
 				</div>
-				<input type="hidden" name="original__start__{{ usage_event.id }}" value="{{ usage_event.start|date:'Y-m-d H:i:s' }}" />
+				<input type="hidden" id="original__start__{{ usage_event.id }}" name="original__start__{{ usage_event.id }}" value="{{ usage_event.start|date:'Y-m-d H:i:s' }}" />
 			</td>
 		</tr>
 		<tr>
@@ -48,7 +48,7 @@
 				<div class="datetimepicker-container">
 					<input type="text" class="form-control" name="proposed__end__{{ usage_event.id }}" id="proposed__end__{{ usage_event.id }}" value="{{ usage_event.end|date:'Y-m-d H:i:s' }}" />
 				</div>
-				<input type="hidden" name="original__end__{{ usage_event.id }}" value="{{ usage_event.end|date:'Y-m-d H:i:s' }}" />
+				<input type="hidden" id="original__end__{{ usage_event.id }}" name="original__end__{{ usage_event.id }}" value="{{ usage_event.end|date:'Y-m-d H:i:s' }}" />
 			</td>
 		</tr>
 		<tr>
@@ -80,7 +80,7 @@
 						<td id="user_project__{{ u.id }}">
 							{% if u.customer.active_project_count == 1 %}
 								{{ u.project }}
-								<input type="hidden" name="proposed__chosen_project__{{ u.id }}" value="{{ u.project.id }}" />
+								<input type="hidden" id="proposed__chosen_project__{{ u.id }}" name="proposed__chosen_project__{{ u.id }}" value="{{ u.project.id }}" />
 							{% else %}
 							<select name="proposed__chosen_project__{{ u.id }}" id="proposed__chosen_project__{{ u.id }}" class="form-control">
 								{% for p in u.customer.active_projects %}
@@ -123,7 +123,7 @@
 				<div class="datetimepicker-container">
 					<input type="text" class="form-control" name="proposed__start__{{ staff_charge.id }}" id="proposed__start__{{ staff_charge.id }}" value="{{ staff_charge.start|date:'Y-m-d H:i:s' }}" />
 				</div>
-				<input type="hidden" name="original__start__{{ staff_charge.id }}" value="{{ staff_charge.start|date:'Y-m-d H:i:s' }}" />
+				<input type="hidden" id="original__start__{{ staff_charge.id }}" name="original__start__{{ staff_charge.id }}" value="{{ staff_charge.start|date:'Y-m-d H:i:s' }}" />
 			</td>
 		</tr>
 		<tr>
@@ -132,7 +132,7 @@
 				<div class="datetimepicker-container">
 					<input type="text" class="form-control" name="proposed__end__{{ staff_charge.id }}" id="proposed__end__{{ staff_charge.id }}" value="{{ staff_charge.end|date:'Y-m-d H:i:s' }}" />
 				</div>
-				<input type="hidden" name="original__end__{{ staff_charge.id }}" value="{{ staff_charge.end|date:'Y-m-d H:i:s' }}" />
+				<input type="hidden" id="original__end__{{ staff_charge.id }}" name="original__end__{{ staff_charge.id }}" value="{{ staff_charge.end|date:'Y-m-d H:i:s' }}" />
 			</td>
 		</tr>
 		<tr>
@@ -160,7 +160,7 @@
 						<td id="user_project__{{ s.id }}">
 							{% if s.customer.active_project_count == 1 %}
 								{{ s.project }}
-								<input type="hidden" name="proposed__chosen_project__{{ s.id }}" value="{{ s.project.id }}" />
+								<input type="hidden" id="proposed__chosen_project__{{ s.id }}" name="proposed__chosen_project__{{ s.id }}" value="{{ s.project.id }}" />
 							{% else %}
 							<select name="proposed__chosen_project__{{ s.id }}" id="proposed__chosen_project__{{ s.id }}" class="form-control">
 								{% for p in s.customer.active_projects %}
@@ -233,7 +233,7 @@
 						<td id="user_project__{{ a.id }}">
 							{% if a.customer.active_project_count == 1 %}
 								{{ a.project }}
-								<input type="hidden" name="proposed__chosen_project__{{ a.id }}" value="{{ a.project.id }}" />
+								<input type="hidden" id="proposed__chosen_project__{{ a.id }}" name="proposed__chosen_project__{{ a.id }}" value="{{ a.project.id }}" />
 							{% else %}
 							<select name="proposed__chosen_project__{{ a.id }}" id="proposed__chosen_project__{{ a.id }}" class="form-control">
 								{% for p in a.customer.active_projects %}
@@ -262,7 +262,7 @@
 				<div class="datetimepicker-container">
 					<input type="text" class="form-control" name="proposed__start__{{ area_access_record.id }}" id="proposed__start__{{ area_access_record.id }}" value="{{ area_access_record.start|date:'Y-m-d H:i:s' }}" />
 				</div>
-				<input type="hidden" name="original__start__{{ area_access_record.id }}" value="{{ area_access_record.start|date:'Y-m-d H:i:s' }}" />
+				<input type="hidden" id="original__start__{{ area_access_record.id }}" name="original__start__{{ area_access_record.id }}" value="{{ area_access_record.start|date:'Y-m-d H:i:s' }}" />
 			</td>
 		</tr>
 		<tr>
@@ -271,7 +271,7 @@
 				<div class="datetimepicker-container">
 					<input type="text" class="form-control" name="proposed__end__{{ area_access_record.id }}" id="proposed__end__{{ area_access_record.id }}" value="{{ area_access_record.end|date:'Y-m-d H:i:s' }}" />
 				</div>
-				<input type="hidden" name="original__end__{{ area_access_record.id }}" value="{{ area_access_record.end|date:'Y-m-d H:i:s' }}" />
+				<input type="hidden" id="original__end__{{ area_access_record.id }}" name="original__end__{{ area_access_record.id }}" value="{{ area_access_record.end|date:'Y-m-d H:i:s' }}" />
 			</td>
 		</tr>
 		<tr>
@@ -316,7 +316,7 @@
 				<input type="button" class="btn btn-default" value="{{ consumable_withdraw.customer }}" name="button__chosen_user__{{ consumable_withdraw.id }}" id="button__chosen_user__{{ consumable_withdraw.id }}" onclick="change_customer({{ consumable_withdraw.id }});" />
 				<input type="hidden" value="{{ consumable_withdraw.customer.id }}" name="original__chosen_user__{{ consumable_withdraw.id }}" id="original__chosen_user__{{ consumable_withdraw.id }}" />
 				<input type="text" class="form-control" id="proposed__chosen_user__{{ consumable_withdraw.id }}" name="proposed__chosen_user__{{ consumable_withdraw.id }}" value="{{ consumable_withdraw.customer.id }}" data-row="{{ consumable_withdraw.id }}" style="display: none;" />
-				<input type="hidden" name="original__chosen_project__{{ consumable_withdraw.id }}" value="{{ consumable_withdraw.project.id }}" />
+				<input type="hidden" id="original__chosen_project__{{ consumable_withdraw.id }}" name="original__chosen_project__{{ consumable_withdraw.id }}" value="{{ consumable_withdraw.project.id }}" />
 			</td>
 		</tr>
 		<tr>
@@ -324,7 +324,7 @@
 			<td id="user_project__{{ consumable_withdraw.id }}">
 				{% if consumable_withdraw.customer.active_project_count == 1 %}
 					{{ consumable_withdraw.project }}
-					<input type="hidden" name="proposed__chosen_project__{{ consumable_withdraw.id }}" value="{{ consumable_withdraw.project.id }}" />
+					<input type="hidden" id="proposed__chosen_project__{{ consumable_withdraw.id }}" name="proposed__chosen_project__{{ consumable_withdraw.id }}" value="{{ consumable_withdraw.project.id }}" />
 				{% else %}
 					<select name="proposed__chosen_project__{{ consumable_withdraw.id }}" id="proposed__chosen_project__{{ consumable_withdraw.id }}" class="form-control">
 						{% for p in consumable_withdraw.customer.active_projects %}
@@ -359,6 +359,7 @@
 					<option value="Forgot to log out">Forgot to log out</option>
 					<option value="Erroneous percentage assignments">Erroneous percentage assignments</option>
 					<option value="Incorrect project selection">Incorrect project selection</option>
+					<option value="Time adjustment">Time adjustment</option>
 					<option value="Other">Other</option>
 				</select>
 				</label>
@@ -458,6 +459,9 @@
 				if ($(this).prop("name") != "no_charge_flag" && $(this).prop("name") != "other_reason") {
 					if ($(this).prop("type") != "hidden" && $(this).prop("type") != "submit") {
 						$(this).prop("disabled", true);
+						if ($(this).prop("type") == "checkbox") {
+							$(this).prop("checked", false);
+						}
 					}
 				}
 			});
@@ -490,6 +494,7 @@
 	function on_submit()
 	{
 		var bSubmit = true;
+		var bChanged = false;
 
 		if ($("#contest_reason").val() == "") {
 			alert("Please select a reason for contesting this {{ contest_type }}.");
@@ -511,6 +516,8 @@
 		{% if usage_event is not None %}
 		var prop_start = $("#proposed__start__{{ usage_event.id }}");
 		var prop_end = $("#proposed__end__{{ usage_event.id }}");
+		var orig_start = $("#original__start__{{ usage_event.id }}");
+		var orig_end = $("#original__end__{{ usage_event.id }}");
 
 		var prop_start_date = new Date(prop_start.val());
 		var prop_end_date = new Date(prop_end.val());
@@ -532,12 +539,23 @@
 			bSubmit = false;
 		}
 
+		if (prop_start.val() != orig_start.val() || prop_end.val() != orig_end.val()) {
+			bChanged = true;
+		}
+
 		$("input[name*='proposed__chosen_user__']").each(
 			function(index, element) {
-				if ($(element).val() == "") {
-					alert("Please select a user for each entry");
-					$(element).focus();
-					bSubmit = false;
+				if (!$(element).prop("disabled")) {
+					if ($(element).val() == "") {
+						alert("Please select a user for each entry");
+						$(element).focus();
+						bSubmit = false;
+					} else {
+						s = "#original__chosen_user__" + $(element).prop("name").split("__")[2];
+						if ($(s).val() != $(element).val()) {
+							bChanged = true;
+						}
+					}
 				}
 			}
 		);
@@ -549,6 +567,18 @@
 						alert("Please select a project for each entry");
 						$(element).focus();
 						bSubmit = false;
+					} else {
+						s = "#original__chosen_project__" + $(element).prop("name").split("__")[2];
+
+						if ($(element).children("option")) {
+							if ($(s).val() != $(element).children("option:selected").val()) {
+								bChanged = true;
+							}
+						} else {
+							if ($(s).val() != $(element).val()) {
+								bChanged = true;
+							}
+						}
 					}
 				}
 			}
@@ -565,6 +595,11 @@
 						bSubmit = false;
 					} else {
 						percent += parseFloat($(element).val());
+
+						s = "#original__project_percent__" + $(element).prop("name").split("__")[2];
+						if ($(s).val() != $(element).val()) {
+							bChanged = true;
+						}
 					}
 				}
 			}
@@ -580,6 +615,8 @@
 		{% if staff_charge is not None %}
 		var prop_start = $("#proposed__start__{{ staff_charge.id }}");
 		var prop_end = $("#proposed__end__{{ staff_charge.id }}");
+		var orig_start = $("#original__start__{{ staff_charge.id }}");
+		var orig_end = $("#original__end__{{ staff_charge.id }}");
 
 		var prop_start_date = new Date(prop_start.val());
 		var prop_end_date = new Date(prop_end.val());
@@ -601,22 +638,48 @@
 			return false;
 		}
 
+		if (prop_start.val() != orig_start.val() || prop_end.val() != orig_end.val()) {
+			bChanged = true;
+		}
+
 		$("input[name*='proposed__chosen_user__']").each(
 			function(index, element) {
-				if ($(element).val() == "") {
-					alert("Please select a user for each entry");
-					$(element).focus();
-					bSubmit = false;
+				if (!$(element).prop("disabled")) {
+					if ($(element).val() == "") {
+						alert("Please select a user for each entry");
+						$(element).focus();
+						bSubmit = false;
+					} else {
+						s = "#original__chosen_user__" + $(element).prop("name").split("__")[2];
+
+						if ($(s).val() != $(element).val()) {
+							bChanged = true;
+						}
+					}
 				}
 			}
 		);
 
 		$("select[name*='proposed__chosen_project__']").each(
 			function(index, element) {
-				if ($(element).val() == "") {
-					alert("Please select a project for each entry");
-					$(element).focus();
-					bSubmit = false;
+				if (!$(element).prop("disabled")) {
+					if ($(element).val() == "") {
+						alert("Please select a project for each entry");
+						$(element).focus();
+						bSubmit = false;
+					} else {
+						s = "#original__chosen_project__" + $(element).prop("name").split("__")[2];
+
+						if ($(element).children("option")) {
+							if ($(s).val() != $(element).children("option:selected").val()) {
+								bChanged = true;
+							}
+						} else {
+							if ($(s).val() != $(element).val()) {
+								bChanged = true;
+							}
+						}
+					}
 				}
 			}
 		);
@@ -632,6 +695,12 @@
 						bSubmit = false;
 					} else {
 						percent += parseFloat($(element).val());
+
+						s = "#original__project_percent__" + $(element).prop("name").split("__")[2];
+
+						if ($(s).val() != $(element).val()) {
+							bChanged = true;
+						}
 					}
 				}
 			}
@@ -646,6 +715,8 @@
 		{% if area_access_record is not None %}
 		var prop_start = $("#proposed__start__{{ area_access_record.id }}");
 		var prop_end = $("#proposed__end__{{ area_access_record.id }}");
+		var orig_start = $("#original__start__{{ area_access_record.id }}");
+		var orig_end = $("#original__end__{{ area_access_record.id }}");
 
 		var prop_start_date = new Date(prop_start.val());
 		var prop_end_date = new Date(prop_end.val());
@@ -667,22 +738,48 @@
 			return false;
 		}
 
+		if (prop_start.val() != orig_start.val() || prop_end.val() != orig_end.val()) {
+			bChanged = true;
+		}
+
 		$("input[name*='proposed__chosen_user__']").each(
 			function(index, element) {
-				if ($(element).val() == "") {
-					alert("Please select a user for each entry");
-					$(element).focus();
-					bSubmit = false;
+				if (!$(element).prop("disabled")) {
+					if ($(element).val() == "") {
+						alert("Please select a user for each entry");
+						$(element).focus();
+						bSubmit = false;
+					} else {
+						s = "#original__chosen_user__" + $(element).prop("name").split("__")[2];
+
+						if ($(s).val() != $(element).val()) {
+							bChanged = true;
+						}
+					}
 				}
 			}
 		);
 
 		$("select[name*='proposed__chosen_project__']").each(
 			function(index, element) {
-				if ($(element).val() == "") {
-					alert("Please select a project for each entry");
-					$(element).focus();
-					bSubmit = false;
+				if (!$(element).prop("disabled")) {
+					if ($(element).val() == "") {
+						alert("Please select a project for each entry");
+						$(element).focus();
+						bSubmit = false;
+					} else {
+						s = "#original__chosen_project__" + $(element).prop("name").split("__")[2];
+
+						if ($(element).children("option")) {
+							if ($(s).val() != $(element).children("option:selected").val()) {
+								bChanged = true;
+							}
+						} else {
+							if ($(s).val() != $(element).val()) {
+								bChanged = true;
+							}
+						}
+					}
 				}
 			}
 		);
@@ -698,6 +795,12 @@
 						bSubmit = false;
 					} else {
 						percent += parseFloat($(element).val());
+
+						s = "#original__project_percent__" + $(element).prop("name").split("__")[2];
+
+						if ($(s).val() != $(element).val()) {
+							bChanged = true;
+						}
 					}
 				}
 			}
@@ -711,6 +814,7 @@
 
 		{% if consumable_withdraw is not None %}
 		var quantity = $("#proposed__quantity__{{ consumable_withdraw.id }}");
+		var orig_quantity = $("#original__quantity__{{ consumable_withdraw.id }}");
 
 		if (quantity.val() == "") {
 			alert("The quantity cannot be blank.  Please enter a numerical value.");
@@ -724,22 +828,48 @@
 			return false;
 		}
 
+		if (quantity.val() != orig_quantity.val()) {
+			bChanged = true;
+		}
+
 		$("input[name*='proposed__chosen_user__']").each(
 			function(index, element) {
-				if ($(element).val() == "") {
-					alert("Please select a user for each entry");
-					$(element).focus();
-					bSubmit = false;
+				if (!$(element).prop("disabled")) {
+					if ($(element).val() == "") {
+						alert("Please select a user for each entry");
+						$(element).focus();
+						bSubmit = false;
+					} else {
+						s = "#original__chosen_user__" + $(element).prop("name").split("__")[2];
+
+						if ($(s).val() != $(element).val()) {
+							bChanged = true;
+						}
+					}
 				}
 			}
 		);
 
 		$("select[name*='proposed__chosen_project__']").each(
 			function(index, element) {
-				if ($(element).val() == "") {
-					alert("Please select a project for each entry");
-					$(element).focus();
-					bSubmit = false;
+				if (!$(element).prop("disabled")) {
+					if ($(element).val() == "") {
+						alert("Please select a project for each entry");
+						$(element).focus();
+						bSubmit = false;
+					} else {
+						s = "#original__chosen_project__" + $(element).prop("name").split("__")[2];
+
+						if ($(element).children("option")) {
+							if ($(s).val() != $(element).children("option:selected").val()) {
+								bChanged = true;
+							}
+						} else {
+							if ($(s).val() != $(element).val()) {
+								bChanged = true;
+							}
+						}
+					}
 				}
 			}
 		);
@@ -755,12 +885,23 @@
 						bSubmit = false;
 					} else {
 						percent += parseFloat($(element).val());
+
+						s = "#original__project_percent__" + $(element).prop("name").split("__")[2];
+
+						if ($(s).val() != $(element).val()) {
+							bChanged = true;
+						}
 					}
 				}
 			}
 		);
 
 		{% endif %}
+
+		if (!bChanged) {
+			alert("No changes were detected in your contest, and it's not selected as a no charge request.  Please update the field values appropriately and submit your request again.  If you're not sure how to make the needed change please contact LEOHelp@psu.edu.");
+			bSubmit = false;
+		}
 
 		return bSubmit;
 	}

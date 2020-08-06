@@ -1,5 +1,6 @@
 import json
 
+from datetime import datetime
 from logging import getLogger
 from re import search
 
@@ -28,7 +29,14 @@ def get_dummy_projects():
 @login_required
 @require_GET
 def remote_work(request):
-	first_of_the_month, last_of_the_month = get_month_timeframe(request.GET.get('date'))
+	start_date = request.GET.get('date')
+
+	if start_date is None:
+		start_date = timezone.now().strftime('%Y-%m-%d')
+	else:
+		start_date = datetime.strptime(start_date, '%B, %Y').strftime('%Y-%m-%d')
+
+	first_of_the_month, last_of_the_month = get_month_timeframe(start_date)
 	operator = request.GET.get('operator')
 	if operator:
 		if operator == "all staff":
@@ -49,13 +57,18 @@ def remote_work(request):
 		consumable_withdraws = consumable_withdraws.filter(consumable__core_id__in=request.user.core_ids.all())
 
 	if operator:
-		usage_events = usage_events.exclude(~Q(operator_id=operator.id)).exclude(projects__in=get_dummy_projects()).exclude(project__in=get_dummy_projects())
-		staff_charges = staff_charges.exclude(~Q(staff_member_id=operator.id)).exclude(projects__in=get_dummy_projects()).exclude(project__in=get_dummy_projects())
-		area_access_records = area_access_records.exclude(~Q(staff_charge__staff_member_id=operator.id)).exclude(projects__in=get_dummy_projects()).exclude(project__in=get_dummy_projects())
-		consumable_withdraws = consumable_withdraws.exclude(~Q(merchant_id=operator.id)).exclude(project__in=get_dummy_projects())
+		usage_events = usage_events.exclude(~Q(operator_id=operator.id))
+		staff_charges = staff_charges.exclude(~Q(staff_member_id=operator.id))
+		area_access_records = area_access_records.exclude(~Q(staff_charge__staff_member_id=operator.id))
+		consumable_withdraws = consumable_withdraws.exclude(~Q(merchant_id=operator.id))
+
+		if operator == request.user:
+			usage_events = usage_events.exclude(projects__in=get_dummy_projects()).exclude(project__in=get_dummy_projects())
+			staff_charges = staff_charges.exclude(projects__in=get_dummy_projects()).exclude(project__in=get_dummy_projects())
+			area_access_records = area_access_records.exclude(projects__in=get_dummy_projects()).exclude(project__in=get_dummy_projects())
+			consumable_withdraws = consumable_withdraws.exclude(project__in=get_dummy_projects())
 
 	show_buttons = operator == request.user or request.user.is_superuser or request.user.groups.filter(name="Core Admin").exists()
-
 
 	uep = UsageEventProject.objects.filter(usage_event__in=usage_events, active_flag=True)
 	scp = StaffChargeProject.objects.filter(staff_charge__in=staff_charges, active_flag=True)
@@ -66,6 +79,256 @@ def remote_work(request):
 	if operator is None and request.user.groups.filter(name="Core Admin").exists():
 		staff_list = staff_list.filter(core_ids__in=request.user.core_ids.all())
 
+	transactions = {}
+
+	# render usage event and usage event project records into the transactions dictionary
+	for u in usage_events:
+		transaction_type = "Tool Use"
+		transaction_key = "usage_event_" + str(u.id)
+
+		if transaction_key not in transactions:
+			transactions[transaction_key] = {
+				'type': transaction_type,
+				'id': u.id,
+				'operator': str(u.operator),
+				'tool': str(u.tool),
+				'start': u.start,
+				'end': u.end,
+				'validated': u.validated,
+				'contested': u.contested,
+				'comment': u.operator_comment,
+				'duration': u.duration,
+				'rowspan': u.usageeventproject_set.filter(active_flag=True).count(),
+				'contest_rejection_reason': '',
+				'contest_id': '',
+				'contest_resolved_date':'',
+				'class': '',
+				'customers': '',
+			}
+
+			if u.validated:
+				transactions[transaction_key]['class'] = 'success-highlight'
+			else:
+				if u.contested:
+					if u.contest_record.filter(contest_resolved=False).count() == 0:
+						# a problem exists because there should be at least one open contest record if the usage event is marked as contested
+						transactions[transaction_key]['class'] = 'conflict-highlight'
+					elif u.contest_record.filter(contest_resolved=False).count() == 1:
+						transactions[transaction_key]['class'] = 'warning-highlight'
+					else:
+						# more than one contest record open
+						 transactions[transaction_key]['class'] = 'conflict-highlight'
+				else:
+					if u.contest_record:
+						if u.contest_record.all().count() > 0:
+							if u.contest_record.all().order_by('-contest_resolved_date')[0].contest_resolution:
+								transactions[transaction_key]['class'] = ''
+							else:
+								transactions[transaction_key]['class'] = 'danger-highlight'
+								transactions[transaction_key]['contest_rejection_reason'] = u.contest_record.all().order_by('-contest_resolved_date')[0].contest_rejection_reason
+								transactions[transaction_key]['contest_id'] = u.contest_record.all().order_by('-contest_resolved_date')[0].id
+								transactions[transaction_key]['contest_resolved_date'] = u.contest_record.all().order_by('-contest_resolved_date')[0].contest_resolved_date
+					else:
+						# not validated, not contested, never had a contest
+						transactions[transaction_key]['class'] = ''
+
+			customers = {}
+			for uep in u.usageeventproject_set.filter(active_flag=True):
+				if uep.id not in customers:
+					customers[uep.id] = {
+						'customer': str(uep.customer),
+						'project': str(uep.project),
+						'percent': uep.project_percent,
+					}
+			transactions[transaction_key]['customers'] = customers
+
+
+	# render staff charge and staff charge project records into the transactions dictionary
+	for s in staff_charges:
+		transaction_type = "Staff Charge"
+		transaction_key = "staff_charge_" + str(s.id)
+
+		if transaction_key not in transactions:
+			transactions[transaction_key] = {
+				'type': transaction_type,
+				'id': s.id,
+				'operator': str(s.staff_member),
+				'tool': 'Staff Charge',
+				'start': s.start,
+				'end': s.end,
+				'validated': s.validated,
+				'contested': s.contested,
+				'comment': s.staff_member_comment,
+				'duration': s.duration,
+				'rowspan': s.staffchargeproject_set.filter(active_flag=True).count(),
+				'contest_rejection_reason': '',
+				'contest_id': '',
+				'contest_resolved_date': '',
+				'class': '',
+				'customers': '',
+			}
+
+			if s.validated:
+				transactions[transaction_key]['class'] = 'success-highlight'
+			else:
+				if s.contested:
+					if s.contest_record.filter(contest_resolved=False).count() == 0:
+ 						# a problem exists because there should be at least one open contest record if the staff charge is marked as contested
+						transactions[transaction_key]['class'] = 'conflict-highlight'
+					elif s.contest_record.filter(contest_resolved=False).count() == 1:
+						transactions[transaction_key]['class'] = 'warning-highlight'
+					else:
+						# more than one contest record open
+						transactions[transaction_key]['class'] = 'conflict-highlight'
+				else:
+					if s.contest_record:
+						if s.contest_record.all().count() > 0:
+							if s.contest_record.all().order_by('-contest_resolved_date')[0].contest_resolution:
+								transactions[transaction_key]['class'] = ''
+							else:
+								transactions[transaction_key]['class'] = 'danger-highlight'
+								transactions[transaction_key]['contest_rejection_reason'] = s.contest_record.all().order_by('-contest_resolved_date')[0].contest_rejection_reason
+								transactions[transaction_key]['contest_id'] = s.contest_record.all().order_by('-contest_resolved_date')[0].id
+								transactions[transaction_key]['contest_resolved_date'] = s.contest_record.all().order_by('-contest_resolved_date')[0].contest_resolved_date
+					else:
+						# not validated, not contested, never had a contest
+						transactions[transaction_key]['class'] = ''
+
+			customers = {}
+			for scp in s.staffchargeproject_set.filter(active_flag=True):
+				if scp.id not in customers:
+					customers[scp.id] = {
+						'customer': str(scp.customer),
+						'project': str(scp.project),
+						'percent': scp.project_percent,
+					}
+			transactions[transaction_key]['customers'] = customers
+
+
+	# render area access record and area access record project records into the transactions dictionary
+	for a in area_access_records:
+		transaction_type = "Area Access"
+		transaction_key = "area_access_record_" + str(a.id)
+
+		if transaction_key not in transactions:
+			transactions[transaction_key] = {
+				'type': transaction_type,
+				'id': a.id,
+				'operator': str(a.staff_charge.staff_member) if a.staff_charge else '',
+				'tool': str(a.area),
+				'start': a.start,
+				'end': a.end,
+				'validated': a.validated,
+				'contested': a.contested,
+				'comment': '',
+				'duration': a.duration,
+				'rowspan': a.areaaccessrecordproject_set.filter(active_flag=True).count(),
+				'contest_rejection_reason': '',
+				'contest_id': '',
+				'contest_resolved_date': '',
+				'class': '',
+				'customers': '',
+			}
+
+			if a.validated:
+				transactions[transaction_key]['class'] = 'success-highlight'
+			else:
+				if a.contested:
+					if a.contest_record.filter(contest_resolved=False).count() == 0:
+ 						# a problem exists because there should be at least one open contest record if the staff charge is marked as contested
+						transactions[transaction_key]['class'] = 'conflict-highlight'
+					elif a.contest_record.filter(contest_resolved=False).count() == 1:
+						transactions[transaction_key]['class'] = 'warning-highlight'
+					else:
+						# more than one contest record open
+						transactions[transaction_key]['class'] = 'conflict-highlight'
+				else:
+					if a.contest_record:
+						if a.contest_record.all().count() > 0:
+							if a.contest_record.all().order_by('-contest_resolved_date')[0].contest_resolution:
+								transactions[transaction_key]['class'] = ''
+							else:
+								transactions[transaction_key]['class'] = 'danger-highlight'
+								transactions[transaction_key]['contest_rejection_reason'] = a.contest_record.all().order_by('-contest_resolved_date')[0].contest_rejection_reason
+								transactions[transaction_key]['contest_id'] = a.contest_record.all().order_by('-contest_resolved_date')[0].id
+								transactions[transaction_key]['contest_resolved_date'] = a.contest_record.all().order_by('-contest_resolved_date')[0].contest_resolved_date
+					else:
+						# not validated, not contested, never had a contest
+						transactions[transaction_key]['class'] = ''
+
+			customers = {}
+			for aarp in a.areaaccessrecordproject_set.filter(active_flag=True):
+				if aarp.id not in customers:
+					customers[aarp.id] = {
+						'customer': str(aarp.customer),
+						'project': str(aarp.project),
+						'percent': aarp.project_percent,
+					}
+			transactions[transaction_key]['customers'] = customers
+
+
+	# render the consumable withdraw records into the transactions dictionary
+	for c in consumable_withdraws:
+		transaction_type = "Withdraw"
+		transaction_key = "consumable_withdraw_" + str(c.id)
+
+		if transaction_key not in transactions:
+			transactions[transaction_key] = {
+				'type': transaction_type,
+				'id': c.id,
+				'operator': str(c.merchant),
+				'tool': str(c.consumable),
+				'start': c.date,
+				'end': c.date,
+				'validated': c.validated,
+				'contested': c.contested,
+				'comment': c.notes,
+				'duration': '',
+				'rowspan': 1,
+				'contest_rejection_reason': '',
+				'contest_id': '',
+				'contest_resolved_date': '',
+				'class': '',
+				'customers': '',
+			}
+
+			if c.validated:
+				transactions[transaction_key]['class'] = 'success-highlight'
+			else:
+				if c.contested:
+					if c.contest_record.filter(contest_resolved=False).count() == 0:
+ 						# a problem exists because there should be at least one open contest record if the staff charge is marked as contested
+						transactions[transaction_key]['class'] = 'conflict-highlight'
+					elif c.contest_record.filter(contest_resolved=False).count() == 1:
+						transactions[transaction_key]['class'] = 'warning-highlight'
+					else:
+						# more than one contest record open
+						transactions[transaction_key]['class'] = 'conflict-highlight'
+				else:
+					if c.contest_record:
+						if c.contest_record.all().count() > 0:
+							if c.contest_record.all().order_by('-contest_resolved_date')[0].contest_resolution:
+								transactions[transaction_key]['class'] = ''
+							else:
+								transactions[transaction_key]['class'] = 'danger-highlight'
+								transactions[transaction_key]['contest_rejection_reason'] = c.contest_record.all().order_by('-contest_resolved_date')[0].contest_rejection_reason
+								transactions[transaction_key]['contest_id'] = c.contest_record.all().order_by('-contest_resolved_date')[0].id
+								transactions[transaction_key]['contest_resolved_date'] = c.contest_record.all().order_by('-contest_resolved_date')[0].contest_resolved_date
+					else:
+						# not validated, not contested, never had a contest
+						transactions[transaction_key]['class'] = ''
+
+			customers = {}
+
+			customers[c.id] = {
+				'customer': str(c.customer),
+				'project': str(c.project),
+				'percent': c.project_percent,
+			}
+
+			transactions[transaction_key]['customers'] = customers
+
+
 	dictionary = {
 		'usage': usage_events,
 		'staff_charges': staff_charges if request.user.is_staff else None,
@@ -74,12 +337,13 @@ def remote_work(request):
 		'staff_list': User.objects.filter(is_staff=True).order_by('last_name', 'first_name'),
 		'month_list': month_list(),
 		'selected_staff': operator.id if operator else "all staff",
-		'selected_month': request.GET.get('date'),
+		'selected_month': datetime.strptime(start_date, '%Y-%m-%d').strftime('%B, %Y'),
 		'uep': uep,
 		'scp': scp,
 		'aarp': aarp,
 		'show_buttons': show_buttons,
 		'user_is_core_admin': request.user.groups.filter(name="Core Admin").exists(),
+		'transactions': transactions,
 	}
 	return render(request, 'remote_work.html', dictionary)
 
@@ -1086,6 +1350,10 @@ def save_contest_resolution(request):
 		contest_transaction.contest_resolution = False
 		contest_transaction.contest_rejection_reason = request.POST.get("reject_contest_reason")
 		contest_transaction.save()
+		contest_transaction.content_object.contested = False
+		contest_transaction.content_object.updated = timezone.now()
+		contest_transaction.content_object.validated = False
+		contest_transaction.content_object.save()
 
 
 	return HttpResponseRedirect('/review_contested_items/')
