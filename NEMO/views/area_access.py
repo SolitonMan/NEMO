@@ -10,7 +10,7 @@ from django.utils import timezone
 from django.utils.http import urlencode
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
-from NEMO.models import Area, AreaAccessRecord, Door, PhysicalAccessLog, PhysicalAccessType, Project, User
+from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, Door, PhysicalAccessLog, PhysicalAccessType, Project, User
 from NEMO.tasks import postpone
 from NEMO.utilities import parse_start_and_end_date
 from NEMO.views.customization import get_customization
@@ -157,6 +157,15 @@ def login_to_area(request, door_id=None, area_id=None):
 		record.created = timezone.now()
 		record.updated = timezone.now()
 		record.save()
+
+		aarp = AreaAccessRecordProject()
+		aarp.area_access_record = record
+		aarp.project = user.active_projects()[0]
+		aarp.customer = user
+		aarp.created = timezone.now()
+		aarp.updated = timezone.now()
+		aarp.save()
+
 		if door_id is not None and door_id != 0:
 			unlock_door(door.id)
 		return render(request, 'area_access/login_success.html', {'area': area, 'name': user.first_name, 'project': record.project, 'previous_area': previous_area})
@@ -187,6 +196,15 @@ def login_to_area(request, door_id=None, area_id=None):
 			record.created = timezone.now()
 			record.updated = timezone.now()
 			record.save()
+
+			aarp = AreaAccessRecordProject()
+			aarp.area_access_record = record
+			aarp.project = project
+			aarp.customer = user
+			aarp.created = timezone.now()
+			aarp.updated = timezone.now()
+			aarp.save()
+
 			if door_id is not None and door_id != 0:
 				unlock_door(door.id)
 			return render(request, 'area_access/login_success.html', {'area': area, 'name': user.first_name, 'project': record.project, 'previous_area': previous_area})
@@ -291,6 +309,13 @@ def change_project(request, new_project=None):
 	record.created = timezone.now()
 	record.updated = timezone.now()
 	record.save()
+	aarp = AreaAccessRecordProject()
+	aarp.area_access_record = record
+	aarp.project = new_project
+	aarp.customer = request.user
+	aarp.created = timezone.now()
+	aarp.updated = timezone.now()
+	aarp.save()
 	return redirect(reverse('landing'))
 
 
@@ -353,6 +378,13 @@ def new_area_access_record(request, customer=None):
 		record.created = timezone.now()
 		record.updated = timezone.now()
 		record.save()
+		aarp = AreaAccessRecordProject()
+		aarp.area_access_record = record
+		aarp.project = project
+		aarp.customer = user
+		aarp.created = timezone.now()
+		aarp.updated = timezone.now()
+		aarp.save()
 		dictionary['success'] = '{} is now logged in to the {}.'.format(user, area.name.lower())
 		if request.POST['self_login_flag'] == "True":
 			return HttpResponseRedirect(reverse('landing'))
@@ -388,7 +420,8 @@ def self_log_in(request):
 						a.end = timezone.now()
 						a.save()
 
-				AreaAccessRecord.objects.create(area=a, customer=request.user, project=p, created=timezone.now(), updated=timezone.now())
+				record = AreaAccessRecord.objects.create(area=a, customer=request.user, project=p, created=timezone.now(), updated=timezone.now())
+				AreaAccessRecordProject.objects.create(area_access_record=record, customer=request.user, project=p, created=timezone.now(), updated=timezone.now())
 		except:
 			pass
 		return redirect(reverse('landing'))

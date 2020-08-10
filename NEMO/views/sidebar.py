@@ -11,5 +11,5 @@ from NEMO.views.status_dashboard import create_tool_summary
 @require_GET
 @disable_session_expiry_refresh
 def refresh_sidebar_icons(request):
-	tool_summary = create_tool_summary()
+	tool_summary = create_tool_summary(request)
 	return render(request, 'refresh_sidebar_icons.html', {'tool_summary': tool_summary})

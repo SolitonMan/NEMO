@@ -18,7 +18,7 @@ def status_dashboard(request):
 	interest = request.GET.get('interest')
 	if interest is None:
 		dictionary = {
-			'tool_summary': create_tool_summary(),
+			'tool_summary': create_tool_summary(request),
 			'nanofab_occupants': AreaAccessRecord.objects.filter(end=None, staff_charge=None, active_flag=True).prefetch_related('customer', 'project', 'area'),
 			'user_current_logins': request.user.in_area()
 		}
@@ -77,6 +77,7 @@ def merge(request, tools, tasks, unavailable_resources, usage_events, scheduled_
 			'nonrequired_resource_is_unavailable': False,
 			'scheduled_outage': False,
 			'include_force_logout': False,
+			'allow_force_logoff': True,
 		}
 	for task in tasks:
 		result[task.tool.id]['problematic'] = True
@@ -91,6 +92,7 @@ def merge(request, tools, tasks, unavailable_resources, usage_events, scheduled_
 					result[event.tool.id]['include_force_logout'] = True
 			else:
 				result[event.tool.id]['user'] += " on behalf of multiple customers"
+				result[event.tool.id]['allow_force_logoff'] = False
 		else:
 			if request.user.is_staff:
 				result[event.tool.id]['include_force_logout'] = True

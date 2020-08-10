@@ -214,7 +214,7 @@ def remote_work(request):
 			transactions[transaction_key] = {
 				'type': transaction_type,
 				'id': a.id,
-				'operator': str(a.staff_charge.staff_member) if a.staff_charge else '',
+				'operator': str(a.staff_charge.staff_member) if a.staff_charge else str(a.customer),
 				'tool': str(a.area),
 				'start': a.start,
 				'end': a.end,
@@ -257,13 +257,21 @@ def remote_work(request):
 						transactions[transaction_key]['class'] = ''
 
 			customers = {}
-			for aarp in a.areaaccessrecordproject_set.filter(active_flag=True):
-				if aarp.id not in customers:
-					customers[aarp.id] = {
-						'customer': str(aarp.customer),
-						'project': str(aarp.project),
-						'percent': aarp.project_percent,
-					}
+			if a.areaaccessrecordproject_set.filter(active_flag=True).count() > 0:
+				for aarp in a.areaaccessrecordproject_set.filter(active_flag=True):
+					if aarp.id not in customers:
+						customers[aarp.id] = {
+							'customer': str(aarp.customer),
+							'project': str(aarp.project),
+							'percent': aarp.project_percent,
+						}
+			else:
+				customers[a.id] = {
+					'customer': str(a.customer),
+					'project': str(a.project),
+					'percent': '100.0'
+				}
+
 			transactions[transaction_key]['customers'] = customers
 
 

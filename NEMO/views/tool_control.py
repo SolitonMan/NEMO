@@ -305,7 +305,7 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge, billing_mod
 	uep.updated = timezone.now()
 	uep.save()
 
-	if staff_charge:
+	if staff_charge and not billing_mode:
 		new_staff_charge = StaffCharge()
 		new_staff_charge.staff_member = request.user
 		new_staff_charge.customer = user

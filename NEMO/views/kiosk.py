@@ -119,7 +119,7 @@ def choices(request):
 		'customer': customer,
 		'usage_events': UsageEvent.objects.filter(operator=customer.id, end=None, active_flag=True).order_by('tool__name').prefetch_related('tool', 'project'),
 		'tools': Tool.objects.filter(visible=True, location=request.GET['location']),
-		'tool_summary': create_tool_summary(),
+		'tool_summary': create_tool_summary(request),
 		'categories': [t[0] for t in Tool.objects.filter(visible=True).order_by('category').values_list('category').distinct()],
 	}
 	return render(request, 'kiosk/choices.html', dictionary)
@@ -139,7 +139,7 @@ def category_choices(request, category, user_id):
 		'customer': customer,
 		'category': category,
 		'tools': tools,
-		'tool_summary': create_tool_summary(),
+		'tool_summary': create_tool_summary(request),
 	}
 	return render(request, 'kiosk/category_choices.html', dictionary)
 
