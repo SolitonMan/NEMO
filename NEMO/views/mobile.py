@@ -148,6 +148,7 @@ def make_reservation(request):
 	# Reservation can't be short notice if the user is configuring the tool themselves.
 	if reservation.self_configuration:
 		reservation.short_notice = False
+	policy_problems, overridable = check_policy_to_save_reservation(request, None, reservation, request.user, False)
 	reservation.save()
 	for rc in res_conf:
 		rc.reservation = reservation

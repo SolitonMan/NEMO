@@ -132,12 +132,18 @@ def is_valid_field(field):
 	return search("^(chosen_user|chosen_project|project_percent|overlap_choice|event_comment)__[0-9]+$", field) is not None
 
 def month_is_locked(check_date):
+	day = int(check_date.day)
 	month = int(check_date.month)
+	if day > 24:
+		month += 1
 	year = int(check_date.year)
 	return LockBilling.objects.filter(is_locked=True,billing_month=month,billing_year=year).exists()
 
 def month_is_closed(check_date):
+	day = int(check_date.day)
 	month = int(check_date.month)
+	if day > 24:
+		month += 1
 	year = int(check_date.year)
 	return LockBilling.objects.filter(is_closed=True,billing_month=month,billing_year=year).exists()
 
