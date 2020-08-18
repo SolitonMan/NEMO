@@ -160,6 +160,12 @@
 					</select>
 				</td>
 			</tr>
+			<tr>
+				<td colspan="2">
+					<label for="operator_comment">Comment / Description of Work</label>
+					<textarea name="operator_comment" id="operator_comment" rows="10" cols="80"></textarea>
+				</td>
+			</tr>
 			{% if request.user.is_superuser %}
 			<tr>
 				<th>Operator</th>
@@ -197,12 +203,6 @@
 					I used the tool for others
 					{% endif %}
 					</label></div>
-				</td>
-			</tr>
-			<tr>
-				<td colspan="2">
-					<label for="operator_comment">Comment / Description of Work</label>
-					<textarea name="operator_comment" id="operator_comment" rows="10" cols="80"></textarea>
 				</td>
 			</tr>
 		</table>
