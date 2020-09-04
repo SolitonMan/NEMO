@@ -16,6 +16,15 @@
 	{% endif %}
 	<form id="new_staff_charge" onsubmit="return on_submit()">
 		{% csrf_token %}
+		{% if multi_core_user %}
+		<select id="core_select" name="core_select" class="form-control">
+			<option value="0">Please select the core for which this charge is being made</option>
+			{% for c in request.user.core_ids.all %}
+			<option value="{{ c.id }}">{{ c.name }}</option>
+			{% endfor %}
+		</select>
+		{% endif %}
+
 		<table id="staff_charge_entries" class="table">
 			<tr>
 				<th>&nbsp;</th>
@@ -75,6 +84,17 @@
 	</div>
 	<form id="ad_hoc_staff_charge" action="{% url 'ad_hoc_staff_charge' %}" method="POST" onsubmit="return on_ad_hoc_submit();">
 		{% csrf_token %}
+		<br/><br/>
+		{% if multi_core_user %}
+		<select id="ad_hoc_core_select" name="ad_hoc_core_select" class="form-control">
+			<option value="0">Please select the core for which this charge is being made</option>
+			{% for c in request.user.core_ids.all %}
+			<option value="{{ c.id }}">{{ c.name }}</option>
+			{% endfor %}
+		</select>
+		{% endif %}
+		<br/><br/>
+
 		<table id="ad_hoc_entries" class="table">
 			<tr>
                                 <th>&nbsp;</th>
@@ -316,6 +336,14 @@
 				add_customer();
 				return false;
 			}
+			{% if multi_core_user %}
+			if ($("#core_select option:selected").val() == "0") {
+				alert("Please choose the core that will be paid for this staff charge.");
+				$("#core_select").focus();
+				return false;
+			}
+			{% endif %}
+			
 			var failure_dialog = ajax_failure_callback("Could not begin charging staff time");
 			ajax_post("{% url 'begin_staff_charge' %}", serialize("#new_staff_charge"), reload_staff_charges, failure_dialog);
 			return false;
@@ -328,6 +356,14 @@
 				add_ad_hoc_customer();
 				return false;
 			}
+
+			{% if multi_core_user %}
+			if ($("#ad_hoc_core_select option:selected").val() == "0") {
+				alert("Please choose the core that will be paid for this staff charge.");
+				$("#ad_hoc_core_select").focus();
+				return false;
+			}
+			{% endif %}
 			//var failure_dialog = ajax_failure_callback("There was a problem with your ad hoc submission");
 			//ajax_post("{% url 'ad_hoc_staff_charge' %}", serialize("#ad_hoc_staff_charge"), ad_hoc_overlap_callback, failure_dialog);
 			return true;

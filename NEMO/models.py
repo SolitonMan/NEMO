@@ -450,6 +450,9 @@ class Configuration(models.Model):
 		return self.current_settings_as_list()[slot]
 
 	def current_settings_as_list(self):
+		if self.current_settings is None:
+			return []
+
 		if len(self.current_settings) == 0 or len(self.current_settings) is None:
 			if len(self.available_settings_as_list()) > 0:
 				self.current_settings = self.available_settings_as_list()[0]
@@ -566,6 +569,7 @@ class StaffCharge(CalendarDisplay):
 	no_charge_flag = models.BooleanField(default=False)
 	ad_hoc_created = models.BooleanField(default=False)
 	active_flag = models.BooleanField(default=True)
+	core_id_override = models.PositiveIntegerField(null=True, blank=True)
 
 	def duration(self):
 		return calculate_duration(self.start, self.end, "In progress")
@@ -1677,7 +1681,10 @@ class Core(models.Model):
 class CreditCostCollector(models.Model):
 	name = models.CharField(max_length=500)
 	core = models.ForeignKey('Core', on_delete=models.SET_NULL, null=True, blank=True)
-	project = models.ForeignKey('Project', on_delete=models.SET_NULL, null=True, blank=True) 
+	project = models.ForeignKey('Project', on_delete=models.SET_NULL, null=True, blank=True)
+
+	def __str__(self):
+		return str(self.name) + '[' + str(self.core) + ']' + '[' + str(self.project.project_number) + ']' 
 
 class LockBilling(models.Model):
 	fiscal_year = models.CharField(max_length=20, help_text="indicator for the fiscal year in the format 20192020")

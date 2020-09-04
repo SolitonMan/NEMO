@@ -67,6 +67,11 @@ def staff_charges(request):
 	params['start_date'] = dates['start']
 	params['end_date'] = dates['end']
 
+	if request.user.core_ids.count() > 1:
+		params['multi_core_user'] = True
+	else:
+		params['multi_core_user'] = False
+
 	return render(request, 'staff_charges/new_staff_charge.html', params)
 
 
@@ -82,6 +87,8 @@ def begin_staff_charge(request):
 		charge.staff_member = request.user
 		charge.created = timezone.now()
 		charge.updated = timezone.now()
+		if request.POST.get('core_select', None) != None:
+			charge.core_id_override = int(request.POST.get('core_select'))
 		charge.save()
 
 		project_charges = {}
@@ -322,6 +329,8 @@ def ad_hoc_staff_charge(request):
 			charge.staff_member_comment = request.POST.get("staff_member_comment")
 		charge.created = timezone.now()
 		charge.updated = timezone.now()
+		if request.POST.get('core_select', None) != None:
+			charge.core_id_override = int(request.POST.get('core_select'))
 		charge.save()
 
 		prc = 0.0
@@ -441,6 +450,11 @@ def ad_hoc_staff_charge(request):
 		params['start_date'] = dates['start']
 		params['end_date'] = dates['end']
 
+		if request.user.core_ids.count() > 1:
+			params['multi_core_user'] = True
+		else:
+			params['multi_core_user'] = False
+
 		return render(request, 'staff_charges/new_staff_charge.html', params)
 
 	except ValueError as inst:
@@ -494,6 +508,11 @@ def ad_hoc_staff_charge(request):
 
 		for key, value in error_params.items():
 			params[key] = value
+
+		if request.user.core_ids.count() > 1:
+			params['multi_core_user'] = True
+		else:
+			params['multi_core_user'] = False
 
 		return render(request, 'staff_charges/new_staff_charge.html', params)	
 

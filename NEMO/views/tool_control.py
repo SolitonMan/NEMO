@@ -275,6 +275,7 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge, billing_mod
 	billing_mode = billing_mode == 'true'
 	response = check_policy_to_enable_tool(tool, operator, user, project, staff_charge, request)
 	if response.status_code != HTTPStatus.OK:
+		response.write("<p>There was a problem with the policy to enable the tool</p>")
 		return response
 
 	# All policy checks passed so enable the tool for the user.

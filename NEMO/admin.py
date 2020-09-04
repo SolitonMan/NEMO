@@ -163,7 +163,7 @@ class ToolAdmin(admin.ModelAdmin):
 	def change_view(self, request, object_id, form_url='', extra_context=None):
 		if request.user.is_superuser:
 			self.fieldsets = (
-				(None, {'fields': ('name', 'category', 'core_id', 'qualified_users'),}),
+				(None, {'fields': ('name', 'category', 'core_id', 'credit_cost_collector', 'qualified_users'),}),
 				('Current state', {'fields': ('post_usage_questions', 'visible', 'operational'),}),
 				('Contact information', {'fields': ('primary_owner', 'backup_owners', 'notification_email_address', 'location', 'phone_number'),}),
 				('Usage policy', {'fields': ('reservation_horizon', 'minimum_usage_block_time', 'maximum_usage_block_time', 'maximum_reservations_per_day', 'minimum_time_between_reservations', 'maximum_future_reservation_time', 'missed_reservation_threshold', 'requires_area_access', 'grant_physical_access_level_upon_qualification', 'grant_badge_reader_access_upon_qualification', 'interlock', 'allow_delayed_logoff', 'reservation_required'),}),
@@ -195,6 +195,11 @@ class ToolAdmin(admin.ModelAdmin):
 			return qs
 		return qs.filter(core_id__in=request.user.core_ids.all())
 
+	def formfield_for_foreignkey(self, db_field, request, **kwargs):
+		if db_field.name == 'credit_cost_collector':
+			kwargs["queryset"] = CreditCostCollector.objects.order_by('project__project_number')
+		return super(ToolAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
 	def has_delete_permission(self, request, obj=None):
 		return False
 
@@ -204,6 +209,8 @@ class TrainingSessionAdmin(admin.ModelAdmin):
 	list_display = ('id', 'trainer', 'trainee', 'tool', 'project', 'type', 'date', 'duration', 'qualified')
 	list_filter = ('qualified', 'date', 'type')
 	date_hierarchy = 'date'
+
+	search_fields = ('trainer__first_name','trainer__last_name','trainer__first_name','trainer__last_name','project__project_number')
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "project":
@@ -216,10 +223,12 @@ class TrainingSessionAdmin(admin.ModelAdmin):
 
 @register(StaffCharge)
 class StaffChargeAdmin(admin.ModelAdmin):
-	list_display = ('id', 'staff_member', 'customer', 'start', 'end', 'charge_end_override', 'override_confirmed', 'related_override_charge', 'ad_hoc_replaced', 'ad_hoc_related')
+	list_display = ('id', 'staff_member', 'customer', 'start', 'end')
 	list_filter = ('start',)
 	date_hierarchy = 'start'
 	ordering = ['-id']
+
+	search_fields = ('staff_member__first_name','staff_member__last_name','projects__project_number')
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "project":
@@ -232,6 +241,8 @@ class StaffChargeAdmin(admin.ModelAdmin):
 @register(StaffChargeProject)
 class StaffChargeProjectAdmin(admin.ModelAdmin):
 	list_display = ('id', 'staff_charge', 'customer', 'project', 'project_percent')
+
+	search_fields = ('customer__first_name','customer__last_name','project__project_number')
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "project":
@@ -247,6 +258,8 @@ class AreaAccessRecordAdmin(admin.ModelAdmin):
 	list_filter = ('area', 'start',)
 	date_hierarchy = 'start'
 
+	search_fields = ('area__name', 'customers__first_name','customers__last_name','projects__project_number')
+
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "project":
 			kwargs["queryset"] = Project.objects.order_by('project_number')
@@ -258,6 +271,8 @@ class AreaAccessRecordAdmin(admin.ModelAdmin):
 @register(AreaAccessRecordProject)
 class AreaAccessRecordProjectAdmin(admin.ModelAdmin):
 	list_display = ('id', 'area_access_record', 'customer', 'project', 'project_percent')
+
+	search_fields = ('customer__first_name','customer__last_name','project__project_number')
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "project":
@@ -272,6 +287,8 @@ class AreaAccessRecordProjectAdmin(admin.ModelAdmin):
 class ConfigurationAdmin(admin.ModelAdmin):
 	list_display = ('id', 'tool', 'name', 'qualified_users_are_maintainers', 'display_priority', 'exclude_from_configuration_agenda')
 	filter_horizontal = ('maintainers',)
+
+	search_fields = ('tool__name', 'name', 'consumable__name')
 
 	def change_view(self, request, object_id, form_url='', extra_context=None):
 		if not request.user.is_superuser:
@@ -305,6 +322,8 @@ class ConfigurationAdmin(admin.ModelAdmin):
 class ConfigurationHistoryAdmin(admin.ModelAdmin):
 	list_display = ('id', 'configuration', 'user', 'modification_time', 'slot')
 	date_hierarchy = 'modification_time'
+
+	search_fields = ('user__first_name', 'user__last_name', 'configuration__tool__name')
 
 	def has_delete_permission(self, request, obj=None):
 		return False
@@ -395,6 +414,8 @@ class ReservationAdmin(admin.ModelAdmin):
 	list_filter = ('cancelled', 'missed')
 	date_hierarchy = 'start'
 
+	search_fields = ('user__first_name', 'user__last_name', 'tool__name', 'projects__project_number')
+
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "project":
 			kwargs["queryset"] = Project.objects.order_by('project_number')
@@ -408,12 +429,16 @@ class ReservationAdmin(admin.ModelAdmin):
 class ReservationConfigurationAdmin(admin.ModelAdmin):
 	list_display = ('id', 'reservation', 'configuration', 'consumable')
 
+	search_fields = ('reservation__user__first_name', 'reservation__user__last_name', 'reservation__tool__name', 'reservation__projects__project_number')
+
 	def has_delete_permission(self, request, obj=None):
 		return False
 
 @register(ReservationProject)
 class ReservationProjectAdmin(admin.ModelAdmin):
 	list_display = ('id', 'reservation', 'project', 'customer')
+
+	search_fields = ('project__project_number', 'customer__first_name', 'customer__last_name')
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "project":
@@ -429,6 +454,8 @@ class UsageEventAdmin(admin.ModelAdmin):
 	list_filter = ('start', 'end')
 	date_hierarchy = 'start'
 
+	search_fields = ('tool__name', 'projects__project_number', 'customers__first_name', 'customers__last_name')
+
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "project":
 			kwargs["queryset"] = Project.objects.order_by('project_number')
@@ -440,6 +467,8 @@ class UsageEventAdmin(admin.ModelAdmin):
 @register(UsageEventProject)
 class UsageEventProjectAdmin(admin.ModelAdmin):
 	list_display = ('id', 'usage_event', 'customer', 'project', 'project_percent')
+
+	search_fields = ('project__project_number', 'customer__first_name', 'customer__last_name')
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "project":
@@ -464,12 +493,16 @@ class ConsumableAdmin(admin.ModelAdmin):
 class ConsumableUnitAdmin(admin.ModelAdmin):
 	list_display = ('name', 'abbreviation')
 
+	search_fields = ('name', 'abbreviation')
+
 	def has_delete_permission(self, request, obj=None):
 		return False
 
 @register(ConsumableCategory)
 class ConsumableCategoryAdmin(admin.ModelAdmin):
 	list_display = ('name',)
+
+	search_fields = ('name',)
 
 	def has_delete_permission(self, request, obj=None):
 		return False
@@ -479,9 +512,16 @@ class ConsumableWithdrawAdmin(admin.ModelAdmin):
 	list_display = ('id', 'customer', 'merchant', 'consumable', 'quantity', 'project', 'date')
 	date_hierarchy = 'date'
 
+	search_fields = ('customer__first_name', 'customer__last_name', 'merchant__first_name', 'merchant__last_name', 'project__project_number','consumable__name')
+
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "project":
 			kwargs["queryset"] = Project.objects.order_by('project_number')
+		return super(ConsumableWithdrawAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
+	def formfield_for_foreignkey(self, db_field, request, **kwargs):
+		if db_field.name == 'credit_cost_collector':
+			kwargs["queryset"] = CreditCostCollector.objects.order_by('project__project_number')
 		return super(ConsumableWithdrawAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 	def has_delete_permission(self, request, obj=None):
@@ -492,6 +532,8 @@ class ConsumableWithdrawAdmin(admin.ModelAdmin):
 class InterlockCardAdmin(admin.ModelAdmin):
 	list_display = ('server', 'port', 'number', 'even_port', 'odd_port')
 
+	search_fields = ('server',)
+
 	def has_delete_permission(self, request, obj=None):
 		return False
 
@@ -500,6 +542,8 @@ class InterlockAdmin(admin.ModelAdmin):
 	list_display = ('id', 'card', 'channel', 'state', 'tool', 'door')
 	actions = [lock_selected_interlocks, unlock_selected_interlocks, synchronize_with_tool_usage]
 	readonly_fields = ['state', 'most_recent_reply']
+
+	search_fields = ('tool_name', 'card__server')
 
 	def has_delete_permission(self, request, obj=None):
 		return False
@@ -510,6 +554,8 @@ class TaskAdmin(admin.ModelAdmin):
 	list_filter = ('urgency', 'resolved', 'cancelled', 'safety_hazard', 'creation_time')
 	date_hierarchy = 'creation_time'
 
+	search_fields = ('tool__name', 'creator__first_name', 'creator__last_name')
+
 	def has_delete_permission(self, request, obj=None):
 		return False
 
@@ -517,12 +563,16 @@ class TaskAdmin(admin.ModelAdmin):
 class TaskCategoryAdmin(admin.ModelAdmin):
 	list_display = ('name', 'stage')
 
+	search_fields = ('name',)
+
 	def has_delete_permission(self, request, obj=None):
 		return False
 
 @register(TaskStatus)
 class TaskStatusAdmin(admin.ModelAdmin):
 	list_display = ('name', 'notify_primary_tool_owner', 'notify_backup_tool_owners', 'notify_tool_notification_email', 'custom_notification_email_address')
+
+	search_fields = ('name',)
 
 	def has_delete_permission(self, request, obj=None):
 		return False
@@ -532,6 +582,8 @@ class TaskHistoryAdmin(admin.ModelAdmin):
 	list_display = ('id', 'task', 'status', 'time', 'user')
 	readonly_fields = ('time',)
 	date_hierarchy = 'time'
+
+	search_fields = ('task__tool__name', 'user__first_name', 'user__last_name')
 
 	def has_delete_permission(self, request, obj=None):
 		return False
@@ -551,6 +603,8 @@ class ResourceAdmin(admin.ModelAdmin):
 	list_display = ('name', 'category', 'available')
 	list_filter = ('available', 'category')
 	filter_horizontal = ('fully_dependent_tools', 'partially_dependent_tools', 'dependent_areas')
+
+	search_fields = ('name',)
 
 	def has_delete_permission(self, request, obj=None):
 		return False
@@ -584,7 +638,7 @@ class UserTypeAdmin(admin.ModelAdmin):
 class UserAdmin(admin.ModelAdmin):
 	filter_horizontal = ('groups', 'user_permissions', 'qualifications', 'projects', 'physical_access_levels', 'pi_delegates')
 	fieldsets = (
-		('Personal information', {'fields': ('first_name', 'last_name', 'username', 'email', 'badge_number', 'type', 'domain', 'core_ids')}),
+		('Personal information', {'fields': ('first_name', 'last_name', 'username', 'email', 'badge_number', 'type', 'domain', 'credit_cost_collector', 'core_ids')}),
 		('Permissions', {'fields': ('is_active', 'is_staff', 'is_technician', 'is_superuser', 'training_required', 'groups', 'user_permissions', 'physical_access_levels', 'pi_delegates')}),
 		('Important dates', {'fields': ('date_joined', 'last_login', 'access_expiration')}),
 		('Laboratory information', {'fields': ('qualifications', 'projects')}),
@@ -602,6 +656,11 @@ class UserAdmin(admin.ModelAdmin):
 		record_local_many_to_many_changes(request, obj, form, 'core_ids')
 		record_active_state(request, obj, form, 'is_active', not change)
 
+	def formfield_for_foreignkey(self, db_field, request, **kwargs):
+		if db_field.name == 'credit_cost_collector':
+			kwargs["queryset"] = CreditCostCollector.objects.order_by('project__project_number')
+		return super(UserAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
 	def has_delete_permission(self, request, obj=None):
 		return False
 
@@ -610,7 +669,7 @@ class UserAdmin(admin.ModelAdmin):
 class PhysicalAccessLogAdmin(admin.ModelAdmin):
 	list_display = ('user', 'door', 'area', 'time', 'result')
 	list_filter = ('door', 'area', 'result')
-	search_fields = ('user',)
+	search_fields = ('user__first_name','user__last_name')
 	date_hierarchy = 'time'
 
 	def has_delete_permission(self, request, obj=None):
@@ -636,12 +695,16 @@ class DoorAdmin(admin.ModelAdmin):
 class AlertAdmin(admin.ModelAdmin):
 	list_display = ('title', 'creation_time', 'creator', 'debut_time', 'expiration_time', 'user', 'dismissible')
 
+	search_fields = ('title', 'creator__first_name', 'creator__last_name', 'user__first_name', 'user__last_name')
+
 	def has_delete_permission(self, request, obj=None):
 		return False
 
 @register(PhysicalAccessLevel)
 class PhysicalAccessLevelAdmin(admin.ModelAdmin):
 	list_display = ('name', 'area', 'schedule')
+
+	search_fields = ('name', 'area__name')
 
 	def has_delete_permission(self, request, obj=None):
 		return False
@@ -656,7 +719,9 @@ class ContactInformationCategoryAdmin(admin.ModelAdmin):
 
 @register(ContactInformation)
 class ContactInformationAdmin(admin.ModelAdmin):
-	list_display = ('name', 'category')
+	list_display = ('name', 'category', 'city', 'state', 'zipcode')
+
+	search_fields = ('name', 'category__name', 'city', 'state')
 
 	def has_delete_permission(self, request, obj=None):
 		return False
@@ -691,6 +756,8 @@ class ScheduledOutageCategoryAdmin(admin.ModelAdmin):
 class ScheduledOutageAdmin(admin.ModelAdmin):
 	list_display = ('id', 'tool', 'resource', 'creator', 'title', 'start', 'end')
 
+	search_fields = ('tool__name', 'creator__first_name', 'creator__last_name', 'title')
+
 	def has_delete_permission(self, request, obj=None):
 		return False
 
@@ -700,12 +767,16 @@ class NewsAdmin(admin.ModelAdmin):
 	list_display = ('id', 'created', 'last_updated', 'archived', 'title')
 	list_filter = ('archived',)
 
+	search_fields = ('title',)
+
 	def has_delete_permission(self, request, obj=None):
 		return False
 
 @register(Notification)
 class NotificationAdmin(admin.ModelAdmin):
 	list_display = ('id', 'user', 'expiration', 'content_type', 'object_id')
+
+	search_fields = ('user__first_name', 'user__last_name')
 
 	def has_delete_permission(self, request, obj=None):
 		return False
@@ -761,6 +832,11 @@ class ResourceCategoryAdmin(admin.ModelAdmin):
 class AreaAdmin(admin.ModelAdmin):
 	list_display = ('id', 'name', 'welcome_message', 'core_id')
 
+	def formfield_for_foreignkey(self, db_field, request, **kwargs):
+		if db_field.name == 'credit_cost_collector':
+			kwargs["queryset"] = CreditCostCollector.objects.order_by('project__project_number')
+		return super(AreaAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
 	def has_delete_permission(self, request, obj=None):
 		return False
 
@@ -782,6 +858,8 @@ class CoreAdmin(admin.ModelAdmin):
 @register(Organization)
 class OrganizationAdmin(admin.ModelAdmin):
 	list_display = ('id', 'name', 'organization_type', 'billing_type', 'url')
+
+	search_fields = ('name',)
 
 	def has_delete_permission(self, request, obj=None):
 		return False
@@ -810,6 +888,8 @@ class NsfCategoryAdmin(admin.ModelAdmin):
 @register(CreditCostCollector)
 class CreditCostCollectorAdmin(admin.ModelAdmin):
 	list_display = ('id', 'name', 'project', 'core')
+
+	search_fields = ('name', 'project__project_number')
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "project":
