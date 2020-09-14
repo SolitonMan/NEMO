@@ -681,42 +681,66 @@ def disable_tool(request, tool_id):
 	# check for no charge flag, which at this point can only exist for a fixed cost run
 	if current_usage_event.no_charge_flag:
 		# add a consumable record for a fixed cost per sample run
-		consumable_records = {}
+		consumable_records_dollar = {}
+		consumable_records_cent = {}
 		sample_num = {}
-		quantity_num = {}
+		quantity_num_dollar = {}
+		quantity_num_cent = {}
 
 		for key, value in request.POST.items():
 			if is_valid_field(key):
 				attribute, separator, index = key.partition("__")
 				index = int(index)
-				if index not in consumable_records:
-					consumable_records[index] = ConsumableWithdraw()
-					consumable_records[index].consumable = Consumable.objects.filter(core_id=tool.core_id, name="Fixed Cost Sample")[0]
-					consumable_records[index].usage_event = current_usage_event
-					consumable_records[index].merchant = current_usage_event.operator
-					consumable_records[index].date = timezone.now()
-					consumable_records[index].project_percent = 100.0
-					consumable_records[index].updated = timezone.now()
+				if index not in consumable_records_dollar:
+					consumable_records_dollar[index] = ConsumableWithdraw()
+					consumable_records_dollar[index].consumable = Consumable.objects.filter(core_id=tool.core_id, name="Fixed Cost Sample $1")[0]
+					consumable_records_dollar[index].usage_event = current_usage_event
+					consumable_records_dollar[index].merchant = current_usage_event.operator
+					consumable_records_dollar[index].date = timezone.now()
+					consumable_records_dollar[index].project_percent = 100.0
+					consumable_records_dollar[index].updated = timezone.now()
+				if index not in consumable_records_cent:
+					consumable_records_cent[index] = ConsumableWithdraw()
+					consumable_records_cent[index].consumable = Consumable.objects.filter(core_id=tool.core_id, name="Fixed Cost Sample $0.01")[0]
+					consumable_records_cent[index].usage_event = current_usage_event
+					consumable_records_cent[index].merchant = current_usage_event.operator
+					consumable_records_cent[index].date = timezone.now()
+					consumable_records_cent[index].project_percent = 100.0
+					consumable_records_cent[index].updated = timezone.now()
 				if attribute == "chosen_user":
-					consumable_records[index].customer = User.objects.get(id=value)
+					consumable_records_dollar[index].customer = User.objects.get(id=value)
+					consumable_records_cent[index].customer = User.objects.get(id=value)
 				if attribute == "chosen_project":
-					consumable_records[index].project = Project.objects.get(id=value)
+					consumable_records_dollar[index].project = Project.objects.get(id=value)
+					consumable_records_cent[index].project = Project.objects.get(id=value)
 				if attribute == "sample_notes":
-					consumable_records[index].notes = value
+					consumable_records_dollar[index].notes = value
+					consumable_records_cent[index].notes = value
 				if attribute == "num_samples":
 					sample_num[index] = value
 				if attribute == "fixed_cost":
-					quantity_num[index] = value
+					quantity_num_dollar[index] = value.split(".")[0]
+					quantity_num_cent[index] = value.split(".")[1]
 
-		for key in consumable_records:
+		for key in consumable_records_dollar:
 			num_to_save = int(sample_num[key]) - 1
-			amount = int(quantity_num[key])
-			consumable_records[key].quantity = amount
-			consumable_records[key].save()
+			amount = int(quantity_num_dollar[key])
+			consumable_records_dollar[key].quantity = amount
+			consumable_records_dollar[key].save()
 
 			for i in range(num_to_save):
-				consumable_records[key].pk = None
-				consumable_records[key].save()
+				consumable_records_dollar[key].pk = None
+				consumable_records_dollar[key].save()
+
+		for key in consumable_records_cent:
+			num_to_save = int(sample_num[key]) - 1
+			amount = int(quantity_num_cent[key])
+			consumable_records_cent[key].quantity = amount
+			consumable_records_cent[key].save()
+
+			for i in range(num_to_save):
+				consumable_records_cent[key].pk = None
+				consumable_records_cent[key].save()
 			
 
 	if request.user.charging_staff_time():
