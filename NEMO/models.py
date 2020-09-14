@@ -882,6 +882,10 @@ class UsageEvent(CalendarDisplay):
 	ad_hoc_created = models.BooleanField(default=False)
 	active_flag = models.BooleanField(default=True)
 
+	# a feature to allow for a tool use to be stopped automatically requires some new fields
+	end_time = models.DateTimeField(null=True, blank=True)
+	set_for_autologout =  models.BooleanField(default=False)
+
 	def duration(self):
 		return calculate_duration(self.start, self.end, "In progress")
 

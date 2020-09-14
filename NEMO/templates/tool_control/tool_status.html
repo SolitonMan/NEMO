@@ -60,6 +60,9 @@
 							for the project named {{ current_usage_event.projects.all.0 }}
 						{% endif %}
 						since {{ current_usage_event.start|date:"l @ g:i A" }}.
+						{% if current_usage_event.set_for_autologout %}
+						<span style="font-weight: bold;"> You have scheduled an automatic logout for this run.  The run will complete at {{ current_usage_event.end_time|date:"l @ g:i A" }}
+						{% endif %}
 					</div>
 					{% endif %}
 				{% endwith %}
@@ -274,11 +277,23 @@
 				{% elif tool.operational and not tool.required_resource_is_unavailable and not tool.delayed_logoff_in_progress and not tool.scheduled_outage_in_progress %}
 					{% include 'tool_control/get_projects.html' with active_projects=user.active_projects user_id=user.id my_reservation=my_reservation%}
 				{% endif %}
+
+				{% if rendered_configuration_html == "" %}
+				<span style="" id="auto_logout_feature">
+					<div class="checkbox"><label><input type="checkbox" name="set_for_autologout" id="set_for_autologout" onchange="toggle_autologout();" />Set autologout for this tool use</label></div>
+					<div id="duration_options" class="datetimepicker-container" style="display: none;">
+					Please select the end time for this run: <input type="text" name="autologout_endtime" id="autologout_endtime" />
+					</div>
+				</span>
+				{% endif %}
+
+				<div>
 				{% if my_reservation %}
 					<button id="start" class="btn btn-default"><span class="glyphicon glyphicon-play"></span> Start using the {{ tool.name }}</button>
 				{% elif user.is_staff or tool.operational and not tool.required_resource_is_unavailable and not tool.delayed_logoff_in_progress and not tool.scheduled_outage_in_progress %}
 					<button id="start" class="btn btn-default" style="display:none"><span class="glyphicon glyphicon-play"></span> Start using the {{ tool.name }}</button>
 				{% endif %}
+				</div>
 			{% endif %}
 		</form>
 		<div style="height:150px">{# Spacer #}</div>
@@ -514,6 +529,8 @@
 	$('#task_and_comment_start').datetimepicker({format: 'MM/DD/YYYY', 'widgetParent': '#task_and_comment_start_form_group'});
 	$('#task_and_comment_end').datetimepicker({format: 'MM/DD/YYYY', 'widgetParent': '#task_and_comment_end_form_group'});
 	$('#delayed_logoff_help').popover();
+	current_time = new Date();
+	$('#autologout_endtime').datetimepicker({format: 'YYYY-MM-DD HH:mm:ss', minDate: current_time });
 
 	function update_stop_button()
 	{
@@ -558,6 +575,15 @@
 		{% else %}
 		staff_reserved_for_customer = false;
 		{% endif %}
+	}
+
+	function toggle_autologout()
+	{
+		if ($("#set_for_autologout").is(":checked")) {
+			$("#duration_options").show();
+		} else {
+			$("#duration_options").hide();
+		}
 	}
 
 	{% if my_reservation and my_reservation_projects is None %}

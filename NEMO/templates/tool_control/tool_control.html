@@ -163,7 +163,8 @@
 			else
 				success_callbacks = [refresh_tool_status, ajax_success_callback];
 			var enable_start_button = function() { $("#start").prop("disabled", false); };
-			ajax_post(url, undefined, success_callbacks, failure_dialog, enable_start_button);
+			let contents = serialize("#tool_control");
+			ajax_post(url, contents, success_callbacks, failure_dialog, enable_start_button);
 		}
 
 		function disable_tool(url, confirm, downtime)

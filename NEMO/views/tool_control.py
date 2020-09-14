@@ -1,3 +1,4 @@
+from decimal import *
 from re import search
 
 import requests
@@ -273,6 +274,12 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge, billing_mod
 	project = get_object_or_404(Project, id=project_id)
 	staff_charge = staff_charge == 'true'
 	billing_mode = billing_mode == 'true'
+
+	# check for auto logout settings
+	set_for_autologout = request.POST.get("set_for_autologout")
+	if set_for_autologout:
+		autologout_endtime = request.POST.get("autologout_endtime")
+
 	response = check_policy_to_enable_tool(tool, operator, user, project, staff_charge, request)
 	if response.status_code != HTTPStatus.OK:
 		response.write("<p>There was a problem with the policy to enable the tool</p>")
@@ -283,75 +290,81 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge, billing_mod
 		logger.error("The interlock command for this tool failed. The error message returned: " + str(tool.interlock.most_recent_reply))
 		#raise Exception("The interlock command for this tool failed. The error message returned: " + str(tool.interlock.most_recent_reply))
 
+	# check for an existing usage event
+	if UsageEvent.objects.filter(operator=operator, start__lt=timezone.now(), tool=tool, end=None).exists():
+		pass
+	else:
+		# Create a new usage event to track how long the user uses the tool.
+		new_usage_event = UsageEvent()
+		new_usage_event.operator = operator
+		new_usage_event.user = user
+		new_usage_event.project = project
+		new_usage_event.tool = tool
+		new_usage_event.created = timezone.now()
+		new_usage_event.updated = timezone.now()
+		if billing_mode:
+			new_usage_event.no_charge_flag = True
+		if set_for_autologout:
+			new_usage_event.set_for_autologout = True
+			new_usage_event.end_time = autologout_endtime
+		new_usage_event.save()
 
-	# Create a new usage event to track how long the user uses the tool.
-	new_usage_event = UsageEvent()
-	new_usage_event.operator = operator
-	new_usage_event.user = user
-	new_usage_event.project = project
-	new_usage_event.tool = tool
-	new_usage_event.created = timezone.now()
-	new_usage_event.updated = timezone.now()
-	if billing_mode:
-		new_usage_event.no_charge_flag = True
-	new_usage_event.save()
+		# create a usage event project record for consistency with other usage event charges
+		uep = UsageEventProject()
+		uep.usage_event = new_usage_event
+		uep.customer = user
+		uep.project = project
+		uep.project_percent = 100.0	# no reason to ask after the fact when only one customer
+		uep.created = timezone.now()
+		uep.updated = timezone.now()
+		uep.save()
 
-	# create a usage event project record for consistency with other usage event charges
-	uep = UsageEventProject()
-	uep.usage_event = new_usage_event
-	uep.customer = user
-	uep.project = project
-	uep.project_percent = 100.0	# no reason to ask after the fact when only one customer
-	uep.created = timezone.now()
-	uep.updated = timezone.now()
-	uep.save()
+		if staff_charge and not billing_mode:
+			new_staff_charge = StaffCharge()
+			new_staff_charge.staff_member = request.user
+			new_staff_charge.customer = user
+			new_staff_charge.project = project
+			new_staff_charge.created = timezone.now()
+			new_staff_charge.updated = timezone.now()
+			new_staff_charge.save()
 
-	if staff_charge and not billing_mode:
-		new_staff_charge = StaffCharge()
-		new_staff_charge.staff_member = request.user
-		new_staff_charge.customer = user
-		new_staff_charge.project = project
-		new_staff_charge.created = timezone.now()
-		new_staff_charge.updated = timezone.now()
-		new_staff_charge.save()
+			# create a staff_charge_project record
+			scp = StaffChargeProject()
+			scp.staff_charge = new_staff_charge
+			scp.customer = user
+			scp.project = project
+			scp.created = timezone.now()
+			scp.updated = timezone.now()
+			scp.save()
 
-		# create a staff_charge_project record
-		scp = StaffChargeProject()
-		scp.staff_charge = new_staff_charge
-		scp.customer = user
-		scp.project = project
-		scp.created = timezone.now()
-		scp.updated = timezone.now()
-		scp.save()
+		if tool.requires_area_access and AreaAccessRecord.objects.filter(area=tool.requires_area_access,customer=operator,end=None, active_flag=True).count() == 0:
+			if AreaAccessRecord.objects.filter(customer=operator,end=None, active_flag=True).count() > 0:
+				areas = AreaAccessRecord.objects.filter(customer=operator,end=None, active_flag=True)
+				for a in areas:
+					a.end = timezone.now()
+					a.save()
 
-	if tool.requires_area_access and AreaAccessRecord.objects.filter(area=tool.requires_area_access,customer=operator,end=None, active_flag=True).count() == 0:
-		if AreaAccessRecord.objects.filter(customer=operator,end=None, active_flag=True).count() > 0:
-			areas = AreaAccessRecord.objects.filter(customer=operator,end=None, active_flag=True)
-			for a in areas:
-				a.end = timezone.now()
-				a.save()
+			aar = AreaAccessRecord()
+			aar.area = tool.requires_area_access
+			aar.customer = operator
+			aar.project = project
+			aar.start = timezone.now()
+			aar.created = timezone.now()
+			aar.updated = timezone.now()
 
-		aar = AreaAccessRecord()
-		aar.area = tool.requires_area_access
-		aar.customer = operator
-		aar.project = project
-		aar.start = timezone.now()
-		aar.created = timezone.now()
-		aar.updated = timezone.now()
+			if staff_charge:
+				aar.staff_charge = new_staff_charge
 
-		if staff_charge:
-			aar.staff_charge = new_staff_charge
+			aar.save()
 
-		aar.save()
-
-		# create area access record project
-		aarp = AreaAccessRecordProject()
-		aarp.area_access_record = aar
-		aarp.project = project
-		aarp.customer = user
-		aarp.created = timezone.now()
-		aarp.updated = timezone.now()
-		aarp.save()
+			# create area access record project
+			aarp = AreaAccessRecordProject()
+			aarp.area_access_record = aar
+			aarp.project = project
+			aarp.customer = user
+			aarp.created = timezone.now()
+			aarp.updated = timezone.now()
+			aarp.save()
 
 	return response
 
@@ -368,6 +381,9 @@ def enable_tool_multi(request):
 			return HttpResponseBadRequest('request.POST.get(\'tool_id\') = ' + request.POST.get('tool_id'))
 	tool = get_object_or_404(Tool, id=id)
 	operator = request.user
+	set_for_autologout = request.POST.get("set_for_autologout")
+	if set_for_autologout:
+		autologout_endtime = request.POST.get("autologout_endtime")
 
 	# check for an existing reservation
 	try:
@@ -394,152 +410,195 @@ def enable_tool_multi(request):
 	billing_mode = request.POST.get('billing_mode')
 	billing_mode = billing_mode == 'true'
 
-	new_usage_event = UsageEvent()
-	new_usage_event.operator = operator
-	new_usage_event.tool = tool
-	new_usage_event.project = None
-	new_usage_event.user = None
-	new_usage_event.created = timezone.now()
-	new_usage_event.updated = timezone.now()
-	if billing_mode:
-		new_usage_event.no_charge_flag = True
-	new_usage_event.save()	
+	# check if a usage event already exists
+	if UsageEvent.objects.filter(operator=operator, tool=tool, end=None, start__lt=timezone.now()).exists():
+		pass
+	else:
+		new_usage_event = UsageEvent()
+		new_usage_event.operator = operator
+		new_usage_event.tool = tool
+		new_usage_event.project = None
+		new_usage_event.user = None
+		new_usage_event.created = timezone.now()
+		new_usage_event.updated = timezone.now()
+		if billing_mode:
+			new_usage_event.no_charge_flag = True
+		if set_for_autologout:
+			new_usage_event.set_for_autologout = True
+			new_usage_event.end_time = autologout_endtime
+		new_usage_event.save()	
+	
+		project_events = {}
 
-	project_events = {}
-
-	for key, value in request.POST.items():
-		if is_valid_field(key):
-			attribute, separator, index = key.partition("__")
-			index = int(index)
-			if index not in project_events:
-				project_events[index] = UsageEventProject()
-				project_events[index].usage_event = new_usage_event
-				project_events[index].created = timezone.now()
-				project_events[index].updated = timezone.now()
-			if attribute == "chosen_user":
-				if value is not None and value != "":
-					project_events[index].customer = User.objects.get(id=value)
-				else:
-					new_usage_event.delete()
-					return HttpResponseBadRequest('Please choose a user for whom the tool will be run.')
-			if attribute == "chosen_project":
-				if value is not None and value != "" and value != "-1":
-					cp = Project.objects.get(id=value)
-					if cp.check_date(new_usage_event.start):
-						project_events[index].project = Project.objects.get(id=value)
+		for key, value in request.POST.items():
+			if is_valid_field(key):
+				attribute, separator, index = key.partition("__")
+				index = int(index)
+				if index not in project_events:
+					project_events[index] = UsageEventProject()
+					project_events[index].usage_event = new_usage_event
+					project_events[index].created = timezone.now()
+					project_events[index].updated = timezone.now()
+				if attribute == "chosen_user":
+					if value is not None and value != "":
+						project_events[index].customer = User.objects.get(id=value)
 					else:
-						msg = 'The project ' + str(cp.project_number) + ' cannot be used for a transaction with a start date of ' + str(new_usage_event.start) + ' because the project start date is ' + str(cp.start_date)
 						new_usage_event.delete()
-						return HttpResponseBadRequest(msg)
+						return HttpResponseBadRequest('Please choose a user for whom the tool will be run.')
+				if attribute == "chosen_project":
+					if value is not None and value != "" and value != "-1":
+						cp = Project.objects.get(id=value)
+						if cp.check_date(new_usage_event.start):
+							project_events[index].project = Project.objects.get(id=value)
+						else:
+							msg = 'The project ' + str(cp.project_number) + ' cannot be used for a transaction with a start date of ' + str(new_usage_event.start) + ' because the project start date is ' + str(cp.start_date)
+							new_usage_event.delete()
+							return HttpResponseBadRequest(msg)
+					else:
+						new_usage_event.delete()
+						return HttpResponseBadRequest('Please choose a project for charges made during this run.')
+
+				if hasattr(project_events[index], 'customer') and hasattr(project_events[index], 'project'):
+					response = check_policy_to_enable_tool_for_multi(tool, operator, project_events[index].customer, project_events[index].project, request)
+					if response.status_code != HTTPStatus.OK:
+						new_usage_event.delete()
+						return response
+
+		# if set for autologout, automatically divide 100 percent by the total number of customers
+		customer_count = 0
+		for p in project_events.values():
+			customer_count += 1
+
+		if set_for_autologout:
+			current_count = 0
+			for p in project_events.values():
+				current_count += 1
+				if current_count < customer_count:
+					p.project_percent = round(Decimal(100/customer_count),2)
 				else:
-					new_usage_event.delete()
-					return HttpResponseBadRequest('Please choose a project for charges made during this run.')
+					p.project_percent = round(Decimal(100 - (customer_count - 1)*(100/customer_count)),2)
 
-			if hasattr(project_events[index], 'customer') and hasattr(project_events[index], 'project'):
-				response = check_policy_to_enable_tool_for_multi(tool, operator, project_events[index].customer, project_events[index].project, request)
-				if response.status_code != HTTPStatus.OK:
-					new_usage_event.delete()
-					return response
+		for p in project_events.values():
+			if set_for_autologout:
+				p.full_clean()
+			else:
+				p.full_clean(exclude='project_percent')
+			p.save()
 
-	for p in project_events.values():
-		p.full_clean(exclude='project_percent')
-		p.save()
+		# All policy checks passed so enable the tool for the user.
+		if tool.interlock and not tool.interlock.unlock():
+			logger.error("The interlock command for this tool failed. The error message returned: " + str(tool.interlock.most_recent_reply))
+			#raise Exception("The interlock command for this tool failed. The error message returned: " + str(tool.interlock.most_recent_reply))
 
-	# All policy checks passed so enable the tool for the user.
-	if tool.interlock and not tool.interlock.unlock():
-		logger.error("The interlock command for this tool failed. The error message returned: " + str(tool.interlock.most_recent_reply))
-		#raise Exception("The interlock command for this tool failed. The error message returned: " + str(tool.interlock.most_recent_reply))
-
-	# record staff charges
-	if request.user.charging_staff_time():
-		if request.POST.get("override_staff_charge") == "true":
-			current_staff_charge = request.user.get_staff_charge()
-			current_staff_charge.charge_end_override = True
-			current_staff_charge.override_confirmed = False
-			current_staff_charge.end = timezone.now()
-			current_staff_charge.updated = timezone.now()
-			current_staff_charge.save()
+		# record staff charges
+		if request.user.charging_staff_time():
+			if request.POST.get("override_staff_charge") == "true":
+				current_staff_charge = request.user.get_staff_charge()
+				current_staff_charge.charge_end_override = True
+				current_staff_charge.override_confirmed = False
+				current_staff_charge.end = timezone.now()
+				current_staff_charge.updated = timezone.now()
+				current_staff_charge.save()
+				new_staff_charge = StaffCharge()
+				new_staff_charge.staff_member = request.user
+				new_staff_charge.created = timezone.now()
+				new_staff_charge.updated = timezone.now()
+				new_staff_charge.save()
+			else:
+				new_staff_charge = request.user.get_staff_charge()
+		else:
 			new_staff_charge = StaffCharge()
 			new_staff_charge.staff_member = request.user
 			new_staff_charge.created = timezone.now()
 			new_staff_charge.updated = timezone.now()
 			new_staff_charge.save()
-		else:
-			new_staff_charge = request.user.get_staff_charge()
-	else:
-		new_staff_charge = StaffCharge()
-		new_staff_charge.staff_member = request.user
-		new_staff_charge.created = timezone.now()
-		new_staff_charge.updated = timezone.now()
-		new_staff_charge.save()
+	
+		project_charges = {}
 
-	project_charges = {}
-
-	for key, value in request.POST.items():
-		if is_valid_field(key):
-			attribute, separator, index = key.partition("__")
-			index = int(index)
-			if index not in project_charges:
-				project_charges[index] = StaffChargeProject()
-				project_charges[index].staff_charge = new_staff_charge
-				project_charges[index].created = timezone.now()
-				project_charges[index].updated = timezone.now()
-			if attribute == "chosen_user":
-				if value is not None and value != "":
-					project_charges[index].customer = User.objects.get(id=value)
-				else:
-					new_staff_charge.delete()
-					new_usage_event.delete()
-					return HttpResponseBadRequest('Please choose a user for whom the tool will be run.')
-			if attribute == "chosen_project":
-				if value is not None and value != "" and value != "-1":
-					cp = Project.objects.get(id=value)
-					if cp.check_date(new_staff_charge.start):
-						project_charges[index].project = Project.objects.get(id=value)
+		for key, value in request.POST.items():
+			if is_valid_field(key):
+				attribute, separator, index = key.partition("__")
+				index = int(index)
+				if index not in project_charges:
+					project_charges[index] = StaffChargeProject()
+					project_charges[index].staff_charge = new_staff_charge
+					project_charges[index].created = timezone.now()
+					project_charges[index].updated = timezone.now()
+				if attribute == "chosen_user":
+					if value is not None and value != "":
+						project_charges[index].customer = User.objects.get(id=value)
 					else:
-						msg = 'The project ' + str(cp.project_number) + ' cannot be used for a transaction with a start date of ' + str(new_staff_charge) + ' because the project start date is ' + str(cp.start_date)
 						new_staff_charge.delete()
 						new_usage_event.delete()
-						return HttpResponseBadRequest(msg)
-				else:
-					new_staff_charge.delete()
-					new_usage_event.delete()
-					return HttpResponseBadRequest('Please choose a project for charges made during this run.')
+						return HttpResponseBadRequest('Please choose a user for whom the tool will be run.')
+				if attribute == "chosen_project":
+					if value is not None and value != "" and value != "-1":
+						cp = Project.objects.get(id=value)
+						if cp.check_date(new_staff_charge.start):
+							project_charges[index].project = Project.objects.get(id=value)
+						else:
+							msg = 'The project ' + str(cp.project_number) + ' cannot be used for a transaction with a start date of ' + str(new_staff_charge) + ' because the project start date is ' + str(cp.start_date)
+							new_staff_charge.delete()
+							new_usage_event.delete()
+							return HttpResponseBadRequest(msg)
+					else:
+						new_staff_charge.delete()
+						new_usage_event.delete()
+						return HttpResponseBadRequest('Please choose a project for charges made during this run.')
 
-	for p in project_charges.values():
-		if not StaffChargeProject.objects.filter(staff_charge=p.staff_charge, customer=p.customer, project=p.project, active_flag=True).exists():
-			p.full_clean(exclude='project_percent')
-			p.save()
+		# if set for autologout, automatically divide 100 percent by the total number of customers
+#		customer_count = 0
+#		for p in project_events.values():
+#			customer_count += 1
+
+#		if set_for_autologout:
+#			current_count = 0
+#			for p in project_events.values():
+#				current_count += 1
+#				if current_count < customer_count:
+#					p.project_percent = round(Decimal(100/customer_count),2)
+#				else:
+#					p.project_percent = round(Decimal(100 - (customer_count - 1)*(100/customer_count)),2)
+
+		for p in project_charges.values():
+			if not StaffChargeProject.objects.filter(staff_charge=p.staff_charge, customer=p.customer, project=p.project, active_flag=True).exists():
+#				if set_for_autologout:
+#					p.full_clean()
+#				else:
+				p.full_clean(exclude='project_percent')
+				p.save()
 		 
-	if tool.requires_area_access and AreaAccessRecord.objects.filter(area=tool.requires_area_access,customer=operator,end=None, active_flag=True).count() == 0:
-		if AreaAccessRecord.objects.filter(customer=operator,end=None, active_flag=True).count() > 0:
-			areas = AreaAccessRecord.objects.filter(customer=operator,end=None, active_flag=True)
-			for a in areas:
-				a.end = timezone.now()
-				a.save()
+		if tool.requires_area_access and AreaAccessRecord.objects.filter(area=tool.requires_area_access,customer=operator,end=None, active_flag=True).count() == 0:
+			if AreaAccessRecord.objects.filter(customer=operator,end=None, active_flag=True).count() > 0:
+				areas = AreaAccessRecord.objects.filter(customer=operator,end=None, active_flag=True)
+				for a in areas:
+					a.end = timezone.now()
+					a.save()
 
-		aar = AreaAccessRecord()
-		aar.area = tool.requires_area_access
-		aar.start = timezone.now()
-		aar.created = timezone.now()
-		aar.updated = timezone.now()
+			aar = AreaAccessRecord()
+			aar.area = tool.requires_area_access
+			aar.start = timezone.now()
+			aar.created = timezone.now()
+			aar.updated = timezone.now()
 
-		if new_staff_charge:
-			aar.staff_charge = new_staff_charge
+			if new_staff_charge:
+				aar.staff_charge = new_staff_charge
 
-		aar.save()
+			aar.save()
 
-		if new_staff_charge:
-			scp = StaffChargeProject.objects.filter(staff_charge=new_staff_charge, active_flag=True)
+			if new_staff_charge:
+				scp = StaffChargeProject.objects.filter(staff_charge=new_staff_charge, active_flag=True)
 
-			for s in scp:
-				aarp = AreaAccessRecordProject()
-				aarp.area_access_record = aar
-				aarp.project = s.project
-				aarp.customer = s.customer
-				aarp.created = timezone.now()
-				aarp.updated = timezone.now()
-				aarp.save()
+				for s in scp:
+					aarp = AreaAccessRecordProject()
+					aarp.area_access_record = aar
+					aarp.project = s.project
+					aarp.customer = s.customer
+#					if s.project_percent is not None:
+#						aarp.project_percent = s.project_percent
+					aarp.created = timezone.now()
+					aarp.updated = timezone.now()
+					aarp.save()
 
 	return response
 
@@ -908,8 +967,8 @@ def create_usage_event(request):
 		'end_date': dates['end'],
 	}
 
-	if request.user.is_superuser:
-		operators = User.objects.filter(is_staff=True).order_by('last_name', 'first_name')
+	if request.user.is_superuser or request.user.is_staff:
+		operators = User.objects.filter(is_active=True, projects__active=True, projects__account__active=True).distinct().order_by('last_name', 'first_name')
 		dictionary['operators'] = operators
 
 	return render(request, 'tool_control/ad_hoc_usage_event.html', dictionary)
