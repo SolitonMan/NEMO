@@ -265,8 +265,8 @@
 					{% for g in user.groups.all %}
 						{% if g.name == "Fixed Cost Billing" %}
 					<h4>How would you like to use this tool?</h4>
-					<div class="radio"><label><input type="radio" name="billing_mode" value="false" id="billing_mode" checked>Standard billing (time & materials)</label></div>
-					<div class="radio"><label><input type="radio" name="billing_mode" value="true" id="billing_mode">Fixed per sample rate (totals to be entered manually)</label></div>
+					<div class="radio"><label><input type="radio" name="billing_mode" value="false" id="billing_mode" onclick="show_autologout(1);" checked>Standard billing (time & materials)</label></div>
+					<div class="radio"><label><input type="radio" name="billing_mode" value="true" id="billing_mode" onclick="show_autologout(0);">Fixed per sample rate (totals to be entered manually)</label></div>
 						{% endif %}
 					{% endfor %}
 					<h4>What would you like to do?</h4>
@@ -583,6 +583,17 @@
 			$("#duration_options").show();
 		} else {
 			$("#duration_options").hide();
+		}
+	}
+
+	function show_autologout(i)
+	{
+		if (i == 1) {
+			$("#auto_logout_feature").show();
+		} else {
+			$("#auto_logout_feature").hide();
+			$("#set_for_autologout").prop("checked", false);
+			$("#autologout_endtime").val("");
 		}
 	}
 
