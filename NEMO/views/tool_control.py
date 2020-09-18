@@ -1027,7 +1027,7 @@ def create_usage_event(request):
 
 	dictionary = {
 		'tools': tools,
-		'users': User.objects.filter(is_active=True, projects__active=True, projects__account__active=True).exclude(id=request.user.id).distinct(),
+		'users': User.objects.filter(is_active=True, projects__active=True, projects__account__active=True).distinct(),
 		'start_date': dates['start'],
 		'end_date': dates['end'],
 	}

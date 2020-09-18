@@ -166,16 +166,12 @@
 					<textarea name="operator_comment" id="operator_comment" rows="10" cols="80"></textarea>
 				</td>
 			</tr>
-			{% if request.user.is_superuser %}
+			{% if request.user.is_superuser or request.user.is_staff %}
 			<tr>
 				<th>Operator</th>
 				<td>
-					<select id="operator" name="operator" class="form-control" onchange="set_radio(this.options[this.selectedIndex].value);">
-						<option value="">Please select the operator</option>
-					{% for o in operators %}
-						<option value="{{ o.id }}"{% if o.id == operator_id %} selected{% endif %}>{{ o.last_name }}, {{ o.first_name }} ({{ o.username }})</option>
-					{% endfor %}
-					</select>
+					<input type="text" class="form-control" id="operator" name="operator" />
+					<input type="button" class="btn btn-default" style="display:none" id="operator_button" onclick="purge_operator();" />
 				</td>
 			</tr>
 			{% else %}
@@ -187,17 +183,17 @@
 				</td>
 			</tr>
 			{% endif %}
-			<tr id="radio_options" style="{% if request.user.is_superuser %}display: none;{% else %}display: table-row;{% endif %}">
+			<tr id="radio_options" style="{% if request.user.is_superuser or request.user.is_staff %}display: none;{% else %}display: table-row;{% endif %}">
 				<td colspan="2">
 					<div class="radio"><label><input type="radio" id="use_mode" name="use_mode" value="0" onchange="set_mode(0);">
-					{% if request.user.is_superuser %}
+					{% if request.user.is_superuser or request.user.is_staff %}
 					The tool was used by the operator
 					{% else %}
 					I used the tool for myself
 					{% endif %}
 					</label></div>
 					<div class="radio"><label><input type="radio" id="use_mode" name="use_mode" value="1" onchange="set_mode(1);">
-					{% if request.user.is_superuser %}
+					{% if request.user.is_superuser or request.user.is_staff %}
 					The tool was used for others
 					{% else %}
 					I used the tool for others
@@ -247,6 +243,7 @@
 
 <script type="text/javascript">
 var current_entry_number = 0;
+var selected_operator = "";
 
 function set_radio(sOption)
 {
@@ -276,8 +273,8 @@ function set_mode(iMode)
 		$("#event_details").append($("#operator_customer").html());
 		$("#ad_hoc_user_textbox__0").val($("#operator").val());
 		fetch_projects(0, $("#operator").val());
-		{% if request.user.is_superuser %}
-		$("#selected_operator").html($("#operator option:selected").text());
+		{% if request.user.is_superuseri or request.user.is_staff %}
+		$("#selected_operator").html(selected_operator);
 		{% else %}
 		$("#selected_operator").html("{{ request.user.first_name }} {{ request.user.last_name }}");
 		{% endif %}
@@ -294,6 +291,43 @@ function add_customer()
 		enable_autocompletion(current_entry_number);
 		current_entry_number++;
 	}
+}
+
+function enable_operator()
+{
+	var id = "#operator";
+	$(id).autocomplete('operator', on_operator_selection, {{ users|json_search_base }}).focus();
+}
+
+function on_operator_selection(jquery_event, search_selection, dataset_name)
+{
+	$(this).typeahead('val', search_selection.id).hide();
+	var button_id = "#operator_button";
+	$(button_id).val(search_selection.name).show();
+	set_radio(search_selection.id);
+	selected_operator = search_selection.name;
+
+	/* set options for tool use based on if operator is current user
+	if (search_selection.id == {{ request.user.id }}) {
+		
+	} else {
+
+	}
+	*/
+}
+
+function purge_operator()
+{
+	$("#operator_button").hide();
+	$("#operator").typeahead('val', '').css("display","inline").focus();
+
+	while ($("#event_details tr:last").find(".radio").length == 0) {
+		$("#event_details tr:last").remove();
+	}
+
+	$("#use_mode").each(function() {
+		$(this).prop("checked", false);
+	});
 }
 
 function enable_autocompletion(entry_number)
@@ -430,6 +464,7 @@ function on_load()
 	$("#ad_hoc_start").val({% if ad_hoc_start %}"{{ ad_hoc_start }}"{% else %}""{% endif %});
 	$("#ad_hoc_end").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss', minDate: '{{ start_date }} 00:00:00', maxDate: '{{ end_date }} 23:59:59'});
 	$("#ad_hoc_end").val({% if ad_hoc_end %}"{{ ad_hoc_end }}"{% else %}""{% endif %});
+	enable_operator();
 }
 
 $(on_load);
