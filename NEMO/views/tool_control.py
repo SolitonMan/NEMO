@@ -1093,7 +1093,7 @@ def save_usage_event(request):
 
 		tool = Tool.objects.get(id=tool_id)
 
-		if request.user.is_superuser:
+		if request.user.is_superuser or request.user.is_staff:
 			operator_id = request.POST.get('operator', None)
 			if operator_id is None or operator_id == '':
 				msg = 'An operator must be selected for creating an ad hoc usage event.'
@@ -1189,10 +1189,15 @@ def save_usage_event(request):
 			tools = Tool.objects.all()
 		params['tools'] = tools
 
-		if request.user.is_superuser:
-			operators = User.objects.filter(is_staff=True).order_by('last_name', 'first_name')
+		if request.user.is_superuser or request.user.is_staff:
+			operators = User.objects.filter(is_active=True, projects__active=True, projects__account__active=True).distinct().order_by('last_name', 'first_name')
 			params['operators'] = operators
-		params['users'] = User.objects.filter(is_active=True, projects__active=True, projects__account__active=True).exclude(id=request.user.id).distinct()
+		params['users'] = User.objects.filter(is_active=True, projects__active=True, projects__account__active=True).distinct()
+
+		# set start and end dates
+		dates = get_billing_date_range()
+		params['start_date'] = dates['start']
+		params['end_date'] = dates['end']
 
 		if msg == '':
 			params['error'] = inst

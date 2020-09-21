@@ -336,13 +336,19 @@ def remote_work(request):
 
 			transactions[transaction_key]['customers'] = customers
 
+	if request.user.is_superuser:
+		staff_list = User.objects.filter(is_active=True).order_by('last_name', 'first_name')
+	elif request.user.groups.filter(name="Core Admin").exists():
+		staff_list = User.objects.filter(is_staff=True, core_ids__in=request.user.core_ids.all(), is_active=True).order_by('last_name', 'first_name')
+	else:
+		staff_list = None
 
 	dictionary = {
 		'usage': usage_events,
 		'staff_charges': staff_charges if request.user.is_staff else None,
 		'area_access_records': area_access_records,
 		'consumable_withdraws': consumable_withdraws if request.user.is_staff else None,
-		'staff_list': User.objects.filter(is_staff=True).order_by('last_name', 'first_name'),
+		'staff_list': staff_list,
 		'month_list': month_list(),
 		'selected_staff': operator.id if operator else "all staff",
 		'selected_month': datetime.strptime(start_date, '%Y-%m-%d').strftime('%B, %Y'),
