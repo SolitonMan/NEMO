@@ -1,6 +1,12 @@
 {% extends 'base.html' %}
 {% load custom_tags_and_filters %}
 {% block title %}Email broadcast{% endblock %}
+{% block extrahead %}
+	{% load static %}
+	<script type="text/javascript" src="{% static "datetimepicker/bootstrap-datetimepicker.js" %}"></script>
+	<link rel="stylesheet" type="text/css" href="{% static "datetimepicker/bootstrap-datetimepicker.css" %}"/>
+{% endblock %}
+
 {% block content %}
 	<h1>Email broadcast</h1>
 
@@ -10,12 +16,20 @@
 		</div>
 	{% endif %}
 
+	<p>
 	Compose an email to all users who...
 	<ul>
-		<li><a href="{% url 'email_broadcast' 'tool' %}">are qualified for a tool</a></li>
-		<li><a href="{% url 'email_broadcast' 'project' %}">are working on a project</a></li>
-		<li><a href="{% url 'email_broadcast' 'account' %}">bill to an account</a></li>
+		<li><a href="{% url 'email_broadcast' 'tool' %}">are qualified for a tool</a> or <a href="{% url 'email_broadcast' 'tool_date' %}">used a tool during a specific date range</a></li>
+		<li><a href="{% url 'email_broadcast' 'project' %}">are working on a project</a> or <a href="{% url 'email_broadcast' 'project_date' %}">charged to a project during a specific date range</a></li>
+		<li><a href="{% url 'email_broadcast' 'group' %}">are members of a group</a></li>
 	</ul>
+	</p>
+	<p>
+	or 
+	<ul>
+		<li><a href="{% url 'email_broadcast' 'user' %}">email a particular user</a></li>
+	</ul>
+	</p>
 
 	{% if search_base %}
 		<div class="row">
@@ -23,19 +37,64 @@
 				<input id="search" class="form-control" placeholder="Which {{ audience }}?" autofocus />
 			</div>
 		</div>
+		{% if date_range %}
+		<div class="row">
+			<label for="start_select">Start
+			<div class="datetimepicker-container">
+				<input type="text" name="start_select" id="start_select" />
+			</div>
+			</label>
+			<label for="end_select">End
+			<div class="datetimepicker-container">
+				<input type="text" name="end_select" id="end_select" />
+			</div>
+			</label>
+		</div>
+		{% endif %}
 
 		<form id="email" method="get" action="{% url 'compose_email' %}">
 			<input type="hidden" name="audience" value="{{ audience }}">
 			<input type="hidden" id="selection" name="selection">
+			{% if date_range %}
+			<input type="hidden" name="start" id="start" />
+			<input type="hidden" name="end" id="end" />
+			{% endif %}
 		</form>
 
 		<script type="text/javascript">
+			$('#search').autocomplete('search_base', set_selection, {{ search_base|json_search_base }});
+		{% if date_range %}
+			$("#start_select").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss'})
+				.on('dp.change', function() {
+					$("#start").val($(this).val());
+					check_complete();
+				}
+			);
+			$("#end_select").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss'})
+				.on('dp.change', function() {
+					$("#end").val($(this).val());
+					check_complete();
+				}
+			);
+			function set_selection(jquery_event, search_selection, dataset_name)
+			{
+				$('#selection').val(search_selection.id);
+				check_complete();
+			}
+			function check_complete()
+			{
+				if ($('#selection').val() != "" && $('#start').val() != "" && $('#end').val() != "") {
+					$('#email').submit();
+				}
+			}
+		{% else %}
 			$('#search').autocomplete('search_base', set_selection, {{ search_base|json_search_base }});
 			function set_selection(jquery_event, search_selection, dataset_name)
 			{
 				$('#selection').val(search_selection.id);
 				$('#email').submit();
 			}
+		{% endif %}
 		</script>
 	{% endif %}
 {% endblock %}

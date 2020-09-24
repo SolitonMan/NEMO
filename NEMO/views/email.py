@@ -3,15 +3,17 @@ from smtplib import SMTPException
 
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import Group
 from django.core.mail import EmailMultiAlternatives
 from django.core.validators import validate_email
+from django.db.models import Q
 from django.http import HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.template import Template, Context
 from django.views.decorators.http import require_GET, require_POST
 
 from NEMO.forms import EmailBroadcastForm
-from NEMO.models import Tool, Account, Project, User
+from NEMO.models import Tool, Account, Project, User, UsageEvent, UsageEventProject, StaffCharge, StaffChargeProject, AreaAccessRecord, AreaAccessRecordProject, Consumable, ConsumableWithdraw
 from NEMO.views.customization import get_media_file_contents
 
 
@@ -73,13 +75,27 @@ def send_email(request):
 @staff_member_required(login_url=None)
 @require_GET
 def email_broadcast(request, audience=''):
-	dictionary = {}
+	dictionary = {
+		'date_range': False,
+	}
 	if audience == 'tool':
 		dictionary['search_base'] = Tool.objects.filter(visible=True)
 	elif audience == 'project':
 		dictionary['search_base'] = Project.objects.filter(active=True, account__active=True)
 	elif audience == 'account':
 		dictionary['search_base'] = Account.objects.filter(active=True)
+	elif audience == 'user':
+		dictionary['search_base'] = User.objects.filter(is_active=True).order_by('last_name', 'first_name')
+	elif audience == 'group':
+		dictionary['search_base'] = Group.objects.all()
+	elif audience == 'tool_date':
+		dictionary['search_base'] = Tool.objects.filter(visible=True)
+		audience = 'tool'
+		dictionary['date_range'] = True
+	elif audience == 'project_date':
+		dictionary['search_base'] = Project.objects.filter(active=True, account__active=True)
+		audience = 'project'
+		dictionary['date_range'] = True
 	dictionary['audience'] = audience
 	return render(request, 'email/email_broadcast.html', dictionary)
 
@@ -92,10 +108,37 @@ def compose_email(request):
 	try:
 		if audience == 'tool':
 			users = User.objects.filter(qualifications__id=selection).distinct()
+			if date_range:
+				# get start and end times
+				start = request.GET.get('start')
+				end = request.GET.get('end')
+
+				# find users based on their operation of the tool
+				usage_events = UsageEvent.objects.filter(tool__id=selection)
+				usage_events = usage_events.filter(Q(start__range=[start, end]) | Q(end__range=[start, end]))
+				users = User.objects.filter(id__in=usage_events.operator.id)
+
 		elif audience == 'project':
 			users = User.objects.filter(projects__id=selection).distinct()
+			if date_range:
+				# get start and end times
+				start = request.GET.get('start')
+				end = request.GET.get('end')
+
+				# find users based on charges to a project
+				usage_events = UsageEvent.objects.filter(projects__id=selection)
+				staff_charges = StaffCharge.objects.filter(projects__id=selection)
+				area_access_records = AreaAccessRecord.objects.filter(projects__id=selection)
+				consumable_withdraws = ConsumableWithdraw.objects.filter(project__id=selection)
+
+				users = User.objects.filter(Q(id__in=usage_events.operator.id) | Q(id__in=staff_charges.staff_member.id) | Q(id__in=area_access_records.staff_charge.staff_member.id) | Q(id__in=consumable_withdraws.merchant.id))
+
 		elif audience == 'account':
 			users = User.objects.filter(projects__account__id=selection).distinct()
+		elif audience == 'user':
+			users = User.objects.filter(id=selection).distinct()
+		elif audience == 'group':
+			users = User.objects.filter(groups__id=selection).distinct()
 		else:
 			dictionary = {'error': 'You specified an invalid audience'}
 			return render(request, 'email/email_broadcast.html', dictionary)
@@ -107,6 +150,7 @@ def compose_email(request):
 		'audience': audience,
 		'selection': selection,
 		'users': users,
+		'cc_users': User.objects.filter(is_active=True).order_by('last_name', 'first_name'),
 	}
 	if generic_email_sample:
 		generic_email_context = {
