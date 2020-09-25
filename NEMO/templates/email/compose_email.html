@@ -1,10 +1,15 @@
 {% extends 'base.html' %}
+{% load custom_tags_and_filters %}
 {% block title %}Compose email{% endblock %}
+{% block extrahead %}
+	{% load static %}
+{% endblock %}
+
 {% block content %}
 	<h1>Compose an email</h1>
 	{% if generic_email_sample %}
 		<div class="row">
-			<form action="{% url 'send_broadcast_email' %}" method="post">
+			<form action="{% url 'send_broadcast_email' %}" method="post" id="compose_email">
 				{% csrf_token %}
 				<div class="col-sm-6">
 					<h3>Recipients</h3>
@@ -15,10 +20,23 @@
 					<div class="checkbox">
 						<label><input type="checkbox" name="copy_me" checked> Send a copy of this email to myself</label>
 					</div>
+					<span id="recipients">
 					{% for u in users %}
-						<span {% if not u.is_active %}style="color:lightgrey"{% endif %}>{{ u }} - {{ u.email }}</span><br>
+						<span id="rec_{{ u.id }}">
+						<span class="glyphicon glyphicon-remove-circle grey pointer" onclick="remove_recipient({{ u.id }});"></span>
+						<span {% if not u.is_active %}style="color:lightgrey"{% endif %}>{{ u }} - {{ u.email }}</span>
+						<input type="hidden" name="recipient" value="{{ u.id }}" />
+						</span><br/>
 					{% endfor %}
+					</span>
+					<br/><br/>
+					<div class="row">
+					To add additional recipients to this email, please select from the user search field:<br/>
+					<input class="form-control" id="search" placeholder="Please search for additional recipients" />
+					</div>
 				</div>
+
+
 				<div class="col-sm-6">
 					<h3>Email content</h3>
 					<input type="hidden" name="audience" value="{{ audience }}">
@@ -73,6 +91,27 @@
 				</div>
 			</form>
 		</div>
+		<script type="text/javascript">
+		$('#search').autocomplete('search_base', set_selection, {% json_search_base_with_extra_fields cc_users 'email' %});
+		function set_selection(jquery_event, search_selection, dataset_name)
+		{
+			s_append = '<span id="rec_' + search_selection.id + '">';
+			s_append += '<span class="glyphicon glyphicon-remove-circle grey pointer" onclick="remove_recipient(' + search_selection.id + ');"></span>';
+			s_append += '<span> ' + search_selection.name + ' - ' + search_selection.email + '</span>';
+			s_append += '<input type="hidden" name="recipient" value="' + search_selection.id + '" />';
+			s_append += '</span><br/>';
+
+			$("#recipients").append(s_append);
+			//$("#compose_email").append("<input type='hidden' name='recipient' id='recipient' value='" + search_selection.id + "' />");
+			$('#search').val("");
+		}
+		function remove_recipient(id)
+		{
+			var s = "#rec_" + id;
+			$(s).next().remove();
+			$(s).remove();
+		}
+		</script>
 	{% else %}
 		A generic email format has not been customized for your organization yet. You'll need to create one before you can send email broadcasts from within LEO. Please visit the <a href="{% url 'customization' %}">customizations page</a> to upload a template.
 	{% endif %}

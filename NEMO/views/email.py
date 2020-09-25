@@ -90,11 +90,9 @@ def email_broadcast(request, audience=''):
 		dictionary['search_base'] = Group.objects.all()
 	elif audience == 'tool_date':
 		dictionary['search_base'] = Tool.objects.filter(visible=True)
-		audience = 'tool'
 		dictionary['date_range'] = True
 	elif audience == 'project_date':
 		dictionary['search_base'] = Project.objects.filter(active=True, account__active=True)
-		audience = 'project'
 		dictionary['date_range'] = True
 	dictionary['audience'] = audience
 	return render(request, 'email/email_broadcast.html', dictionary)
@@ -110,7 +108,7 @@ def compose_email(request):
 	end = None
 
 	try:
-		if audience == 'tool':
+		if audience == 'tool' or audience == 'tool_date':
 			users = User.objects.filter(qualifications__id=selection).distinct()
 			if date_range:
 				# get start and end times
@@ -122,7 +120,7 @@ def compose_email(request):
 				usage_events = usage_events.filter(Q(start__range=[start, end]) | Q(end__range=[start, end]))
 				users = User.objects.filter(id__in=usage_events.values_list('operator', flat=True))
 
-		elif audience == 'project':
+		elif audience == 'project' or audience == 'project_date':
 			users = User.objects.filter(projects__id=selection).distinct()
 			if date_range:
 				# get start and end times
@@ -175,6 +173,7 @@ def compose_email(request):
 def send_broadcast_email(request):
 	if not get_media_file_contents('generic_email.html'):
 		return HttpResponseBadRequest('Generic email template not defined. Visit the NEMO customizable_key_values page to upload a template.')
+	recipients = request.POST.getlist('recipient', None)
 	form = EmailBroadcastForm(request.POST)
 	if not form.is_valid():
 		return render(request, 'email/compose_email.html', {'form': form})
@@ -197,6 +196,12 @@ def send_broadcast_email(request):
 			users = User.objects.filter(projects__id=selection)
 		elif audience == 'account':
 			users = User.objects.filter(projects__account__id=selection)
+		elif audience == 'group':
+			users = User.objects.filter(groups__id=selection)
+		elif audience == 'user':
+			users = User.objects.filter(id=selection)
+		elif recipients is not None:
+			users = User.objects.filter(id__in=recipients)
 		if active_choice:
 			users = users.filter(is_active=True)
 	except Exception as error:

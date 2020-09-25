@@ -248,8 +248,9 @@ class EmailBroadcastForm(Form):
 	contents = CharField(required=False)
 	copy_me = BooleanField(initial=True)
 
-	audience = ChoiceField(choices=[('tool', 'tool'), ('project', 'project'), ('account', 'account')], label="Audience")
+	audience = ChoiceField(choices=[('tool', 'tool'), ('project', 'project'), ('account', 'account'), ('tool_date','tool_date'), ('project_date', 'project_date'), ('user', 'user'), ('group', 'group')], label="Audience")
 	selection = IntegerField()
+	recipient = CharField(required=False)
 	only_active_users = BooleanField(initial=True)
 
 	def clean_title(self):
