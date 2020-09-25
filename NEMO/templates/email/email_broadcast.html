@@ -27,7 +27,7 @@
 	<p>
 	or 
 	<ul>
-		<li><a href="{% url 'email_broadcast' 'user' %}">email a particular user</a></li>
+		<li><a href="{% url 'email_broadcast' 'user' %}">email a user</a></li>
 	</ul>
 	</p>
 
@@ -38,6 +38,7 @@
 			</div>
 		</div>
 		{% if date_range %}
+		<br/><br/>
 		<div class="row">
 			<label for="start_select">Start
 			<div class="datetimepicker-container">
@@ -56,8 +57,10 @@
 			<input type="hidden" name="audience" value="{{ audience }}">
 			<input type="hidden" id="selection" name="selection">
 			{% if date_range %}
+			<input type="hidden" name="date_range" id="date_range" value="true" />
 			<input type="hidden" name="start" id="start" />
 			<input type="hidden" name="end" id="end" />
+			<input type="submit" id="submit" value="Compose Email" style="display: none;" class="btn btn-default" />
 			{% endif %}
 		</form>
 
@@ -84,7 +87,10 @@
 			function check_complete()
 			{
 				if ($('#selection').val() != "" && $('#start').val() != "" && $('#end').val() != "") {
-					$('#email').submit();
+					//$('#email').submit();
+					$("#submit").show();
+				} else {
+					$("#submit").hide();
 				}
 			}
 		{% else %}

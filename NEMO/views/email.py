@@ -105,6 +105,10 @@ def email_broadcast(request, audience=''):
 def compose_email(request):
 	audience = request.GET.get('audience')
 	selection = request.GET.get('selection')
+	date_range = request.GET.get('date_range')
+	start = None
+	end = None
+
 	try:
 		if audience == 'tool':
 			users = User.objects.filter(qualifications__id=selection).distinct()
@@ -116,7 +120,7 @@ def compose_email(request):
 				# find users based on their operation of the tool
 				usage_events = UsageEvent.objects.filter(tool__id=selection)
 				usage_events = usage_events.filter(Q(start__range=[start, end]) | Q(end__range=[start, end]))
-				users = User.objects.filter(id__in=usage_events.operator.id)
+				users = User.objects.filter(id__in=usage_events.values_list('operator', flat=True))
 
 		elif audience == 'project':
 			users = User.objects.filter(projects__id=selection).distinct()
@@ -127,11 +131,12 @@ def compose_email(request):
 
 				# find users based on charges to a project
 				usage_events = UsageEvent.objects.filter(projects__id=selection)
-				staff_charges = StaffCharge.objects.filter(projects__id=selection)
+				staff_charges = StaffCharge.objects.filter(projects__id=selection)				
 				area_access_records = AreaAccessRecord.objects.filter(projects__id=selection)
+				area_staff_charges = StaffCharge.objects.filter(id__in=area_access_records.values_list('staff_charge', flat=True))
 				consumable_withdraws = ConsumableWithdraw.objects.filter(project__id=selection)
 
-				users = User.objects.filter(Q(id__in=usage_events.operator.id) | Q(id__in=staff_charges.staff_member.id) | Q(id__in=area_access_records.staff_charge.staff_member.id) | Q(id__in=consumable_withdraws.merchant.id))
+				users = User.objects.filter(Q(id__in=usage_events.values_list('operator', flat=True)) | Q(id__in=staff_charges.values_list('staff_member', flat=True)) | Q(id__in=area_staff_charges.values_list('staff_member', flat=True)) | Q(id__in=consumable_withdraws.values_list('merchant', flat=True)))
 
 		elif audience == 'account':
 			users = User.objects.filter(projects__account__id=selection).distinct()
@@ -142,8 +147,8 @@ def compose_email(request):
 		else:
 			dictionary = {'error': 'You specified an invalid audience'}
 			return render(request, 'email/email_broadcast.html', dictionary)
-	except:
-		dictionary = {'error': 'You specified an invalid audience parameter'}
+	except Exception as inst:
+		dictionary = {'error': inst}
 		return render(request, 'email/email_broadcast.html', dictionary)
 	generic_email_sample = get_media_file_contents('generic_email.html')
 	dictionary = {
@@ -151,6 +156,9 @@ def compose_email(request):
 		'selection': selection,
 		'users': users,
 		'cc_users': User.objects.filter(is_active=True).order_by('last_name', 'first_name'),
+		'date_range': date_range,
+		'start': start,
+		'end': end,
 	}
 	if generic_email_sample:
 		generic_email_context = {
