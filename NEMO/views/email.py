@@ -190,6 +190,9 @@ def send_broadcast_email(request):
 	selection = form.cleaned_data['selection']
 	active_choice = form.cleaned_data['only_active_users']
 	try:
+		users = User.objects.filter(id__in=recipients)
+
+		"""
 		if audience == 'tool':
 			users = User.objects.filter(qualifications__id=selection)
 		elif audience == 'project':
@@ -202,6 +205,8 @@ def send_broadcast_email(request):
 			users = User.objects.filter(id=selection)
 		elif recipients is not None:
 			users = User.objects.filter(id__in=recipients)
+		"""
+
 		if active_choice:
 			users = users.filter(is_active=True)
 	except Exception as error:
