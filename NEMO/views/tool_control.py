@@ -1018,16 +1018,21 @@ def ten_most_recent_past_comments_and_tasks(request, tool_id):
 @login_required
 @staff_member_required(login_url=None)
 def create_usage_event(request):
-	if request.user.core_ids.all().count() > 0:
+	if request.user.core_ids.all().count() > 0 and not request.user.is_superuser:
 		tools = Tool.objects.filter(core_id__in=request.user.core_ids.all())
 	else:
 		tools = Tool.objects.all()
 
 	dates = get_billing_date_range()
 
+	users = User.objects.filter(is_active=True, projects__active=True, projects__account__active=True).distinct()
+
+	if not request.user.is_superuser:
+		users = users.filter(Q(is_staff=False) | Q(id=request.user.id))
+
 	dictionary = {
 		'tools': tools,
-		'users': User.objects.filter(is_active=True, projects__active=True, projects__account__active=True).distinct(),
+		'users': users,
 		'start_date': dates['start'],
 		'end_date': dates['end'],
 	}

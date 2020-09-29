@@ -273,7 +273,7 @@ function set_mode(iMode)
 		$("#event_details").append($("#operator_customer").html());
 		$("#ad_hoc_user_textbox__0").val($("#operator").val());
 		fetch_projects(0, $("#operator").val());
-		{% if request.user.is_superuseri or request.user.is_staff %}
+		{% if request.user.is_superuser or request.user.is_staff %}
 		$("#selected_operator").html(selected_operator);
 		{% else %}
 		$("#selected_operator").html("{{ request.user.first_name }} {{ request.user.last_name }}");
@@ -306,14 +306,15 @@ function on_operator_selection(jquery_event, search_selection, dataset_name)
 	$(button_id).val(search_selection.name).show();
 	set_radio(search_selection.id);
 	selected_operator = search_selection.name;
-
-	/* set options for tool use based on if operator is current user
-	if (search_selection.id == {{ request.user.id }}) {
-		
+	{% if not request.user.is_superuser %}
+	if (search_selection.id != {{ request.user.id }}) {
+		set_mode(0);
+		$("#radio_options").hide();
 	} else {
-
+		$("#radio_options").show();
 	}
-	*/
+	{% endif %}
+
 }
 
 function purge_operator()
