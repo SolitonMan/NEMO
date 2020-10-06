@@ -1026,20 +1026,18 @@ def create_usage_event(request):
 	dates = get_billing_date_range()
 
 	users = User.objects.filter(is_active=True, projects__active=True, projects__account__active=True).distinct()
+	operators = User.objects.filter(is_active=True, projects__active=True, projects__account__active=True).distinct()
 
 	if not request.user.is_superuser:
-		users = users.filter(Q(is_staff=False) | Q(id=request.user.id))
+		operators = operators.filter(Q(is_staff=False) | Q(id=request.user.id))
 
 	dictionary = {
 		'tools': tools,
 		'users': users,
+		'operators': operators,
 		'start_date': dates['start'],
 		'end_date': dates['end'],
 	}
-
-	if request.user.is_superuser or request.user.is_staff:
-		operators = User.objects.filter(is_active=True, projects__active=True, projects__account__active=True).distinct().order_by('last_name', 'first_name')
-		dictionary['operators'] = operators
 
 	return render(request, 'tool_control/ad_hoc_usage_event.html', dictionary)
 

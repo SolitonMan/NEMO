@@ -513,7 +513,7 @@
 			return true;
 		}
 
-		{% if usage_event is not None %}
+		{% if usage_event is not None or staff_charge is not None or area_access_record is not None %}
 		var prop_start = $("#proposed__start__{{ usage_event.id }}");
 		var prop_end = $("#proposed__end__{{ usage_event.id }}");
 		var orig_start = $("#original__start__{{ usage_event.id }}");
@@ -560,10 +560,15 @@
 			}
 		);
 
+		if ($("input[name*='proposed__chosen_user__']").length == 0) {
+			alert("There must be at least one customer.  Please adjust your submission, or cancel and restart if that would be easier.");
+			bSubmit = false;
+		}
+
 		$("select[name*='proposed__chosen_project__']").each(
 			function(index, element) {
 				if (!$(element).prop("disabled")) {
-					if ($(element).val() == "") {
+					if ($(element).val() == "" || $(element).val() == "-1") {
 						alert("Please select a project for each entry");
 						$(element).focus();
 						bSubmit = false;
@@ -583,6 +588,11 @@
 				}
 			}
 		);
+
+		if ($("select[name*='proposed__chosen_project__']").length == 0 && $("input[name*='proposed__chosen_project__']").length == 0) {
+			alert("There must be at least one project selected for this transaction.  Please adjust your submission, or cancel and restart if that would be easier.");
+			bSubmit = False;
+		}
 
 		var percent = 0.0;
 
@@ -610,206 +620,6 @@
 			bSubmit = false;
 		}
 
-		{% endif %}
-
-		{% if staff_charge is not None %}
-		var prop_start = $("#proposed__start__{{ staff_charge.id }}");
-		var prop_end = $("#proposed__end__{{ staff_charge.id }}");
-		var orig_start = $("#original__start__{{ staff_charge.id }}");
-		var orig_end = $("#original__end__{{ staff_charge.id }}");
-
-		var prop_start_date = new Date(prop_start.val());
-		var prop_end_date = new Date(prop_end.val());
-
-		if (prop_start_date == "") {
-			alert("The start date may not be blank");
-			prop_start.focus();
-			return false;
-		}
-
-		if (prop_end_date == "") {
-			alert("The end date may not be blank");
-			prop_end.focus();
-			return false;
-		}
-
-		if (prop_end_date <= prop_start_date) {
-			alert("The end date must be after the start date.  Please adjust your dates to correct this.");
-			return false;
-		}
-
-		if (prop_start.val() != orig_start.val() || prop_end.val() != orig_end.val()) {
-			bChanged = true;
-		}
-
-		$("input[name*='proposed__chosen_user__']").each(
-			function(index, element) {
-				if (!$(element).prop("disabled")) {
-					if ($(element).val() == "") {
-						alert("Please select a user for each entry");
-						$(element).focus();
-						bSubmit = false;
-					} else {
-						s = "#original__chosen_user__" + $(element).prop("name").split("__")[2];
-
-						if ($(s).val() != $(element).val()) {
-							bChanged = true;
-						}
-					}
-				}
-			}
-		);
-
-		$("select[name*='proposed__chosen_project__']").each(
-			function(index, element) {
-				if (!$(element).prop("disabled")) {
-					if ($(element).val() == "") {
-						alert("Please select a project for each entry");
-						$(element).focus();
-						bSubmit = false;
-					} else {
-						s = "#original__chosen_project__" + $(element).prop("name").split("__")[2];
-
-						if ($(element).children("option")) {
-							if ($(s).val() != $(element).children("option:selected").val()) {
-								bChanged = true;
-							}
-						} else {
-							if ($(s).val() != $(element).val()) {
-								bChanged = true;
-							}
-						}
-					}
-				}
-			}
-		);
-
-		var percent = 0.0;
-
-		$("input[name*='proposed__project_percent__']").each(
-			function(index, element) {
-				if (!$(element).prop("disabled")) {
-					if ($(element).val() == "" || isNaN(parseFloat($(element).val()))) {
-						alert("Please enter a numerical value for each project percent field");
-						$(element).focus();
-						bSubmit = false;
-					} else {
-						percent += parseFloat($(element).val());
-
-						s = "#original__project_percent__" + $(element).prop("name").split("__")[2];
-
-						if ($(s).val() != $(element).val()) {
-							bChanged = true;
-						}
-					}
-				}
-			}
-		);
-
-		if (parseInt(percent) != 100) {
-			alert("Percent totals must equal 100");
-			bSubmit = false;
-		}
-		{% endif %}
-
-		{% if area_access_record is not None %}
-		var prop_start = $("#proposed__start__{{ area_access_record.id }}");
-		var prop_end = $("#proposed__end__{{ area_access_record.id }}");
-		var orig_start = $("#original__start__{{ area_access_record.id }}");
-		var orig_end = $("#original__end__{{ area_access_record.id }}");
-
-		var prop_start_date = new Date(prop_start.val());
-		var prop_end_date = new Date(prop_end.val());
-
-		if (prop_start_date == "") {
-			alert("The start date may not be blank");
-			prop_start.focus();
-			return false;
-		}
-
-		if (prop_end_date == "") {
-			alert("The end date may not be blank");
-			prop_end.focus();
-			return false;
-		}
-
-		if (prop_end_date <= prop_start_date) {
-			alert("The end date must be after the start date.  Please adjust your dates to correct this.");
-			return false;
-		}
-
-		if (prop_start.val() != orig_start.val() || prop_end.val() != orig_end.val()) {
-			bChanged = true;
-		}
-
-		$("input[name*='proposed__chosen_user__']").each(
-			function(index, element) {
-				if (!$(element).prop("disabled")) {
-					if ($(element).val() == "") {
-						alert("Please select a user for each entry");
-						$(element).focus();
-						bSubmit = false;
-					} else {
-						s = "#original__chosen_user__" + $(element).prop("name").split("__")[2];
-
-						if ($(s).val() != $(element).val()) {
-							bChanged = true;
-						}
-					}
-				}
-			}
-		);
-
-		$("select[name*='proposed__chosen_project__']").each(
-			function(index, element) {
-				if (!$(element).prop("disabled")) {
-					if ($(element).val() == "") {
-						alert("Please select a project for each entry");
-						$(element).focus();
-						bSubmit = false;
-					} else {
-						s = "#original__chosen_project__" + $(element).prop("name").split("__")[2];
-
-						if ($(element).children("option")) {
-							if ($(s).val() != $(element).children("option:selected").val()) {
-								bChanged = true;
-							}
-						} else {
-							if ($(s).val() != $(element).val()) {
-								bChanged = true;
-							}
-						}
-					}
-				}
-			}
-		);
-
-		var percent = 0.0;
-
-		$("input[name*='proposed__project_percent__']").each(
-			function(index, element) {
-				if (!$(element).prop("disabled")) {
-					if ($(element).val() == "" || isNaN(parseFloat($(element).val()))) {
-						alert("Please enter a numerical value for each project percent field");
-						$(element).focus();
-						bSubmit = false;
-					} else {
-						percent += parseFloat($(element).val());
-
-						s = "#original__project_percent__" + $(element).prop("name").split("__")[2];
-
-						if ($(s).val() != $(element).val()) {
-							bChanged = true;
-						}
-					}
-				}
-			}
-		);
-
-		if (parseInt(percent) != 100) {
-			alert("Percent totals must equal 100");
-			bSubmit = false;
-		}
 		{% endif %}
 
 		{% if consumable_withdraw is not None %}
@@ -850,10 +660,15 @@
 			}
 		);
 
+		if ($("input[name*='proposed__chosen_user__']").length == 0) {
+			alert("There must be at least one customer.  Please adjust your submission, or cancel and restart if that would be easier.");
+			bSubmit = false;
+		}
+
 		$("select[name*='proposed__chosen_project__']").each(
 			function(index, element) {
 				if (!$(element).prop("disabled")) {
-					if ($(element).val() == "") {
+					if ($(element).val() == "" || $(element).val() == "-1") {
 						alert("Please select a project for each entry");
 						$(element).focus();
 						bSubmit = false;
@@ -873,6 +688,11 @@
 				}
 			}
 		);
+
+		if ($("select[name*='proposed__chosen_project__']").length == 0 && $("input[name*='proposed__chosen_project__']").length == 0) {
+			alert("There must be at least one project chosen for this transaction.  Please adjust your submission, or cancel and restart if that would be easier.");
+			bSubmit = false;
+		}
 
 		var percent = 0.0;
 

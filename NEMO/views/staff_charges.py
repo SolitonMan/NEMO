@@ -763,19 +763,20 @@ def end_staff_charge(request, modal_flag):
 			charge.save()
 
 			if AreaAccessRecord.objects.filter(staff_charge=charge, active_flag=True).exists():
-				aar = AreaAccessRecord.objects.get(staff_charge=charge)
-				if aar.end is None:
-					aar.end = timezone.now()
-					aar.updated = timezone.now()
-					aar.save()
+				aars = AreaAccessRecord.objects.filter(staff_charge=charge)		# multiple areas may be accessed during on staff charge
+				for aar in aars:
+					if aar.end is None:
+						aar.end = timezone.now()
+						aar.updated = timezone.now()
+						aar.save()
 
-				aarp = AreaAccessRecordProject.objects.filter(area_access_record=aar, active_flag=True)
+					aarp = AreaAccessRecordProject.objects.filter(area_access_record=aar, active_flag=True)
 
-				if aarp is not None:
-					for a in aarp:
-						a.project_percent = 100.0
-						a.updated = timezone.now()
-						a.save()
+					if aarp is not None:
+						for a in aarp:
+							a.project_percent = 100.0
+							a.updated = timezone.now()
+							a.save()
 
 
 			return update_related_charges(request, charge, StaffCharge.objects.get(related_override_charge=charge))

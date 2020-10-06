@@ -149,9 +149,9 @@ urlpatterns = [
 	url(r'^get_consumables/$', consumables.get_consumables, name='get_consumables'),
 
 	# Training:
-	url(r'^training/$', training.training, name='training'),
-	url(r'^training_entry/$', training.training_entry, name='training_entry'),
-	url(r'^charge_training/$', training.charge_training, name='charge_training'),
+	#url(r'^training/$', training.training, name='training'),
+	#url(r'^training_entry/$', training.training_entry, name='training_entry'),
+	#url(r'^charge_training/$', training.charge_training, name='charge_training'),
 
 	# Safety:
 	url(r'^safety/$', safety.safety, name='safety'),

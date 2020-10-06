@@ -296,7 +296,7 @@ function add_customer()
 function enable_operator()
 {
 	var id = "#operator";
-	$(id).autocomplete('operator', on_operator_selection, {{ users|json_search_base }}).focus();
+	$(id).autocomplete('operator', on_operator_selection, {{ operators|json_search_base }}).focus();
 }
 
 function on_operator_selection(jquery_event, search_selection, dataset_name)

@@ -154,6 +154,17 @@ function update_event_sources()
 		}
 		else
 		{
+			// check for the string "self"
+			if (items.indexOf("self") > -1) {
+				item_check = items.split(",");
+				items = "";
+				for (var i=0; i<item_check.length-1; i++) {
+					if (item_check[i] != "self") {
+						items += item_check[i] + ",";
+					}
+				}
+				items += item_check[item_check.length-1];
+			}
 			tool_event_source.data.tool_ids = items;
 		}
 	}
