@@ -424,7 +424,6 @@ def contest_staff_charge(request, staff_charge_id):
 	return render(request, 'remote_work_contest.html', dictionary)
 
 
-#@staff_member_required(login_url=None)
 @login_required
 @require_POST
 def contest_usage_event(request, usage_event_id):
@@ -446,7 +445,6 @@ def contest_usage_event(request, usage_event_id):
 	return render(request, 'remote_work_contest.html', dictionary)
 
 
-#@staff_member_required(login_url=None)
 @login_required
 @require_POST
 def contest_area_access_record(request, area_access_record_id):
@@ -463,12 +461,12 @@ def contest_area_access_record(request, area_access_record_id):
 	if request.user.is_superuser:
 		areas = Area.objects.all()
 	else:
-		areas = Area.objects.filter(id__in=request.user.physical_access_levels.area.id.all())
+		areas = Area.objects.filter(id__in=request.user.physical_access_levels.all().values_list('area', flat=True))
 	dictionary['areas'] = areas
 	return render(request, 'remote_work_contest.html', dictionary)
 
 
-@staff_member_required(login_url=None)
+@login_required
 @require_POST
 def contest_consumable_withdraw(request, consumable_withdraw_id):
 	dictionary = {
@@ -491,7 +489,6 @@ def contest_consumable_withdraw(request, consumable_withdraw_id):
 def is_valid_field(field):
 	return search("^(proposed|original)__(area|consumable|quantity|chosen_user|chosen_project|project_percent|tool_id|start|end)__(newentry_)?[0-9_]+$", field) is not None
 
-#@staff_member_required(login_url=None)
 @login_required
 @require_POST
 def save_contest(request):

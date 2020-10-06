@@ -70,12 +70,17 @@
 					{% for u in uep %}
 					<tr id="row_{{ u.id }}">
 						<td>
-							<input type="checkbox" name="delete_customer__{{ u.id }}" id="delete_customer__{{ u.id }}" value="1" onclick="mark_for_delete({{ u.id }});" />
+							<input type="checkbox" name="delete_customer__{{ u.id }}" id="delete_customer__{{ u.id }}" value="1" onclick="mark_for_delete({{ u.id }});" {% if not request.user.is_superuser and not request.user.is_staff %}disabled{% endif %}/>
 						</td>
 						<td>
-							<input type="button" class="btn btn-default" value="{{ u.customer }}" name="button__chosen_user__{{ u.id }}" id="button__chosen_user__{{ u.id }}" onclick="change_customer({{ u.id }});" />
 							<input type="hidden" value="{{ u.customer.id }}" name="original__chosen_user__{{ u.id }}" id="original__chosen_user__{{ u.id }}" />
+							{% if request.user.is_superuser or request.user.is_staff %}
+							<input type="button" class="btn btn-default" value="{{ u.customer }}" name="button__chosen_user__{{ u.id }}" id="button__chosen_user__{{ u.id }}" onclick="change_customer({{ u.id }});" />
 							<input type="text" class="form-control" id="proposed__chosen_user__{{ u.id }}" name="proposed__chosen_user__{{ u.id }}" value="{{ u.customer.id }}" data-row="{{ u.id }}" style="display: none;" />
+							{% else %}
+							<input type="hidden" id="proposed__chosen_user__{{ u.id }}" name="proposed__chosen_user__{{ u.id }}" value="{{ u.customer.id }}" data-row="{{ u.id }}" />
+							{{ u.customer }}
+							{% endif %}
 						</td>
 						<td id="user_project__{{ u.id }}">
 							{% if u.customer.active_project_count == 1 %}
@@ -96,9 +101,11 @@
 						</td>
 					</tr>	
 					{% endfor %}
+					{% if request.user.is_superuser or request.user.is_staff %}
 					<tr>
 						<td colspan="4" style="text-align:center"><a href="javascript:void(0)" id="add_customer_link">Add another customer</a></td>
 					</tr>
+					{% endif %}
 					</tbody>
 				</table>
 			</td>
@@ -201,12 +208,12 @@
 					<option value="{{ a.id }}" {% if a == area_access_record.area %}selected{% endif %}>{{ a }}</option>
 				{% endfor %}
 				</select>
-				<input type="hidden" name="original__area__{{ area_access_record.id }}" id="proposed__area__{{ area_access_record.id }}" value="{{ area_access_record.area.id }}" />
+				<input type="hidden" name="original__area__{{ area_access_record.id }}" id="original__area__{{ area_access_record.id }}" value="{{ area_access_record.area.id }}" />
 			</td>
 		</tr>
 		<tr>
 			<th>Staff Member</th>
-			<td>{{ area_access_record.staff_charge.staff_member }}</td>
+			<td>{% if area_access_record.staff_charge %}{{ area_access_record.staff_charge.staff_member }}{% endif %}</td>
 		</tr>
 		<tr>
 			<td colspan="2">
@@ -223,12 +230,17 @@
 					{% for a in aarp %}
 					<tr id="row_{{ a.id }}">
 						<td>
-							<input type="checkbox" name="delete_customer__{{ a.id }}" id="delete_customer__{{ a.id }}" value="1" onclick="mark_for_delete({{ a.id }});" />
+							<input type="checkbox" name="delete_customer__{{ a.id }}" id="delete_customer__{{ a.id }}" value="1" onclick="mark_for_delete({{ a.id }});" {% if not request.user.is_superuser and not request.user.is_staff %}disabled{% endif %}/>
 						</td>
 						<td>
-							<input type="button" class="btn btn-default" value="{{ a.customer }}" name="button__chosen_user__{{ a.id }}" id="button__chosen_user__{{ a.id }}" onclick="change_customer({{ a.id }});" />
 							<input type="hidden" value="{{ a.customer.id }}" name="original__chosen_user__{{ a.id }}" id="original__chosen_user__{{ a.id }}" />
+							{% if request.user.is_superuser or request.user.is_staff %}
+							<input type="button" class="btn btn-default" value="{{ a.customer }}" name="button__chosen_user__{{ a.id }}" id="button__chosen_user__{{ a.id }}" onclick="change_customer({{ a.id }});" />
 							<input type="text" class="form-control" id="proposed__chosen_user__{{ a.id }}" name="proposed__chosen_user__{{ a.id }}" value="{{ a.customer.id }}" data-row="{{ a.id }}" style="display: none;" />
+							{% else %}
+							<input type="hidden" id="proposed__chosen_user__{{ a.id }}" name="proposed__chosen_user__{{ a.id }}" value="{{ a.customer.id }}" data-row="{{ a.id }}" />
+							{{ a.customer }}
+							{% endif %}
 						</td>
 						<td id="user_project__{{ a.id }}">
 							{% if a.customer.active_project_count == 1 %}
@@ -313,10 +325,15 @@
 		<tr>
 			<th>Customer</th>
 			<td>
-				<input type="button" class="btn btn-default" value="{{ consumable_withdraw.customer }}" name="button__chosen_user__{{ consumable_withdraw.id }}" id="button__chosen_user__{{ consumable_withdraw.id }}" onclick="change_customer({{ consumable_withdraw.id }});" />
 				<input type="hidden" value="{{ consumable_withdraw.customer.id }}" name="original__chosen_user__{{ consumable_withdraw.id }}" id="original__chosen_user__{{ consumable_withdraw.id }}" />
-				<input type="text" class="form-control" id="proposed__chosen_user__{{ consumable_withdraw.id }}" name="proposed__chosen_user__{{ consumable_withdraw.id }}" value="{{ consumable_withdraw.customer.id }}" data-row="{{ consumable_withdraw.id }}" style="display: none;" />
 				<input type="hidden" id="original__chosen_project__{{ consumable_withdraw.id }}" name="original__chosen_project__{{ consumable_withdraw.id }}" value="{{ consumable_withdraw.project.id }}" />
+				{% if request.user.is_superuser or request.user.is_staff %}
+				<input type="button" class="btn btn-default" value="{{ consumable_withdraw.customer }}" name="button__chosen_user__{{ consumable_withdraw.id }}" id="button__chosen_user__{{ consumable_withdraw.id }}" onclick="change_customer({{ consumable_withdraw.id }});" />
+				<input type="text" class="form-control" id="proposed__chosen_user__{{ consumable_withdraw.id }}" name="proposed__chosen_user__{{ consumable_withdraw.id }}" value="{{ consumable_withdraw.customer.id }}" data-row="{{ consumable_withdraw.id }}" style="display: none;" />
+				{% else %}
+				<input type="hidden" id="proposed__chosen_user__{{ consumable_withdraw.id }}" name="proposed__chosen_user__{{ consumable_withdraw.id }}" value="{{ consumable_withdraw.customer.id }}" data-row="{{ consumable_withdraw.id }}" />
+				{{ consumable_withdraw.customer }}
+				{% endif %}
 			</td>
 		</tr>
 		<tr>
@@ -360,6 +377,7 @@
 					<option value="Erroneous percentage assignments">Erroneous percentage assignments</option>
 					<option value="Incorrect project selection">Incorrect project selection</option>
 					<option value="Time adjustment">Time adjustment</option>
+					<option value="Wrong customer">Wrong customer</option>
 					<option value="Other">Other</option>
 				</select>
 				</label>
@@ -376,6 +394,7 @@
 		<tr>
 			<td>
 				<input type="submit" class="btn btn-default" value="Contest {{ contest_type }}" />
+				<input type="button" class="btn btn-danger" value="Cancel" onclick="window.location.href='{% url 'remote_work' %}';" />
 			</td>
 		</tr>
 	</table>
@@ -477,7 +496,13 @@
 			$("input").each(function() {
 				if ($(this).prop("name") != "no_charge_flag" && $(this).prop("name") != "other_reason") {
 					if (!($(this).prop("type") == "hidden" && $(this).prop("type") != "submit")) {
+						{% if request.user.is_superuser or request.user.is_staff %}
 						$(this).prop("disabled", false);
+						{% else %}
+						if ($(this).prop("type") != "checkbox") {
+							$(this).prop("disabled", false);
+						}
+						{% endif %}
 					}
 				}
 			});
@@ -591,7 +616,7 @@
 
 		if ($("select[name*='proposed__chosen_project__']").length == 0 && $("input[name*='proposed__chosen_project__']").length == 0) {
 			alert("There must be at least one project selected for this transaction.  Please adjust your submission, or cancel and restart if that would be easier.");
-			bSubmit = False;
+			bSubmit = false;
 		}
 
 		var percent = 0.0;
@@ -620,6 +645,25 @@
 			bSubmit = false;
 		}
 
+		{% endif %}
+
+		{% if area_access_record is not None %}
+		$("select[name*='proposed__area__']").each(
+			function(index, element) {
+				if (!$(element).prop("disabled")) {
+					if ($(element).val() == "-1" || $(element).val() == "") {
+						alert("Please select an area to assign to this transaction.");
+						$(element).focus();
+						bSubmit = false;
+					} else {
+						s = "#original__area__" + $(element).prop("name").split("__")[2];
+						if ($(s).val() != $(element).val()) {
+							bChanged = true;
+						}
+					}
+				}
+			}
+		);
 		{% endif %}
 
 		{% if consumable_withdraw is not None %}
