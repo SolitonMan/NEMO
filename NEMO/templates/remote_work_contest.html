@@ -539,10 +539,27 @@
 		}
 
 		{% if usage_event is not None or staff_charge is not None or area_access_record is not None %}
+
+		{% if usage_event is not None %}
 		var prop_start = $("#proposed__start__{{ usage_event.id }}");
 		var prop_end = $("#proposed__end__{{ usage_event.id }}");
 		var orig_start = $("#original__start__{{ usage_event.id }}");
 		var orig_end = $("#original__end__{{ usage_event.id }}");
+		{% endif %}
+
+		{% if staff_charge is not None %}
+		var prop_start = $("#proposed__start__{{ staff_charge.id }}");
+		var prop_end = $("#proposed__end__{{ staff_charge.id }}");
+		var orig_start = $("#original__start__{{ staff_charge.id }}");
+		var orig_end = $("#original__end__{{ staff_charge.id }}");
+		{% endif %}
+
+		{% if area_access_record is not None %}
+		var prop_start = $("#proposed__start__{{ area_access_record.id }}");
+		var prop_end = $("#proposed__end__{{ area_access_record.id }}");
+		var orig_start = $("#original__start__{{ area_access_record.id }}");
+		var orig_end = $("#original__end__{{ area_access_record.id }}");
+		{% endif %}
 
 		var prop_start_date = new Date(prop_start.val());
 		var prop_end_date = new Date(prop_end.val());

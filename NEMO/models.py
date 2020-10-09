@@ -230,8 +230,8 @@ class User(models.Model):
 	def current_reservation_for_tool(self, tool):
 		current_reservation = None
 		try:
-			if Reservation.objects.filter(start__lte=timezone.now(), end__gt=timezone.now(), cancelled=False, missed=False, user=self, tool=tool).exists():
-				current_reservation = Reservation.objects.filter(start__lte=timezone.now(), end__gt=timezone.now(), cancelled=False, missed=False, user=self, tool=tool)[0]
+			if Reservation.objects.filter(start__lte=timezone.now()+timedelta(0,0,0,0,15,0,0), end__gt=timezone.now(), cancelled=False, missed=False, user=self, tool=tool).exists():
+				current_reservation = Reservation.objects.filter(start__lte=timezone.now()+timedelta(0,0,0,0,15,0,0), end__gt=timezone.now(), cancelled=False, missed=False, user=self, tool=tool)[0]
 				#current_reservation = Reservation.objects.get(start__lte=timezone.now(), end__gt=timezone.now(), cancelled=False, missed=False, user=self, tool=tool)
 		except Reservation.DoesNotExist:
 			pass
@@ -406,19 +406,32 @@ class Tool(models.Model):
 				if c.current_settings is not None and c.current_settings != '':
 					conf = {}
 					consumable_id = int(c.current_settings)
-					conf["type"] = "textbox"
-					conf["title"] = "How much " + c.get_current_setting(0) + " was used?"
-					conf["max-width"] = "250"
-					if Consumable.objects.get(id=consumable_id).unit:
-						conf["suffix"] = str(Consumable.objects.get(id=consumable_id).unit.abbreviation)
+					if consumable_id > 0:
+						conf["type"] = "textbox"
+						conf["title"] = "How much " + c.get_current_setting(0) + " was used?"
+						conf["max-width"] = "250"
+						if Consumable.objects.get(id=consumable_id).unit:
+							conf["suffix"] = str(Consumable.objects.get(id=consumable_id).unit.abbreviation)
+						else:
+							conf["suffix"] = "each"
+						conf["required"] = "true"
+						conf["default_choice"] = "null"
+						conf["placeholder"] = "0"
+						conf["name"] = str(Consumable.objects.get(id=consumable_id).name)
+						conf["consumable"] = str(Consumable.objects.get(id=consumable_id).name)
+						conf["consumable_id"] = str(consumable_id)
 					else:
+						conf["type"] = "textbox"
+						conf["title"] = "None option selected"
+						conf["max-width"] = "250"
 						conf["suffix"] = "each"
-					conf["required"] = "true"
-					conf["default_choice"] = "null"
-					conf["placeholder"] = "0"
-					conf["name"] = str(Consumable.objects.get(id=consumable_id).name)
-					conf["consumable"] = str(Consumable.objects.get(id=consumable_id).name)
-					conf["consumable_id"] = str(consumable_id)
+						conf["required"] = "false"
+						conf["default_choice"] = "null"
+						conf["placeholder"] = "0"
+						conf["name"] = "None"
+						conf["consumable"] = "None"
+						conf["consumable_id"] = "0"
+						
 					post_usage_questions.append(conf)
 		self.post_usage_questions = json.dumps(post_usage_questions)
 		self.save()
@@ -446,7 +459,10 @@ class Configuration(models.Model):
 
 		if self.available_settings is None or self.available_settings == '':
 			id = int(self.current_settings_as_list()[slot])
-			return Consumable.objects.get(id=id).name
+			if id > 0:
+				return Consumable.objects.get(id=id).name
+			else:
+				return "None"
 		return self.current_settings_as_list()[slot]
 
 	def current_settings_as_list(self):

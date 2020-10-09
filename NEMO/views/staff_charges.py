@@ -27,7 +27,8 @@ def staff_charges(request):
 		try:
 			area_access_record = AreaAccessRecord.objects.get(staff_charge=staff_charge.id, end=None, active_flag=True)
 			return render(request, 'staff_charges/end_area_charge.html', {'area': area_access_record.area, 'staff_charge': staff_charge, 'scp': StaffChargeProject.objects.filter(staff_charge=staff_charge, active_flag=True)})
-		except AreaAccessRecord.DoesNotExist:
+		#except AreaAccessRecord.DoesNotExist:
+		except:
 			scp = StaffChargeProject.objects.filter(staff_charge=staff_charge, active_flag=True)
 			return render(request, 'staff_charges/change_status.html', {'areas': Area.objects.all(), 'scp': scp, 'staff_charge': staff_charge})
 	error = None

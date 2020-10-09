@@ -23,17 +23,18 @@ class ConfigurationEditor(Widget):
 			current_setting = 0
 		current_setting = int(current_setting)
 		tool = config.tool
-		try:
-			current_reservation = user.current_reservation_for_tool(tool)
-			res_conf = current_reservation.reservationconfiguration_set.get(configuration=config)
-			current_setting = int(res_conf.consumable.id)
-			config.replace_current_setting(0, current_setting)
-			config.save()
-		except:
-			pass
-		result = "<p><label class='form-inline'>" + escape(config.name) + ": "
-		if not config.tool.in_use():
+#		try:
+#			current_reservation = user.current_reservation_for_tool(tool)
+#			res_conf = current_reservation.reservationconfiguration_set.get(configuration=config)
+#			current_setting = int(res_conf.consumable.id)
+#			config.replace_current_setting(0, current_setting)
+#			config.save()
+#		except:
+#			pass
+		result = "<p><label class='form-inline'>" + escape(config.configurable_item_name) + ": "
+		if not config.tool.in_use() and config.user_is_maintainer(user):
 			result += "<select class='form-control' style='width:300px; max-width:100%' onchange=\"on_change_configuration(" + str(config.id) + ", 0, this.value)\">"
+			result += "<option value=0>" + str(config.absence_string) + "</option>"
 			for c in config.consumable.all():
 				result += "<option value=" + str(c.id)
 				if c.id == current_setting:
@@ -55,15 +56,15 @@ class ConfigurationEditor(Widget):
 		
 		tool = config.tool
 
-		try:
-			current_reservation = user.current_reservation_for_tool(tool)
-			res_conf = current_reservation.reservationconfiguration_set.get(configuration=config)
-			current_setting = str(res_conf.setting)
-			config.replace_current_setting(0, config.get_setting_id(current_setting))
-			config.save()
-		except:
-			pass
-		result = "<p><label class='form-inline'>" + escape(config.name) + ": "
+#		try:
+#			current_reservation = user.current_reservation_for_tool(tool)
+#			res_conf = current_reservation.reservationconfiguration_set.get(configuration=config)
+#			current_setting = str(res_conf.setting)
+#			config.replace_current_setting(0, config.get_setting_id(current_setting))
+#			config.save()
+#		except:
+#			pass
+		result = "<p><label class='form-inline'>" + escape(config.configurable_item_name) + ": "
 		if not config.tool.in_use() and config.user_is_maintainer(user):
 			result += "<select class='form-control' style='width:300px; max-width:100%' onchange=\"on_change_configuration(" + str(config.id) + ", 0, this.value)\">"
 			for index, option in enumerate(config.available_settings_as_list()):
@@ -81,12 +82,12 @@ class ConfigurationEditor(Widget):
 		result = "<p>" + escape(config.name) + ":<ul>"
 		for setting_index, current_setting in enumerate(config.current_settings_as_list()):
 			tool = config.tool
-			try:
-				current_reservation = user.current_reservation_for_tool(tool)
-				res_conf = current_reservation.reservationconfiguration_set.get(configuration=config)
-				current_setting = str(res_conf.setting)
-			except:
-				pass
+#			try:
+#				current_reservation = user.current_reservation_for_tool(tool)
+#				res_conf = current_reservation.reservationconfiguration_set.get(configuration=config)
+#				current_setting = str(res_conf.setting)
+#			except:
+#				pass
 
 			result += "<li title=\"" + escape(config.current_settings_as_list()) + "\">"
 			if not config.tool.in_use() and config.user_is_maintainer(user):

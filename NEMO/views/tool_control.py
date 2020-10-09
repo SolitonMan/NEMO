@@ -147,7 +147,7 @@ def tool_status(request, tool_id):
 	}
 
 	try:
-		current_reservation = Reservation.objects.get(start__lt=timezone.now(), end__gt=timezone.now(), cancelled=False, missed=False, shortened=False, user=request.user, tool=tool)
+		current_reservation = Reservation.objects.get(start__lt=timezone.now()+timedelta(0,0,0,0,15,0,0), end__gt=timezone.now(), cancelled=False, missed=False, shortened=False, user=request.user, tool=tool)
 		#current_reservation = request.user.current_reservation_for_tool(tool)
 		if current_reservation is not None:
 			dictionary['time_left'] = current_reservation.end
@@ -163,10 +163,24 @@ def tool_status(request, tool_id):
 				rp_out = rp_out.rstrip(",") + "]"
 				rp_out = mark_safe(rp_out)
 				dictionary['reservation_projects'] = rp_out
+			if ReservationConfiguration.objects.filter(reservation=current_reservation).exists():
+				rc = ReservationConfiguration.objects.filter(reservation=current_reservation)
+				dictionary['my_reservation_configurations'] = rc
+				# format html to display the chosen reservation configuration settings so they can be compared to the actual
+				rc_out = "<br/><br/><hr><p>The following settings were chosen as part of the current reservation for this tool.  If they differ from what is shown for the actual settings, it could be due to insufficient reservation lead time to allow for the tool to be approprately configured.</p><ul>"
+				for c in rc:
+					if c.consumable is not None:
+						cons = Consumable.objects.get(id=c.consumable.id)
+						rc_out += "<li>" + str(c.configuration.name) + ": " + str(cons.name) + "</li>"
+					else:
+						rc_out += "<li>" + str(c.configuration.name) + ": " + str(c.setting) + "</li>"
+				rc_out += "</ul><hr><br/><br/>"
+				dictionary['reservation_configurations'] = rc_out
 		else:
 			dictionary['time_left'] = None
 			dictionary['my_reservation'] = None
 			dictionary['my_reservation_projects'] = None
+			dictionary['my_reservation_configurations'] = None
 	except Reservation.DoesNotExist:
 		pass
 
@@ -385,26 +399,28 @@ def enable_tool_multi(request):
 	if set_for_autologout:
 		autologout_endtime = request.POST.get("autologout_endtime")
 
-	# check for an existing reservation
-	try:
-		if Reservation.objects.filter(start__lte=timezone.now(), end__gt=timezone.now(), cancelled=False, missed=False, user=operator, tool=tool).exists():
-			if Reservation.objects.filter(start__lte=timezone.now(), end__gt=timezone.now(), cancelled=False, missed=False, user=operator, tool=tool).count() > 1:
-				current_reservation = Reservation.objects.get(start__lte=timezone.now(), end__gt=timezone.now(), cancelled=False, missed=False, user=operator, tool=tool)
-			else:
-				current_reservation = Reservation.objects.filter(start__lte=timezone.now(), end__gt=timezone.now(), cancelled=False, missed=False, user=operator, tool=tool).order_by('-updated')[0]
+	response = HttpResponse()
 
-			res_conf = ReservationConfiguration.objects.filter(reservation=current_reservation)
-			for rc in res_conf:
-				config = Configuration.objects.get(id=rc.configuration.id)
-				if rc.setting is None or rc.setting == '':
-					if rc.consumable is not None:
-						config.current_settings = str(rc.consumable.id)
-				else:
-					config.current_settings = str(rc.setting)
-				config.save()
-			tool.update_post_usage_questions()
-	except Reservation.DoesNotExist:
-		pass
+	# check for an existing reservation  -   NOTE: disabling this because the relevant items should already be set, and this will overwrite any changes that the user made between accessing the reservation and starting the usage event
+#	try:
+#		if Reservation.objects.filter(start__lte=timezone.now(), end__gt=timezone.now(), cancelled=False, missed=False, user=operator, tool=tool).exists():
+#			if Reservation.objects.filter(start__lte=timezone.now(), end__gt=timezone.now(), cancelled=False, missed=False, user=operator, tool=tool).count() == 1:
+#				current_reservation = Reservation.objects.get(start__lte=timezone.now(), end__gt=timezone.now(), cancelled=False, missed=False, user=operator, tool=tool)
+#			else:
+#				current_reservation = Reservation.objects.filter(start__lte=timezone.now(), end__gt=timezone.now(), cancelled=False, missed=False, user=operator, tool=tool).order_by('-updated')[0]
+#
+#			res_conf = ReservationConfiguration.objects.filter(reservation=current_reservation)
+#			for rc in res_conf:
+#				config = Configuration.objects.get(id=rc.configuration.id)
+#				if rc.setting is None or rc.setting == '':
+#					if rc.consumable is not None:
+#						config.current_settings = str(rc.consumable.id)
+#				else:
+#					config.current_settings = str(rc.setting)
+#				config.save()
+#			tool.update_post_usage_questions()
+#	except Reservation.DoesNotExist:
+#		pass
 
 	# initiate a UsageEvent
 	billing_mode = request.POST.get('billing_mode')

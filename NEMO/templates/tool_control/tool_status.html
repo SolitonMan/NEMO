@@ -203,6 +203,9 @@
 		<div style="margin-top:10px">
 			{% if my_reservation is not None %}
 			You are accessing the {{ my_reservation.tool.name }} during a scheduled reservation.  The configuration parameters below have been set to those selected during the reservation process.  While the tool should be configured to use those options, you are still able to make changes prior to starting your run.
+				{% if reservation_configurations is not None %}
+				{{ reservation_configurations|safe }}
+				{% endif %}
 			{% endif %}
 			{{ rendered_configuration_html }}
 		</div>
