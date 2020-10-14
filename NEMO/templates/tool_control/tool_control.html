@@ -144,6 +144,16 @@
 		function enable_tool()
 		{
 			$("#start").prop("disabled", true);
+
+			if ($("#set_for_autologout").is(":checked")) {
+				if ($("#autologout_endtime").val() == "") {
+					$("#start").prop("disabled", false);
+					alert("If you wish to use the autologout feature, you must choose an end time.");
+					$("#autologout_endtime").focus();
+					return false;
+				}
+			}
+
 			var tool_id =  parseInt($("#tool_id").val());
 			var user_id = parseInt($("#user_id").val());
 			var billing_mode = $("#billing_mode:checked").val();
@@ -518,6 +528,14 @@
 				}
 
 				{% endif %}
+
+				if ($("#set_for_autologout").is(":checked")) {
+					if ($("#autologout_endtime").val() == "") {
+						alert("If you wish to use the autologout feature, you must choose an end time.");
+						$("#autologout_endtime").focus();
+						return false;
+					}
+				}
 
 				var failure_dialog = ajax_failure_callback("Could not begin charging staff time");
 				var success_callbacks = [reload_page]; 

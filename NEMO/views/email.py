@@ -223,6 +223,8 @@ def send_broadcast_email(request):
 		users += [request.user.email]
 	try:
 		email = EmailMultiAlternatives(subject, from_email=request.user.email, bcc=set(users))
+		content = content.replace("\r\n\r\n", "</p><p>")
+		content = content.replace("\r\n", "<br />")
 		email.attach_alternative(content, 'text/html')
 		email.send()
 	except SMTPException as error:

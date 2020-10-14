@@ -147,8 +147,9 @@ def tool_status(request, tool_id):
 	}
 
 	try:
-		current_reservation = Reservation.objects.get(start__lt=timezone.now()+timedelta(0,0,0,0,15,0,0), end__gt=timezone.now(), cancelled=False, missed=False, shortened=False, user=request.user, tool=tool)
-		#current_reservation = request.user.current_reservation_for_tool(tool)
+		
+		#current_reservation = Reservation.objects.get(start__lt=timezone.now()+timedelta(0,0,0,0,15,0,0), end__gt=timezone.now(), cancelled=False, missed=False, shortened=False, user=request.user, tool=tool)
+		current_reservation = request.user.current_reservation_for_tool(tool)
 		if current_reservation is not None:
 			dictionary['time_left'] = current_reservation.end
 			dictionary['my_reservation'] = current_reservation
@@ -181,7 +182,7 @@ def tool_status(request, tool_id):
 			dictionary['my_reservation'] = None
 			dictionary['my_reservation_projects'] = None
 			dictionary['my_reservation_configurations'] = None
-	except Reservation.DoesNotExist:
+	except:
 		pass
 
 	dictionary['rendered_configuration_html'] = tool.configuration_widget(request.user)
@@ -293,6 +294,8 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge, billing_mod
 	set_for_autologout = request.POST.get("set_for_autologout")
 	if set_for_autologout:
 		autologout_endtime = request.POST.get("autologout_endtime")
+		if autologout_endtime == "":
+			set_for_autologout = False
 
 	response = check_policy_to_enable_tool(tool, operator, user, project, staff_charge, request)
 	if response.status_code != HTTPStatus.OK:
@@ -398,6 +401,8 @@ def enable_tool_multi(request):
 	set_for_autologout = request.POST.get("set_for_autologout")
 	if set_for_autologout:
 		autologout_endtime = request.POST.get("autologout_endtime")
+		if autologout_endtime == "":
+			set_for_autologout = False
 
 	response = HttpResponse()
 
@@ -489,10 +494,13 @@ def enable_tool_multi(request):
 			current_count = 0
 			for p in project_events.values():
 				current_count += 1
+				current_percent_total = 0.0
 				if current_count < customer_count:
 					p.project_percent = round(Decimal(100/customer_count),2)
+					current_percent_total += round(Decimal(100/customer_count),2)
 				else:
-					p.project_percent = round(Decimal(100 - (customer_count - 1)*(100/customer_count)),2)
+					#p.project_percent = round(Decimal(100 - (customer_count - 1)*(100/customer_count)),2)
+					p.project_percent = round(Decimal(100.0 - current_percent_total), 2)
 
 		for p in project_events.values():
 			if set_for_autologout:
@@ -645,7 +653,9 @@ def disable_tool(request, tool_id):
 	if response.status_code != HTTPStatus.OK:
 		return response
 	try:
-		current_reservation = Reservation.objects.get(start__lt=timezone.now(), end__gt=timezone.now(), cancelled=False, missed=False, shortened=False, user=request.user, tool=tool)
+		#current_reservation = Reservation.objects.get(start__lt=timezone.now(), end__gt=timezone.now(), cancelled=False, missed=False, shortened=False, user=request.user, tool=tool)
+		current_reservation = request.user.current_reservation_for_tool(tool)
+
 		# Staff are exempt from mandatory reservation shortening when tool usage is complete.
 		# if request.user.is_staff is False:
 			# Shorten the user's reservation to the current time because they're done using the tool.
@@ -660,7 +670,7 @@ def disable_tool(request, tool_id):
 		current_reservation.updated = timezone.now()
 		current_reservation.descendant = new_reservation
 		current_reservation.save()
-	except Reservation.DoesNotExist:
+	except:
 		pass
 
 	# All policy checks passed so disable the tool for the user.

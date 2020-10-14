@@ -231,7 +231,7 @@ class User(models.Model):
 		current_reservation = None
 		try:
 			if Reservation.objects.filter(start__lte=timezone.now()+timedelta(0,0,0,0,15,0,0), end__gt=timezone.now(), cancelled=False, missed=False, user=self, tool=tool).exists():
-				current_reservation = Reservation.objects.filter(start__lte=timezone.now()+timedelta(0,0,0,0,15,0,0), end__gt=timezone.now(), cancelled=False, missed=False, user=self, tool=tool)[0]
+				current_reservation = Reservation.objects.filter(start__lte=timezone.now()+timedelta(0,0,0,0,15,0,0), end__gt=timezone.now(), cancelled=False, missed=False, user=self, tool=tool).order_by('-updated')[0]
 				#current_reservation = Reservation.objects.get(start__lte=timezone.now(), end__gt=timezone.now(), cancelled=False, missed=False, user=self, tool=tool)
 		except Reservation.DoesNotExist:
 			pass
