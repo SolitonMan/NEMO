@@ -1,4 +1,5 @@
 from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth.decorators import login_required
 from django.db.models.expressions import RawSQL
 from django.http import HttpResponseBadRequest, HttpResponseRedirect, JsonResponse, HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
@@ -7,7 +8,7 @@ from django.views.decorators.http import require_GET, require_POST, require_http
 from NEMO.forms import ProjectForm, AccountForm
 from NEMO.models import Account, Project, User, MembershipHistory, ActivityHistory
 
-@staff_member_required(login_url=None)
+@login_required
 @require_GET
 def accounts_and_projects(request, kind=None, identifier=None):
 	try:
@@ -50,7 +51,7 @@ def accounts_and_projects(request, kind=None, identifier=None):
 	return render(request, 'accounts_and_projects/accounts_and_projects.html', dictionary)
 
 
-@staff_member_required(login_url=None)
+@login_required
 @require_POST
 def toggle_active(request, kind, identifier):
 	if kind == 'account':
@@ -69,7 +70,7 @@ def toggle_active(request, kind, identifier):
 	return redirect(request.META.get('HTTP_REFERER', 'accounts_and_projects'))
 
 
-@staff_member_required(login_url=None)
+@login_required
 @require_http_methods(['GET', 'POST'])
 def create_project(request):
 	dictionary = {
@@ -96,7 +97,7 @@ def create_project(request):
 	return redirect('account', project.account.id)
 
 
-@staff_member_required(login_url=None)
+@login_required
 @require_http_methods(['GET', 'POST'])
 def create_account(request):
 	if request.method == 'GET':
@@ -113,7 +114,7 @@ def create_account(request):
 	return redirect('account', account.id)
 
 
-@staff_member_required(login_url=None)
+@login_required
 @require_http_methods(['GET', 'POST'])
 def remove_user_from_project(request, user_id, project_id):
 	user = get_object_or_404(User, id=user_id)
@@ -136,7 +137,7 @@ def remove_user_from_project(request, user_id, project_id):
 #	return render(request, 'accounts_and_projects/users_for_project.html', dictionary)
 
 
-@staff_member_required(login_url=None)
+@login_required
 @require_http_methods(['GET', 'POST'])
 def add_user_to_project(request, user_id, project_id):
 	user = get_object_or_404(User, id=user_id)

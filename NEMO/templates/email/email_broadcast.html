@@ -60,7 +60,10 @@
 			<input type="hidden" name="date_range" id="date_range" value="true" />
 			<input type="hidden" name="start" id="start" />
 			<input type="hidden" name="end" id="end" />
-			<input type="submit" id="submit" value="Compose Email" style="display: none;" class="btn btn-default" />
+			{% endif %}
+			{% if audience == 'tool' or date_range %}
+			<br/><input type="submit" id="submit" value="Compose Email" style="display: none;" class="btn btn-default" />
+			<br/><br/><span id="tools"></span>
 			{% endif %}
 		</form>
 
@@ -79,28 +82,46 @@
 					check_complete();
 				}
 			);
-			function set_selection(jquery_event, search_selection, dataset_name)
-			{
-				$('#selection').val(search_selection.id);
-				check_complete();
-			}
 			function check_complete()
 			{
-				if ($('#selection').val() != "" && $('#start').val() != "" && $('#end').val() != "") {
-					//$('#email').submit();
+				if ($('#start').val() != "" && $('#end').val() != "") {
 					$("#submit").show();
 				} else {
 					$("#submit").hide();
 				}
 			}
-		{% else %}
-			$('#search').autocomplete('search_base', set_selection, {{ search_base|json_search_base }});
+		{% endif %}
 			function set_selection(jquery_event, search_selection, dataset_name)
 			{
 				$('#selection').val(search_selection.id);
-				$('#email').submit();
+				{% if audience == 'tool' or date_range %}
+					{% if date_range %}
+					if ($('#start').val() != "" && $('#end').val() != "") {
+						$("#submit").show();
+					} else {
+						$("#submit").hide();
+					}
+					{% else %}
+						$("#submit").show();
+					{% endif %}
+					s_append = '<span id="tool_' + search_selection.id + '">';
+					s_append += '<span class="glyphicon glyphicon-remove-circle grey pointer" onclick="remove_tool(' + search_selection.id + ');"></span>';
+					s_append += '<span> ' + search_selection.name + '</span>';
+					s_append += '<input type="hidden" name="tool" value="' + search_selection.id + '" />';
+					s_append += '</span><br/>';
+
+					$("#tools").append(s_append);
+					$('#search').val("");
+				{% else %}
+					$('#email').submit();
+				{% endif %}
 			}
-		{% endif %}
+			function remove_tool(id)
+			{
+				var s = "#tool_" + id;
+				$(s).next().remove();
+				$(s).remove();
+			}
 		</script>
 	{% endif %}
 {% endblock %}

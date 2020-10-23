@@ -109,14 +109,15 @@ def compose_email(request):
 
 	try:
 		if audience == 'tool' or audience == 'tool_date':
-			users = User.objects.filter(qualifications__id=selection).distinct()
+			tool = request.GET.getlist('tool', None)
+			users = User.objects.filter(qualifications__id__in=tool).distinct()
 			if date_range:
 				# get start and end times
 				start = request.GET.get('start')
 				end = request.GET.get('end')
 
 				# find users based on their operation of the tool
-				usage_events = UsageEvent.objects.filter(tool__id=selection)
+				usage_events = UsageEvent.objects.filter(tool__id__in=tool)
 				usage_events = usage_events.filter(Q(start__range=[start, end]) | Q(end__range=[start, end]))
 				users = User.objects.filter(id__in=usage_events.values_list('operator', flat=True))
 

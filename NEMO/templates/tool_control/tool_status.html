@@ -202,7 +202,7 @@
 
 		<div style="margin-top:10px">
 			{% if my_reservation is not None %}
-			You are accessing the {{ my_reservation.tool.name }} during a scheduled reservation.  The configuration parameters below have been set to those selected during the reservation process.  While the tool should be configured to use those options, you are still able to make changes prior to starting your run.
+			You are accessing the {{ my_reservation.tool.name }} during a scheduled reservation.  If you set configuration options during the reservation process, those options should be selected below.  If they are not, it could be that there was insufficient time to configure the {{ my_reservation.tool.name }} before the start of your reservation.
 				{% if reservation_configurations is not None %}
 				{{ reservation_configurations|safe }}
 				{% endif %}
@@ -281,7 +281,7 @@
 					{% include 'tool_control/get_projects.html' with active_projects=user.active_projects user_id=user.id my_reservation=my_reservation%}
 				{% endif %}
 
-				{% if rendered_configuration_html == "" %}
+				{% if rendered_configuration_html == "" and tool.allow_autologout %}
 				<span style="" id="auto_logout_feature">
 					<div class="checkbox"><label><input type="checkbox" name="set_for_autologout" id="set_for_autologout" onchange="toggle_autologout();" />Set autologout for this tool use</label></div>
 					<div id="duration_options" class="datetimepicker-container" style="display: none;">

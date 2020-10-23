@@ -148,7 +148,6 @@ def tool_status(request, tool_id):
 
 	try:
 		
-		#current_reservation = Reservation.objects.get(start__lt=timezone.now()+timedelta(0,0,0,0,15,0,0), end__gt=timezone.now(), cancelled=False, missed=False, shortened=False, user=request.user, tool=tool)
 		current_reservation = request.user.current_reservation_for_tool(tool)
 		if current_reservation is not None:
 			dictionary['time_left'] = current_reservation.end
@@ -165,7 +164,7 @@ def tool_status(request, tool_id):
 				rp_out = mark_safe(rp_out)
 				dictionary['reservation_projects'] = rp_out
 			if ReservationConfiguration.objects.filter(reservation=current_reservation).exists():
-				rc = ReservationConfiguration.objects.filter(reservation=current_reservation)
+				rc = ReservationConfiguration.objects.filter(reservation=current_reservation).order_by('configuration__display_priority')
 				dictionary['my_reservation_configurations'] = rc
 				# format html to display the chosen reservation configuration settings so they can be compared to the actual
 				rc_out = "<br/><br/><hr><p>The following settings were chosen as part of the current reservation for this tool.  If they differ from what is shown for the actual settings, it could be due to insufficient reservation lead time to allow for the tool to be approprately configured.</p><ul>"
@@ -182,6 +181,8 @@ def tool_status(request, tool_id):
 			dictionary['my_reservation'] = None
 			dictionary['my_reservation_projects'] = None
 			dictionary['my_reservation_configurations'] = None
+			dictionary['reservation_projects'] = None
+			dictionary['reservation_configurations'] = None
 	except:
 		pass
 
@@ -336,13 +337,15 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge, billing_mod
 		uep.updated = timezone.now()
 		uep.save()
 
-		if staff_charge and not billing_mode:
+		if staff_charge:
 			new_staff_charge = StaffCharge()
 			new_staff_charge.staff_member = request.user
 			new_staff_charge.customer = user
 			new_staff_charge.project = project
 			new_staff_charge.created = timezone.now()
 			new_staff_charge.updated = timezone.now()
+			if billing_mode:
+				new_staff_charge.no_charge_flag = True
 			new_staff_charge.save()
 
 			# create a staff_charge_project record
@@ -371,6 +374,8 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge, billing_mod
 
 			if staff_charge:
 				aar.staff_charge = new_staff_charge
+			if billing_mode:
+				aar.no_charge_flag = True
 
 			aar.save()
 
@@ -527,6 +532,8 @@ def enable_tool_multi(request):
 				new_staff_charge.staff_member = request.user
 				new_staff_charge.created = timezone.now()
 				new_staff_charge.updated = timezone.now()
+				if billing_mode:
+					new_staff_charge.no_charge_flag = True
 				new_staff_charge.save()
 			else:
 				new_staff_charge = request.user.get_staff_charge()
@@ -535,6 +542,8 @@ def enable_tool_multi(request):
 			new_staff_charge.staff_member = request.user
 			new_staff_charge.created = timezone.now()
 			new_staff_charge.updated = timezone.now()
+			if billing_mode:
+				new_staff_charge.no_charge_flag = True
 			new_staff_charge.save()
 	
 		project_charges = {}
@@ -607,6 +616,8 @@ def enable_tool_multi(request):
 
 			if new_staff_charge:
 				aar.staff_charge = new_staff_charge
+			if billing_mode:
+				aar.no_charge_flag = True
 
 			aar.save()
 

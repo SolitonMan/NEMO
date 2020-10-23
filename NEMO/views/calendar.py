@@ -285,7 +285,7 @@ def create_reservation(request):
 		try:
 			explicit_policy_override = request.POST['explicit_policy_override'] == 'true'
 		except Exception as e:
-			logger.exception(str(e))
+			#logger.exception(str(e))
 			pass
 	else:
 		user = request.user
