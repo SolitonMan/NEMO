@@ -31,6 +31,17 @@ from NEMO.widgets.dynamic_form import DynamicForm
 from NEMO.widgets.tool_tree import ToolTree
 
 
+
+@login_required
+@require_GET
+def save_operator_comment(request):
+	usage_id = int(request.GET['usage_id'])
+	ue = UsageEvent.objects.get(id=usage_id)
+	ue.operator_comment = request.GET['operator_comment']
+	ue.save()
+	return HttpResponse()
+
+
 @staff_member_required(login_url=None)
 @require_GET
 def tools(request):
@@ -1220,6 +1231,61 @@ def save_usage_event(request):
 
 		params['new_usage_event'] = new_usage_event
 		params['uep'] = UsageEventProject.objects.filter(usage_event=new_usage_event)
+
+		staff_charge = request.POST.get('staff_charge')
+
+		if staff_charge:
+			new_staff_charge = StaffCharge()
+			new_staff_charge.staff_member = request.user
+			new_staff_charge.created = timezone.now()
+			new_staff_charge.updated = timezone.now()
+			new_staff_charge.start = ad_hoc_start
+			new_staff_charge.end = ad_hoc_end
+			new_staff_charge.save()
+
+			project_charges = {}
+
+			for key, value in request.POST.items():
+				if is_valid_field(key):
+					attribute, separator, index = key.partition("__")
+					index = int(index)
+					if index not in project_charges:
+						project_charges[index] = StaffChargeProject()
+						project_charges[index].staff_charge = new_staff_charge
+						project_charges[index].created = timezone.now()
+						project_charges[index].updated = timezone.now()
+					if attribute == "chosen_user":
+						if value is not None and value != "":
+							project_charges[index].customer = User.objects.get(id=value)
+						else:
+							new_staff_charge.delete()
+							new_usage_event.delete()
+							return HttpResponseBadRequest('Please choose a user for whom the tool will be run.')
+					if attribute == "chosen_project":
+						if value is not None and value != "" and value != "-1":
+							cp = Project.objects.get(id=value)
+							if cp.check_date_range(new_usage_event.start, new_usage_event.end):
+								project_charges[index].project = Project.objects.get(id=value)
+							else:
+								msg = 'The project ' + str(cp.project_number) + ' cannot be used for a transaction with a date range of ' + str(new_usage_event.start) + ' to ' + str(new_usage_event.end) + ' because the project active date range is ' + str(cp.start_date) + ' to ' + str(cp.end_date)
+								new_staff_charge.delete()
+								new_usage_event.delete()
+								return HttpResponseBadRequest(msg)
+						else:
+							new_staff_charge.delete()
+							new_usage_event.delete()
+							return HttpResponseBadRequest('Please choose a project for charges made during this run.')
+					if attribute == "project_percent":
+						if value is not None and value != "":
+							project_charges[index].project_percent = value
+						else:
+							new_staff_charge.delete()
+							new_usage_event.delete()
+							return HttpResponseBadRequest('Please enter a project percent value')
+
+			for p in project_charges.values():
+				p.full_clean()
+				p.save()
 
 
 	except Exception as inst:

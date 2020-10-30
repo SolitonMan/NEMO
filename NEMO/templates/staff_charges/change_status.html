@@ -15,7 +15,7 @@
 		<tr>
 			<td colspan="2" align="left" valign="top">
 				<label for="staff_member_comment">Comment / Purpose of Charge</label>
-				<textarea name="staff_member_comment" id="staff_member_comment" rows="6" cols="50" placeholder="Please enter a description of the work done or reason the charge is being made"></textarea>
+				<textarea name="staff_member_comment" id="staff_member_comment" onblur="save_staff_comment()" rows="6" cols="50" placeholder="Please enter a description of the work done or reason the charge is being made">{% if staff_charge.staff_member_comment is not None %}{{ staff_charge.staff_member_comment }}{% endif %}</textarea>
 			</td>
 		</tr>
 		</table>
@@ -37,4 +37,11 @@
 			<input type="submit" class="btn btn-primary" value="Begin billing for area access">
 		</form>
 	{% endif %}
+	<script>
+		function save_staff_comment() {
+                	ajax_get("{% url 'save_staff_comment' %}", { "staff_charge_id": {{ staff_charge.id }}, "staff_member_comment": $("#staff_member_comment").val() },undefined,undefined);
+        	}
+
+        	window.onunload = save_staff_comment;
+	</script>
 {% endblock %}

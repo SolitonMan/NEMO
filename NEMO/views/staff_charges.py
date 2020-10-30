@@ -7,7 +7,7 @@ from decimal import Decimal
 
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import HttpResponseBadRequest, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
 from django.db.models import Q, Max
 from django.shortcuts import render, redirect
 from django.template.loader import render_to_string
@@ -17,6 +17,16 @@ from django.utils.dateparse import parse_time, parse_date, parse_datetime
 from django.views.decorators.http import require_GET, require_POST
 
 from NEMO.models import User, StaffCharge, AreaAccessRecord, Project, Area, StaffChargeProject, AreaAccessRecordProject, LockBilling
+
+
+@require_GET
+def save_staff_comment(request):
+	staff_charge_id = int(request.GET['staff_charge_id'])
+	charge = StaffCharge.objects.get(id=staff_charge_id)
+	charge.staff_member_comment = request.GET['staff_member_comment']
+	charge.updated = timezone.now()
+	charge.save()
+	return HttpResponse()
 
 
 @staff_member_required(login_url=None)

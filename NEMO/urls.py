@@ -57,6 +57,7 @@ urlpatterns = [
 	url(r'^usage_event_projects_save/$', tool_control.usage_event_projects_save, name='usage_event_projects_save'),
 	url(r'^create_usage_event/$', tool_control.create_usage_event, name='create_usage_event'),
 	url(r'^save_usage_event/$', tool_control.save_usage_event, name='save_usage_event'),
+	url(r'^save_operator_comment/$', tool_control.save_operator_comment, name='save_operator_comment'),
 
 	# Tasks:
 	url(r'^create_task/$', tasks.create, name='create_task'),
@@ -102,6 +103,7 @@ urlpatterns = [
 	url(r'^end_staff_area_charge/$', staff_charges.end_staff_area_charge, name='end_staff_area_charge'),
 	url(r'^staff_charge_projects_save/(?P<modal_flag>\d+)/$', staff_charges.staff_charge_projects_save, name='staff_charge_projects_save'),
 	url(r'^continue_staff_charge/(?P<staff_charge_id>\d+)/$', staff_charges.continue_staff_charge, name='continue_staff_charge'),
+	url(r'^save_staff_comment/$', staff_charges.save_staff_comment, name='save_staff_comment'),
 
 	# Status dashboard:
 	url(r'^status_dashboard/$', status_dashboard.status_dashboard, name='status_dashboard'),
