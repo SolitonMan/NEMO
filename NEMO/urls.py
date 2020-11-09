@@ -149,6 +149,7 @@ urlpatterns = [
 	# Consumables:
 	url(r'^consumables/$', consumables.consumables, name='consumables'),
 	url(r'^get_consumables/$', consumables.get_consumables, name='get_consumables'),
+	url(r'^save_withdraw_notes/$', consumables.save_withdraw_notes, name='save_withdraw_notes'),
 
 	# Training:
 	#url(r'^training/$', training.training, name='training'),
@@ -176,6 +177,7 @@ urlpatterns = [
 	url(r'^change_project/(?P<new_project>\d+)/$', area_access.change_project, name='change_project'),
 	url(r'^force_area_logout/(?P<user_id>\d+)/$', area_access.force_area_logout, name='force_area_logout'),
 	url(r'^self_log_in/$', area_access.self_log_in, name='self_log_in'),
+	url(r'^save_area_access_comment/$', area_access.save_area_access_comment, name='save_area_access_comment'),
 
 	# Laboratory usage:
 	url(r'^usage/$', usage.usage, name='usage'),
@@ -209,6 +211,7 @@ if settings.ALLOW_CONDITIONAL_URLS:
 		url(r'^farewell_screen/(?P<door_id>\d+)/$', area_access.farewell_screen, name='farewell_screen'),
 		url(r'^login_to_area/(?P<door_id>\d+)/(?P<area_id>\d+)/$', area_access.login_to_area, name='login_to_area'),
 		url(r'^logout_of_area/(?P<door_id>\d+)/(?P<area_id>\d+)/$', area_access.logout_of_area, name='logout_of_area'),
+		url(r'^logout_of_area/$', area_access.logout_of_area, name='logout_of_area_form'),
 		url(r'^open_door/(?P<door_id>\d+)/$', area_access.open_door, name='open_door'),
 
 		# Tablet kiosk

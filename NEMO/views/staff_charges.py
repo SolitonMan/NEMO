@@ -1016,6 +1016,7 @@ def begin_staff_area_charge(request):
 		return HttpResponseBadRequest('Invalid area')
 	area_access = AreaAccessRecord()
 	area_access.area = area
+	area_access.user = request.user
 	area_access.staff_charge = charge
 	area_access.created = timezone.now()
 	area_access.updated = timezone.now()

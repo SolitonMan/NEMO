@@ -1,8 +1,9 @@
 from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods, require_GET
-from django.http import JsonResponse, HttpResponseRedirect
+from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
 
 from NEMO.forms import ConsumableWithdrawForm
 from NEMO.models import Consumable, ConsumableWithdraw, Core, User
@@ -53,3 +54,15 @@ def get_consumables(request):
 		consumables = Consumable.objects.filter(visible=True).order_by('category', 'name')
 
 	return JsonResponse(dict(consumables=list(consumables.values('id', 'category__name', 'name'))))
+
+
+@login_required
+@require_GET
+def save_withdraw_notes(request):
+	id = request.GET.get('withdraw_id')
+	cw = ConsumableWithdraw.objects.get(id=id)
+	cw.notes = request.GET.get('withdraw_comment')
+	cw.save()
+	return HttpResponse()
+
+

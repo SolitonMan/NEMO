@@ -153,6 +153,7 @@ def login_to_area(request, door_id=None, area_id=None):
 		record = AreaAccessRecord()
 		record.area = door.area
 		record.customer = user
+		record.user = user
 		record.project = user.active_projects()[0]
 		record.created = timezone.now()
 		record.updated = timezone.now()
@@ -192,6 +193,7 @@ def login_to_area(request, door_id=None, area_id=None):
 			record = AreaAccessRecord()
 			record.area = area
 			record.customer = user
+			record.user = user
 			record.project = project
 			record.created = timezone.now()
 			record.updated = timezone.now()
@@ -230,14 +232,17 @@ def logout_of_area(request, door_id=None, area_id=None):
 		badge_number = int(request.POST.get('badge_number', ''))
 		user = User.objects.get(badge_number=badge_number)
 	except (User.DoesNotExist, ValueError):
-		return render(request, 'area_access/badge_not_found.html')
+		#return render(request, 'area_access/badge_not_found.html')
+		user = request.user
 	record = user.area_access_record()
 	# Allow the user to log out of any area, even if this is a logout tablet for a different area.
 	if record:
 		record.end = timezone.now()
 		record.updated = timezone.now()
+		record.comment = request.POST.get("comment")
 		record.save()
-		return render(request, 'area_access/logout_success.html', {'area': record.area, 'name': user.first_name})
+		#return render(request, 'area_access/logout_success.html', {'area': record.area, 'name': user.first_name})
+		return HttpResponseRedirect(reverse('landing'))
 	else:
 		return render(request, 'area_access/not_logged_in.html')
 
@@ -305,6 +310,7 @@ def change_project(request, new_project=None):
 	record = AreaAccessRecord()
 	record.area = area
 	record.customer = request.user
+	record.user = request.user
 	record.project = new_project
 	record.created = timezone.now()
 	record.updated = timezone.now()
@@ -343,9 +349,11 @@ def new_area_access_record(request, customer=None):
 				return render(request, 'area_access/new_area_access_record.html', dictionary)
 
 			return render(request, 'area_access/new_area_access_record_details.html', dictionary)
-		except:
+		except Exception as inst:
 			#raise Exception()
-			pass
+			#dictionary['error_message'] = inst
+			return render(request, 'area_access/new_area_access_record.html', dictionary)
+
 		return render(request, 'area_access/new_area_access_record.html', dictionary)
 	if request.method == 'POST':
 		try:
@@ -374,6 +382,7 @@ def new_area_access_record(request, customer=None):
 		record = AreaAccessRecord()
 		record.area = area
 		record.customer = user
+		record.user = user
 		record.project = project
 		record.created = timezone.now()
 		record.updated = timezone.now()
@@ -464,3 +473,13 @@ def able_to_self_log_in_to_area(user):
 			return True
 	# No areas are accessible...
 	return False
+
+
+@login_required
+@require_GET
+def save_area_access_comment(request):
+	id = request.GET.get('area_access_id')
+	aar = AreaAccessRecord.objects.get(id=id)
+	aar.comment = request.GET.get('area_access_comment')
+	aar.save()
+	return HttpResponse()

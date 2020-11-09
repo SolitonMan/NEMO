@@ -645,10 +645,12 @@ class Area(models.Model):
 class AreaAccessRecord(CalendarDisplay):
 	area = models.ForeignKey(Area, on_delete=models.SET_NULL, null=True)
 	customer = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+	user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='area_user')
 	project = models.ForeignKey('Project', on_delete=models.SET_NULL, related_name='area_access_record_project', null=True)
 	start = models.DateTimeField(default=timezone.now)
 	end = models.DateTimeField(null=True, blank=True)
 	staff_charge = models.ForeignKey(StaffCharge, on_delete=models.SET_NULL, blank=True, null=True)
+	comment = models.TextField(null=True, blank=True)
 	projects = models.ManyToManyField('Project', through='AreaAccessRecordProject')
 	customers = models.ManyToManyField('User', through='AreaAccessRecordProject', related_name='AreaAccessRecordMultipleCustomers')
 	created = models.DateTimeField(null=True, blank=True)

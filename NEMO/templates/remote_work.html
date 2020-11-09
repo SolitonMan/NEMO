@@ -102,9 +102,12 @@ th {
 		<td style="width:70px;">{{ v.percent }}</td>
 		</tr>
 		{% endfor %}
-		{% if value.comment != '' %}
-		<tr><td colspan="3"><span style="font-weight: bold; background-color: #eeeeff;">Comment: </span>{{ value.comment }}</td></tr>
-		{% endif %}
+		<tr>
+			<td colspan="3">
+				<span style="font-weight: bold; background-color: #eeeeff;" onclick="edit_comment({{ value.id }}, '{{ value.type }}', $('#cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa {% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__{{ value.id }}').html())">Comment: </span>
+				<span id="cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa {% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__{{ value.id }}" onclick="edit_comment({{ value.id }}, '{{ value.type }}', $(this).html())">{{ value.comment }}</span>
+			</td>
+		</tr>
 		{% if value.contest_rejection_reason != '' %}
 		<tr><td colspan="3"><span title="ID={{ value.contest_id }} DATE={{ value.contest_resolved_date }}" style="font-weight: bold; background-color: #eeeeff;">Contest rejected: </span>{{ value.contest_rejection_reason }}</td></tr>
 		{% endif %}
@@ -215,6 +218,90 @@ function contest_charge(url, button, row)
 		var failure_dialog = ajax_failure_callback("Unable to contest charge");
 		ajax_post(url, {"description": description}, undefined, failure_dialog);
 	}
+}
+
+function edit_comment(id, type, comment)
+{
+	//var edited = prompt("Please make any desired changes to the comment for the " + type, comment);
+
+	let url = "";
+	let span_id = "#cmt__";
+	switch (type) {
+		case "Tool Use":
+			url = "{% url 'save_operator_comment' %}";
+			span_id += "tu__" + id;
+			break;
+		case "Withdraw":
+			url = "{% url 'save_withdraw_notes' %}";
+			span_id += "wd__" + id;
+			break;
+		case "Staff Charge":
+			url = "{% url 'save_staff_comment' %}";
+			span_id += "sc__" + id;
+			break;
+		case "Area Access":
+			url = "{% url 'save_area_access_comment' %}";
+			span_id += "aa__" + id;
+			break;
+	}
+
+	let dialog_contents =
+		"<div class='modal-header'>" +
+		"<button type='button' class='close' data-dismiss='modal'>&times;</button>" +
+		"<h4 class='modal-title'>Please update your comment</h4>" +
+		"</div>" +
+		"<div class='modal-body'>" +
+		"<form action='" + url + "' id='comment_update'>" +
+		"<textarea id='comment_text' cols=15 rows=5 class='form-control'>" + comment + "</textarea>" +
+		"<input type='submit' value='Update Comment' class='btn btn-success' />" +
+		"<button type='button' class='btn btn-danger' data-dismiss='modal'>Cancel</button>" +
+		"</form>" +		
+		"</div>";			
+	$("#dialog .modal-content").html(dialog_contents);
+	$("#comment_update").submit(function( event ) {
+		if ($("#comment_text").val() != comment) {
+			//let url = "";
+			let params = {};
+
+			switch (type) {
+				case "Tool Use":
+					url = "{% url 'save_operator_comment' %}";
+					params["usage_id"] = id;
+					params["operator_comment"] = $("#comment_text").val();
+					break;
+				case "Withdraw":
+					url = "{% url 'save_withdraw_notes' %}";
+					params["withdraw_id"] = id
+					params["withdraw_comment"] = $("#comment_text").val();
+					break;
+				case "Staff Charge":
+					url = "{% url 'save_staff_comment' %}";
+					params["staff_charge_id"] = id
+					params["staff_member_comment"] = $("#comment_text").val();
+					break;
+				case "Area Access":
+					url = "{% url 'save_area_access_comment' %}";
+					params["area_access_id"] = id;
+					params["area_access_comment"] = $("#comment_text").val();
+					break;
+			}
+					
+			ajax_get(
+				url,
+				params,
+				function() {
+					$(span_id).html($("#comment_text").val());
+					$("#dialog").modal('hide'); 
+				},
+				undefined
+			);
+		} else {
+			alert("No changes were detected in the current comment text.  The update will be cancelled.");
+			$("#dialog").modal('hide');
+		}
+		return false;
+	});
+	$("#dialog").modal('show');
 }
 </script>
 {% endblock %}

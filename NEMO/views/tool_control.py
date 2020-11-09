@@ -37,7 +37,7 @@ from NEMO.widgets.tool_tree import ToolTree
 def save_operator_comment(request):
 	usage_id = int(request.GET['usage_id'])
 	ue = UsageEvent.objects.get(id=usage_id)
-	ue.operator_comment = request.GET['operator_comment']
+	ue.operator_comment = request.GET.get('operator_comment')
 	ue.save()
 	return HttpResponse()
 
@@ -378,6 +378,7 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge, billing_mod
 			aar = AreaAccessRecord()
 			aar.area = tool.requires_area_access
 			aar.customer = operator
+			aar.user = request.user
 			aar.project = project
 			aar.start = timezone.now()
 			aar.created = timezone.now()
@@ -621,6 +622,7 @@ def enable_tool_multi(request):
 
 			aar = AreaAccessRecord()
 			aar.area = tool.requires_area_access
+			aar.user = request.user
 			aar.start = timezone.now()
 			aar.created = timezone.now()
 			aar.updated = timezone.now()
@@ -1236,11 +1238,14 @@ def save_usage_event(request):
 
 		if staff_charge:
 			new_staff_charge = StaffCharge()
-			new_staff_charge.staff_member = request.user
+			new_staff_charge.staff_member = operator
 			new_staff_charge.created = timezone.now()
 			new_staff_charge.updated = timezone.now()
 			new_staff_charge.start = ad_hoc_start
 			new_staff_charge.end = ad_hoc_end
+			if request.POST.get("operator_comment") is not None:
+				new_staff_charge.staff_member_comment = request.POST.get("operator_comment")
+			new_staff_charge.ad_hoc_created = True
 			new_staff_charge.save()
 
 			project_charges = {}
