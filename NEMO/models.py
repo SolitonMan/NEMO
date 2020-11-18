@@ -600,13 +600,14 @@ class StaffCharge(CalendarDisplay):
 
 	def description(self):
 		ep = StaffChargeProject.objects.filter(staff_charge=self, active_flag=True)
+		d = "<table class=\"table\"><thead><tr><th>Customer</th><th>Project</th></tr></thead><tbody>"
+
 		if ep.exists():
-			d = "<table class=\"table\"><thead><tr><th>Customer</th><th>Project</th></tr></thead><tbody>"
 			for e in ep:
 				d += "<tr><td>" + e.customer.get_full_name() + "</td><td>" + str(e.project) + "</td></tr>"
 			d += "</tbody></table>"
 		else:
-			d = ""
+			d += "<tr><td>" + self.customer.get_full_name() + "</td><td>" + str(self.project) + "</td></tr></tbody></table>"
 		return d
 
 	class Meta:
@@ -845,13 +846,14 @@ class Reservation(CalendarDisplay):
 
 	def description(self):
 		ep = ReservationProject.objects.filter(reservation=self)
+		d = "<table class=\"table\"><thead><tr><th>Customer</th><th>Project</th></tr></thead><tbody>"
+
 		if ep.exists():
-			d = "<table class=\"table\"><thead><tr><th>Customer</th><th>Project</th></tr></thead><tbody>"
 			for e in ep:
 				d += "<tr><td>" + e.customer.get_full_name() + "</td><td>" + str(e.project) + "</td></tr>"
 			d += "</tbody></table>"
 		else:
-			d = ""
+			d += "<tr><td>" + self.user.get_full_name() + "</td><td>" + str(self.project) + "</td></tr></tbody></table>"
 		return d
 
 	class Meta:
@@ -917,13 +919,14 @@ class UsageEvent(CalendarDisplay):
 
 	def description(self):
 		ep = UsageEventProject.objects.filter(usage_event=self, active_flag=True)
+		d = "<table class=\"table\"><thead><tr><th>Customer</th><th>Project</th></tr></thead><tbody>"
+
 		if ep.exists():
-			d = "<table class=\"table\"><thead><tr><th>Customer</th><th>Project</th></tr></thead><tbody>"
 			for e in ep:
 				d += "<tr><td>" + e.customer.get_full_name() + "</td><td>" + str(e.project) + "</td></tr>"
 			d += "</tbody></table>"
 		else:
-			d = ""
+			d += "<tr><td>" + self.customer.get_full_name() + "</td><td>" + str(self.project) + "</td></tr></tbody></table>"
 		return d
 
 	class Meta:

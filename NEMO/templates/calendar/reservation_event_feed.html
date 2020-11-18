@@ -12,8 +12,12 @@
 		"start": "{{ x.start|date:"c" }}",
 		"end": "{{ x.get_visual_end|date:"c" }}",
 		"details_url": "{% url 'reservation_details' x.id %}",
+		{% if user.is_staff or user.id == x.user.id %}
 		"description": "{{ x.description|escapejs }}"
-	}{% if not forloop.last %},{% elif outages %},{% endif %}
+		{% else %}
+		"description": ""
+		{% endif %}
+	}{% if not forloop.last %},{% elif outages or current %},{% endif %}
 	{% endfor %}
 	{% for x in outages %}
 	{
@@ -25,6 +29,18 @@
 		"end": "{{ x.end|date:"c" }}",
 		"details_url": "{% url 'outage_details' x.id %}",
 		"description": ""
+	}{% if not forloop.last %},{% elif current %},{% endif %}
+	{% endfor %}
+	{% for x in current %}
+	{
+		"title": "Active tool use",
+		"id": "UsageEvent {{ x.id }}",
+		"color": "#ffff00",
+		"textColor": "#000000",
+		"start": "{{ x.start|date:"c" }}",
+		"end": "{{ current_time|date:"c" }}",
+		"details_url": "{% url 'usage_details' x.id %}",
+		"description": "{{ x.description|escapejs }}"
 	}{% if not forloop.last %},{% endif %}
 	{% endfor %}
 ]

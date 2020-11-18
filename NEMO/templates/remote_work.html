@@ -104,8 +104,8 @@ th {
 		{% endfor %}
 		<tr>
 			<td colspan="3">
-				<span style="font-weight: bold; background-color: #eeeeff;" onclick="edit_comment({{ value.id }}, '{{ value.type }}', $('#cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa {% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__{{ value.id }}').html())">Comment: </span>
-				<span id="cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa {% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__{{ value.id }}" onclick="edit_comment({{ value.id }}, '{{ value.type }}', $(this).html())">{{ value.comment }}</span>
+				<span style="font-weight: bold; background-color: #eeeeff;" onclick="edit_comment({{ value.id }}, '{{ value.type }}', $('#cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa{% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__{{ value.id }}').html())">Comment: </span>
+				<span id="cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa{% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__{{ value.id }}" onclick="edit_comment({{ value.id }}, '{{ value.type }}', $(this).html())">{{ value.comment }}</span>
 			</td>
 		</tr>
 		{% if value.contest_rejection_reason != '' %}

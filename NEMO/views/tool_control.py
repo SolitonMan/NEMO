@@ -23,7 +23,7 @@ from django.utils.safestring import mark_safe
 from django.urls import reverse
 
 from NEMO.forms import CommentForm, nice_errors, ToolForm
-from NEMO.models import AreaAccessRecord, AreaAccessRecordProject, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableWithdraw, LockBilling, Project, Reservation, ReservationConfiguration, ReservationProject, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskStatus, Tool, UsageEvent, UsageEventProject, User
+from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableWithdraw, LockBilling, Project, Reservation, ReservationConfiguration, ReservationProject, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskStatus, Tool, UsageEvent, UsageEventProject, User
 from NEMO.utilities import extract_times, quiet_int
 from NEMO.views.policy import check_policy_to_disable_tool, check_policy_to_enable_tool, check_policy_to_enable_tool_for_multi
 from NEMO.views.staff_charges import month_is_locked, month_is_closed, get_billing_date_range
@@ -1291,6 +1291,31 @@ def save_usage_event(request):
 			for p in project_charges.values():
 				p.full_clean()
 				p.save()
+
+		area_access_record = request.POST.get("area_access_record")
+
+		if area_access_record:
+			new_aar = AreaAccessRecord()
+			new_aar.ad_hoc_created = True
+			new_aar.area = Area.objects.get(id=request.POST.get("ad_hoc_area"))
+			new_aar.start = new_usage_event.start
+			new_aar.end = new_usage_event.end
+			if staff_charge:
+				new_aar.staff_charge = new_staff_charge
+			new_aar.comment = new_usage_event.operator_comment
+			new_aar.created = timezone.now()
+			new_aar.updated = timezone.now()
+			new_aar.save()
+
+			for p in project_events:
+				aarp = AreaAccessRecordProject()
+				aarp.area_access_record = new_aar
+				aarp.customer = project_events[p].customer
+				aarp.project = project_events[p].project
+				aarp.project_percent = project_events[p].project_percent
+				aarp.created = timezone.now()
+				aarp.updated = timezone.now()
+				aarp.save()
 
 
 	except Exception as inst:

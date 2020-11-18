@@ -1,7 +1,16 @@
 {% extends 'base.html' %}
+{% load custom_tags_and_filters %}
 {% block title %}Add area access record{% endblock %}
+{% block extrahead %}
+	{% load static %}
+	<script type="text/javascript" src="{% static "datetimepicker/bootstrap-datetimepicker.js" %}"></script>
+	<link rel="stylesheet" type="text/css" href="{% static "datetimepicker/bootstrap-datetimepicker.css" %}" />
+{% endblock %}
+
+
 {% block content %}
-	{% if customer.in_area %}
+
+{% if customer.in_area %}
 	<h1>Currently Signed In</h1>
 	<p>
 	You are currently signed in to the {{ customer.area_access_record.area.name }}.  You may sign out below.  The text field can be used to add a comment about your time.
@@ -20,7 +29,7 @@
 	}
 	window.onunload = save_area_access_comment;
 	</script>
-	{% else %}
+{% else %}
 	<h1>New area access record</h1>
 	<form action="{% url 'new_area_access_record' %}" class="form-horizontal" method="post">
 		{% csrf_token %}
@@ -67,5 +76,227 @@
 			</div>
 		</div>
 	</form>
+
+	<h1>Ad Hoc Area Access Record</h1>
+
+	<p>Use the form below to add a record for time spent in an area that wasn't captured in real time.  Note that this is only for time you've spent for personal project use.  If you were working on behalf of a customer, you can include an area access record with an ad hoc staff time charge.</p>
+
+	<form id="ad_hoc_form" action="{% url 'ad_hoc_area_access_record' %}" class="form-horizontal" method="post" onsubmit="return check_ad_hoc_submit()">
+	{% csrf_token %}
+	{% if multi_core_user %}
+	<select id="ad_hoc_core_select" name="ad_hoc_core_select" class="form-control">
+		<option value="0">Please select the core for which this charge is being made</option>
+		{% for c in request.user.core_ids.all %}
+		<option value="{{ c.id }}">{{ c.name }}</option>
+		{% endfor %}
+	</select>
 	{% endif %}
+
+	<br/><br/>
+
+	<table id="ad_hoc_entries" class="table">
+		{% if request.user.is_staff or request.user.is_superuser %}
+		<tr>
+			<th>&nbsp;</th>
+			<th>User</th>
+			<td>
+				<input type="text" class="form-control" id="area_user" name="area_user" />
+				<input type="button" class="btn btn-default" style="display:none" id="area_user_button" onclick="purge_area_user();" />
+			</td>
+			<th>&nbsp;</th>
+		</tr>
+		<tr>
+			<th>&nbsp;</th>
+			<th>Project</th>
+			<td id="user_projects">
+				<div class="form-group">
+				<select class="form-control" name="ad_hoc_project" id="ad_hoc_project">
+
+				</select>
+				</div>
+			</td>
+			<th>&nbsp;</th>
+		</tr>
+		<tr>
+			<th>&nbsp;</th>
+			<th>Area</th>
+			<td>
+				<div class="form-group">
+				<select name="ad_hoc_area" id="ad_hoc_area" class="form-control">
+
+				</select>
+				</div>
+			</td>
+		</tr>
+		{% else %}
+		<tr>
+			<th>&nbsp;</th>
+			<th>Area</th>
+			<td>
+				<div class="form-group">
+				<select name="ad_hoc_area" id="ad_hoc_area" class="form-control">
+					{% for a in request.user.physical_access_levels.all %}
+					<option value="{{ a.area.id }}">{{ a.area.name }}</option>
+					{% endfor %}
+				</select>
+				</div>
+			</td>
+			<th>&nbsp;</th>
+		</tr>
+		{% endif %}
+		<tr>
+			<th>&nbsp;</th>
+			<th>Start</th>
+			<td>
+				<div class="datetimepicker-container">
+					<input type="text" name="ad_hoc_start" id="ad_hoc_start" />
+				</div>
+			</td>
+			<th>&nbsp;</th>
+		</tr>
+		<tr>
+			<th>&nbsp;</th>
+			<th>End</th>
+			<td>
+				<div class="datetimepicker-container">
+					<input type="text" name="ad_hoc_end" id="ad_hoc_end" />
+				</div>
+			</td>
+			<th>&nbsp;</th>
+		</tr>
+		<tr>
+			<td colspan="4" align="left" valign="top" style="align: left; vertical-align: top;">
+				<div class="form-group">
+				<label class="control-label col-sm-2" for="area_access_comment"><b>Comment / Purpose of Charge</b></label>
+				<textarea class="form-control" name="area_access_comment" id="area_access_comment" rows="6" cols="50" placeholder="Please enter any comments about the reason for or details about the work performed"></textarea>
+				</div>
+			</td>
+		</tr>
+		{% if not request.user.is_staff and not request.user.is_superuser %}
+		<tr>
+			<th>&nbsp;</th>
+			<th>Project</th>
+			<td>
+				<div class="form-group">
+				<select class="form-control" name="ad_hoc_project" id="ad_hoc_project">
+					{% for p in request.user.all_projects.all %}
+					<option value="{{ p.id }}">{{ p }}</option>
+					{% endfor %}
+				</select>
+				</div>
+			</td>
+			<th>&nbsp;</th>
+		</tr>
+		{% endif %}
+	</table>
+	<input type="submit" class="btn btn-default" id="save_ad_hoc_area_access_record" value="Save Ad Hoc Area Access Record" />
+	</form>
+
+	<script type="text/javascript">
+	function check_ad_hoc_submit()
+	{
+		var start = $("#ad_hoc_start").val();
+		var end = $("#ad_hoc_end").val();
+
+		if (start == "") {
+			alert("Please select a start time");
+			$("#ad_hoc_start").focus();
+			return false;
+		}
+
+		if (end == "") {
+			alert("Please select an end time");
+			$("#ad_hoc_end").focus();
+			return false;
+		}
+
+		{% if request.is_staff or request.is_superuser %}
+		// check for user
+		if ($("#area_user").val() == "") {
+			alert("Please select a user to assign to the area access record.");
+			$("#area_user").focus();
+			return false;
+		}
+
+		// check for project
+		if ($("#ad_hoc_project").html() == "") {
+			alert("Please select a user to get a list of available projects");
+			$("#area_user").focus();
+			return false;
+		} else {
+			if ($("#ad_hoc_project option:checked").val() == "") {
+				alert("Please select a project to charge for this area access");
+				$("#ad_hoc_project").focus();
+				return false;
+			}
+		}
+
+		// check for area
+		if ($("#ad_hoc_area").html() == "") {
+			alert("Please select a user to get a list of available areas");
+			$("#area_user").focus();
+			return false;
+		} else {
+			if ($("#ad_hoc_area option:checked").val() == "") {
+				alert("Please select an area for the record");
+				$("#ad_hoc_area").focus();
+				return false;
+			}
+		}
+		{% endif %}
+
+		return true;
+	}
+
+	function on_autocomplete_selection(jquery_event, search_selection, dataset_name)
+	{
+		var parameters = 
+		{
+			"source_template": "ad_hoc_area",
+			"user_id": search_selection.id,
+			"entry_number": 0,
+			"ad_hoc": true,
+		};
+		$(this).typeahead('val', search_selection.id).hide();
+		$("#area_user_button").val(search_selection.name).show();
+		var url = "{% url 'get_projects' %}?" + jQuery.param(parameters);
+
+		// reset projects for selected user
+		$("#ad_hoc_project").html("");
+		$("#ad_hoc_project").load(url, undefined, function(responseTxt, statusTxt, xhr) {
+			if(statusTxt != "success") {
+				ajax_complete_callback("Could not fetch projects for user", "There was a problem obtaining the list of projects for the user.");
+			}
+		});
+
+		// reset areas for selected user
+		$("#ad_hoc_area").html("");
+		url = "{% url 'get_areas' %}?" + jQuery.param(parameters);
+		$("#ad_hoc_area").load(url, undefined, function(responseTxt, statusTxt, xhr) {
+			if(statusTxt != "success") {
+				ajax_complete_callback("Could not fetch areas for user", "There was a problem obtaining the list of areas for the user.");
+			}
+		});
+	}
+
+	function purge_area_user()
+	{
+		$("#area_user_button").hide();
+		$("#ad_hoc_project").html("");
+		$("#ad_hoc_area").html("");
+		$("#area_user").typeahead('val', '').show().focus();
+	}
+
+	function on_load()
+	{
+		$("#ad_hoc_start").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss', minDate: '{{ start_date }} 00:00:00', maxDate: '{{ end_date }} 23:59:59'});
+		$("#ad_hoc_end").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss', minDate: '{{ start_date }} 00:00:00', maxDate: '{{ end_date }} 23:59:59'});
+		{% if request.user.is_staff or request.user.is_superuser %}
+		$("#area_user").autocomplete('user', on_autocomplete_selection, {{ users|json_search_base }});
+		{% endif %}
+	}
+
+	$(on_load);
+	</script>
+{% endif %}
 {% endblock %}

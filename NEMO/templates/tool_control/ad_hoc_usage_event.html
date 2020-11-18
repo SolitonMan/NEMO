@@ -183,6 +183,28 @@
 				</td>
 			</tr>
 			{% endif %}
+			{% if request.user.physical_access_levels.all|length > 0 %}
+			<tr>
+				<td colspan="2">
+				<div class="form-group">
+					<input type="checkbox" name="area_access_record" id="area_access_record" onclick="toggle_area()" />
+					<label for="area_access_record">Include an area access record
+				</div>
+				</td>
+			</tr>
+			<tr>
+				<td>Area</td>
+				<td>
+				<div class="form-group">
+					<select name="ad_hoc_area" id="ad_hoc_area" disabled>
+					{% for a in request.user.physical_access_levels.all %}
+					<option value="{{ a.area.id }}">{{ a.area.name }}</option>
+					{% endfor %}
+					</select>
+				</div>	
+				</td>
+			</tr>
+			{% endif %}
 			<tr id="radio_options" style="{% if request.user.is_superuser or request.user.is_staff %}display: none;{% else %}display: table-row;{% endif %}">
 				<td colspan="2">
 					<div class="radio"><label><input type="radio" id="use_mode" name="use_mode" value="0" onchange="set_mode(0);">
@@ -249,6 +271,15 @@
 <script type="text/javascript">
 var current_entry_number = 0;
 var selected_operator = "";
+
+function toggle_area()
+{
+	if ($("#area_access_record").is(":checked")) {
+		$("#ad_hoc_area").prop("disabled", false);
+	} else {
+		$("#ad_hoc_area").prop("disabled", true);
+	}
+}
 
 function set_radio(sOption)
 {
@@ -334,6 +365,8 @@ function purge_operator()
 	$("#use_mode").each(function() {
 		$(this).prop("checked", false);
 	});
+
+	$("#radio_options").hide();
 }
 
 function enable_autocompletion(entry_number)

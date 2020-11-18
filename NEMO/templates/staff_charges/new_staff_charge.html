@@ -118,10 +118,24 @@
 			</tr>
 			<tr>
 				<td colspan="4" align="left" valign="top" style="align: left; vertical-align: top;">
-					<label class="control-label col-sm-2" for="staff_member_comment">Comment / Purpose of Charge</label>
+					<label class="control-label col-sm-2" for="staff_member_comment" style="font-weight: bold;">Comment / Purpose of Charge</label>
 					<textarea name="staff_member_comment" id="staff_member_comment" rows="6" cols="50" placeholder="Please enter any comments about the reason for or details about the work performed"></textarea>
 				</td>
 			</tr>
+			{% if request.user.physical_access_levels.all|length > 0 %}
+			<tr>
+				<td colspan="4" align="left" valign="top" style="align: left; vertical-align: top;">
+				<input type="checkbox" value="1" name="include_area_access" id="include_area_access" onclick="toggle_areas()">
+				Include an area access record with this staff charge
+<br/><br/>
+				<select name="area_id" id="area_id" class="form-control" disabled>
+					{% for pa in request.user.physical_access_levels.all %}
+					<option value="{{ pa.area.id }}">{{ pa.area.name }}</option>
+					{% endfor %}
+				</select>
+				</td>
+			</tr>
+			{% endif %}
 			<tr>
                                 <th>&nbsp;</th>
 				<th style="min-width:200px">Customer</th>
@@ -376,6 +390,15 @@
 				var strHTML = response;
 				strHTML = strHTML.replace(/[\n\r]/g, '');
 				$("html").html(strHTML);
+			}
+		}
+
+		function toggle_areas()
+		{
+			if ($("#include_area_access").is(":checked")) {
+				$("#area_id").prop("disabled", false);
+			} else {
+				$("#area_id").prop("disabled", true);
 			}
 		}
 

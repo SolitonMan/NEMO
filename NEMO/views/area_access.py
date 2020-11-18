@@ -14,6 +14,7 @@ from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, Door, P
 from NEMO.tasks import postpone
 from NEMO.utilities import parse_start_and_end_date
 from NEMO.views.customization import get_customization
+from NEMO.views.staff_charges import get_billing_date_range
 
 @staff_member_required(login_url=None)
 @require_GET
@@ -331,14 +332,25 @@ def new_area_access_record(request, customer=None):
 	dictionary = {
 		'customers': User.objects.filter(is_active=True, projects__active=True).distinct()
 	}
+
+	if request.user.core_ids.count() > 1:
+		dictionary['multi_core_user'] = True
+	else:
+		dictionary['multi_core_user'] = False
+
 	if request.method == 'GET':
 		try:
 			if customer:
 				customer_to_send = User.objects.get(id=customer, is_active=True)
 				dictionary['self_login_flag'] = True
 			else:
-				customer_to_send = User.objects.get(id=request.GET['customer'], is_active=True)
-				dictionary['self_login_flag'] = False
+				if request.GET['customer']:
+					customer_to_send = User.objects.get(id=request.GET['customer'], is_active=True)
+					dictionary['self_login_flag'] = False
+				else:
+					customer_to_send = request.user
+					dictionary['self_login_flag'] = True
+
 			dictionary['customer'] = customer_to_send
 			dictionary['areas'] = list(set([access_level.area for access_level in customer_to_send.physical_access_levels.all()]))
 			if customer_to_send.active_project_count() == 0:
@@ -347,6 +359,12 @@ def new_area_access_record(request, customer=None):
 			if not dictionary['areas']:
 				dictionary['error_message'] = '{} does not have access to any billable laboratory areas'.format(customer_to_send)
 				return render(request, 'area_access/new_area_access_record.html', dictionary)
+
+
+			dates = get_billing_date_range()
+			dictionary['start_date'] = dates['start']
+			dictionary['end_date'] = dates['end']
+			dictionary['users'] = User.objects.filter(is_active=True, projects__active=True).distinct()
 
 			return render(request, 'area_access/new_area_access_record_details.html', dictionary)
 		except Exception as inst:
@@ -483,3 +501,36 @@ def save_area_access_comment(request):
 	aar.comment = request.GET.get('area_access_comment')
 	aar.save()
 	return HttpResponse()
+
+
+@login_required
+@require_POST
+def ad_hoc_area_access_record(request):
+	aar = AreaAccessRecord()
+	aar.area = Area.objects.get(id=request.POST.get("ad_hoc_area"))
+	aar.project = Project.objects.get(id=request.POST.get("ad_hoc_project"))
+	if request.POST.get("area_user"):
+		aar.customer = User.objects.get(id=request.POST.get("area_user"))
+		aar.user = User.objects.get(id=request.POST.get("area_user"))
+	else:
+		aar.customer = User.objects.get(id=request.user.id)
+		aar.user = User.objects.get(id=request.user.id)
+	aar.start = request.POST.get("ad_hoc_start")
+	aar.end = request.POST.get("ad_hoc_end")
+	aar.ad_hoc_created = True
+	aar.created = timezone.now()
+	aar.updated = timezone.now()
+	if request.POST.get("area_access_comment") is not None:
+		aar.comment = request.POST.get("area_access_comment")
+	aar.save()
+
+	aarp = AreaAccessRecordProject()
+	aarp.area_access_record = aar
+	aarp.project = aar.project
+	aarp.customer = aar.customer
+	aarp.project_percent = 100.0
+	aarp.created = timezone.now()
+	aarp.updated = timezone.now()
+	aarp.save()
+
+	return HttpResponseRedirect(reverse('landing'))

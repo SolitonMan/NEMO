@@ -59,14 +59,14 @@ def remote_work(request):
 	if operator:
 		usage_events = usage_events.exclude(~Q(operator_id=operator.id))
 		staff_charges = staff_charges.exclude(~Q(staff_member_id=operator.id))
-		area_access_records = area_access_records.exclude(~Q(staff_charge__staff_member_id=operator.id))
+		area_access_records = area_access_records.exclude(~Q(staff_charge__staff_member_id=operator.id) & ~(Q(staff_charge__staff_member_id__isnull=True) & Q(customer_id=operator.id)))
 		consumable_withdraws = consumable_withdraws.exclude(~Q(merchant_id=operator.id))
 
-		if operator == request.user:
-			usage_events = usage_events.exclude(projects__in=get_dummy_projects()).exclude(project__in=get_dummy_projects())
-			staff_charges = staff_charges.exclude(projects__in=get_dummy_projects()).exclude(project__in=get_dummy_projects())
-			area_access_records = area_access_records.exclude(projects__in=get_dummy_projects()).exclude(project__in=get_dummy_projects())
-			consumable_withdraws = consumable_withdraws.exclude(project__in=get_dummy_projects())
+		#if operator == request.user:
+			#usage_events = usage_events.exclude(projects__in=get_dummy_projects()).exclude(project__in=get_dummy_projects())
+			#staff_charges = staff_charges.exclude(projects__in=get_dummy_projects()).exclude(project__in=get_dummy_projects())
+			#area_access_records = area_access_records.exclude(projects__in=get_dummy_projects()).exclude(project__in=get_dummy_projects())
+			#consumable_withdraws = consumable_withdraws.exclude(project__in=get_dummy_projects())
 
 	show_buttons = operator == request.user or request.user.is_superuser or request.user.groups.filter(name="Core Admin").exists()
 
@@ -220,7 +220,7 @@ def remote_work(request):
 				'end': a.end,
 				'validated': a.validated,
 				'contested': a.contested,
-				'comment': '',
+				'comment': a.comment,
 				'duration': a.duration,
 				'rowspan': a.areaaccessrecordproject_set.filter(active_flag=True).count(),
 				'contest_rejection_reason': '',
@@ -416,11 +416,12 @@ def contest_staff_charge(request, staff_charge_id):
 		'usage_event': None,
 		'area_access_record': None,
 		'consumable_withdraw': None,
-		'users': User.objects.filter(is_active=True, projects__active=True, projects__account__active=True).distinct(),
+		'users': User.objects.filter(is_active=True).distinct(),
 	}
 	staff_charge = get_object_or_404(StaffCharge, id=staff_charge_id)
 	dictionary['staff_charge'] = staff_charge
-	dictionary['scp'] = StaffChargeProject.objects.filter(staff_charge=staff_charge, active_flag=True)
+	#dictionary['scp'] = StaffChargeProject.objects.filter(staff_charge=staff_charge, active_flag=True)
+	dictionary['scp'] = StaffChargeProject.objects.filter(staff_charge=staff_charge)
 	return render(request, 'remote_work_contest.html', dictionary)
 
 
@@ -432,7 +433,7 @@ def contest_usage_event(request, usage_event_id):
 		'staff_charge': None,
 		'area_access_record': None,
 		'consumable_withdraw': None,
-		'users': User.objects.filter(is_active=True, projects__active=True, projects__account__active=True).distinct(),
+		'users': User.objects.filter(is_active=True).distinct(),
 	}
 	usage_event = get_object_or_404(UsageEvent, id=usage_event_id)
 	dictionary['usage_event'] = usage_event
@@ -453,7 +454,7 @@ def contest_area_access_record(request, area_access_record_id):
 		'staff_charge': None,
 		'usage_event': None,
 		'consumable_withdraw': None,
-		'users': User.objects.filter(is_active=True, projects__active=True, projects__account__active=True).distinct(),
+		'users': User.objects.filter(is_active=True).distinct(),
 	}
 	area_access_record = get_object_or_404(AreaAccessRecord, id=area_access_record_id)
 	dictionary['area_access_record'] = area_access_record
@@ -474,7 +475,7 @@ def contest_consumable_withdraw(request, consumable_withdraw_id):
 		'staff_charge': None,
 		'usage_event': None,
 		'area_access_record': None,
-		'users': User.objects.filter(is_active=True, projects__active=True, projects__account__active=True).distinct(),
+		'users': User.objects.filter(is_active=True).distinct(),
 	}
 	consumable_withdraw = get_object_or_404(ConsumableWithdraw, id=consumable_withdraw_id)
 	dictionary['consumable_withdraw'] = consumable_withdraw

@@ -5,7 +5,7 @@ from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
 from django.views.decorators.http import require_GET
 
-from NEMO.models import User, Tool
+from NEMO.models import Area, User, Tool
 
 
 @staff_member_required(login_url=None)
@@ -25,6 +25,8 @@ def get_projects(request):
 	elif source_template == 'contest_transaction':
 		entry_number = request.GET['entry_number']
 		return render(request, 'get_projects.html', {'projects': projects, 'entry_number': entry_number})
+	elif source_template == 'ad_hoc_area':
+		return render(request, 'get_project_list.html', {'projects': projects })
 
 	projects_out = []
 	for p in projects:
@@ -32,6 +34,17 @@ def get_projects(request):
 		projects_out.append({'id':p.id,'name':send_name})
 	#return JsonResponse(dict(projects=list(projects.values('id', 'name', 'project_number'))))
 	return JsonResponse(dict(projects=projects_out))
+
+@staff_member_required(login_url=None)
+@require_GET
+def get_areas(request):
+	user = get_object_or_404(User, id=request.GET.get('user_id', None))
+	projects = user.active_projects()
+	areas = Area.objects.filter(id__in=user.physical_access_levels.values_list('area', flat=True))
+	source_template = request.GET.get('source_template')
+	ad_hoc = request.GET.get('ad_hoc')
+
+	return render(request, 'get_areas.html', { 'areas': areas })
 
 
 @staff_member_required(login_url=None)

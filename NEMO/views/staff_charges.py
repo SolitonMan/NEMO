@@ -401,6 +401,28 @@ def ad_hoc_staff_charge(request):
 
 		params['staff_charges'] = StaffCharge.objects.filter(id=charge.id, active_flag=True)
 
+		if request.POST.get("include_area_access") is not None:
+			area_id = request.POST.get("area_id")
+			aar = AreaAccessRecord()
+			aar.area = Area.objects.get(id=area_id)
+			aar.staff_charge = charge
+			aar.ad_hoc_created = True
+			aar.start = ad_hoc_start
+			aar.end = ad_hoc_end
+			aar.created = timezone.now()
+			aar.updated = timezone.now()
+			aar.save()
+
+			for pc in project_charges:
+				aarp = AreaAccessRecordProject()
+				aarp.area_access_record = aar
+				aarp.project = project_charges[pc].project
+				aarp.customer = project_charges[pc].customer
+				aarp.project_percent = project_charges[pc].project_percent
+				aarp.created = timezone.now()
+				aarp.updated = timezone.now()
+				aarp.save()
+
 	except Exception as inst:
 		# collect form submission values for display
 		pc = {}

@@ -141,6 +141,8 @@ def multiple_tool_feed(request, start, end):
 def reservation_event_feed(request, start, end):
 	events = Reservation.objects.filter(cancelled=False, missed=False, shortened=False)
 	outages = None
+	current = None
+
 	# Exclude events for which the following is true:
 	# The event starts and ends before the time-window, and...
 	# The event starts and ends after the time-window.
@@ -155,6 +157,8 @@ def reservation_event_feed(request, start, end):
 		outages = ScheduledOutage.objects.filter(Q(tool=tool) | Q(resource__fully_dependent_tools__in=[tool]))
 		outages = outages.exclude(start__lt=start, end__lt=start)
 		outages = outages.exclude(start__gt=end, end__gt=end)
+
+		current = UsageEvent.objects.filter(tool=tool, end=None)
 
 	# Filter events that only have to do with the current user.
 	personal_schedule = request.GET.get('personal_schedule')
@@ -174,6 +178,8 @@ def reservation_event_feed(request, start, end):
 		'event_projects': event_projects,
 		'outages': outages,
 		'personal_schedule': personal_schedule,
+		'current': current,
+		'current_time': timezone.now(),
 	}
 	return render(request, 'calendar/reservation_event_feed.html', dictionary)
 
@@ -733,14 +739,17 @@ def cancel_outage(request, outage_id):
 		return render(request, 'mobile/cancellation_result.html', dictionary)
 
 
-@staff_member_required(login_url=None)
+@login_required
 @require_POST
 def set_reservation_title(request, reservation_id):
-	""" Cancel a reservation for a user. """
-	reservation = get_object_or_404(Reservation, id=reservation_id)
-	reservation.title = request.POST.get('title', '')[:reservation._meta.get_field('title').max_length]
-	reservation.updated = timezone.now()
-	reservation.save()
+	try:
+		reservation = get_object_or_404(Reservation, id=reservation_id)
+		reservation.title = request.POST.get('title', '')[:reservation._meta.get_field('title').max_length]
+		reservation.updated = timezone.now()
+		reservation.save()
+	except Exception as inst:
+		return HttpResponseBadRequest(inst)
+
 	return HttpResponse()
 
 

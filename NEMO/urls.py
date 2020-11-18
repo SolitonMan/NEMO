@@ -37,6 +37,7 @@ urlpatterns = [
 	url(r'^get_projects/$', get_projects.get_projects, name='get_projects'),
 	url(r'^get_projects_for_tool_control/$', get_projects.get_projects_for_tool_control, name='get_projects_for_tool_control'),
 	url(r'^get_projects_for_self/(?P<tool_id>\d+)/$', get_projects.get_projects_for_self, name='get_projects_for_self'),
+	url(r'^get_areas/$', get_projects.get_areas, name='get_areas'),
 
 	# Tool control:
 	url(r'^tools/$', tool_control.tools, name='tools'),
@@ -178,6 +179,7 @@ urlpatterns = [
 	url(r'^force_area_logout/(?P<user_id>\d+)/$', area_access.force_area_logout, name='force_area_logout'),
 	url(r'^self_log_in/$', area_access.self_log_in, name='self_log_in'),
 	url(r'^save_area_access_comment/$', area_access.save_area_access_comment, name='save_area_access_comment'),
+	url(r'^ad_hoc_area_access_record/$', area_access.ad_hoc_area_access_record, name='ad_hoc_area_access_record'),
 
 	# Laboratory usage:
 	url(r'^usage/$', usage.usage, name='usage'),

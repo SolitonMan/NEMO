@@ -88,7 +88,7 @@
 								<input type="hidden" id="proposed__chosen_project__{{ u.id }}" name="proposed__chosen_project__{{ u.id }}" value="{{ u.project.id }}" />
 							{% else %}
 							<select name="proposed__chosen_project__{{ u.id }}" id="proposed__chosen_project__{{ u.id }}" class="form-control">
-								{% for p in u.customer.active_projects %}
+								{% for p in u.customer.all_projects.all %}
 								<option value="{{ p.id }}"{% if p == u.project %} selected{% endif %}>{{ p }} [{{ p }}]</option>
 								{% endfor %}
 							</select>
@@ -170,7 +170,7 @@
 								<input type="hidden" id="proposed__chosen_project__{{ s.id }}" name="proposed__chosen_project__{{ s.id }}" value="{{ s.project.id }}" />
 							{% else %}
 							<select name="proposed__chosen_project__{{ s.id }}" id="proposed__chosen_project__{{ s.id }}" class="form-control">
-								{% for p in s.customer.active_projects %}
+								{% for p in s.customer.all_projects.all %}
 								<option value="{{ p.id }}"{% if p == s.project %} selected{% endif %}>{{ p }} [{{ p }}]</option>
 								{% endfor %}
 							</select>
@@ -248,7 +248,7 @@
 								<input type="hidden" id="proposed__chosen_project__{{ a.id }}" name="proposed__chosen_project__{{ a.id }}" value="{{ a.project.id }}" />
 							{% else %}
 							<select name="proposed__chosen_project__{{ a.id }}" id="proposed__chosen_project__{{ a.id }}" class="form-control">
-								{% for p in a.customer.active_projects %}
+								{% for p in a.customer.all_projects.all %}
 								<option value="{{ p.id }}"{% if p == a.project %} selected{% endif %}>{{ p }} [{{ p }}]</option>
 								{% endfor %}
 							</select>
@@ -344,7 +344,7 @@
 					<input type="hidden" id="proposed__chosen_project__{{ consumable_withdraw.id }}" name="proposed__chosen_project__{{ consumable_withdraw.id }}" value="{{ consumable_withdraw.project.id }}" />
 				{% else %}
 					<select name="proposed__chosen_project__{{ consumable_withdraw.id }}" id="proposed__chosen_project__{{ consumable_withdraw.id }}" class="form-control">
-						{% for p in consumable_withdraw.customer.active_projects %}
+						{% for p in consumable_withdraw.customer.all_projects.all %}
 						<option value="{{ p.id }}"{% if p == consumable_withdraw.project %} selected{% endif %}>{{ p }}</option>
 						{% endfor %}
 					</select>
