@@ -28,15 +28,21 @@
 	or 
 	<ul>
 		<li><a href="{% url 'email_broadcast' 'user' %}">email a user</a></li>
+		<li><a href="{% url 'email_broadcast' 'active_users' %}">email all users</a></li>
+		<li><a href="{% url 'email_broadcast' 'active_users_date' %}">email all users who were active during a date range</a></li>
 	</ul>
 	</p>
 
 	{% if search_base %}
+
+		{% if audience != 'active_users_date' %}
 		<div class="row">
 			<div class="col-sm-4">
 				<input id="search" class="form-control" placeholder="Which {% if audience == 'tool_date' %}tool{% elif audience == 'project_date' %}project{% else %}{{ audience }}{% endif %}?" autofocus />
 			</div>
 		</div>
+		{% endif %}
+
 		{% if date_range %}
 		<br/><br/>
 		<div class="row">

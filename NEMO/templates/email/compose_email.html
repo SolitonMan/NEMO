@@ -21,23 +21,34 @@
 						<label><input type="checkbox" name="copy_me" checked> Send a copy of this email to myself</label>
 					</div>
 					<span id="recipients">
+					{% if audience == "active_users" %}
+					<b>All active users selected</b>
+					{% endif %}
+					{% if audience == "active_users_date" %}
+					<b>All users active from {{ start }} to {{ end }} selected</b>
+					{% endif %}
 					{% for u in users %}
+						{% if audience != "active_users" and audience != "active_users_date" %}
 						<span id="rec_{{ u.id }}">
 						<span class="glyphicon glyphicon-remove-circle grey pointer" onclick="remove_recipient({{ u.id }});"></span>
 						<span {% if not u.is_active %}style="color:lightgrey"{% endif %}>{{ u }} - {{ u.email }}</span>
+						{% endif %}
 						<input type="hidden" name="recipient" value="{{ u.id }}" />
-						</span><br/>
+						{% if audience != "active_users" and audience != "active_users_date" %}</span><br/>{% endif %}
 					{% endfor %}
 					</span>
 					<br/><br/>
+					{% if audience != "active_users" and audience != "active_users_date" %}
 					<div class="row">
 					To add additional recipients to this email, please select from the user search field:<br/>
 					<input class="form-control" id="search" placeholder="Please search for additional recipients" />
 					</div>
+					{% endif %}
 				</div>
 
 
 				<div class="col-sm-6">
+					<p>This page was loaded {{ current_time }}</p>
 					<h3>Email content</h3>
 					<input type="hidden" name="audience" value="{{ audience }}">
 					<input type="hidden" name="selection" value="{{ selection }}">

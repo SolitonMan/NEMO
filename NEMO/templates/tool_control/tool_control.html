@@ -141,8 +141,9 @@
 				$("#customer_project").html("Unable to retrieve a list of projects for this user.")
 		}
 
-		function enable_tool()
+		function enable_tool(e)
 		{
+			e.preventDefault();
 			$("#start").prop("disabled", true);
 
 			if ($("#set_for_autologout").is(":checked")) {
@@ -429,8 +430,9 @@
 				$("#project__" + row).html("");
 				$("#user_textbox__" + row).typeahead('val', '').show().focus();
 			}
-			function on_submit()
+			function on_submit(e)
 			{
+				e.preventDefault();
 				// check for all project fields having selected values
 				var s;
 				var o;

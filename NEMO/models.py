@@ -396,7 +396,25 @@ class Tool(models.Model):
 	def get_current_usage_event(self):
 		""" Gets the usage event for the current user of this tool. """
 		try:
-			return UsageEvent.objects.get(end=None, tool=self.id)
+			if UsageEvent.objects.filter(end=None, tool=self.id).exists():
+				if UsageEvent.objects.filter(end=None, tool=self.id).count() == 1:
+					return UsageEvent.objects.get(end=None, tool=self.id)
+				else:
+					current_usage = None
+					for u in UsageEvent.objects.filter(end=None, tool=self.id).order_by('start'):
+						if current_usage == None:
+							current_usage = u
+						else:
+							u.end = timezone.now()
+							u.updated = timezone.now()
+							u.no_charge_flag = True
+							u.active_flag = False
+							u.save()
+
+					return current_usage
+			else:
+				return None
+						
 		except UsageEvent.DoesNotExist:
 			return None
 

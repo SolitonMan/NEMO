@@ -7,9 +7,11 @@ from django.contrib.auth.models import Group
 from django.core.mail import EmailMultiAlternatives
 from django.core.validators import validate_email
 from django.db.models import Q
+from django.db.models.functions import Length
 from django.http import HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.template import Template, Context
+from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
 from NEMO.forms import EmailBroadcastForm
@@ -94,6 +96,30 @@ def email_broadcast(request, audience=''):
 	elif audience == 'project_date':
 		dictionary['search_base'] = Project.objects.filter(active=True, account__active=True)
 		dictionary['date_range'] = True
+	elif audience == 'active_users_date':
+		dictionary['search_base'] = User.objects.annotate(email_length=Length('email')).filter(is_active=True, email_length__gt=0).order_by('last_name', 'first_name')
+		dictionary['date_range'] = True
+	elif audience == 'active_users':
+		dictionary['users'] = User.objects.annotate(email_length=Length('email')).filter(is_active=True, email_length__gt=0).order_by('last_name', 'first_name')
+		dictionary['audience'] = audience
+		dictionary['selection'] = None
+		dictionary['cc_users'] = User.objects.filter(is_active=True).order_by('last_name', 'first_name')
+		dictionary['date_range'] = False
+		dictionary['start'] = None
+		dictionary['end'] = None
+		dictionary['current_time'] = timezone.now()
+
+		generic_email_sample = get_media_file_contents('generic_email.html')
+		if generic_email_sample:
+			generic_email_context = {
+				'title': 'TITLE',
+				'greeting': 'Greeting',
+				'contents': 'Contents',
+			}
+			dictionary['generic_email_sample'] = Template(generic_email_sample).render(Context(generic_email_context))
+
+		return render(request, 'email/compose_email.html', dictionary)
+
 	dictionary['audience'] = audience
 	return render(request, 'email/email_broadcast.html', dictionary)
 
@@ -119,7 +145,7 @@ def compose_email(request):
 				# find users based on their operation of the tool
 				usage_events = UsageEvent.objects.filter(tool__id__in=tool)
 				usage_events = usage_events.filter(Q(start__range=[start, end]) | Q(end__range=[start, end]))
-				users = User.objects.filter(id__in=usage_events.values_list('operator', flat=True))
+				users = User.objects.filter(Q(id__in=usage_events.values_list('operator', flat=True)) | Q(id__in=usage_events.values_list('customers', flat=True)))
 
 		elif audience == 'project' or audience == 'project_date':
 			users = User.objects.filter(projects__id=selection).distinct()
@@ -135,7 +161,22 @@ def compose_email(request):
 				area_staff_charges = StaffCharge.objects.filter(id__in=area_access_records.values_list('staff_charge', flat=True))
 				consumable_withdraws = ConsumableWithdraw.objects.filter(project__id=selection)
 
-				users = User.objects.filter(Q(id__in=usage_events.values_list('operator', flat=True)) | Q(id__in=staff_charges.values_list('staff_member', flat=True)) | Q(id__in=area_staff_charges.values_list('staff_member', flat=True)) | Q(id__in=consumable_withdraws.values_list('merchant', flat=True)))
+				users = User.objects.filter(Q(id__in=usage_events.values_list('customers', flat=True)) | Q(id__in=usage_events.values_list('operator', flat=True)) | Q(id__in=staff_charges.values_list('customers', flat=True)) | Q(id__in=staff_charges.values_list('staff_member', flat=True)) | Q(id__in=area_staff_charges.values_list('staff_member', flat=True)) | Q(id__in=area_staff_charges.values_list('customers', flat=True)) | Q(id__in=consumable_withdraws.values_list('merchant', flat=True))| Q(id__in=consumable_withdraws.values_list('customer', flat=True)))
+
+		elif audience == 'active_users_date':
+			users = User.objects.filter(is_active=True).order_by('last_name','first_name')
+			start = request.GET.get('start')
+			end = request.GET.get('end')
+
+			# find users who were active in the system between the start and end dates
+			usage_events = UsageEvent.objects.filter(Q(start__range=[start, end]) | Q(end__range=[start, end]))
+			staff_charges = StaffCharge.objects.filter(Q(start__range=[start, end]) | Q(end__range=[start, end]))
+			area_access_records = AreaAccessRecord.objects.filter(Q(start__range=[start, end]) | Q(end__range=[start, end]))
+			area_staff_charges = StaffCharge.objects.filter(id__in=area_access_records.values_list('staff_charge', flat=True))
+			consumable_withdraws = ConsumableWithdraw.objects.filter(Q(date__range=[start, end]))
+
+			users = users.filter(Q(id__in=usage_events.values_list('customers', flat=True)) | Q(id__in=usage_events.values_list('operator', flat=True)) | Q(id__in=staff_charges.values_list('customers', flat=True)) | Q(id__in=staff_charges.values_list('staff_member', flat=True)) | Q(id__in=area_staff_charges.values_list('staff_member', flat=True)) | Q(id__in=area_staff_charges.values_list('customers', flat=True)) | Q(id__in=consumable_withdraws.values_list('merchant', flat=True))| Q(id__in=consumable_withdraws.values_list('customer', flat=True)))
+
 
 		elif audience == 'account':
 			users = User.objects.filter(projects__account__id=selection).distinct()
@@ -158,6 +199,7 @@ def compose_email(request):
 		'date_range': date_range,
 		'start': start,
 		'end': end,
+		'current_time': timezone.now(),
 	}
 	if generic_email_sample:
 		generic_email_context = {
@@ -192,21 +234,6 @@ def send_broadcast_email(request):
 	active_choice = form.cleaned_data['only_active_users']
 	try:
 		users = User.objects.filter(id__in=recipients)
-
-		"""
-		if audience == 'tool':
-			users = User.objects.filter(qualifications__id=selection)
-		elif audience == 'project':
-			users = User.objects.filter(projects__id=selection)
-		elif audience == 'account':
-			users = User.objects.filter(projects__account__id=selection)
-		elif audience == 'group':
-			users = User.objects.filter(groups__id=selection)
-		elif audience == 'user':
-			users = User.objects.filter(id=selection)
-		elif recipients is not None:
-			users = User.objects.filter(id__in=recipients)
-		"""
 
 		if active_choice:
 			users = users.filter(is_active=True)

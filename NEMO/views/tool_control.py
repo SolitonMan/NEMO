@@ -423,26 +423,6 @@ def enable_tool_multi(request):
 
 	response = HttpResponse()
 
-	# check for an existing reservation  -   NOTE: disabling this because the relevant items should already be set, and this will overwrite any changes that the user made between accessing the reservation and starting the usage event
-#	try:
-#		if Reservation.objects.filter(start__lte=timezone.now(), end__gt=timezone.now(), cancelled=False, missed=False, user=operator, tool=tool).exists():
-#			if Reservation.objects.filter(start__lte=timezone.now(), end__gt=timezone.now(), cancelled=False, missed=False, user=operator, tool=tool).count() == 1:
-#				current_reservation = Reservation.objects.get(start__lte=timezone.now(), end__gt=timezone.now(), cancelled=False, missed=False, user=operator, tool=tool)
-#			else:
-#				current_reservation = Reservation.objects.filter(start__lte=timezone.now(), end__gt=timezone.now(), cancelled=False, missed=False, user=operator, tool=tool).order_by('-updated')[0]
-#
-#			res_conf = ReservationConfiguration.objects.filter(reservation=current_reservation)
-#			for rc in res_conf:
-#				config = Configuration.objects.get(id=rc.configuration.id)
-#				if rc.setting is None or rc.setting == '':
-#					if rc.consumable is not None:
-#						config.current_settings = str(rc.consumable.id)
-#				else:
-#					config.current_settings = str(rc.setting)
-#				config.save()
-#			tool.update_post_usage_questions()
-#	except Reservation.DoesNotExist:
-#		pass
 
 	# initiate a UsageEvent
 	billing_mode = request.POST.get('billing_mode')
