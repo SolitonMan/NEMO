@@ -105,6 +105,7 @@ def remote_work(request):
 				'contest_resolved_date':'',
 				'class': '',
 				'customers': '',
+				'ad_hoc_created': u.ad_hoc_created,
 			}
 
 			if u.validated:
@@ -167,6 +168,7 @@ def remote_work(request):
 				'contest_resolved_date': '',
 				'class': '',
 				'customers': '',
+				'ad_hoc_created': s.ad_hoc_created,
 			}
 
 			if s.validated:
@@ -229,6 +231,7 @@ def remote_work(request):
 				'contest_resolved_date': '',
 				'class': '',
 				'customers': '',
+				'ad_hoc_created': a.ad_hoc_created,
 			}
 
 			if a.validated:
@@ -299,6 +302,7 @@ def remote_work(request):
 				'contest_resolved_date': '',
 				'class': '',
 				'customers': '',
+				'ad_hoc_created': False,
 			}
 
 			if c.validated:

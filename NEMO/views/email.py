@@ -136,6 +136,8 @@ def compose_email(request):
 	try:
 		if audience == 'tool' or audience == 'tool_date':
 			tool = request.GET.getlist('tool', None)
+			if not tool:
+				tool = [selection]
 			users = User.objects.filter(qualifications__id__in=tool).distinct()
 			if date_range:
 				# get start and end times

@@ -207,7 +207,7 @@ class User(models.Model):
 		return self.projects.filter(active=True, account__active=True, start_date__lte=timezone.now(), end_date__gte=timezone.now()).count()
 
 	def active_projects(self):
-		return self.projects.filter(active=True, account__active=True, start_date__lte=timezone.now(), end_date__gte=timezone.now())
+		return self.projects.filter(active=True, account__active=True, start_date__lte=timezone.now(), end_date__gte=timezone.now()).order_by('project_number')
 
 	def all_projects(self):
 		return self.projects
@@ -800,7 +800,12 @@ class Project(models.Model):
 		ordering = ['name']
 
 	def __str__(self):
-		return '[' + str(self.project_number) + '] ' + str(self.application_identifier) + ' [' + str(self.get_project()) + '][IBIS:' + str(self.account.ibis_account) + ']'
+		s = ''
+		if not self.active:
+			s = '[INACTIVE]'
+
+		s += '[' + str(self.project_number) + '] ' + str(self.application_identifier) + ' [' + str(self.get_project()) + '][IBIS:' + str(self.account.ibis_account) + ']'
+		return s
 
 	def get_project(self):
 		if self.wbs_element is not None:

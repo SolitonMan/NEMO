@@ -88,7 +88,7 @@ th {
 	<tbody id="transaction_data">
 {% for key, value in transactions.items %}
 	<tr{% if value.class != '' %} class="{{ value.class }}"{% endif %} id="transaction_row_{{ forloop.counter }}">
-		<td style="width:40px;" title="ID={{ value.id }}">{{ value.type }}</td>
+		<td style="width:40px;" title="ID={{ value.id }}">{% if value.ad_hoc_created %}Ad Hoc {% endif %}{{ value.type }}</td>
 		<td style="width:120px;">{{ value.operator }}</td>
 		<td style="width:120px;">{{ value.start|date:"m-d-Y g:i:s A" }}</td>
 		<td style="width:120px;">{{ value.end|date:"m-d-Y g:i:s A" }}</td>

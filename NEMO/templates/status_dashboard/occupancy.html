@@ -30,7 +30,7 @@
 							{% endif %}
 							<span {% if o.customer.is_staff %}class="success-highlight"{% endif %}>{{ o.customer.first_name }} {{ o.customer.last_name }}</span>
 						</td>
-						<td>{{ o.start|date:"l @ g:i A" }}</td>
+						<td>{{ o.start|date:"l, M jS @ g:i A" }}</td>
 						<td>{{ o.project }}</td>
 					</tr>
 				{% endfor %}
