@@ -59,6 +59,7 @@ urlpatterns = [
 	url(r'^create_usage_event/$', tool_control.create_usage_event, name='create_usage_event'),
 	url(r'^save_usage_event/$', tool_control.save_usage_event, name='save_usage_event'),
 	url(r'^save_operator_comment/$', tool_control.save_operator_comment, name='save_operator_comment'),
+	url(r'^save_tool_comment/$', tool_control.save_tool_comment, name='save_tool_comment'),
 
 	# Tasks:
 	url(r'^create_task/$', tasks.create, name='create_task'),
@@ -105,6 +106,7 @@ urlpatterns = [
 	url(r'^staff_charge_projects_save/(?P<modal_flag>\d+)/$', staff_charges.staff_charge_projects_save, name='staff_charge_projects_save'),
 	url(r'^continue_staff_charge/(?P<staff_charge_id>\d+)/$', staff_charges.continue_staff_charge, name='continue_staff_charge'),
 	url(r'^save_staff_comment/$', staff_charges.save_staff_comment, name='save_staff_comment'),
+	url(r'^save_sc_customer_comment/$', staff_charges.save_sc_customer_comment, name='save_sc_customer_comment'),
 
 	# Status dashboard:
 	url(r'^status_dashboard/$', status_dashboard.status_dashboard, name='status_dashboard'),
@@ -180,6 +182,7 @@ urlpatterns = [
 	url(r'^self_log_in/$', area_access.self_log_in, name='self_log_in'),
 	url(r'^save_area_access_comment/$', area_access.save_area_access_comment, name='save_area_access_comment'),
 	url(r'^ad_hoc_area_access_record/$', area_access.ad_hoc_area_access_record, name='ad_hoc_area_access_record'),
+	url(r'^save_aa_customer_comment/$', area_access.save_aa_customer_comment, name='save_aa_customer_comment'),
 
 	# Laboratory usage:
 	url(r'^usage/$', usage.usage, name='usage'),

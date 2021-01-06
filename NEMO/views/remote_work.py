@@ -99,6 +99,7 @@ def remote_work(request):
 				'contested': u.contested,
 				'comment': u.operator_comment,
 				'duration': u.duration,
+				'quantity': '',
 				'rowspan': u.usageeventproject_set.filter(active_flag=True).count(),
 				'contest_rejection_reason': '',
 				'contest_id': '',
@@ -138,9 +139,11 @@ def remote_work(request):
 			for uep in u.usageeventproject_set.filter(active_flag=True):
 				if uep.id not in customers:
 					customers[uep.id] = {
+						'id': uep.id,
 						'customer': str(uep.customer),
 						'project': str(uep.project),
 						'percent': uep.project_percent,
+						'comment': uep.comment,
 					}
 			transactions[transaction_key]['customers'] = customers
 
@@ -162,6 +165,7 @@ def remote_work(request):
 				'contested': s.contested,
 				'comment': s.staff_member_comment,
 				'duration': s.duration,
+				'quantity': '',
 				'rowspan': s.staffchargeproject_set.filter(active_flag=True).count(),
 				'contest_rejection_reason': '',
 				'contest_id': '',
@@ -201,9 +205,11 @@ def remote_work(request):
 			for scp in s.staffchargeproject_set.filter(active_flag=True):
 				if scp.id not in customers:
 					customers[scp.id] = {
+						'id': scp.id,
 						'customer': str(scp.customer),
 						'project': str(scp.project),
 						'percent': scp.project_percent,
+						'comment': scp.comment,
 					}
 			transactions[transaction_key]['customers'] = customers
 
@@ -225,6 +231,7 @@ def remote_work(request):
 				'contested': a.contested,
 				'comment': a.comment,
 				'duration': a.duration,
+				'quantity': '',
 				'rowspan': a.areaaccessrecordproject_set.filter(active_flag=True).count(),
 				'contest_rejection_reason': '',
 				'contest_id': '',
@@ -265,15 +272,19 @@ def remote_work(request):
 				for aarp in a.areaaccessrecordproject_set.filter(active_flag=True):
 					if aarp.id not in customers:
 						customers[aarp.id] = {
+							'id': aarp.id,
 							'customer': str(aarp.customer),
 							'project': str(aarp.project),
 							'percent': aarp.project_percent,
+							'comment': '',
 						}
 			else:
 				customers[a.id] = {
+					'id': a.id,
 					'customer': str(a.customer),
 					'project': str(a.project),
-					'percent': '100.0'
+					'percent': '100.0',
+					'comment': '',
 				}
 
 			transactions[transaction_key]['customers'] = customers
@@ -296,6 +307,7 @@ def remote_work(request):
 				'contested': c.contested,
 				'comment': c.notes,
 				'duration': '',
+				'quantity': str(c.quantity) + ' ' + str(c.consumable.unit.abbreviation),
 				'rowspan': 1,
 				'contest_rejection_reason': '',
 				'contest_id': '',
@@ -334,9 +346,11 @@ def remote_work(request):
 			customers = {}
 
 			customers[c.id] = {
+				'id': c.id,
 				'customer': str(c.customer),
 				'project': str(c.project),
 				'percent': c.project_percent,
+				'comment': '',
 			}
 
 			transactions[transaction_key]['customers'] = customers
@@ -347,6 +361,14 @@ def remote_work(request):
 		staff_list = User.objects.filter(is_staff=True, core_ids__in=request.user.core_ids.all(), is_active=True).order_by('last_name', 'first_name')
 	else:
 		staff_list = None
+
+	# sort the transaction on start date descending
+	t_list = sorted(transactions.items(), key=lambda trans: trans[1]['start'], reverse=True)
+
+	new_t = {}
+
+	for t in t_list:
+		new_t[t[0]] = t[1]
 
 	dictionary = {
 		'usage': usage_events,
@@ -362,7 +384,8 @@ def remote_work(request):
 		'aarp': aarp,
 		'show_buttons': show_buttons,
 		'user_is_core_admin': request.user.groups.filter(name="Core Admin").exists(),
-		'transactions': transactions,
+		'transactions': new_t,
+		'sorted_transactions': t_list,
 	}
 	return render(request, 'remote_work.html', dictionary)
 

@@ -722,6 +722,7 @@ class AreaAccessRecordProject(models.Model):
 	contest_data = GenericRelation('ContestTransactionData')
 	no_charge_flag = models.BooleanField(default=False)
 	active_flag = models.BooleanField(default=True)
+	comment = models.TextField(null=True, blank=True)
 
 
 class ConfigurationHistory(models.Model):
@@ -803,6 +804,10 @@ class Project(models.Model):
 		s = ''
 		if not self.active:
 			s = '[INACTIVE]'
+
+		if s == '' and self.end_date is not None:
+			if self.end_date < timezone.now().date():
+				s = '[INACTIVE]'
 
 		s += '[' + str(self.project_number) + '] ' + str(self.application_identifier) + ' [' + str(self.get_project()) + '][IBIS:' + str(self.account.ibis_account) + ']'
 		return s

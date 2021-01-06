@@ -21,7 +21,7 @@
 			<tr>
 				<td>{{ u.customer.first_name }} {{ u.customer.last_name }}</td>
 				<td>{{ u.project.name }}</td>
-				<td><input type="text" name="event_comment__{{ u.id }}" value="" /></td>
+				<td><input type="text" name="event_comment__{{ u.id }}" value="{% if u.comment is not None %}{{ u.comment }}{% endif %}" /></td>
 				<td><input type="text" name="project_percent__{{ u.id }}" value="" /></td>
 				<td><input type="radio" name="prime" value="{{ u.id }}" style="display: none;" /></td>
 			</tr>

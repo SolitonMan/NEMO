@@ -42,6 +42,16 @@ def save_operator_comment(request):
 	return HttpResponse()
 
 
+@login_required
+@require_GET
+def save_tool_comment(request):
+	uep_id = int(request.GET['uep_id'])
+	uep = UsageEventProject.objects.get(id=uep_id)
+	uep.comment = request.GET.get('comment')
+	uep.save()
+	return HttpResponse()
+
+
 @staff_member_required(login_url=None)
 @require_GET
 def tools(request):

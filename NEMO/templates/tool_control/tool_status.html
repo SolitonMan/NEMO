@@ -35,13 +35,14 @@
 					{% if request.user == current_usage_event.operator %}
 					<div>	
 						{% if current_usage_event.operator.id != current_usage_event.customers.all.0.id %}
-							{% if current_usage_event.customers.all|length > 1 %}
-								for the customers:
+							{% if current_usage_event.customers.all|length > 0 %}
+								for the customer(s):
 								<table class="table">
 									<thead>
 									<tr>
 										<th>Customer</th>
 										<th>Project</th>
+										<th>Comment</th>
 									</tr>
 									</thead>
 									<tbody>
@@ -49,6 +50,7 @@
 									<tr>
 										<td>{{ uep.customer }}</td>
 										<td>{{ uep.project }}</td>
+										<td><textarea rows="3" cols="60" name="cc__{{ uep.id }}" id="cc__{{ uep.id }}" value="{{ uep.comment }}" onblur="save_comment(this);">{% if uep.comment is not None %}{{ uep.comment }}{% endif %}</textarea></td>
 									</tr>
 								{% endfor %}
 									</tbody>
@@ -536,8 +538,15 @@
 	$('#autologout_endtime').datetimepicker({format: 'YYYY-MM-DD HH:mm:ss', minDate: current_time });
 
 	{% if tool.get_current_usage_event is not None %}
-	function save_operator_comment() {
+	function save_operator_comment() 
+	{
 		ajax_get("{% url 'save_operator_comment' %}", { "usage_id": {{ tool.get_current_usage_event.id }}, "operator_comment": $("#operator_comment").val() },undefined,undefined);
+	}
+
+	function save_comment(el) 
+	{
+		id = $(el).prop("id").split("__")[1];
+		ajax_get("{% url 'save_tool_comment' %}", { "uep_id": id, "comment": $(el).val() }, undefined, undefined);
 	}
 
 	window.onunload = save_operator_comment;

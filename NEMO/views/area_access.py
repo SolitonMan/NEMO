@@ -16,6 +16,17 @@ from NEMO.utilities import parse_start_and_end_date
 from NEMO.views.customization import get_customization
 from NEMO.views.staff_charges import get_billing_date_range
 
+
+@require_GET
+def save_aa_customer_comment(request):
+	aarp_id = int(request.GET['aarp_id'])
+	aarp = AreaAccessRecordProject.objects.get(id=aarp_id)
+	aarp.comment = request.GET['comment']
+	aarp.updated = timezone.now()
+	aarp.save()
+	return HttpResponse()
+
+
 @staff_member_required(login_url=None)
 @require_GET
 def area_access(request):

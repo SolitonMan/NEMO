@@ -28,6 +28,15 @@ def save_staff_comment(request):
 	charge.save()
 	return HttpResponse()
 
+@require_GET
+def save_sc_customer_comment(request):
+	scp_id = int(request.GET['scp_id'])
+	scp = StaffChargeProject.objects.get(id=scp_id)
+	scp.comment = request.GET['comment']
+	scp.updated = timezone.now()
+	scp.save()
+	return HttpResponse()
+
 
 @staff_member_required(login_url=None)
 @require_GET
@@ -176,9 +185,15 @@ def get_billing_date_range():
 	else:
 		max_month = datetime.today().month - 2
 
+	if max_month > 12:
+		max_month = 1
+		max_year += 1
+
 	start = str(max_month) + '/25/' + str(max_year)
-	#end = str(datetime.today().strftime('%m/%d/%Y'))
-	end = str(max_month + 1) + '/24/' + str(max_year)
+	if max_month == 12:
+		end = '1/24/' + str(max_year+1)
+	else:
+		end = str(max_month + 1) + '/24/' + str(max_year)
 
 	dictionary = {
 		'start': start,

@@ -4,10 +4,9 @@
 {% block content %}
 
 <h1>Transaction validation</h1>
-
 	<p>This page displays transactions conducted by and for users.  If you have the appropriate permissions you can filter by which staff member performed the work, and when, by using the dropdown boxes below.</p>
 
-	<p>The table lists all the charges sorted by the most recent Start date.  You can sort by the columns with a <span style="background-color: #199BD7;"> blue background</span>.  You can also filter the table using the search field input below.</p>
+	<p>The table lists all the charges sorted by the most recent Start date.  You can filter the table using the search field input below.</p>
 
 	<p>Each charge can be validated, which means that you have confirmed that the charge is legitimate and correct, and no adjustment needs to
 	be made to it. Press the green 'Validate' button on an individual row to validate a charge. Charges that have already been validated are
@@ -72,90 +71,131 @@ th {
 <table id="transactions" style="background-color: #fefefe;">
 	<thead>
 	<tr>
-		<th style="width:40px;background-color: #199BD7;">Type</th>
-		<th style="width:120px;background-color: #199BD7;" title="This column refers to the person who operated the tool, performed the staff work, or sold the consumable">Merchant</th>
-		<th style="width:120px;background-color: #199BD7;">Start</th>
-		<th style="width:120px;background-color: #199BD7;">End</th>
-		<th style="width:70px;background-color: #199BD7;">Duration</th>
-		<th style="width:100px;" class="sort-customer">Customer</th>
-		<th style="width:200px;" class="sort-project">Project</th>
-		<th style="width:70px;" class="sort-percent">Percent</th>
-		<th style="width:150px;background-color: #199BD7;">Tool/Item/Area</th>
-		<th style="width:75px;" class="sort-validate">Validate</th>
-		<th style="width:75px;" class="sort-contest">Contest</th>
+		<th style="width:40px;">Type</th>
+		<td>
+			<table>
+			<tr>
+			<th style="width:120px;" title="This column refers to the person who operated the tool, performed the staff work, or sold the consumable">Merchant</th>
+			<th style="width:120px;">Start</th>
+			<th style="width:120px;">End</th>
+			<th style="width:70px;">Duration/Quantity</th>
+			<th style="width:150px;">Tool/Item/Area</th>
+			<th style="width:75px;" class="sort-validate">Validate</th>
+			<th style="width:75px;" class="sort-contest">Contest</th>
+			</tr>
+			</table>
+		</td>
 	</tr>
+	<!--tr>
+		<td>
+			<table>
+			<tr>
+			<th style="width:100px;" class="sort-customer">Customer</th>
+			<th style="width:200px;" class="sort-project">Project</th>
+			<th style="width:70px;" class="sort-percent">Percent</th>
+			<th style="width:70px;" class="sort-percent">Comment</th>
+			</tr>
+			</table>
+		</td>
+	</tr-->
+	
 	</thead>
 	<tbody id="transaction_data">
 {% for key, value in transactions.items %}
-	<tr{% if value.class != '' %} class="{{ value.class }}"{% endif %} id="transaction_row_{{ forloop.counter }}">
-		<td style="width:40px;" title="ID={{ value.id }}">{% if value.ad_hoc_created %}Ad Hoc {% endif %}{{ value.type }}</td>
-		<td style="width:120px;">{{ value.operator }}</td>
-		<td style="width:120px;">{{ value.start|date:"m-d-Y g:i:s A" }}</td>
-		<td style="width:120px;">{{ value.end|date:"m-d-Y g:i:s A" }}</td>
-		<td style="width:70px;">{{ value.duration|smooth_timedelta }}</td>
-		<td colspan="3">
-			<table>
-		{% for k, v in value.customers.items %}
-		<tr>
-		<td style="width:100px;">{{ v.customer }}</td>
-		<td style="width:200px;">{{ v.project }}</td>
-		<td style="width:70px;">{{ v.percent }}</td>
-		</tr>
-		{% endfor %}
-		<tr>
-			<td colspan="3">
-				<span style="font-weight: bold; background-color: #eeeeff;" onclick="edit_comment({{ value.id }}, '{{ value.type }}', $('#cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa{% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__{{ value.id }}').html())">Comment: </span>
-				<span id="cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa{% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__{{ value.id }}" onclick="edit_comment({{ value.id }}, '{{ value.type }}', $(this).html())">{{ value.comment }}</span>
+	<tr{% if value.class != '' %} class="{{ value.class }}"{% endif %} id="transaction_row_{{ forloop.counter }}" {% if forloop.counter|divisibleby:"2" %}style="background-color: #e0e0e0; border: 2px solid #c0c0c0;"{% else %}style="border: 2px solid #c0c0c0;"{% endif %}>
+		<td rowspan="2" style="width:40px;" title="ID={{ value.id }}">{% if value.ad_hoc_created %}Ad Hoc {% endif %}{{ value.type }}</td>
+		<td style="padding: 20px;">
+			<table style="border: 2px solid black; font-weight: bold;">
+			<tr>
+			<td style="width:120px;">{{ value.operator }}</td>
+			<td style="width:120px;">{{ value.start|date:"m-d-Y g:i:s A" }}</td>
+			<td style="width:120px;">{{ value.end|date:"m-d-Y g:i:s A" }}</td>
+			<td style="width:120px;">{% if value.duration != '' %}{{ value.duration|smooth_timedelta }}{% else %}{{ value.quantity }}{% endif %}</td>
+			<td style="width:150px;">{{ value.tool }}</td>
+			<td style="width:50px; text-align:center;">
+			{% if show_buttons %}
+				{% if not value.validated %}
+					{% if value.type == "Tool Use" %}
+			<button {% if value.contested %}disabled{% endif %}  class="btn btn-success" onclick="validate_charge('{% url 'validate_usage_event' value.id %}', this, '#transaction_row_{{ forloop.counter }}')">Validate</button>
+					{% endif %}
+					{% if value.type == "Staff Charge" %}
+			<button {% if value.contested %}disabled{% endif %}  class="btn btn-success" onclick="validate_charge('{% url 'validate_staff_charge' value.id %}', this, '#transaction_row_{{ forloop.counter }}')">Validate</button>
+					{% endif %}
+					{% if value.type == "Area Access" %}
+			<button {% if value.contested %}disabled{% endif %}  class="btn btn-success" onclick="validate_charge('{% url 'validate_area_access_record' value.id %}', this, '#transaction_row_{{ forloop.counter }}')">Validate</button>
+					{% endif %}
+					{% if value.type == "Withdraw" %}
+			<button {% if value.contested %}disabled{% endif %}  class="btn btn-success" onclick="validate_charge('{% url 'validate_consumable_withdraw' value.id %}', this, '#transaction_row_{{ forloop.counter }}')">Validate</button>
+					{% endif %}
+				{% endif %}
+			{% endif %}
 			</td>
-		</tr>
-		{% if value.contest_rejection_reason != '' %}
-		<tr><td colspan="3"><span title="ID={{ value.contest_id }} DATE={{ value.contest_resolved_date }}" style="font-weight: bold; background-color: #eeeeff;">Contest rejected: </span>{{ value.contest_rejection_reason }}</td></tr>
-		{% endif %}
+			<td style="width:50px; text-align:center;">
+			{% if show_buttons %}
+				{% if not value.validated %}
+					{% if value.type == "Tool Use" %}
+			<form action="{% url 'contest_usage_event' value.id %}" method="POST">
+			<input type="hidden" name="usage_event_id" value="{{ value.id }}" />
+					{% endif %}
+					{% if value.type == "Staff Charge" %}
+			<form action="{% url 'contest_staff_charge' value.id %}" method="POST">
+			<input type="hidden" name="staff_charge_id" value="{{ value.id }}" />
+					{% endif %}
+					{% if value.type == "Area Access" %}
+			<form action="{% url 'contest_area_access_record' value.id %}" method="POST">
+			<input type="hidden" name="area_access_record_id" value="{{ value.id }}" />
+					{% endif %}
+					{% if value.type == "Withdraw" %}
+			<form action="{% url 'contest_consumable_withdraw' value.id %}" method="POST">
+			<input type="hidden" name="consumable_withdraw_id" value="{{ value.id }}" />
+					{% endif %}
+			{% csrf_token %}
+			<input {% if value.contested %}disabled{% endif %}  type="submit" class="btn btn-warning" value="Contest" />
+			</form>
+				{% endif %}
+			{% endif %}
+			</td>
+			</tr>
 			</table>
 		</td>
-		<td style="width:150px;">{{ value.tool }}</td>
-		<td style="width:75px;">
-		{% if show_buttons %}
-			{% if not value.validated %}
-				{% if value.type == "Tool Use" %}
-		<button {% if value.contested %}disabled{% endif %}  class="btn btn-success" onclick="validate_charge('{% url 'validate_usage_event' value.id %}', this, '#transaction_row_{{ forloop.counter }}')">Validate</button>
-				{% endif %}
-				{% if value.type == "Staff Charge" %}
-		<button {% if value.contested %}disabled{% endif %}  class="btn btn-success" onclick="validate_charge('{% url 'validate_staff_charge' value.id %}', this, '#transaction_row_{{ forloop.counter }}')">Validate</button>
-				{% endif %}
-				{% if value.type == "Area Access" %}
-		<button {% if value.contested %}disabled{% endif %}  class="btn btn-success" onclick="validate_charge('{% url 'validate_area_access_record' value.id %}', this, '#transaction_row_{{ forloop.counter }}')">Validate</button>
-				{% endif %}
-				{% if value.type == "Withdraw" %}
-		<button {% if value.contested %}disabled{% endif %}  class="btn btn-success" onclick="validate_charge('{% url 'validate_consumable_withdraw' value.id %}', this, '#transaction_row_{{ forloop.counter }}')">Validate</button>
-				{% endif %}
+	</tr>
+	<tr{% if value.class != '' %} class="{{ value.class }}"{% endif %} id="transaction_row_{{ forloop.counter }}_customers" {% if forloop.counter|divisibleby:"2" %}style="background-color: #e0e0e0; border: 2px solid #c0c0c0;"{% else %}style="border: 2px solid #c0c0c0;"{% endif %}>
+		<td style="padding: 20px;">
+			<table>
+			<tr>
+			<th style="width:100px;" class="sort-customer">Customer</th>
+			<th style="width:200px;" class="sort-project">Project</th>
+			<th style="width:70px;" class="sort-percent">Percent</th>
+			{% if value.type != "Withdraw" %}
+			<th style="width:70px;" class="sort-percent">Comment</th>
 			{% endif %}
-		{% endif %}
-		</td>
-		<td style="width:75px;">
-		{% if show_buttons %}
-			{% if not value.validated %}
-				{% if value.type == "Tool Use" %}
-		<form action="{% url 'contest_usage_event' value.id %}" method="POST">
-		<input type="hidden" name="usage_event_id" value="{{ value.id }}" />
-				{% endif %}
-				{% if value.type == "Staff Charge" %}
-		<form action="{% url 'contest_staff_charge' value.id %}" method="POST">
-		<input type="hidden" name="staff_charge_id" value="{{ value.id }}" />
-				{% endif %}
-				{% if value.type == "Area Access" %}
-		<form action="{% url 'contest_area_access_record' value.id %}" method="POST">
-		<input type="hidden" name="area_access_record_id" value="{{ value.id }}" />
-				{% endif %}
-				{% if value.type == "Withdraw" %}
-		<form action="{% url 'contest_consumable_withdraw' value.id %}" method="POST">
-		<input type="hidden" name="consumable_withdraw_id" value="{{ value.id }}" />
-				{% endif %}
-		{% csrf_token %}
-		<input {% if value.contested %}disabled{% endif %}  type="submit" class="btn btn-warning" value="Contest" />
-		</form>
+			</tr>
+			{% for k, v in value.customers.items %}
+			<tr>
+			<td style="width:100px;">{{ v.customer }}</td>
+			<td style="width:200px;">{{ v.project }}</td>
+			<td style="width:70px;">{{ v.percent }}</td>
+			{% if value.type != "Withdraw" %}
+			<td style="width:70px;" onclick="edit_comment({{ v.id }}, '{{ value.type }} customer', $('#cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa{% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__customer__{{ v.id }}').html())">
+				<span style="width: 100%;" id="cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa{% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__customer__{{ v.id }}">{% if v.comment is not None %}{{ v.comment }}{% endif %}</span>
+			</td>
 			{% endif %}
-		{% endif %}
+			</tr>
+			{% endfor %}
+			<tr>
+				<td colspan="4">
+					<span style="font-weight: bold; background-color: #eeeeff;" onclick="edit_comment({{ value.id }}, '{{ value.type }}', $('#cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa{% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__{{ value.id }}').html())">Comment: </span>
+					<span id="cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa{% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__{{ value.id }}" onclick="edit_comment({{ value.id }}, '{{ value.type }}', $(this).html())">{% if value.comment is not None %}{{ value.comment }}{% endif %}</span>
+				</td>
+			</tr>
+			{% if value.contest_rejection_reason != '' %}
+			<tr>
+				<td colspan="4">
+					<span title="ID={{ value.contest_id }} DATE={{ value.contest_resolved_date }}" style="font-weight: bold; background-color: #eeeeff;">Contest rejected: </span>{{ value.contest_rejection_reason }}
+				</td>
+			</tr>
+			{% endif %}
+			</table>
 		</td>
 	</tr>
 {% endfor %}
@@ -163,6 +203,7 @@ th {
 	</table>
 
 <script type="text/javascript">
+/*
 $(function() {
 	$("#transactions").tablesorter({ 
 		sortList: [[2,1], [0,0]],
@@ -174,6 +215,7 @@ $(function() {
 		}
 	});
 });
+*/
 
 $("#search").keyup(function () {
 	//var data = this.value.split(" ");
@@ -191,8 +233,18 @@ $("#search").keyup(function () {
 
 	tr.filter(function(i, v) {
 		var $t = $(this);
+
+		// add more detailed filtering to collectively hide and show related rows
+		var id = $t.prop("id");
+
+		if (id.indexOf("_customers") > -1) {
+			id_related = "#" + id.substr(0, id.length - 10);
+		} else {
+			id_related = "#" + id + "_customers";
+		}
+
 		var s = data.toUpperCase();
-		if ($t.text().toUpperCase().indexOf(s) > -1) {
+		if ($t.text().toUpperCase().indexOf(s) > -1 || $(id_related).text().toUpperCase().indexOf(s) > -1) {
 			return true;
 		}
 	})
@@ -204,6 +256,8 @@ function validate_charge(url, button, row)
 	$(button).hide();
 	$(button).parent().next().children().first().hide();
 	$(row).addClass('success-highlight');
+	customer = row + '_customers';
+	$(customer).addClass('success-highlight');	
 	var failure_dialog = ajax_failure_callback("Unable to validate charge");
 	ajax_post(url, undefined, undefined, failure_dialog);
 }
@@ -215,6 +269,8 @@ function contest_charge(url, button, row)
 		$(button).hide();
 		$(button).parent().prev().children().first().prop("disabled", true);
 		$(row).addClass('warning-highlight');
+		customer = row + '_customers';
+		$(customer).addClass('warning-highlight');
 		var failure_dialog = ajax_failure_callback("Unable to contest charge");
 		ajax_post(url, {"description": description}, undefined, failure_dialog);
 	}
@@ -231,6 +287,10 @@ function edit_comment(id, type, comment)
 			url = "{% url 'save_operator_comment' %}";
 			span_id += "tu__" + id;
 			break;
+		case "Tool Use customer":
+			url = "{% url 'save_tool_comment' %}";
+			span_id += "tu__customer__" + id;
+			break;
 		case "Withdraw":
 			url = "{% url 'save_withdraw_notes' %}";
 			span_id += "wd__" + id;
@@ -239,9 +299,17 @@ function edit_comment(id, type, comment)
 			url = "{% url 'save_staff_comment' %}";
 			span_id += "sc__" + id;
 			break;
+		case "Staff Charge customer":
+			url = "{% url 'save_sc_customer_comment' %}";
+			span_id += "sc__customer__" + id;
+			break;
 		case "Area Access":
 			url = "{% url 'save_area_access_comment' %}";
 			span_id += "aa__" + id;
+			break;
+		case "Area Access customer":
+			url = "{% url 'save_aa_customer_comment' %}";
+			span_id += "aa__customer__" + id;
 			break;
 	}
 
@@ -269,6 +337,11 @@ function edit_comment(id, type, comment)
 					params["usage_id"] = id;
 					params["operator_comment"] = $("#comment_text").val();
 					break;
+				case "Tool Use customer":
+					url = "{% url 'save_tool_comment' %}";
+					params["uep_id"] = id;
+					params["comment"] = $("#comment_text").val();
+					break;
 				case "Withdraw":
 					url = "{% url 'save_withdraw_notes' %}";
 					params["withdraw_id"] = id
@@ -279,11 +352,24 @@ function edit_comment(id, type, comment)
 					params["staff_charge_id"] = id
 					params["staff_member_comment"] = $("#comment_text").val();
 					break;
+				case "Staff Charge customer":
+					url = "{% url 'save_sc_customer_comment' %}";
+					params["scp_id"] = id;
+					params["comment"] = $("#comment_text").val();
+					break;
 				case "Area Access":
 					url = "{% url 'save_area_access_comment' %}";
 					params["area_access_id"] = id;
 					params["area_access_comment"] = $("#comment_text").val();
 					break;
+				case "Area Access customer":
+					url = "{% url 'save_aa_customer_comment' %}";
+					params["aarp_id"] = id;
+					params["comment"] = $("#comment_text").val();
+					break;
+				default:
+					alert($("#comment_text").val());
+					return false;
 			}
 					
 			ajax_get(
