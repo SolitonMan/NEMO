@@ -796,6 +796,7 @@ class Project(models.Model):
 	active = models.BooleanField(default=True, help_text="Users may only charge to a project if it is active. Deactivate the project to block billable activity (such as tool usage and consumable check-outs).")
 	start_date = models.DateField(null=True, blank=True, help_text="The date on which the project, internal order or wbs element becomes active")
 	end_date = models.DateField(null=True, blank=True, help_text="The date on which the project, internal order or wbs element becomes inactive")
+	detailed_invoice = models.BooleanField(default=False, help_text="A flag to indicate if the customer assigned this project should receive a detailed invoice.  The default is False, indicating that a summarized invoice should be sent.")
 
 	class Meta:
 		ordering = ['name']

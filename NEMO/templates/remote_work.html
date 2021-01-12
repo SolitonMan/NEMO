@@ -3,17 +3,27 @@
 {% block title %}Transaction Validation{% endblock %}
 {% block content %}
 
+<style>
+p {
+	font-weight: bold;
+	background-color: #eeeeee;
+}
+</style>
+
 <h1>Transaction validation</h1>
+	<span style="background-color: #eeeeee;">
 	<p>This page displays transactions conducted by and for users.  If you have the appropriate permissions you can filter by which staff member performed the work, and when, by using the dropdown boxes below.</p>
 
 	<p>The table lists all the charges sorted by the most recent Start date.  You can filter the table using the search field input below.</p>
+
+	<p>The table cells containing notes, for <span style="background-color: #ddffdd;">individual customers</span> or for <span style="background-color: #ddddff;">transactions generally</span>, are editable in this page.  Simply click on the desired cell and a pop up dialog will allow you to add or edit a comment.  Changes are saved immediately to the database.</p>
 
 	<p>Each charge can be validated, which means that you have confirmed that the charge is legitimate and correct, and no adjustment needs to
 	be made to it. Press the green 'Validate' button on an individual row to validate a charge. Charges that have already been validated are
 	highlighted in <span class="success-highlight">green</span>.</p>
 
 	<p>Each charge can also be contested, which means that an adjustment is needed.  Press the yellow 'Contest' button on an individual row to contest the charge.  Charges that are already being contested are highlighted in <span class="warning-highlight">yellow</span>.</p>
-
+	</span>
 
 	<form class="form-inline" role="form">
 		<div class="form-group">
@@ -59,6 +69,12 @@ td {
 th {
 	text-align: center;
 }
+
+.edit_note {
+	background-color: #2222dd;
+	color: #ffffff;
+	font-weight: bold;
+}
 </style>
 
 <div class="row">
@@ -73,7 +89,7 @@ th {
 	<tr>
 		<th style="width:40px;">Type</th>
 		<td>
-			<table>
+			<!--table>
 			<tr>
 			<th style="width:120px;" title="This column refers to the person who operated the tool, performed the staff work, or sold the consumable">Merchant</th>
 			<th style="width:120px;">Start</th>
@@ -83,7 +99,7 @@ th {
 			<th style="width:75px;" class="sort-validate">Validate</th>
 			<th style="width:75px;" class="sort-contest">Contest</th>
 			</tr>
-			</table>
+			</table-->
 		</td>
 	</tr>
 	<!--tr>
@@ -103,9 +119,18 @@ th {
 	<tbody id="transaction_data">
 {% for key, value in transactions.items %}
 	<tr{% if value.class != '' %} class="{{ value.class }}"{% endif %} id="transaction_row_{{ forloop.counter }}" {% if forloop.counter|divisibleby:"2" %}style="background-color: #e0e0e0; border: 2px solid #c0c0c0;"{% else %}style="border: 2px solid #c0c0c0;"{% endif %}>
-		<td rowspan="2" style="width:40px;" title="ID={{ value.id }}">{% if value.ad_hoc_created %}Ad Hoc {% endif %}{{ value.type }}</td>
+		<td rowspan="2" style="width:40px;" title="ID={{ value.id }}"><b>{% if value.ad_hoc_created %}Ad Hoc {% endif %}{{ value.type }}</b></td>
 		<td style="padding: 20px;">
 			<table style="border: 2px solid black; font-weight: bold;">
+			<tr>
+			<th style="width:120px;" title="This column refers to the person who operated the tool, performed the staff work, or sold the consumable">Merchant</th>
+			<th style="width:120px;">Start</th>
+			<th style="width:120px;">End</th>
+			<th style="width:70px;">Duration/Quantity</th>
+			<th style="width:150px;">Tool/Item/Area</th>
+			<th style="width:75px;" class="sort-validate">Validate</th>
+			<th style="width:75px;" class="sort-contest">Contest</th>
+			</tr>
 			<tr>
 			<td style="width:120px;">{{ value.operator }}</td>
 			<td style="width:120px;">{{ value.start|date:"m-d-Y g:i:s A" }}</td>
@@ -167,7 +192,7 @@ th {
 			<th style="width:200px;" class="sort-project">Project</th>
 			<th style="width:70px;" class="sort-percent">Percent</th>
 			{% if value.type != "Withdraw" %}
-			<th style="width:70px;" class="sort-percent">Comment</th>
+			<th style="width:70px;" class="sort-percent">Customer Comment</th>
 			{% endif %}
 			</tr>
 			{% for k, v in value.customers.items %}
@@ -176,16 +201,16 @@ th {
 			<td style="width:200px;">{{ v.project }}</td>
 			<td style="width:70px;">{{ v.percent }}</td>
 			{% if value.type != "Withdraw" %}
-			<td style="width:70px;" onclick="edit_comment({{ v.id }}, '{{ value.type }} customer', $('#cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa{% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__customer__{{ v.id }}').html())">
+			<td title="Click to edit this customer comment" style="width:70px; background-color: #ddffdd;" onclick="edit_comment({{ v.id }}, '{{ value.type }} customer', $('#cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa{% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__customer__{{ v.id }}').html())" onmouseover="$(this).css({ 'background-color':'#2222dd', 'font-weight':'bold', 'color':'#ffffff' });" onmouseout="$(this).css({ 'background-color':'#ddffdd', 'font-weight':'', 'color':'' });">
 				<span style="width: 100%;" id="cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa{% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__customer__{{ v.id }}">{% if v.comment is not None %}{{ v.comment }}{% endif %}</span>
 			</td>
 			{% endif %}
 			</tr>
 			{% endfor %}
 			<tr>
-				<td colspan="4">
-					<span style="font-weight: bold; background-color: #eeeeff;" onclick="edit_comment({{ value.id }}, '{{ value.type }}', $('#cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa{% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__{{ value.id }}').html())">Comment: </span>
-					<span id="cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa{% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__{{ value.id }}" onclick="edit_comment({{ value.id }}, '{{ value.type }}', $(this).html())">{% if value.comment is not None %}{{ value.comment }}{% endif %}</span>
+				<td style="background-color: #ddddff;" title="Click to edit this general comment" colspan="4" onclick="edit_comment({{ value.id }}, '{{ value.type }}', $('#cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa{% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__{{ value.id }}').html())" onmouseover="$(this).css({ 'background-color':'#2222dd', 'font-weight':'bold', 'color':'#ffffff' });" onmouseout="$(this).css({ 'background-color':'#ddddff', 'font-weight':'', 'color':'' });">
+					<span style="font-weight: bold;">General Comment: </span>
+					<span id="cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa{% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__{{ value.id }}">{% if value.comment is not None %}{{ value.comment }}{% endif %}</span>
 				</td>
 			</tr>
 			{% if value.contest_rejection_reason != '' %}
@@ -324,7 +349,7 @@ function edit_comment(id, type, comment)
 		"<input type='submit' value='Update Comment' class='btn btn-success' />" +
 		"<button type='button' class='btn btn-danger' data-dismiss='modal'>Cancel</button>" +
 		"</form>" +		
-		"</div>";			
+		"</div>";
 	$("#dialog .modal-content").html(dialog_contents);
 	$("#comment_update").submit(function( event ) {
 		if ($("#comment_text").val() != comment) {

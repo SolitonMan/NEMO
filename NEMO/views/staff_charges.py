@@ -903,7 +903,8 @@ def staff_charge_projects_save(request, modal_flag):
 					scp.updated = timezone.now()
 					scp.save()
 
-		charge.end = timezone.now()
+		if charge.end is None:
+			charge.end = timezone.now()
 		if charge.charge_end_override:
 			charge.override_confirmed = True
 		if request.POST.get("staff_member_comment") is not None:

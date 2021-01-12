@@ -46,7 +46,7 @@ def landing(request):
 					contested_items = True
 
 
-	if UsageEvent.objects.filter(operator=request.user, validated=False, contested=False, active_flag=True).exclude(projects__in=get_dummy_projects()).exists() or StaffCharge.objects.filter(staff_member=request.user, validated=False, contested=False, active_flag=True).exclude(projects__in=get_dummy_projects()).exists():
+	if UsageEvent.objects.filter(operator=request.user, validated=False, active_flag=True).exists() or StaffCharge.objects.filter(staff_member=request.user, validated=False, active_flag=True).exists():
 		validation_needed = True
 	else:
 		validation_needed = False
