@@ -872,18 +872,20 @@ def staff_charge_projects_save(request, modal_flag):
 				if attribute == "project_percent":
 					if value == '':
 						msg = 'You must enter a numerical value for the percent to charge to a project'
-						charge.end=null
-						charge.updated = timezone.now()
-						charge.save()
+						if not charge.charge_end_override:
+							charge.end=null
+							charge.updated = timezone.now()
+							charge.save()
 						raise Exception()
 					else:
 						prc = prc + float(value)
 
 		if int(prc) != 100:
 			msg = 'Percent values must total to 100.0'
-			charge.end=null
-			charge.updated = timezone.now()
-			charge.save()
+			if not charge.charge_end_override:
+				charge.end=null
+				charge.updated = timezone.now()
+				charge.save()
 			raise Exception()
 
 		for key, value in request.POST.items():
@@ -903,7 +905,7 @@ def staff_charge_projects_save(request, modal_flag):
 					scp.updated = timezone.now()
 					scp.save()
 
-		if charge.end is None:
+		if not charge.charge_end_override:
 			charge.end = timezone.now()
 		if charge.charge_end_override:
 			charge.override_confirmed = True

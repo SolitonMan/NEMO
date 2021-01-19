@@ -7,14 +7,25 @@
 	<link rel="stylesheet" type="text/css" href="{% static "datetimepicker/bootstrap-datetimepicker.css" %}" />
 {% endblock %}
 {% block content %}
-	<h1>Staff charges</h1>
-	<p>Use this form to charge one or more customers for staff time and area access time when you are working on a project on their behalf.  This will track your charges in real time.</p>
 	{% if error %}
 		<div class="alert alert-danger">
 			{{ error }}
 		</div>
 	{% endif %}
+	<div>
+		<h1 class="pull-left" style="margin-right:20px; margin-top:0; margin-bottom:0">Staff charges center</h1>
+		<ul class="nav nav-pills" id="tabs">
+			<li class="active"><a href="#staff_charges">Current Staff Charges</a></li>
+			<li><a href="#ad_hoc">Ad Hoc Staff Charges</a></li>
+			<li><a href="#override">Overridden Staff Charges</a></li> 
+		</ul>
+	</div>
+
+	<div id="content" class="tab-content" style="padding-top:10px">
+	<div class="tab-pane active" id="staff_charges">
+	<h2>Current Staff Charges</h2>
 	<form id="new_staff_charge" onsubmit="return on_submit()">
+		<p>Use this form to charge one or more customers for staff time and area access time when you are working on a project on their behalf.  This will track your charges in real time.</p>
 		{% csrf_token %}
 		{% if multi_core_user %}
 		<select id="core_select" name="core_select" class="form-control">
@@ -39,10 +50,10 @@
 		</table>
 		<input type="submit" class="btn btn-default" id="begin_staff_time_charges" value="Begin charging staff time">
 	</form>
-	<br/>
-	<hr/>
-	<br/>
-	<h1>Ad hoc staff charges</h1>
+	</div>
+
+	<div class="tab-pane" id="ad_hoc">
+	<h2>Ad Hoc Staff Charges</h2>
 	<p>Use the form below to save a record for a staff time charge that was not captured in real time.  You can see existing charges you have made by clicking the "Show Charges" button.</p>
 	<div>
 		<input class="btn btn-default" type="button" value="Show Charges" onclick="show_user_charges();" />
@@ -159,15 +170,16 @@
 		</table>
 		<input type="submit" class="btn btn-default" id="save_ad_hoc_staff_time_charge" value="Save ad hoc staff time charge">
 	</form>
+	</div>
 
-	{% if scp|length > 0 %}
-	<br/>
-	<hr/>
-	<br/>
-
-	<div style="display: block;">
-	<h1>Overridden Staff Charges</h1>
+	
+	<div class="tab-pane" id="override">
+	<h2>Overridden Staff Charges</h2>
 	<p>The following staff charge(s) are marked as being overridden but not yet confirmed.  Please fill out the relevant percentages where appropriate and click "End the current charges" to confirm a completed override, or select "Continue the current charges" to add further time to the charges.</p>
+
+	{% if scp|length == 0 %}
+	There are currently no overridden staff charges.
+	{% else %}
 	{% for o in override_charges %}
 		<form id="override_charges_{{ o.id }}" onsubmit="return submit_override({{ o.id }})" class="form-horizontal">
 		{% csrf_token %}
@@ -212,8 +224,10 @@
 		</form>
 		<br/><br/>
 	{% endfor %}
-	</div>
 	{% endif %}
+	</div>
+
+	</div>
 
 	<div style="display:none;" id="fragment-collector"></div>
 
@@ -430,6 +444,7 @@
 			$("#ad_hoc_end").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss', minDate: '{{ start_date }} 00:00:00', maxDate: '{{ end_date }} 23:59:59'});
 			$("#ad_hoc_end").val({% if ad_hoc_end %}"{{ ad_hoc_end }}"{% else %}""{% endif %});
 			$(document).scrollTop(0);
+			$("#tabs a").click(switch_tab);
 		}
 		$(on_load);
 
