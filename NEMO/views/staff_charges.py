@@ -42,14 +42,28 @@ def save_sc_customer_comment(request):
 @require_GET
 def staff_charges(request):
 	staff_charge = request.user.get_staff_charge()
+	params = {}
+	render_path = ''
+
 	if staff_charge:
 		try:
 			area_access_record = AreaAccessRecord.objects.get(staff_charge=staff_charge.id, end=None, active_flag=True)
-			return render(request, 'staff_charges/end_area_charge.html', {'area': area_access_record.area, 'staff_charge': staff_charge, 'scp': StaffChargeProject.objects.filter(staff_charge=staff_charge, active_flag=True)})
+			params['area'] = area_access_record.area
+			params['staff_charge'] = staff_charge
+			params['scp'] = StaffChargeProject.objects.filter(staff_charge=staff_charge, active_flag=True)
+			render_path = 'staff_charges/end_area_charge.html'
+
+			#return render(request, 'staff_charges/end_area_charge.html', {'area': area_access_record.area, 'staff_charge': staff_charge, 'scp': StaffChargeProject.objects.filter(staff_charge=staff_charge, active_flag=True)})
 		#except AreaAccessRecord.DoesNotExist:
+
+
 		except:
 			scp = StaffChargeProject.objects.filter(staff_charge=staff_charge, active_flag=True)
-			return render(request, 'staff_charges/change_status.html', {'areas': Area.objects.all(), 'scp': scp, 'staff_charge': staff_charge})
+			params['scp'] = scp
+			params['areas'] = Area.objects.all()
+			params['staff_charge'] = staff_charge
+			render_path = 'staff_charges/change_status.html'
+			#return render(request, 'staff_charges/change_status.html', {'areas': Area.objects.all(), 'scp': scp, 'staff_charge': staff_charge})
 	error = None
 	customer = None
 	try:
@@ -63,17 +77,18 @@ def staff_charges(request):
 			error = str(customer) + ' does not have any active projects. You cannot bill staff time to this user.'
 	users = User.objects.filter(is_active=True).exclude(id=request.user.id)
 
-	params = {'users': users, 'error': error}
+	params['users'] = users 
+	params['error'] = error
 
 	# if the user has any open charges pass the information to the form
 	overridden_charges = StaffCharge.objects.filter(staff_member=request.user, charge_end_override=True, override_confirmed=False, active_flag=True)
 
 	if overridden_charges.count() > 0:
 		params['override_charges'] = overridden_charges
-		scp = StaffChargeProject.objects.filter(staff_charge__in=overridden_charges, active_flag=True)
+		oscp = StaffChargeProject.objects.filter(staff_charge__in=overridden_charges, active_flag=True)
 
-		if scp.count() > 0:
-			params['scp'] = scp
+		if oscp.count() > 0:
+			params['oscp'] = oscp
 
 	# get all staff charges for this user so ad hoc charges can be made with an appropriate reference
 	earliest = timezone.now().date() - timedelta(days=30)
@@ -92,7 +107,9 @@ def staff_charges(request):
 	else:
 		params['multi_core_user'] = False
 
-	return render(request, 'staff_charges/new_staff_charge.html', params)
+	if render_path == '':
+		render_path = 'staff_charges/new_staff_charge.html'
+	return render(request, render_path, params)
 
 
 @staff_member_required(login_url=None)

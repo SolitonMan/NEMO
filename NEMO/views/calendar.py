@@ -875,6 +875,10 @@ def area_access_details(request, event_id):
 @require_GET
 @permission_required('NEMO.trigger_timed_services', raise_exception=True)
 def cancel_unused_reservations(request):
+	return do_cancel_unused_reservations()
+
+
+def do_cancel_unused_reservations():
 	# Exit early if the missed reservation email template has not been customized for the organization yet.
 	if not get_media_file_contents('missed_reservation_email.html'):
 		return HttpResponseNotFound('The missed reservation email template has not been customized for your organization yet. Please visit the NEMO customizable_key_values page to upload a template, then missed email notifications can be sent.')

@@ -177,7 +177,7 @@
 	<h2>Overridden Staff Charges</h2>
 	<p>The following staff charge(s) are marked as being overridden but not yet confirmed.  Please fill out the relevant percentages where appropriate and click "End the current charges" to confirm a completed override, or select "Continue the current charges" to add further time to the charges.</p>
 
-	{% if scp|length == 0 %}
+	{% if oscp|length == 0 %}
 	There are currently no overridden staff charges.
 	{% else %}
 	{% for o in override_charges %}
@@ -198,7 +198,7 @@
 				<th>Project</th>
 				<th>Percent</th>
 			</tr>
-		{% for s in scp %}
+		{% for s in oscp %}
 			{% if o.id == s.staff_charge.id %}
 			<tr>
 				<td>{{ s.customer }}</td>

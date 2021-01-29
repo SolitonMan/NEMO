@@ -4,9 +4,26 @@
 </div>
 
 <div class="modal-body">
-		You are charging staff time to the project(s) named
-		{{ staff_charge.projects }} since {{ staff_charge.start }}.
-		Would you like to stop charging staff time?
+	You are currently charging staff time: <br/>
+
+	<table class="table">
+		<thead>
+		<tr>
+			<th>Customer</th>
+			<th>Project</th>
+		</tr>
+		</thead>
+		<tbody>
+		{% for scp in staff_charge.staffchargeproject_set.all %}
+		<tr>
+			<td>{{ scp.customer }}</td>
+			<td>{{ scp.project }}</td>
+		</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+
+	Would you like to stop charging staff time?
 </div>
 
 <div class="modal-footer">

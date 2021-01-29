@@ -1,7 +1,31 @@
 {% extends 'base.html' %}
+{% load custom_tags_and_filters %}
 {% block title %}Staff charges{% endblock %}
+{% block extrahead %}
+	{% load static %}
+	<script type="text/javascript" src="{% static "datetimepicker/bootstrap-datetimepicker.js" %}"></script>
+	<link rel="stylesheet" type="text/css" href="{% static "datetimepicker/bootstrap-datetimepicker.css" %}" />
+{% endblock %}
 {% block content %}
-	<h1>Staff charges</h1>
+
+	{% if error %}
+		<div class="alert alert-danger">
+			{{ error }}
+		</div>
+	{% endif %}
+
+	<div>
+		<h1 class="pull-left" style="margin-right:20px; margin-top:0; margin-bottom:0">Staff charges center</h1>
+		<ul class="nav nav-pills" id="tabs">
+			<li class="active"><a href="#staff_charges">Current Staff Charges</a></li>
+			<li><a href="#ad_hoc">Ad Hoc Staff Charges</a></li>
+			<li><a href="#override">Overridden Staff Charges</a></li> 
+		</ul>
+	</div>
+
+	<div id="content" class="tab-content" style="padding-top:10px">
+	<div class="tab-pane active" id="staff_charges">
+	<h2>Current Staff Charges</h2>
 	<form action="{% url 'end_staff_charge' 0 %}" class="form-horizontal" method="post">
 		{% csrf_token %}
 		<p>You are currently charging staff time to the following customer(s):</p>
@@ -37,11 +61,410 @@
 			<input type="submit" class="btn btn-primary" value="Begin billing for area access">
 		</form>
 	{% endif %}
+
+
+	</div>
+
+	<div class="tab-pane" id="ad_hoc">
+	<h2>Ad Hoc Staff Charges</h2>
+	<p>Use the form below to save a record for a staff time charge that was not captured in real time.  You can see existing charges you have made by clicking the "Show Charges" button.</p>
+	<div>
+		<input class="btn btn-default" type="button" value="Show Charges" onclick="show_user_charges();" />
+		<input class="btn btn-default" type="button" value="Hide Charges" onclick="hide_user_charges();" />
+		<br/>
+		<table id="existing_charges" class="table">
+			<tr>
+				<th>Start</th>
+				<th>End</th>
+				<th>Customers</th>
+				<th>Projects</th>
+			</tr>
+			{% if current_user_charges %}
+				{% for s in current_user_charges %}
+					{% if not s.ad_hoc_replaced %}
+					<tr>
+						<td>{{ s.start }}</td>
+						<td>{{ s.end }}</td>
+						<td>
+						{% for c in s.customers.all %}
+							{{ c.first_name }}&nbsp;{{ c.last_name }}<br/>
+						{% endfor %}
+						</td>
+						<td>
+						{% for p in s.projects.all %}
+							{{ p }}<br/>
+						{% endfor %}
+						</td>
+					</tr>
+					{% endif %}
+				{% endfor %}
+			{% else %}
+			<tr>
+				<td colspan="4">No staff charges found</td>
+			</tr>
+			{% endif %}
+		</table>
+			
+	</div>
+	<form id="ad_hoc_staff_charge" action="{% url 'ad_hoc_staff_charge' %}" method="POST" onsubmit="return on_ad_hoc_submit();">
+		{% csrf_token %}
+		<br/><br/>
+		{% if multi_core_user %}
+		<select id="ad_hoc_core_select" name="ad_hoc_core_select" class="form-control">
+			<option value="0">Please select the core for which this charge is being made</option>
+			{% for c in request.user.core_ids.all %}
+			<option value="{{ c.id }}">{{ c.name }}</option>
+			{% endfor %}
+		</select>
+		{% endif %}
+		<br/><br/>
+
+		<table id="ad_hoc_entries" class="table">
+			<tr>
+                                <th>&nbsp;</th>
+				<th>Start</th>
+				<td>
+					<div class="datetimepicker-container">
+						<input type="text" name="ad_hoc_start" id="ad_hoc_start" />
+					</div>
+				</td>
+				<th>&nbsp;</th>
+			</tr>
+			<tr>
+                                <th>&nbsp;</th>
+				<th>End</th>
+				<td>
+					<div class="datetimepicker-container">
+						<input type="text" name="ad_hoc_end" id="ad_hoc_end" />
+					</div>
+				</td>
+				<th>&nbsp;</th>
+			</tr>
+			<tr>
+				<td colspan="4" align="left" valign="top" style="align: left; vertical-align: top;">
+					<label class="control-label col-sm-2" for="staff_member_comment" style="font-weight: bold;">Comment / Purpose of Charge</label>
+					<textarea name="staff_member_comment" id="staff_member_comment" rows="6" cols="50" placeholder="Please enter any comments about the reason for or details about the work performed"></textarea>
+				</td>
+			</tr>
+			{% if request.user.physical_access_levels.all|length > 0 %}
+			<tr>
+				<td colspan="4" align="left" valign="top" style="align: left; vertical-align: top;">
+				<input type="checkbox" value="1" name="include_area_access" id="include_area_access" onclick="toggle_areas()">
+				Include an area access record with this staff charge
+<br/><br/>
+				<select name="area_id" id="area_id" class="form-control" disabled>
+					{% for pa in request.user.physical_access_levels.all %}
+					<option value="{{ pa.area.id }}">{{ pa.area.name }}</option>
+					{% endfor %}
+				</select>
+				</td>
+			</tr>
+			{% endif %}
+			<tr>
+                                <th>&nbsp;</th>
+				<th style="min-width:200px">Customer</th>
+                                <th style="min-width:200px">Project</th>
+				<th style="min-width:100px">Percent</th>
+                        </tr>
+			{% if ad_hoc_entries|length > 0 %}
+				{% for a in ad_hoc_entries %}
+					{% if a.0 == None %}
+						{% include 'staff_charges/ad_hoc_staff_charge_entry.html' with entry_number=forloop.counter %}
+					{% else %}
+						{% include 'staff_charges/ad_hoc_staff_charge_entry_loaded.html' with entry_number=forloop.counter chosen_user=a.0 chosen_project=a.1 project_percent=a.2 %}
+					{% endif %}
+				{% endfor %}
+			{% else %}
+				{% include 'staff_charges/ad_hoc_staff_charge_entry.html' with entry_number=0 %}
+			{% endif %}
+			<tr>
+				<td colspan="4" style="text-align:center"><a href="javascript:void(0)" onclick="add_ad_hoc_customer()">Add another customer</a></td>
+			</tr>
+		</table>
+		<input type="submit" class="btn btn-default" id="save_ad_hoc_staff_time_charge" value="Save ad hoc staff time charge">
+	</form>
+	</div>
+
+	
+	<div class="tab-pane" id="override">
+	<h2>Overridden Staff Charges</h2>
+	<p>The following staff charge(s) are marked as being overridden but not yet confirmed.  Please fill out the relevant percentages where appropriate and click "End the current charges" to confirm a completed override, or select "Continue the current charges" to add further time to the charges.</p>
+
+	{% if oscp|length == 0 %}
+	There are currently no overridden staff charges.
+	{% else %}
+	{% for o in override_charges %}
+		<form id="override_charges_{{ o.id }}" onsubmit="return submit_override({{ o.id }})" class="form-horizontal">
+		{% csrf_token %}
+		<input type="hidden" value="true" name="override_confirmed" />
+		<input type="hidden" value="{{ o.id }}" name="staff_charge_id" id="staff_charge_id" />
+		<table class="table">
+			<tr>
+				<td colspan="3">
+					<b>Start:</b> {{ o.start }} 
+					<br/>
+					<b>End:</b>{{ o.end }}
+				</td>
+			</tr>
+			<tr>
+				<th>Customer</th>
+				<th>Project</th>
+				<th>Percent</th>
+			</tr>
+		{% for s in oscp %}
+			{% if o.id == s.staff_charge.id %}
+			<tr>
+				<td>{{ s.customer }}</td>
+				<td>{{ s.project }}</td>
+				<td>
+					<input type="text" name="project_percent__{{ s.id }}" id="project_percent__{{ s.id }}" /></td>
+			<tr>
+			{% endif %}
+		{% endfor %}
+			<tr>
+				<td colspan="3" align="left" valign="top" style="align: left; vertical-align: top;">
+					<label class="control-label col-sm-2" for="staff_member_comment_{{ o.id }}">Comment / Purpose of Charge</label>
+					<textarea name="staff_member_comment" id="staff_member_comment_{{ o.id }}" rows="6" cols="50" placeholder="Please enter any comments about the reason for or details about the work performed"></textarea>
+				</td>
+			</tr>
+			<tr>
+				<td colspan="3">
+					<input type="submit" value="End the current charges" class="btn btn-default" />
+					<input type="button" class="btn btn-default" value="Continue the current charges" onclick="continue_staff_charges({{ o.id }}, '{% url 'continue_staff_charge' o.id %}');" />
+				</td>
+			</tr>
+		</table>
+		</form>
+		<br/><br/>
+	{% endfor %}
+	{% endif %}
+	</div>
+
+	</div>
+
+	<div style="display:none;" id="fragment-collector"></div>
+
 	<script>
 		function save_staff_comment() {
-                	ajax_get("{% url 'save_staff_comment' %}", { "staff_charge_id": {{ staff_charge.id }}, "staff_member_comment": $("#staff_member_comment").val() },undefined,undefined);
-        	}
+			ajax_get("{% url 'save_staff_comment' %}", { "staff_charge_id": {{ staff_charge.id }}, "staff_member_comment": $("#staff_member_comment").val() },undefined,undefined);
+		}
 
-        	window.onunload = save_staff_comment;
+		window.onunload = save_staff_comment;
+
+		var current_entry_number = 1;
+		var ad_hoc_entry_number = 1;
+
+		{% if ad_hoc_entries %}
+			{% for a in ad_hoc_entries %}
+		ad_hoc_entry_number++;
+		enable_ad_hoc_autocompletion({{ forloop.counter }});
+			{% endfor %}
+		{% endif %}
+
+		function show_user_charges()
+		{
+			$("#existing_charges").show("slow");
+		}
+
+		function hide_user_charges()
+		{
+			 $("#existing_charges").hide("slow");
+		}
+
+		function select_user(jquery_event, search_selection, dataset_name)
+		{
+			$("#customer").val(search_selection.id);
+		}
+
+		function add_customer() 
+		{
+			var failure_dialog = ajax_failure_callback("Cannot add new entry", "The web browser was not able to communicate with the server.");
+			ajax_get("{% url 'staff_charge_entry' %}", { "entry_number": current_entry_number }, add_entry_success_callback, failure_dialog);
+			function add_entry_success_callback(response, status, xml_http_request)
+			{
+				$("#staff_charge_entries tr:last").before(response);
+				enable_autocompletion(current_entry_number);
+				current_entry_number++;
+			}
+		}
+
+		function add_ad_hoc_customer()
+		{
+			var failure_dialog = ajax_failure_callback("Cannot add new entry", "The web browser was not able to communicate with the server.");
+                        ajax_get("{% url 'ad_hoc_staff_charge_entry' %}", { "entry_number": ad_hoc_entry_number }, add_entry_success_callback, failure_dialog);
+                        function add_entry_success_callback(response, status, xml_http_request)
+                        {
+                                $("#ad_hoc_entries tr:last").before(response);
+                                enable_ad_hoc_autocompletion(ad_hoc_entry_number);
+                                ad_hoc_entry_number++;
+                        }
+		}
+
+		function enable_autocompletion(entry_number)
+		{
+			var id = "#user_textbox__" + entry_number;
+			$(id).autocomplete('user', on_autocomplete_selection, {{ users|json_search_base }}).focus();
+		}
+
+		function enable_ad_hoc_autocompletion(entry_number)
+                {
+                        var id = "#ad_hoc_user_textbox__" + entry_number;
+                        $(id).autocomplete('user', on_ad_hoc_autocomplete_selection, {{ users|json_search_base }}).focus();
+                }
+
+		function remove_row(number)
+		{
+			$("#row_" + number).remove();
+		}
+
+		function remove_ad_hoc_row(number)
+                {
+                        $("#ad_hoc_row_" + number).remove();
+                }
+
+		function on_autocomplete_selection(jquery_event, search_selection, dataset_name)
+		{
+			$(this).typeahead('val', search_selection.id).hide();
+			var row = $(this).data('row');
+			var button_id = "#" + dataset_name + "_button__" + row;
+			$(button_id).val(search_selection.name).show();
+			if(dataset_name == "user")
+				fetch_projects(row, search_selection.id, false);
+		}
+
+		function on_ad_hoc_autocomplete_selection(jquery_event, search_selection, dataset_name)
+                {
+                        $(this).typeahead('val', search_selection.id).hide();
+                        var row = $(this).data('row');
+                        var button_id = "#ad_hoc_" + dataset_name + "_button__" + row;
+                        $(button_id).val(search_selection.name).show();
+                        if(dataset_name == "user")
+                                fetch_projects(row, search_selection.id, true);
+                }
+
+		function fetch_projects(row, user_id, ad_hoc)
+		{
+			var parameters =
+			{
+				"source_template": "staff_charges",
+				"user_id": user_id,
+				"entry_number": row,
+				"ad_hoc": ad_hoc
+			};
+			var target_element;
+			if (ad_hoc) {
+				target_element = "#ad_hoc_project__" + row;
+			} else {
+				target_element = "#project__" + row;
+			}
+			var url = "{% url 'get_projects' %}?" + jQuery.param(parameters);
+			var report_error = ajax_complete_callback("Could not fetch projects for user", "There was a problem obtaining the list of projects for the user.");
+			$(target_element).load(url, undefined, report_error);
+		}
+
+		function purge_customer(row)
+		{
+			$("#user_button__" + row).hide();
+			$("#project__" + row).html("");
+			$("#user_textbox__" + row).typeahead('val', '').show().focus();
+		}
+
+		function purge_ad_hoc_customer(row)
+                {
+                        $("#ad_hoc_user_button__" + row).hide();
+                        $("#ad_hoc_project__" + row).html("");
+                        $("#ad_hoc_user_textbox__" + row).typeahead('val', '').css("display","inline").focus();
+                }
+
+		function on_submit()
+		{
+			if ($("#staff_charge_entries tr").length < 3) {
+				alert("You must add at least one customer");
+				add_customer();
+				return false;
+			}
+			{% if multi_core_user %}
+			if ($("#core_select option:selected").val() == "0") {
+				alert("Please choose the core that will be paid for this staff charge.");
+				$("#core_select").focus();
+				return false;
+			}
+			{% endif %}
+			
+			var failure_dialog = ajax_failure_callback("Could not begin charging staff time");
+			ajax_post("{% url 'begin_staff_charge' %}", serialize("#new_staff_charge"), reload_staff_charges, failure_dialog);
+			return false;
+		}
+
+		function on_ad_hoc_submit()
+		{
+			if ($("#ad_hoc_entries tr").length < 5) {
+				alert("You must add at least one customer");
+				add_ad_hoc_customer();
+				return false;
+			}
+
+			{% if multi_core_user %}
+			if ($("#ad_hoc_core_select option:selected").val() == "0") {
+				alert("Please choose the core that will be paid for this staff charge.");
+				$("#ad_hoc_core_select").focus();
+				return false;
+			}
+			{% endif %}
+			//var failure_dialog = ajax_failure_callback("There was a problem with your ad hoc submission");
+			//ajax_post("{% url 'ad_hoc_staff_charge' %}", serialize("#ad_hoc_staff_charge"), ad_hoc_overlap_callback, failure_dialog);
+			return true;
+		}
+
+		function ad_hoc_overlap_callback(response, status, xml_http_request)
+		{
+			if (response)
+			{
+				var strHTML = response;
+				strHTML = strHTML.replace(/[\n\r]/g, '');
+				$("html").html(strHTML);
+			}
+		}
+
+		function toggle_areas()
+		{
+			if ($("#include_area_access").is(":checked")) {
+				$("#area_id").prop("disabled", false);
+			} else {
+				$("#area_id").prop("disabled", true);
+			}
+		}
+
+		function submit_override(num) 
+		{
+			var form_id = "#override_charges_" + num;
+			var failure_dialog = ajax_failure_callback("There was an error processing the data.  Please check the form and try again.");
+			ajax_post("{% url 'staff_charge_projects_save' 0 %}", serialize(form_id), reload_staff_charges, failure_dialog);
+			return false;
+		}
+
+		function continue_staff_charges(id, url) 
+		{
+			location.href = url;
+		}
+
+		function reload_staff_charges()
+		{
+			location.reload();
+		}
+
+		function on_load()
+		{
+			hide_user_charges();
+			enable_autocompletion(0);
+			enable_ad_hoc_autocompletion(0);
+			$("#ad_hoc_start").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss', minDate: '{{ start_date }} 00:00:00', maxDate: '{{ end_date }} 23:59:59'});
+			$("#ad_hoc_start").val({% if ad_hoc_start %}"{{ ad_hoc_start }}"{% else %}""{% endif %});
+			$("#ad_hoc_end").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss', minDate: '{{ start_date }} 00:00:00', maxDate: '{{ end_date }} 23:59:59'});
+			$("#ad_hoc_end").val({% if ad_hoc_end %}"{{ ad_hoc_end }}"{% else %}""{% endif %});
+			$(document).scrollTop(0);
+			$("#tabs a").click(switch_tab);
+		}
+		$(on_load);
 	</script>
 {% endblock %}

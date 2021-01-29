@@ -201,8 +201,8 @@ th {
 			<td style="width:200px;">{{ v.project }}</td>
 			<td style="width:70px;">{{ v.percent }}</td>
 			{% if value.type != "Withdraw" %}
-			<td title="Click to edit this customer comment" style="width:70px; background-color: #ddffdd;" onclick="edit_comment({{ v.id }}, '{{ value.type }} customer', $('#cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa{% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__customer__{{ v.id }}').html())" onmouseover="$(this).css({ 'background-color':'#2222dd', 'font-weight':'bold', 'color':'#ffffff' });" onmouseout="$(this).css({ 'background-color':'#ddffdd', 'font-weight':'', 'color':'' });">
-				<span style="width: 100%;" id="cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa{% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__customer__{{ v.id }}">{% if v.comment is not None %}{{ v.comment }}{% endif %}</span>
+			<td title="Click to edit this customer comment" style="width:70px; background-color: #ddffdd; padding: 5px;" onclick="edit_comment({{ v.id }}, '{{ value.type }} customer', $('#cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa{% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__customer__{{ v.id }}').html())" onmouseover="$(this).css({ 'background-color':'#2222dd', 'font-weight':'bold', 'color':'#ffffff', 'padding': '0px' });" onmouseout="$(this).css({ 'background-color':'#ddffdd', 'font-weight':'', 'color':'', 'padding': '5px' });">
+				<span style="width: 90%;" id="cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa{% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__customer__{{ v.id }}">{% if v.comment is not None %}{{ v.comment }}{% endif %}</span>
 			</td>
 			{% endif %}
 			</tr>

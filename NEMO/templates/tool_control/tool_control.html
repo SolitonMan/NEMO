@@ -344,7 +344,10 @@
 				var data = {
 					'tool_id': tool_id,
 				}
-				ajax_post("{% url 'end_staff_charge' 1 %}", data, ajax_success_callback, failure_dialog);
+
+				success_callbacks = [ajax_success_callback];
+
+				ajax_post("{% url 'end_staff_charge' 1 %}", data, success_callbacks, failure_dialog);
 			}
 
 			{# Adding supporting javascript functions to implement a multi-project selection option for tool user #}

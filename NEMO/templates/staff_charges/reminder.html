@@ -4,12 +4,27 @@
 </div>
 
 <div class="modal-body">
-	{% with user.get_staff_charge as staff_charge %}
-		You are charging staff time to {{ staff_charge.customer }} for the project named
-		{{ staff_charge.project }} since {{ staff_charge.start }}.
-		Now that you have finished using the {{ tool.name }} on this person's behalf, would you
-		also like to stop charging staff time to this user?
-	{% endwith %}
+	You are currently charging staff time: <br/>
+
+	<table class="table">
+		<thead>
+		<tr>
+			<th>Customer</th>
+			<th>Project</th>
+		</tr>
+		</thead>
+		<tbody>
+		{% for scp in staff_charge.staffchargeproject_set.all %}
+		<tr>
+			<td>{{ scp.customer }}</td>
+			<td>{{ scp.project }}</td>
+		</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+
+	Now that you have finished using the {{ tool.name }}, would you
+	also like to stop charging staff time?
 </div>
 
 <div class="modal-footer">
