@@ -5,6 +5,7 @@ import requests
 
 from copy import deepcopy
 from datetime import timedelta
+from datetime import datetime
 from http import HTTPStatus
 from itertools import chain
 from logging import getLogger
@@ -422,7 +423,7 @@ def enable_tool_multi(request):
 	try:
 		id = int(request.POST.get('tool_id'))
 	except ValueError:
-			return HttpResponseBadRequest('request.POST.get(\'tool_id\') = ' + request.POST.get('tool_id'))
+		return HttpResponseBadRequest('request.POST.get(\'tool_id\') = ' + request.POST.get('tool_id'))
 	tool = get_object_or_404(Tool, id=id)
 	operator = request.user
 	set_for_autologout = request.POST.get("set_for_autologout")
@@ -957,7 +958,8 @@ def disable_tool_multi(request, tool_id, usage_event, dynamic_form):
 				'uep': uep,
 				'tool_id': tool_id,
 				'downtime': request.POST.get('downtime'),
-				'operator_comment': usage_event.operator_comment
+				'operator_comment': usage_event.operator_comment,
+				'total_minutes': (timezone.now() - usage_event.start).total_seconds()//60
 			}
 			return render(request, 'tool_control/multiple_projects_finish.html', params)
 

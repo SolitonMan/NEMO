@@ -852,6 +852,7 @@ def end_staff_charge(request, modal_flag):
 				'charge': charge,
 				'scp': scp,
 				'staff_charge_id': charge.id,
+				'total_minutes': (timezone.now() - charge.start).total_seconds()//60,
 				'staff_member_comment': request.POST.get("staff_member_comment")
 			}
 			if int(modal_flag) == 0:
@@ -1019,6 +1020,9 @@ def update_related_charges(request, new_charge=None, old_charge=None):
 
 @staff_member_required(login_url=None)
 def continue_staff_charge(request, staff_charge_id):
+	if request.user.charging_staff_time():
+		return HttpResponseBadRequest('Please end your current staff charge before continuing an overridden charge.')
+
 	staff_charge = StaffCharge.objects.get(id=staff_charge_id)
 
 	if staff_charge is None:

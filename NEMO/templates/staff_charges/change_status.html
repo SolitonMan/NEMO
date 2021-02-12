@@ -189,6 +189,9 @@
 	<div class="tab-pane" id="override">
 	<h2>Overridden Staff Charges</h2>
 	<p>The following staff charge(s) are marked as being overridden but not yet confirmed.  Please fill out the relevant percentages where appropriate and click "End the current charges" to confirm a completed override, or select "Continue the current charges" to add further time to the charges.</p>
+	{% if oscp|length > 0 %}
+	<p style="font-weight: bold; color:red;">NOTE: You cannot continue an overridden charge while making a staff charge.  End your current staff charge in order to continue with an override.</p>
+	{% endif %}
 
 	{% if oscp|length == 0 %}
 	There are currently no overridden staff charges.
@@ -230,7 +233,7 @@
 			<tr>
 				<td colspan="3">
 					<input type="submit" value="End the current charges" class="btn btn-default" />
-					<input type="button" class="btn btn-default" value="Continue the current charges" onclick="continue_staff_charges({{ o.id }}, '{% url 'continue_staff_charge' o.id %}');" />
+					<input disabled title="You cannot continue a charge while one is being made.  Please end your current staff charge to continue with this charge." type="button" class="btn btn-default" value="Continue the current charges" onclick="continue_staff_charges({{ o.id }}, '{% url 'continue_staff_charge' o.id %}');" />
 				</td>
 			</tr>
 		</table>

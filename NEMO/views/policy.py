@@ -337,13 +337,13 @@ def check_policy_to_save_reservation(request, cancelled_reservation, new_reserva
 	if new_reservation.tool.minimum_time_between_reservations:
 		buffer_time = timedelta(minutes=new_reservation.tool.minimum_time_between_reservations)
 		must_end_before = new_reservation.start - buffer_time
-		too_close = Reservation.objects.filter(cancelled=False, shortened=False, user=user, end__gt=must_end_before, start__lt=new_reservation.start, tool=new_reservation.tool)
+		too_close = Reservation.objects.filter(cancelled=False, missed=False, shortened=False, user=user, end__gt=must_end_before, start__lt=new_reservation.start, tool=new_reservation.tool)
 		if cancelled_reservation and cancelled_reservation.id:
 			too_close = too_close.exclude(id=cancelled_reservation.id)
 		if too_close.exists():
 			policy_problems.append("Separate reservations for this tool that belong to you must be at least " + str(new_reservation.tool.minimum_time_between_reservations) + " minutes apart from each other. The proposed reservation ends too close to another reservation.")
 		must_start_after = new_reservation.end + buffer_time
-		too_close = Reservation.objects.filter(cancelled=False, shortened=False, user=user, start__lt=must_start_after, end__gt=new_reservation.start, tool=new_reservation.tool)
+		too_close = Reservation.objects.filter(cancelled=False, missed=False, shortened=False, user=user, start__lt=must_start_after, end__gt=new_reservation.start, tool=new_reservation.tool)
 		if cancelled_reservation and cancelled_reservation.id:
 			too_close = too_close.exclude(id=cancelled_reservation.id)
 		if too_close.exists():

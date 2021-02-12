@@ -366,7 +366,7 @@ class ProjectAdminForm(forms.ModelForm):
 
 @register(Project)
 class ProjectAdmin(admin.ModelAdmin):
-	list_display = ('id', 'name', 'project_number', 'internal_order', 'account', 'organization', 'owner', 'bill_to', 'end_date', 'active')
+	list_display = ('id', 'name', 'project_number', 'internal_order', 'wbs_element', 'account', 'organization', 'owner', 'bill_to', 'end_date', 'active')
 	search_fields = ('name', 'organization__name', 'internal_order', 'wbs_element', 'application_identifier', 'account__name', 'account__simba_cost_center', 'owner__first_name', 'owner__last_name', 'owner__username', 'bill_to__first_name', 'bill_to__last_name', 'bill_to__username', 'project_number')
 	list_filter = ('active','project_number')
 	form = ProjectAdminForm

@@ -10,7 +10,7 @@
 {% elif scp|length == 1 %}
 	<p>Charges will assigned 100% for {{ scp.customer.first_name }} {{ scp.customer.last_name }} to project {{ scp.project.name }}</p>
 {% else %}
-	<p>Please assign the desired percent of staff charges to each project included:</p>
+	<p>Please assign the desired percent of staff charges to each project included (hours and minutes are calculated into percents when minutes textbox loses focus and minutes must total {{ total_minutes }}):</p>
 	<form id="staff_charge_projects" method="POST" class="form-horizontal" onsubmit="return on_submit();">
 		{% csrf_token %}
 		<table class="table">
@@ -18,6 +18,8 @@
 				<th>Customer</th>
 				<th>Project</th>
 				<th>Comment</th>
+                                <th>Hours</th>
+                                <th>Minutes</th>
 				<th>Percent</th>
 				<th>Assign % evenly</br><input type="checkbox" name="split_percent" id="split_percent" onclick="toggle_split(this);" /></th>
 			</tr>
@@ -26,17 +28,19 @@
 				<td>{{ s.customer.first_name }} {{ s.customer.last_name }}</td>
 				<td>{{ s.project.name }}</td>
 				<td><input type="text" name="event_comment__{{ s.id }}" value="{% if s.comment is not None %}{{ s.comment }}{% endif %}" /></td>
-				<td><input type="text" name="project_percent__{{ s.id }}" value="" /></td>
+				<td><input type="text" id="hours__{{ forloop.counter }}" value="0" onkeypress="return isNumberKey(event)" style="width:80px;" /></td>
+                                <td><input type="text" id="minutes__{{ forloop.counter }}" value="0" onkeypress="return isNumberKey(event)" onblur="MinutesToPercent()" style="width:80px;" /></td>
+				<td><input type="text" id="percent__{{ forloop.counter }}" name="project_percent__{{ s.id }}" value="" /></td>
 				<td><input type="radio" name="prime" value="{{ s.id }}" style="display: none;" /></td>
 			</tr>
 		{% endfor %}
 			<tr>
-				<td colspan="5" align="right">
+				<td colspan="7" align="right">
 					<button type="button" style="display: none;" class="btn btn-success" name="splitter" id="splitter" onclick="divper(this); return false;">Split %</button>
 				</td>
 			</tr>
 			<tr>
-				<td colspan="5" align="left" valign="top">
+				<td colspan="7" align="left" valign="top">
 					<label class="control-label col-sm-2" for="staff_member_comment">Comment / Purpose of Charge</label>
 					<textarea name="staff_member_comment" id="staff_member_comment" rows="6" cols="50">{{ staff_member_comment }}</textarea>
 				</td>
@@ -50,6 +54,33 @@
 		<input type="submit" value="Record Staff Charges" class="btn btn-default"/>
 	</form>
 	<script>
+	
+	function MinutesToPercent() {
+		var sumMinutes = 0;
+	{% for s in scp %}
+		var hours{{ forloop.counter }} = document.getElementById("hours__{{ forloop.counter }}");
+		var minutes{{ forloop.counter }} = document.getElementById("minutes__{{ forloop.counter }}");
+		var percent{{ forloop.counter }} = document.getElementById("percent__{{ forloop.counter }}");
+				
+		{% if forloop.last %}
+			minutes{{ forloop.counter }}.value = ({{ total_minutes }} - sumMinutes) % 60;
+			hours{{ forloop.counter }}.value = ({{ total_minutes }} - sumMinutes - minutes{{ forloop.counter }}.value) / 60;
+		{% else %}
+			sumMinutes += ((hours{{ forloop.counter }}.value * 60) + (minutes{{ forloop.counter }}.value*1));
+		{% endif %}
+		percent{{ forloop.counter }}.value = ((((hours{{ forloop.counter }}.value * 60) + (minutes{{ forloop.counter }}.value*1))/{{ total_minutes }})*100).toFixed(1);
+	{% endfor %}
+	}
+
+	function isNumberKey(evt)
+       	{
+        	var charCode = (evt.which) ? evt.which : evt.keyCode;
+        	if (charCode != 46 && charCode > 31 && (charCode < 48 || charCode > 57))
+        	return false;
+
+        	return true;
+        }
+
 	function on_submit()
 	{
 		var failure_dialog = ajax_failure_callback("There was an error processing the data.  Please check the form and try again.");
