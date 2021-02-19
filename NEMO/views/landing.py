@@ -7,7 +7,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_GET
 from django.http import HttpResponseRedirect
 
-from NEMO.models import Alert, AreaAccessRecord, ConsumableWithdraw, LandingPageChoice, Reservation, Resource, StaffCharge, UsageEvent
+from NEMO.models import Alert, AreaAccessRecord, ConsumableWithdraw, LandingPageChoice, Reservation, Resource, StaffCharge, UsageEvent, User
 from NEMO.views.alerts import delete_expired_alerts
 from NEMO.views.area_access import able_to_self_log_in_to_area
 from NEMO.views.notifications import delete_expired_notifications, get_notificaiton_counts
@@ -62,6 +62,12 @@ def landing(request):
 		landing_page_choices = landing_page_choices.exclude(hide_from_users=True)
 
 
+	user_delegate = False
+	if not request.session['pi'] and not request.user.groups.filter(name__in=("Technical Staff","Financial Admin")).exists() and not request.user.is_superuser:
+		if User.objects.filter(pi_delegates=request.user).exists():
+			user_delegate = True
+
+
 	dictionary = {
 		'now': timezone.now(),
 		'alerts': Alert.objects.filter(Q(user=None) | Q(user=request.user), debut_time__lte=timezone.now()),
@@ -74,5 +80,6 @@ def landing(request):
 		'active_area_access': active_area_access,
 		'contested_items': contested_items,
 		'validation_needed': validation_needed,
+		'user_delegate': user_delegate,
 	}
 	return render(request, 'landing.html', dictionary)

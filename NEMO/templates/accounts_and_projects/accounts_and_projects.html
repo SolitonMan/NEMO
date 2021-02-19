@@ -25,11 +25,48 @@
 	{% for p in projects %}
 		<tr>
 			<td>
-				<b>Account:</b> {{ p.account }}<br/>
-				<b>Account Owner:</b> {{ p.account.owner }}<br/>
 				<b>Project: {{ p }}</b><br/>
+				<b>Project number: {{ p.project_number }}</b><br/>
+				<b>Credit Cost Collector(s):
+				{% if p.creditcostcollector_set.all|length > 0 %}
+					{% for c in p.creditcostcollector_set.all %}
+					{{ c.name }} <br/>
+					{% endfor %}
+				{% else %}
+					None assigned
+				{% endif %}
+				</b><br/>
+				<b>End Date:</b> {{ p.end_date }}<br/>
 				<b>Project Owner:</b> {{ p.owner }}<br/>
-				<b>End Date:</b> {{ p.end_date }}
+				<b>Project Owner Data:</b>
+				<p>
+				Email: {{ p.owner.email }}<br/>
+				Address: <br/> 
+				{{ p.owner.contact.address1 }}<br/>
+				{% if p.owner.contact.address2 is not None %}
+				{{ p.owner.contact.address2 }}<br/>
+				{% endif %}
+				{{ p.owner.contact.city }}, {{ p.owner.contact.state }} {{ p.owner.contact.zipcode }}
+				</p>
+
+				<b>Billing Contact:</b>
+				<p>
+				Name: {{ p.bill_to }}<br/>
+				Email: {{ p.bill_to.email }}<br/>
+				Address: <br/>
+				{{ p.bill_to.contact.address1 }}<br/>
+				{% if p.bill_to.contact.address2 is not None %}
+				{{ p.bill_to.contact.address2 }}<br/>
+				{% endif %}
+				{{ p.bill_to.contact.city }}, {{ p.bill_to.contact.state }} {{ p.bill_to.contact.zipcode }}
+				</p>
+
+				{% if request.session.financial_admin or request.user.is_superuser %}
+					<p>
+						<a href="/admin/NEMO/project/{{ p.id }}/change/">Edit this project</a>
+					</p>
+				{% endif %}
+
 			</td>
 			<td>
 				<table class="table" id="project_{{ p.id }}">
@@ -39,7 +76,9 @@
 
 					<td width="85%">{{ u }}</td>
 					<td>
+						{% if request.session.financial_admin or request.user.is_superuser or request.session.pi and p.owner.id == request.user.id or user_delegate and request.user in p.owner.pi_delegates.all or request.session.technical_staff and request.user in p.owner.pi_delegates.all %}
 						<button type="button" class="btn btn-danger" onclick="remove_user_from_project({{ u.id}},{{ p.id }});">Remove</button>
+						{% endif %}
 					</td>
 				</tr>
 				{% endfor %}
@@ -51,8 +90,11 @@
 				</table>
 			</td>
 			<td>
+				{% if request.session.financial_admin or request.user.is_superuser or request.session.pi and p.owner.id == request.user.id or user_delegate and request.user in p.owner.pi_delegates.all or request.session.technical_staff and request.user in p.owner.pi_delegates.all %}
 				<p><input id="search_{{ p.id }}" type="text" placeholder="Add a user" class="form-control user_search" autofocus></p>
-
+				{% else %}
+				<p><input disabled id="search_{{ p.id }}" type="text" placeholder="Add a user" class="form-control user_search" autofocus></p>
+				{% endif %}
 				<p><span id="selection_{{ p.id }}" style="display:inline" class="form-control user_search_span"></span></p>
 				<p><button id="add_{{ p.id }}" type="button" style="display:none" class="btn btn-success user_add">Add </button></p>
 				<p><button id="cancel_{{ p.id }}" type="button" style="display:none" class="btn btn-danger user_cancel">Cancel</button></p>
@@ -189,7 +231,8 @@
 		{
 			//$('#search').autocomplete('accounts_and_projects', get_account, {% json_search_base_with_extra_fields accounts_and_projects 'application_identifier' %});
 			$("#search").keyup(function () {
-				var data = this.value.split(" ");
+				//var data = this.value.split(" ");
+				var data = this.value;
 				var tr = $("#project_data").children();
 
 				if (this.value == "") {
@@ -201,12 +244,13 @@
 
 				tr.filter(function(i, v) {
 					var $t = $(this);
-					for (var d = 0; d < data.length; ++d) {
-						var s = data[d].toUpperCase();
+				//	for (var d = 0; d < data.length; ++d) {
+						//var s = data[d].toUpperCase();
+						var s = data.toUpperCase();
 						if ($t.text().toUpperCase().indexOf(s) > -1) {
 							return true;
 						}
-					}
+				//	}
 				})
 				.show();
 			});

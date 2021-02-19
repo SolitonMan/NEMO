@@ -90,7 +90,13 @@
 				<li><a href="{% url 'new_area_access_customer' request.user.id %}">Area Access</a></li>
 				{% endif %}
 				<li><a href="{% url 'status_dashboard' %}">Status dashboard</a></li>
-				{% if user.is_staff or request.session.pi %}
+				{% if request.session.pi or user_delegate %}
+				{% if not request.session.technical_staff %}
+				{% navigation_url 'accounts_and_projects' 'Accounts and projects' %}
+				{% endif %}
+				{% endif %}
+
+				{% if user.is_staff %}
 					<li class="dropdown">
 						<a href="#" class="dropdown-toggle" data-toggle="dropdown">Administration <b class="caret"></b></a>
 						<ul class="dropdown-menu">
@@ -99,7 +105,7 @@
 							{% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
 							{% navigation_url 'abuse' 'Abuse' %}
 							{% endif %}
-							{% if request.session.pi or request.session.administrative_staff or request.session.financial_admin or user.is_superuser %}
+							{% if request.session.pi or request.session.administrative_staff or request.session.financial_admin or user.is_superuser or user.is_staff %}
 							{% navigation_url 'accounts_and_projects' 'Accounts and projects' %}
 							{% endif %}
 							{% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}

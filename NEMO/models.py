@@ -784,7 +784,8 @@ class Project(models.Model):
 	name = models.CharField(max_length=100)
 	project_number = models.CharField(max_length=20, null=True, blank=True, default=get_new_project_number)
 	application_identifier = models.CharField(max_length=500, null=True, blank=True)
-	account = models.ForeignKey(Account, on_delete=models.SET_NULL, null=True, help_text="All charges for this project will be billed to the selected account.")
+	account = models.ForeignKey(Account, on_delete=models.SET_NULL, null=True, blank=True, help_text="All charges for this project will be billed to the selected account.")
+	simba_cost_center = models.CharField(max_length=10, null=True, blank=True)
 	internal_order = models.CharField(max_length=12, null=True, blank=True)
 	wbs_element = models.CharField(max_length=12, null=True, blank=True)
 	owner = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, help_text="The owner or person responsible for the Project (Internal Order or WBS Element in SIMBA) as imported via SIMBA download nightly", related_name="project_owner")
@@ -797,6 +798,8 @@ class Project(models.Model):
 	start_date = models.DateField(null=True, blank=True, help_text="The date on which the project, internal order or wbs element becomes active")
 	end_date = models.DateField(null=True, blank=True, help_text="The date on which the project, internal order or wbs element becomes inactive")
 	detailed_invoice = models.BooleanField(default=False, help_text="A flag to indicate if the customer assigned this project should receive a detailed invoice.  The default is False, indicating that a summarized invoice should be sent.")
+	po_number = models.TextField(null=True, blank=True)
+	comment = models.TextField(null=True, blank=True)
 
 	class Meta:
 		ordering = ['name']
@@ -810,7 +813,11 @@ class Project(models.Model):
 			if self.end_date < timezone.now().date():
 				s = '[INACTIVE]'
 
-		s += '[' + str(self.project_number) + '] ' + str(self.application_identifier) + ' [' + str(self.get_project()) + '][IBIS:' + str(self.account.ibis_account) + ']'
+		s += '[' + str(self.project_number) + '] ' + str(self.application_identifier) + ' [' + str(self.get_project()) + ']'
+
+		if self.account is not None:
+			s += '[IBIS:' + str(self.account.ibis_account) + ']'
+
 		return s
 
 	def get_project(self):

@@ -24,22 +24,26 @@ def accounts_and_projects(request, kind=None, identifier=None):
 	account_list = None
 	accounts_and_projects = None
 
-	if request.user.is_superuser:
+	if request.user.is_superuser or request.session['financial_admin'] or request.session['technical_staff']:
 		account_list = Account.objects.all()
 		accounts_and_projects = set(Account.objects.all()) | set(Project.objects.all())
 		projects = Project.objects.all()
+		user_delegate = False
 	elif request.session['pi']:
 		account_list = Account.objects.filter(owner=request.user)
 		accounts_and_projects = set(Account.objects.filter(owner=request.user)) | set(Project.objects.filter(owner=request.user))
 		projects = Project.objects.filter(owner=request.user)
+		user_delegate = False
 	elif not request.session['pi'] and User.objects.filter(pi_delegates=request.user).exists():
 		account_list = Account.objects.filter(owner__pi_delegates=request.user)
 		accounts_and_projects = set(Account.objects.filter(owner__pi_delegates=request.user)) | set(Project.objects.filter(owner__pi_delegates=request.user))
 		projects = Project.objects.filter(owner__pi_delegates=request.user)
+		user_delegate = True
 	else:
 		account_list = None
 		accounts_and_projects = None
 		projects = None
+		user_delegate = False
 
 	dictionary = {
 		'account': account,
@@ -47,6 +51,7 @@ def accounts_and_projects(request, kind=None, identifier=None):
 		'accounts_and_projects': accounts_and_projects,
 		'users': User.objects.all(),
 		'projects': projects,
+		'user_delegate': user_delegate,
 	}
 	return render(request, 'accounts_and_projects/accounts_and_projects.html', dictionary)
 
