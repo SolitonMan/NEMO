@@ -120,7 +120,7 @@ def tool_control(request, tool_id=None, qualified_only=None, core_only=None):
 	categorized_tools = categorized_tools.rstrip(",") + "]"
 	categorized_tools = mark_safe(categorized_tools)
 
-	users = User.objects.filter(is_active=True, projects__active=True, projects__account__active=True).exclude(id=request.user.id).distinct()
+	users = User.objects.filter(is_active=True, projects__active=True).exclude(id=request.user.id).distinct()
 
 	dictionary = {
 		'tools': tools,
@@ -213,7 +213,7 @@ def tool_status(request, tool_id):
 
 	# Staff need the user list to be able to qualify users for the tool.
 	if request.user.is_staff:
-		dictionary['users'] = User.objects.filter(is_active=True, projects__active=True, projects__account__active=True).distinct()
+		dictionary['users'] = User.objects.filter(is_active=True, projects__active=True).distinct()
 
 	return render(request, 'tool_control/tool_status.html', dictionary)
 
@@ -222,7 +222,7 @@ def tool_status(request, tool_id):
 @require_GET
 def use_tool_for_other(request, entry_number):
 	dictionary = {
-		'users': User.objects.filter(is_active=True, projects__active=True, projects__account__active=True).exclude(id=request.user.id).distinct(),
+		'users': User.objects.filter(is_active=True, projects__active=True).exclude(id=request.user.id).distinct(),
 		'entry_number': entry_number
 	}
 	return render(request, 'tool_control/use_tool_for_other.html', dictionary)
@@ -1098,8 +1098,8 @@ def create_usage_event(request):
 
 	dates = get_billing_date_range()
 
-	users = User.objects.filter(is_active=True, projects__active=True, projects__account__active=True).distinct()
-	operators = User.objects.filter(is_active=True, projects__active=True, projects__account__active=True).distinct()
+	users = User.objects.filter(is_active=True, projects__active=True).distinct()
+	operators = User.objects.filter(is_active=True, projects__active=True).distinct()
 
 	if not request.user.is_superuser:
 		operators = operators.filter(Q(is_staff=False) | Q(id=request.user.id))
@@ -1349,9 +1349,9 @@ def save_usage_event(request):
 		params['tools'] = tools
 
 		if request.user.is_superuser or request.user.is_staff:
-			operators = User.objects.filter(is_active=True, projects__active=True, projects__account__active=True).distinct().order_by('last_name', 'first_name')
+			operators = User.objects.filter(is_active=True, projects__active=True).distinct().order_by('last_name', 'first_name')
 			params['operators'] = operators
-		params['users'] = User.objects.filter(is_active=True, projects__active=True, projects__account__active=True).distinct()
+		params['users'] = User.objects.filter(is_active=True, projects__active=True).distinct()
 
 		# set start and end dates
 		dates = get_billing_date_range()

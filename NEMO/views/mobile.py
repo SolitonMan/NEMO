@@ -58,7 +58,7 @@ def new_reservation(request, tool_id, date=None):
 	dictionary = tool.get_configuration_information(user=request.user, start=None)
 	dictionary['tool'] = tool
 	dictionary['date'] = date
-	dictionary['users'] = User.objects.filter(is_active=True, projects__active=True, projects__account__active=True).distinct()
+	dictionary['users'] = User.objects.filter(is_active=True, projects__active=True).distinct()
 
 	return render(request, 'mobile/new_reservation.html', dictionary)
 

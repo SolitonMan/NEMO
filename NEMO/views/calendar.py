@@ -344,7 +344,7 @@ def create_reservation(request):
 
 		# Present the staff member with a form to choose if the reservation is for themselves for or one or more customers.
 		if request.POST.get('staff_charge') is None:
-			return render(request, 'calendar/project_choice_staff.html', { 'active_projects': user.active_projects(), 'users': User.objects.filter(is_active=True, projects__active=True, projects__account__active=True).distinct()})
+			return render(request, 'calendar/project_choice_staff.html', { 'active_projects': user.active_projects(), 'users': User.objects.filter(is_active=True, projects__active=True).distinct()})
 		else:
 			# process submission to determine the reservation details
 			mode = request.POST['staff_charge']

@@ -204,10 +204,10 @@ class User(models.Model):
 				return access_record.project
 
 	def active_project_count(self):
-		return self.projects.filter(active=True, account__active=True, start_date__lte=timezone.now(), end_date__gte=timezone.now()).count()
+		return self.projects.filter(active=True, start_date__lte=timezone.now(), end_date__gte=timezone.now()).count()
 
 	def active_projects(self):
-		return self.projects.filter(active=True, account__active=True, start_date__lte=timezone.now(), end_date__gte=timezone.now()).order_by('project_number')
+		return self.projects.filter(active=True, start_date__lte=timezone.now(), end_date__gte=timezone.now()).order_by('project_number')
 
 	def all_projects(self):
 		return self.projects
@@ -827,7 +827,7 @@ class Project(models.Model):
 		if self.internal_order is not None:
 			if len(self.internal_order) > 0:
 				return str(self.internal_order)
-		return str(self.account.simba_cost_center)
+		return str(self.simba_cost_center)
 
 	def check_date(self, compare_date):
 		return (compare_date.date() >= self.start_date) and (compare_date.date() <= self.end_date)
@@ -1631,7 +1631,7 @@ class ContactInformation(models.Model):
 	state = models.CharField(max_length=50, blank=True, null=True)
 	zipcode = models.CharField(max_length=20,  blank=True, null=True)
 	country = models.CharField(max_length=50, blank=True, null=True)
-	category = models.ForeignKey(ContactInformationCategory, on_delete=models.SET_NULL, null=True)
+	category = models.ForeignKey(ContactInformationCategory, on_delete=models.SET_NULL, null=True, blank=True)
 	email = models.EmailField(blank=True, null=True)
 	office_phone = models.CharField(max_length=40, blank=True, null=True)
 	office_location = models.CharField(max_length=200, blank=True, null=True)

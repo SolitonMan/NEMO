@@ -92,7 +92,7 @@
 				<li><a href="{% url 'status_dashboard' %}">Status dashboard</a></li>
 				{% if request.session.pi or user_delegate %}
 				{% if not request.session.technical_staff %}
-				{% navigation_url 'accounts_and_projects' 'Accounts and projects' %}
+				{% navigation_url 'accounts_and_projects' 'Projects' %}
 				{% endif %}
 				{% endif %}
 
@@ -104,9 +104,6 @@
 							{# This allows items to be easily removed from the public facing version of NEMO. #}
 							{% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
 							{% navigation_url 'abuse' 'Abuse' %}
-							{% endif %}
-							{% if request.session.pi or request.session.administrative_staff or request.session.financial_admin or user.is_superuser or user.is_staff %}
-							{% navigation_url 'accounts_and_projects' 'Accounts and projects' %}
 							{% endif %}
 							{% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
 							{% navigation_url 'alerts' 'Alerts' %}
@@ -134,6 +131,9 @@
 							{% endif %}
 							{% if user.is_superuser %}
 							{% navigation_url 'delegates' 'PI Delegates' %}
+							{% endif %}
+							{% if request.session.pi or request.session.administrative_staff or request.session.financial_admin or user.is_superuser or user.is_staff %}
+							{% navigation_url 'accounts_and_projects' 'Projects' %}
 							{% endif %}
 							{% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
 							{% navigation_url 'qualifications' 'Qualifications' %}

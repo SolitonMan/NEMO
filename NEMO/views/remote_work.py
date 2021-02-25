@@ -22,7 +22,7 @@ from NEMO.utilities import month_list, get_month_timeframe
 
 
 def get_dummy_projects():
-	projects = Project.objects.filter(Q(account__simba_cost_center__iregex=r'^[a-zA-Z]') | Q(internal_order__iregex=r'^[a-zA-Z]') | Q(wbs_element__iregex=r'^[a-zA-Z]'))
+	projects = Project.objects.filter(Q(simba_cost_center__iregex=r'^[a-zA-Z]') | Q(internal_order__iregex=r'^[a-zA-Z]') | Q(wbs_element__iregex=r'^[a-zA-Z]'))
 	return projects
 
 #@staff_member_required(login_url=None)

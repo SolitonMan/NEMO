@@ -83,7 +83,7 @@ def email_broadcast(request, audience=''):
 	if audience == 'tool':
 		dictionary['search_base'] = Tool.objects.filter(visible=True)
 	elif audience == 'project':
-		dictionary['search_base'] = Project.objects.filter(active=True, account__active=True)
+		dictionary['search_base'] = Project.objects.filter(active=True)
 	elif audience == 'account':
 		dictionary['search_base'] = Account.objects.filter(active=True)
 	elif audience == 'user':
@@ -94,7 +94,7 @@ def email_broadcast(request, audience=''):
 		dictionary['search_base'] = Tool.objects.filter(visible=True)
 		dictionary['date_range'] = True
 	elif audience == 'project_date':
-		dictionary['search_base'] = Project.objects.filter(active=True, account__active=True)
+		dictionary['search_base'] = Project.objects.filter(active=True)
 		dictionary['date_range'] = True
 	elif audience == 'active_users_date':
 		dictionary['search_base'] = User.objects.annotate(email_length=Length('email')).filter(is_active=True, email_length__gt=0).order_by('last_name', 'first_name')

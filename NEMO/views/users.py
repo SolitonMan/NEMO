@@ -28,7 +28,7 @@ def users(request):
 def create_or_modify_user(request, user_id):
 	logger = getLogger(__name__)
 	dictionary = {
-		'projects': Project.objects.filter(active=True, account__active=True),
+		'projects': Project.objects.filter(active=True),
 		'tools': Tool.objects.filter(visible=True),
 		'physical_access_levels': PhysicalAccessLevel.objects.all(),
 		'one_year_from_now': timezone.now() + timedelta(days=365),
@@ -303,7 +303,7 @@ def unlock_account(request, user_id):
 def delegates(request):
 	users = []
 	for u in User.objects.all():
-		if Account.objects.filter(owner=u).exists():
+		if Project.objects.filter(owner=u).exists():
 			users.append(u.id)
 
 	all_pis = User.objects.filter(id__in=users).order_by('last_name', 'first_name')
