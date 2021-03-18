@@ -368,7 +368,7 @@ class ProjectAdminForm(forms.ModelForm):
 class ProjectAdmin(admin.ModelAdmin):
 	list_display = ('id', 'name', 'project_number', 'simba_cost_center', 'internal_order', 'wbs_element', 'account', 'organization', 'owner', 'bill_to', 'end_date', 'active')
 	search_fields = ('name', 'organization__name', 'internal_order', 'wbs_element', 'application_identifier', 'account__name', 'simba_cost_center', 'owner__first_name', 'owner__last_name', 'owner__username', 'bill_to__first_name', 'bill_to__last_name', 'bill_to__username', 'project_number')
-	# list_filter = ('owner','organization__name')
+	list_filter = ('active',)
 	exclude = ('account',)
 	form = ProjectAdminForm
 
@@ -489,6 +489,11 @@ class ConsumableAdmin(admin.ModelAdmin):
 	def has_delete_permission(self, request, obj=None):
 		return False
 
+	def formfield_for_foreignkey(self, db_field, request, **kwargs):
+		if db_field.name == "credit_cost_collector":
+			kwargs["queryset"] = CreditCostCollector.objects.order_by('project__project_number')
+		return super(ConsumableAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
 
 @register(ConsumableUnit)
 class ConsumableUnitAdmin(admin.ModelAdmin):
@@ -527,11 +532,6 @@ class ConsumableWithdrawAdmin(admin.ModelAdmin):
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "project":
 			kwargs["queryset"] = Project.objects.order_by('project_number')
-		return super(ConsumableWithdrawAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
-
-	def formfield_for_foreignkey(self, db_field, request, **kwargs):
-		if db_field.name == 'credit_cost_collector':
-			kwargs["queryset"] = CreditCostCollector.objects.order_by('project__project_number')
 		return super(ConsumableWithdrawAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 	def has_delete_permission(self, request, obj=None):
@@ -795,6 +795,7 @@ class NotificationAdmin(admin.ModelAdmin):
 @register(ContestTransaction)
 class ContestTransactionAdmin(admin.ModelAdmin):
 	list_display = ('id', 'content_type', 'object_id', 'contest_description', 'contested_date', 'contest_resolution')
+	list_filter = ('content_type','contest_resolution')
 
 	def has_delete_permission(self, request, obj=None):
 		return False
@@ -803,6 +804,7 @@ class ContestTransactionAdmin(admin.ModelAdmin):
 @register(ContestTransactionData)
 class ContestTransactionDataAdmin(admin.ModelAdmin):
 	list_display = ('id', 'content_type', 'object_id', 'contest_transaction', 'field_name', 'original_value', 'proposed_value')
+	list_filter = ('content_type',)
 
 	def has_delete_permission(self, request, obj=None):
 		return False
@@ -811,6 +813,7 @@ class ContestTransactionDataAdmin(admin.ModelAdmin):
 @register(ContestTransactionNewData)
 class ContestTransactionNewDataAdmin(admin.ModelAdmin):
 	list_display = ('id', 'content_type', 'field_name', 'field_value', 'field_group', 'contest_transaction')
+	list_filter = ('content_type',)
 
 	def has_delete_permission(self, request, obj=None):
 		return False

@@ -518,24 +518,30 @@
 	}
 	function on_submit()
 	{
+		$("input[type='submit']").prop("disabled",true);
+
 		var bSubmit = true;
 		var bChanged = false;
+		var bContinue = true;
+		var error_message = "";
 
 		if ($("#contest_reason").val() == "") {
-			alert("Please select a reason for contesting this {{ contest_type }}.");
+			error_message = "Please select a reason for contesting this {{ contest_type }}.";
 			$("#contest_reason").focus();
 			bSubmit = false;
-			return false;
+			bContinue = false;
 		}
-		if ($("#contest_description").val() == "") {
-			alert("Please enter a contest description.");
-			$("#contest_description").focus();
-			bSubmit = false;
-			return false;
+		if (bContinue) {
+			if ($("#contest_description").val() == "") {
+				error_message = "Please enter a contest description.";
+				$("#contest_description").focus();
+				bSubmit = false;
+				bContinue = false;
+			}
 		}
 
 		if ($("#no_charge_flag").is(":checked")) {
-			return true;
+			bChanged = true;
 		}
 
 		{% if usage_event is not None or staff_charge is not None or area_access_record is not None %}
@@ -564,21 +570,30 @@
 		var prop_start_date = new Date(prop_start.val());
 		var prop_end_date = new Date(prop_end.val());
 
-		if (prop_start_date == "") {
-			alert("The start date may not be blank");
-			prop_start.focus();
-			bSubmit = false;
+		if (bContinue) {
+			if (prop_start_date == "") {
+				error_message = "The start date may not be blank";
+				prop_start.focus();
+				bSubmit = false;
+				bContinue = false;
+			}
 		}
 
-		if (prop_end_date == "") {
-			alert("The end date may not be blank");
-			prop_end.focus();
-			bSubmit = false;
+		if (bContinue) {
+			if (prop_end_date == "") {
+				error_message = "The end date may not be blank";
+				prop_end.focus();
+				bSubmit = false;
+				bContinue = false;
+			}
 		}
 
-		if (prop_end_date <= prop_start_date) {
-			alert("The end date must be after the start date.  Please adjust your dates to correct this.");
-			bSubmit = false;
+		if (bContinue) {
+			if (prop_end_date <= prop_start_date) {
+				error_message = "The end date must be after the start date.  Please adjust your dates to correct this.";
+				bSubmit = false;
+				bContinue = false;
+			}
 		}
 
 		if (prop_start.val() != orig_start.val() || prop_end.val() != orig_end.val()) {
@@ -588,40 +603,14 @@
 		$("input[name*='proposed__chosen_user__']").each(
 			function(index, element) {
 				if (!$(element).prop("disabled")) {
-					if ($(element).val() == "") {
-						alert("Please select a user for each entry");
-						$(element).focus();
-						bSubmit = false;
-					} else {
-						s = "#original__chosen_user__" + $(element).prop("name").split("__")[2];
-						if ($(s).val() != $(element).val()) {
-							bChanged = true;
-						}
-					}
-				}
-			}
-		);
-
-		if ($("input[name*='proposed__chosen_user__']").length == 0) {
-			alert("There must be at least one customer.  Please adjust your submission, or cancel and restart if that would be easier.");
-			bSubmit = false;
-		}
-
-		$("select[name*='proposed__chosen_project__']").each(
-			function(index, element) {
-				if (!$(element).prop("disabled")) {
-					if ($(element).val() == "" || $(element).val() == "-1") {
-						alert("Please select a project for each entry");
-						$(element).focus();
-						bSubmit = false;
-					} else {
-						s = "#original__chosen_project__" + $(element).prop("name").split("__")[2];
-
-						if ($(element).children("option")) {
-							if ($(s).val() != $(element).children("option:selected").val()) {
-								bChanged = true;
-							}
+					if (bContinue) {
+						if ($(element).val() == "") {
+							error_message = "Please select a user for each entry";
+							$(element).focus();
+							bSubmit = false;
+							bContinue = false;
 						} else {
+							s = "#original__chosen_user__" + $(element).prop("name").split("__")[2];
 							if ($(s).val() != $(element).val()) {
 								bChanged = true;
 							}
@@ -631,9 +620,47 @@
 			}
 		);
 
-		if ($("select[name*='proposed__chosen_project__']").length == 0 && $("input[name*='proposed__chosen_project__']").length == 0) {
-			alert("There must be at least one project selected for this transaction.  Please adjust your submission, or cancel and restart if that would be easier.");
-			bSubmit = false;
+		if (bContinue) {
+			if ($("input[name*='proposed__chosen_user__']").length == 0) {
+				error_message = "There must be at least one customer.  Please adjust your submission, or cancel and restart if that would be easier.";
+				bSubmit = false;
+				bContinue = false;
+			}
+		}
+
+		$("select[name*='proposed__chosen_project__']").each(
+			function(index, element) {
+				if (!$(element).prop("disabled")) {
+					if (bContinue) {
+						if ($(element).val() == "" || $(element).val() == "-1") {
+							error_message = "Please select a project for each entry";
+							$(element).focus();
+							bSubmit = false;
+							bContinue = false;
+						} else {
+							s = "#original__chosen_project__" + $(element).prop("name").split("__")[2];
+
+							if ($(element).children("option")) {
+								if ($(s).val() != $(element).children("option:selected").val()) {
+									bChanged = true;
+								}
+							} else {
+								if ($(s).val() != $(element).val()) {
+									bChanged = true;
+								}
+							}
+						}
+					}
+				}
+			}
+		);
+
+		if (bContinue) {
+			if ($("select[name*='proposed__chosen_project__']").length == 0 && $("input[name*='proposed__chosen_project__']").length == 0) {
+				error_message = "There must be at least one project selected for this transaction.  Please adjust your submission, or cancel and restart if that would be easier.";
+				bSubmit = false;
+				bContinue = false;
+			}
 		}
 
 		var percent = 0.0;
@@ -641,25 +668,31 @@
 		$("input[name*='proposed__project_percent__']").each(
 			function(index, element) {
 				if (!$(element).prop("disabled")) {
-					if ($(element).val() == "" || isNaN(parseFloat($(element).val()))) {
-						alert("Please enter a numerical value for each project percent field");
-						$(element).focus();
-						bSubmit = false;
-					} else {
-						percent += parseFloat($(element).val());
+					if (bContinue) {
+						if ($(element).val() == "" || isNaN(parseFloat($(element).val()))) {
+							error_message = "Please enter a numerical value for each project percent field";
+							$(element).focus();
+							bSubmit = false;
+							bContinue = false;
+						} else {
+							percent += parseFloat($(element).val());
 
-						s = "#original__project_percent__" + $(element).prop("name").split("__")[2];
-						if ($(s).val() != $(element).val()) {
-							bChanged = true;
+							s = "#original__project_percent__" + $(element).prop("name").split("__")[2];
+							if ($(s).val() != $(element).val()) {
+								bChanged = true;
+							}
 						}
 					}
 				}
 			}
 		);
 
-		if (parseInt(percent) != 100) {
-			alert("Percent totals must equal 100");
-			bSubmit = false;
+		if (bContinue) {
+			if (parseInt(percent) != 100) {
+				error_message = "Percent totals must equal 100";
+				bSubmit = false;
+				bContinue = false;
+			}
 		}
 
 		{% endif %}
@@ -668,14 +701,17 @@
 		$("select[name*='proposed__area__']").each(
 			function(index, element) {
 				if (!$(element).prop("disabled")) {
-					if ($(element).val() == "-1" || $(element).val() == "") {
-						alert("Please select an area to assign to this transaction.");
-						$(element).focus();
-						bSubmit = false;
-					} else {
-						s = "#original__area__" + $(element).prop("name").split("__")[2];
-						if ($(s).val() != $(element).val()) {
-							bChanged = true;
+					if (bContinue) {
+						if ($(element).val() == "-1" || $(element).val() == "") {
+							error_message = "Please select an area to assign to this transaction.";
+							$(element).focus();
+							bSubmit = false;
+							bContinue = false;
+						} else {
+							s = "#original__area__" + $(element).prop("name").split("__")[2];
+							if ($(s).val() != $(element).val()) {
+								bChanged = true;
+							}
 						}
 					}
 				}
@@ -687,16 +723,22 @@
 		var quantity = $("#proposed__quantity__{{ consumable_withdraw.id }}");
 		var orig_quantity = $("#original__quantity__{{ consumable_withdraw.id }}");
 
-		if (quantity.val() == "") {
-			alert("The quantity cannot be blank.  Please enter a numerical value.");
-			quantity.focus();
-			return false;
+		if (bContinue) {
+			if (quantity.val() == "") {
+				error_message = "The quantity cannot be blank.  Please enter a numerical value.";
+				quantity.focus();
+				bSubmit = false;
+				bContinue = false;
+			}
 		}
 
-		if (isNaN(parseInt(quantity.val())) && isNaN(parseFloat(quantity.val()))) {
-			alert("Please enter only a numerical value for the quantity.");
-			quantity.focus();
-			return false;
+		if (bContinue) {
+			if (isNaN(parseInt(quantity.val())) && isNaN(parseFloat(quantity.val()))) {
+				error_message = "Please enter only a numerical value for the quantity.";
+				quantity.focus();
+				bSubmit = false;
+				bContinue = false;
+			}
 		}
 
 		if (quantity.val() != orig_quantity.val()) {
@@ -706,41 +748,15 @@
 		$("input[name*='proposed__chosen_user__']").each(
 			function(index, element) {
 				if (!$(element).prop("disabled")) {
-					if ($(element).val() == "") {
-						alert("Please select a user for each entry");
-						$(element).focus();
-						bSubmit = false;
-					} else {
-						s = "#original__chosen_user__" + $(element).prop("name").split("__")[2];
-
-						if ($(s).val() != $(element).val()) {
-							bChanged = true;
-						}
-					}
-				}
-			}
-		);
-
-		if ($("input[name*='proposed__chosen_user__']").length == 0) {
-			alert("There must be at least one customer.  Please adjust your submission, or cancel and restart if that would be easier.");
-			bSubmit = false;
-		}
-
-		$("select[name*='proposed__chosen_project__']").each(
-			function(index, element) {
-				if (!$(element).prop("disabled")) {
-					if ($(element).val() == "" || $(element).val() == "-1") {
-						alert("Please select a project for each entry");
-						$(element).focus();
-						bSubmit = false;
-					} else {
-						s = "#original__chosen_project__" + $(element).prop("name").split("__")[2];
-
-						if ($(element).children("option")) {
-							if ($(s).val() != $(element).children("option:selected").val()) {
-								bChanged = true;
-							}
+					if (bContinue) {
+						if ($(element).val() == "") {
+							error_message = "Please select a user for each entry";
+							$(element).focus();
+							bSubmit = false;
+							bContinue = false;
 						} else {
+							s = "#original__chosen_user__" + $(element).prop("name").split("__")[2];
+
 							if ($(s).val() != $(element).val()) {
 								bChanged = true;
 							}
@@ -750,9 +766,47 @@
 			}
 		);
 
-		if ($("select[name*='proposed__chosen_project__']").length == 0 && $("input[name*='proposed__chosen_project__']").length == 0) {
-			alert("There must be at least one project chosen for this transaction.  Please adjust your submission, or cancel and restart if that would be easier.");
-			bSubmit = false;
+		if (bContinue) {
+			if ($("input[name*='proposed__chosen_user__']").length == 0) {
+				error_message = "There must be at least one customer.  Please adjust your submission, or cancel and restart if that would be easier.";
+				bSubmit = false;
+				bContinue = false;
+			}
+		}
+
+		$("select[name*='proposed__chosen_project__']").each(
+			function(index, element) {
+				if (!$(element).prop("disabled")) {
+					if (bContinue) {
+						if ($(element).val() == "" || $(element).val() == "-1") {
+							error_message = "Please select a project for each entry";
+							$(element).focus();
+							bSubmit = false;
+							bContinue = false;
+						} else {
+							s = "#original__chosen_project__" + $(element).prop("name").split("__")[2];
+
+							if ($(element).children("option")) {
+								if ($(s).val() != $(element).children("option:selected").val()) {
+									bChanged = true;
+								}
+							} else {
+								if ($(s).val() != $(element).val()) {
+									bChanged = true;
+								}
+							}
+						}
+					}
+				}
+			}
+		);
+
+		if (bContinue) {
+			if ($("select[name*='proposed__chosen_project__']").length == 0 && $("input[name*='proposed__chosen_project__']").length == 0) {
+				error_message = "There must be at least one project chosen for this transaction.  Please adjust your submission, or cancel and restart if that would be easier.";
+				bSubmit = false;
+				bContinue = false;
+			}
 		}
 
 		var percent = 0.0;
@@ -760,17 +814,20 @@
 		$("input[name*='proposed__project_percent__']").each(
 			function(index, element) {
 				if (!$(element).prop("disabled")) {
-					if ($(element).val() == "" || isNaN(parseFloat($(element).val()))) {
-						alert("Please enter a numerical value for each project percent field");
-						$(element).focus();
-						bSubmit = false;
-					} else {
-						percent += parseFloat($(element).val());
+					if (bContinue) {
+						if ($(element).val() == "" || isNaN(parseFloat($(element).val()))) {
+							error_message = "Please enter a numerical value for each project percent field";
+							$(element).focus();
+							bSubmit = false;
+							bContinue = false;
+						} else {
+							percent += parseFloat($(element).val());
 
-						s = "#original__project_percent__" + $(element).prop("name").split("__")[2];
+							s = "#original__project_percent__" + $(element).prop("name").split("__")[2];
 
-						if ($(s).val() != $(element).val()) {
-							bChanged = true;
+							if ($(s).val() != $(element).val()) {
+								bChanged = true;
+							}
 						}
 					}
 				}
@@ -780,8 +837,13 @@
 		{% endif %}
 
 		if (!bChanged) {
-			alert("No changes were detected in your contest, and it's not selected as a no charge request.  Please update the field values appropriately and submit your request again.  If you're not sure how to make the needed change please contact LEOHelp@psu.edu.");
+			error_message = "No changes were detected in your contest, and it's not selected as a no charge request.  Please update the field values appropriately and submit your request again.  If you're not sure how to make the needed change please contact LEOHelp@psu.edu.";
 			bSubmit = false;
+		}
+
+		if (!bSubmit) {
+			$("input[type='submit']").prop("disabled", false);
+			alert(error_message);
 		}
 
 		return bSubmit;

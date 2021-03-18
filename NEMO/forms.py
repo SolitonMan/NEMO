@@ -196,8 +196,8 @@ class ConsumableWithdrawForm(ModelForm):
 		project = self.cleaned_data['project']
 		if not project.active:
 			raise ValidationError('A consumable may only be billed to an active project. The user\'s project is inactive.')
-		if not project.account.active:
-			raise ValidationError('A consumable may only be billed to a project that belongs to an active account. The user\'s account is inactive.')
+#		if not project.account.active:
+#			raise ValidationError('A consumable may only be billed to a project that belongs to an active account. The user\'s account is inactive.')
 		return project
 
 	def clean_quantity(self):
