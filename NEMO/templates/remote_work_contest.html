@@ -525,6 +525,10 @@
 		var bContinue = true;
 		var error_message = "";
 
+		if ($("#no_charge_flag").is(":checked")) {
+			bChanged = true;
+		}
+
 		if ($("#contest_reason").val() == "") {
 			error_message = "Please select a reason for contesting this {{ contest_type }}.";
 			$("#contest_reason").focus();
@@ -540,9 +544,6 @@
 			}
 		}
 
-		if ($("#no_charge_flag").is(":checked")) {
-			bChanged = true;
-		}
 
 		{% if usage_event is not None or staff_charge is not None or area_access_record is not None %}
 
@@ -596,8 +597,10 @@
 			}
 		}
 
-		if (prop_start.val() != orig_start.val() || prop_end.val() != orig_end.val()) {
-			bChanged = true;
+		if (bContinue) {
+			if (prop_start.val() != orig_start.val() || prop_end.val() != orig_end.val()) {
+				bChanged = true;
+			}
 		}
 
 		$("input[name*='proposed__chosen_user__']").each(
@@ -688,10 +691,12 @@
 		);
 
 		if (bContinue) {
-			if (parseInt(percent) != 100) {
-				error_message = "Percent totals must equal 100";
-				bSubmit = false;
-				bContinue = false;
+			if (!$("#no_charge_flag").is(":checked")) {
+				if (parseInt(percent) != 100) {
+					error_message = "Percent totals must equal 100";
+					bSubmit = false;
+					bContinue = false;
+				}
 			}
 		}
 
@@ -741,8 +746,10 @@
 			}
 		}
 
-		if (quantity.val() != orig_quantity.val()) {
-			bChanged = true;
+		if (bContinue) {
+			if (quantity.val() != orig_quantity.val()) {
+				bChanged = true;
+			}
 		}
 
 		$("input[name*='proposed__chosen_user__']").each(

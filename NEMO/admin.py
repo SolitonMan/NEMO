@@ -553,7 +553,7 @@ class InterlockAdmin(admin.ModelAdmin):
 	actions = [lock_selected_interlocks, unlock_selected_interlocks, synchronize_with_tool_usage]
 	readonly_fields = ['state', 'most_recent_reply']
 
-	search_fields = ('tool_name', 'card__server')
+	search_fields = ('tool__name', 'card__server')
 
 	def has_delete_permission(self, request, obj=None):
 		return False

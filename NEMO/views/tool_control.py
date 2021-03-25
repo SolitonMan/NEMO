@@ -734,7 +734,7 @@ def disable_tool(request, tool_id):
 				index = int(index)
 				if index not in consumable_records_dollar:
 					consumable_records_dollar[index] = ConsumableWithdraw()
-					consumable_records_dollar[index].consumable = Consumable.objects.filter(core_id=tool.core_id, name="Fixed Cost Sample $1")[0]
+					consumable_records_dollar[index].consumable = Consumable.objects.filter(core_id=tool.core_id, name="Cost Per Sample $1")[0]
 					consumable_records_dollar[index].usage_event = current_usage_event
 					consumable_records_dollar[index].merchant = current_usage_event.operator
 					consumable_records_dollar[index].date = timezone.now()
@@ -742,7 +742,7 @@ def disable_tool(request, tool_id):
 					consumable_records_dollar[index].updated = timezone.now()
 				if index not in consumable_records_cent:
 					consumable_records_cent[index] = ConsumableWithdraw()
-					consumable_records_cent[index].consumable = Consumable.objects.filter(core_id=tool.core_id, name="Fixed Cost Sample $0.01")[0]
+					consumable_records_cent[index].consumable = Consumable.objects.filter(core_id=tool.core_id, name="Cost Per Sample $0.01")[0]
 					consumable_records_cent[index].usage_event = current_usage_event
 					consumable_records_cent[index].merchant = current_usage_event.operator
 					consumable_records_cent[index].date = timezone.now()
@@ -844,7 +844,7 @@ def disable_tool_multi(request, tool_id, usage_event, dynamic_form):
 				index = int(index)
 				if index not in consumable_records_dollar:
 					consumable_records_dollar[index] = ConsumableWithdraw()
-					consumable_records_dollar[index].consumable = Consumable.objects.filter(core_id=tool.core_id, name="Fixed Cost Sample $1")[0]
+					consumable_records_dollar[index].consumable = Consumable.objects.filter(core_id=tool.core_id, name="Cost Per Sample $1")[0]
 					consumable_records_dollar[index].usage_event = current_usage_event
 					consumable_records_dollar[index].merchant = current_usage_event.operator
 					consumable_records_dollar[index].date = timezone.now()
@@ -852,7 +852,7 @@ def disable_tool_multi(request, tool_id, usage_event, dynamic_form):
 					consumable_records_dollar[index].updated = timezone.now()
 				if index not in consumable_records_cent:
 					consumable_records_cent[index] = ConsumableWithdraw()
-					consumable_records_cent[index].consumable = Consumable.objects.filter(core_id=tool.core_id, name="Fixed Cost Sample $0.01")[0]
+					consumable_records_cent[index].consumable = Consumable.objects.filter(core_id=tool.core_id, name="Cost Per Sample $0.01")[0]
 					consumable_records_cent[index].usage_event = current_usage_event
 					consumable_records_cent[index].merchant = current_usage_event.operator
 					consumable_records_cent[index].date = timezone.now()
