@@ -24,7 +24,7 @@ from django.utils.safestring import mark_safe
 from django.urls import reverse
 
 from NEMO.forms import CommentForm, nice_errors, ToolForm
-from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableWithdraw, LockBilling, Project, Reservation, ReservationConfiguration, ReservationProject, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskStatus, Tool, UsageEvent, UsageEventProject, User
+from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableWithdraw, LockBilling, Project, Reservation, ReservationConfiguration, ReservationProject, ScheduledOutage, ScheduledOutageCategory, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskStatus, Tool, UsageEvent, UsageEventProject, User
 from NEMO.utilities import extract_times, quiet_int
 from NEMO.views.policy import check_policy_to_disable_tool, check_policy_to_enable_tool, check_policy_to_enable_tool_for_multi
 from NEMO.views.staff_charges import month_is_locked, month_is_closed, get_billing_date_range
@@ -312,6 +312,7 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge, billing_mod
 	project = get_object_or_404(Project, id=project_id)
 	staff_charge = staff_charge == 'true'
 	billing_mode = billing_mode == 'true'
+	end_scheduled_outage = int(request.POST.get('end_scheduled_outage')) == 1
 
 	# check for auto logout settings
 	set_for_autologout = request.POST.get("set_for_autologout")
@@ -347,6 +348,8 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge, billing_mod
 		if set_for_autologout:
 			new_usage_event.set_for_autologout = True
 			new_usage_event.end_time = autologout_endtime
+		if end_scheduled_outage:
+			new_usage_event.end_scheduled_outage = True
 		new_usage_event.save()
 
 		# create a usage event project record for consistency with other usage event charges
@@ -438,6 +441,7 @@ def enable_tool_multi(request):
 	# initiate a UsageEvent
 	billing_mode = request.POST.get('billing_mode')
 	billing_mode = billing_mode == 'true'
+	end_scheduled_outage = int(request.POST.get('end_scheduled_outage')) == 1
 
 	# check if a usage event already exists
 	if UsageEvent.objects.filter(operator=operator, tool=tool, end=None, start__lt=timezone.now()).exists():
@@ -455,6 +459,8 @@ def enable_tool_multi(request):
 		if set_for_autologout:
 			new_usage_event.set_for_autologout = True
 			new_usage_event.end_time = autologout_endtime
+		if end_scheduled_outage:
+			new_usage_event.end_scheduled_outage = True
 		new_usage_event.save()	
 	
 		project_events = {}
@@ -716,6 +722,18 @@ def disable_tool(request, tool_id):
 	# Charge for consumables
 	dynamic_form.charge_for_consumable(current_usage_event.user, current_usage_event.operator, current_usage_event.project, current_usage_event.run_data, current_usage_event)
 
+	# check for end of scheduled outage
+	try:
+		if current_usage_event.end_scheduled_outage:
+			outages = tool.scheduled_outages()
+
+			for o in outages:
+				o.end = timezone.now()
+				o.save()
+	except:
+		pass
+
+
 	current_usage_event.updated = timezone.now()
 	current_usage_event.save()
 
@@ -827,6 +845,16 @@ def disable_tool_multi(request, tool_id, usage_event, dynamic_form):
 
 	# set local variable for processing
 	current_usage_event = usage_event
+
+	try:
+		if current_usage_event.end_scheduled_outage:
+			outages = tool.scheduled_outages()
+
+			for o in outages:
+				o.end = timezone.now()
+				o.save()
+	except:
+		pass
 
 	# check for no charge flag, which at this point can only exist for a fixed cost run
 	if current_usage_event.no_charge_flag:

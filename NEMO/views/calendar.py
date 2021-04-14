@@ -158,7 +158,9 @@ def reservation_event_feed(request, start, end):
 		outages = outages.exclude(start__lt=start, end__lt=start)
 		outages = outages.exclude(start__gt=end, end__gt=end)
 
-		current = UsageEvent.objects.filter(tool=tool, end=None)
+		current = UsageEvent.objects.filter(tool=tool)
+		current = current.exclude(start__lt=start, end__lt=start)
+		current = current.exclude(start__gt=end, end__gt=end)
 
 	# Filter events that only have to do with the current user.
 	personal_schedule = request.GET.get('personal_schedule')

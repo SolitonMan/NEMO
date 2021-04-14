@@ -82,6 +82,9 @@
 				</div>
 			{% endwith %}
 		{% elif tool.scheduled_outages %}
+			{% if request.user == tool.primary_owner or request.user in tool.backup_owners.all %}
+			<input type="checkbox" onchange="toggleEndOutage(this)" /> <b>End the scheduled outage when the tool run is completed</b>
+			{% else %}
 			{% with tool.scheduled_outages as outages %}
 				{% for o in outages %}
 					<div class="danger-highlight">
@@ -92,6 +95,7 @@
 					</div>
 				{% endfor %}
 			{% endwith %}
+			{% endif %}
 		{% elif not tool.operational or tool.required_resource_is_unavailable %}
 			<div class="danger-highlight">
 				<span class="glyphicon glyphicon-ban-circle pull-left status-icon"></span>
@@ -215,6 +219,7 @@
 		{# Display tool control... #}
 		<form id="tool_control">
 			<input type="hidden" id="tool_id" name="tool_id" value="{{ tool.id }}" />
+			<input type="hidden" id="end_scheduled_outage" name="end_scheduled_outage" value="0" />
 			{% csrf_token %}
 			{% if tool.in_use %}
 				{% if tool.get_current_usage_event.operator.id == user.id or tool.get_current_usage_event.customer.all.0.id == user.id %}
@@ -551,6 +556,15 @@
 
 	window.onunload = save_operator_comment;
 	{% endif %}
+
+	function toggleEndOutage(el)
+	{
+		if ($(el).prop("checked")) {
+			$("#end_scheduled_outage").val("1");
+		} else {
+			$("#end_scheduled_outage").val("0");
+		}
+	}
 
 	function update_stop_button()
 	{

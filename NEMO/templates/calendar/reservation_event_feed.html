@@ -33,14 +33,30 @@
 	{% endfor %}
 	{% for x in current %}
 	{
+		{% if x.end is None %}	
 		"title": "Active tool use",
+		{% else %}
+		"title": "Run completed by {{ x.operator }}",
+		{% endif %}
 		"id": "UsageEvent {{ x.id }}",
+		{% if x.end is None %}
 		"color": "#ffff00",
+		{% else %}
+		"color": "#99ff00",
+		{% endif %}
 		"textColor": "#000000",
 		"start": "{{ x.start|date:"c" }}",
+		{% if x.end is None %}
 		"end": "{{ current_time|date:"c" }}",
+		{% else %}
+		"end": "{{ x.end|date:"c" }}",
+		{% endif %}
 		"details_url": "{% url 'usage_details' x.id %}",
+		{% if user.is_staff or user.id == x.operator.id %}		
 		"description": "{{ x.description|escapejs }}"
+		{% else %}
+		"description": ""
+		{% endif %}
 	}{% if not forloop.last %},{% endif %}
 	{% endfor %}
 ]

@@ -567,6 +567,8 @@ def save_contest(request):
 		# "resolve" any previous contests for this item
 		for c in staff_charge.contest_record.all():
 			c.contest_resolution = True
+			c.contest_resolved = True
+			c.contest_resolved_date = timezone.now()
 			c.save()
 
 		description = request.POST.get("contest_reason")
@@ -630,6 +632,8 @@ def save_contest(request):
 		# "resolve" any previous contests
 		for c in usage_event.contest_record.all():
 			c.contest_resolution = True
+			c.contest_resolved = True
+			c.contest_resolved_date = timezone.now()
 			c.save()
 
 		description = request.POST.get("contest_reason")
@@ -693,6 +697,8 @@ def save_contest(request):
 		# "resolve" any previous contests
 		for c in area_access_record.contest_record.all():
 			c.contest_resolution = True
+			c.contest_resolved = True
+			c.contest_resolved_date = timezone.now()
 			c.save()
 
 		description = request.POST.get("contest_reason")
@@ -756,6 +762,8 @@ def save_contest(request):
 		# "resolve" any outstanding contests
 		for c in consumable_withdraw.contest_record.all():
 			c.contest_resolution = True
+			c.contest_resolved = True
+			c.contest_resolved_date = timezone.now()
 			c.save()
 
 		description = request.POST.get("contest_reason")

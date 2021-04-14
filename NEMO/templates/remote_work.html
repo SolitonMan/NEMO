@@ -78,7 +78,13 @@ th {
 </style>
 
 <div class="row">
-	<div class="col-md-4">
+	<div class="col-md-4" style="display: inline;">
+		<input type="checkbox" name="select_all" id="select_all" onclick="toggle_select(this)" /> <b>Select all visible transactions</b>
+	</div>
+	<div class="col-md-4" style="display: inline;">
+		<input type="button" class="btn btn-success" id="activate" disabled value="Validate Selected Transactions" onclick="validate_selected();" />
+	</div>
+	<div class="col-md-4" style="display: inline; margin-right:0px;">
 		<input id="search" type="text" placeholder="Search for transactions" class="form-control" autofocus>
 	</div>
 </div>
@@ -102,24 +108,18 @@ th {
 			</table-->
 		</td>
 	</tr>
-	<!--tr>
-		<td>
-			<table>
-			<tr>
-			<th style="width:100px;" class="sort-customer">Customer</th>
-			<th style="width:200px;" class="sort-project">Project</th>
-			<th style="width:70px;" class="sort-percent">Percent</th>
-			<th style="width:70px;" class="sort-percent">Comment</th>
-			</tr>
-			</table>
-		</td>
-	</tr-->
 	
 	</thead>
 	<tbody id="transaction_data">
 {% for key, value in transactions.items %}
 	<tr{% if value.class != '' %} class="{{ value.class }}"{% endif %} id="transaction_row_{{ forloop.counter }}" {% if forloop.counter|divisibleby:"2" %}style="background-color: #e0e0e0; border: 2px solid #c0c0c0;"{% else %}style="border: 2px solid #c0c0c0;"{% endif %}>
-		<td rowspan="2" style="width:40px;" title="ID={{ value.id }}"><b>{% if value.ad_hoc_created %}Ad Hoc {% endif %}{{ value.type }}</b></td>
+		<td rowspan="2" style="width:40px;" title="ID={{ value.id }}">
+			<b>{% if value.ad_hoc_created %}Ad Hoc {% endif %}{{ value.type }}</b>
+			{% if not value.validated and not value.contested %}
+			<br/><br/>
+			<input type="checkbox" id="c_{{ forloop.counter }}" onclick="toggle_activation();"> <b>Select</b>
+			{% endif %}
+		</td>
 		<td style="padding: 20px;">
 			<table style="border: 2px solid black; font-weight: bold;">
 			<tr>
@@ -141,16 +141,16 @@ th {
 			{% if show_buttons %}
 				{% if not value.validated %}
 					{% if value.type == "Tool Use" %}
-			<button {% if value.contested %}disabled{% endif %}  class="btn btn-success" onclick="validate_charge('{% url 'validate_usage_event' value.id %}', this, '#transaction_row_{{ forloop.counter }}')">Validate</button>
+			<button id="b_c_{{ forloop.counter }}" {% if value.contested %}disabled{% endif %}  class="btn btn-success" onclick="validate_charge('{% url 'validate_usage_event' value.id %}', this, '#transaction_row_{{ forloop.counter }}')">Validate</button>
 					{% endif %}
 					{% if value.type == "Staff Charge" %}
-			<button {% if value.contested %}disabled{% endif %}  class="btn btn-success" onclick="validate_charge('{% url 'validate_staff_charge' value.id %}', this, '#transaction_row_{{ forloop.counter }}')">Validate</button>
+			<button id="b_c_{{ forloop.counter }}" {% if value.contested %}disabled{% endif %}  class="btn btn-success" onclick="validate_charge('{% url 'validate_staff_charge' value.id %}', this, '#transaction_row_{{ forloop.counter }}')">Validate</button>
 					{% endif %}
 					{% if value.type == "Area Access" %}
-			<button {% if value.contested %}disabled{% endif %}  class="btn btn-success" onclick="validate_charge('{% url 'validate_area_access_record' value.id %}', this, '#transaction_row_{{ forloop.counter }}')">Validate</button>
+			<button id="b_c_{{ forloop.counter }}" {% if value.contested %}disabled{% endif %}  class="btn btn-success" onclick="validate_charge('{% url 'validate_area_access_record' value.id %}', this, '#transaction_row_{{ forloop.counter }}')">Validate</button>
 					{% endif %}
 					{% if value.type == "Withdraw" %}
-			<button {% if value.contested %}disabled{% endif %}  class="btn btn-success" onclick="validate_charge('{% url 'validate_consumable_withdraw' value.id %}', this, '#transaction_row_{{ forloop.counter }}')">Validate</button>
+			<button id="b_c_{{ forloop.counter }}" {% if value.contested %}disabled{% endif %}  class="btn btn-success" onclick="validate_charge('{% url 'validate_consumable_withdraw' value.id %}', this, '#transaction_row_{{ forloop.counter }}')">Validate</button>
 					{% endif %}
 				{% endif %}
 			{% endif %}
@@ -251,6 +251,7 @@ $("#search").keyup(function () {
 
 	if (this.value == "") {
 		tr.show();
+		toggle_activation();
 		return;
 	}
 
@@ -274,10 +275,81 @@ $("#search").keyup(function () {
 		}
 	})
 	.show();
+
+	toggle_activation();
 });
+
+function set_select_all()
+{
+	// check on state of transactions per row and adjust select all checkbox accordingly
+	bCheck = true;
+	$("input[id^='c_']").each(function() {
+		if ($(this).parentsUntil("tbody").last().css("display") == "table-row") {
+			if (!$(this).prop("checked")) {
+				bCheck = false;
+			}
+		}
+	});
+	$("#select_all").prop("checked", bCheck);
+}
+
+
+function toggle_select(el)
+{
+	if ($(el).prop("checked")) {
+		$("input[id^='c_']").each(function() {
+			if ($(this).parentsUntil("tbody").last().css("display") == "table-row") {
+				$(this).prop("checked", true);
+			}
+		});
+		$("#activate").prop("disabled", false);
+	} else {
+		$("input[id^='c_']").each(function() {
+			if ($(this).parentsUntil("tbody").last().css("display") == "table-row") {
+				$(this).prop("checked", false);
+			}
+		});
+		$("#activate").prop("disabled", true);
+	}
+}
+
+
+function validate_selected()
+{
+	$("input[id^='c_']").each(function() {
+		if ($(this).parentsUntil("tbody").last().css("display") == "table-row") {
+			if ($(this).prop("checked")) {
+				s = '#b_' + $(this).prop("id");
+				$(s).click();
+			}
+		}
+	});
+
+	toggle_activation();
+}
+
+
+function toggle_activation()
+{
+	bDisabled = true;
+	$("input[id^='c_']").each(function() {
+		if ($(this).parentsUntil("tbody").last().css("display") == "table-row") {
+			if ($(this).prop("checked")) {
+				bDisabled = false;
+			}
+		}
+	});
+	$("#activate").prop("disabled", bDisabled);
+
+	set_select_all();
+}
 
 function validate_charge(url, button, row)
 {
+	id = $(button).prop("id");
+	id = "#" + id.substring(2);
+	$(id).next().hide();
+	$(id).hide();
 	$(button).hide();
 	$(button).parent().next().children().first().hide();
 	$(row).addClass('success-highlight');

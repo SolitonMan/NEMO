@@ -510,6 +510,7 @@ temporary rendered events).
 	border: 1px solid #3a87ad; /* default BORDER color */
 	background-color: #3a87ad; /* default BACKGROUND color */
 	font-weight: normal; /* undo jqui's ui-widget-header bold */
+	/*min-height: 20px;*/
 }
 
 /* overpower some of bootstrap's and jqui's styles on <a> tags */
@@ -1257,4 +1258,9 @@ be a descendant of the grid when it is being dragged.
 	border-width: 5px 6px 5px 0;
 	border-top-color: transparent;
 	border-bottom-color: transparent;
+}
+
+/* LEO customization for added events */
+.fc-event-container a {
+    min-height: 20px;
 }
