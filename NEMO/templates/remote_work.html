@@ -22,7 +22,7 @@ p {
 	be made to it. Press the green 'Validate' button on an individual row to validate a charge. Charges that have already been validated are
 	highlighted in <span class="success-highlight">green</span>.</p>
 
-	<p>Each charge can also be contested, which means that an adjustment is needed.  Press the yellow 'Contest' button on an individual row to contest the charge.  Charges that are already being contested are highlighted in <span class="warning-highlight">yellow</span>.</p>
+	<p>Each charge can also be contested, which means that an adjustment is needed.  Press the yellow 'Contest' button on an individual row to contest the charge.  Charges that are already being contested are highlighted in <span class="warning-highlight">yellow</span>.  If a contest is accepted then the transaction will be automatically validated as part of the resolution.  If the contest is rejected then the transaction record will display in <span class="danger-highlight">red</span> and the Validate and Contest buttons will be active.  The record can be validated at this point, or contested again with new information.</p>
 	</span>
 
 	<form class="form-inline" role="form">
@@ -77,7 +77,21 @@ th {
 }
 </style>
 
-<div class="row">
+<div class="row" style="border: 1px solid #303030; margin: 0px; padding: 10px;">
+<u><b>Display Options</b></u><br/>
+<div>
+	<span style="display: inline; padding-right: 20px;">
+		<input type="checkbox" id="show_validated" checked onclick="toggle_transaction_view(this, 'success-highlight');" /> 
+		<b>Show Validated Transactions</b>
+	</span>
+	<span style="display: inline; padding-right: 20px;">
+		<input type="checkbox" id="show_contested" checked onclick="toggle_transaction_view(this, 'warning-highlight');" />
+		<b>Show Contested Transactions</b>
+	</span>
+</div>
+</div>
+<br/>
+<div class="row" style="border: 1px solid #303030; margin: 0px; padding: 10px;">
 	<div class="col-md-4" style="display: inline;">
 		<input type="checkbox" name="select_all" id="select_all" onclick="toggle_select(this)" /> <b>Select all visible transactions</b>
 	</div>
@@ -245,12 +259,15 @@ $(function() {
 $("#search").keyup(function () {
 	//var data = this.value.split(" ");
 	var data = this.value;
-
-	//var tr = $("#transaction_data").find("tr");
+	var contested_state = $("#show_contested").prop("checked") === true;
+	var validated_state = $("#show_validated").prop("checked") === true;
+	var open_state = true;
 	var tr = $("#transaction_data").children();
 
 	if (this.value == "") {
 		tr.show();
+		toggle_transaction_view($("#show_validated"), 'success-highlight');
+		toggle_transaction_view($("#show_contested"), 'warning-highlight');
 		toggle_activation();
 		return;
 	}
@@ -271,13 +288,52 @@ $("#search").keyup(function () {
 
 		var s = data.toUpperCase();
 		if ($t.text().toUpperCase().indexOf(s) > -1 || $(id_related).text().toUpperCase().indexOf(s) > -1) {
-			return true;
+			if ($t.hasClass('success-highlight') && validated_state) {
+				return true;
+			} else if ($t.hasClass('warning-highlight') && contested_state) {
+				return true;
+			} else if (!$t.hasClass('success-highlight') && !$t.hasClass('warning-highlight') && open_state) {
+				return true;
+			}
 		}
 	})
 	.show();
 
 	toggle_activation();
 });
+
+function search_filter()
+{
+	var data = $("#search").val();
+	var validated_state = $("#show_validated").prop("checked") === true;
+	var contested_state = $("#show_contested").prop("checked") === true;
+
+	var tr = $("#transaction_data").children();
+
+	
+}
+
+function toggle_transaction_view(el, s_class)
+{
+	var data = $("#search").val();
+
+	if (data != "") {
+		$("#search").keyup();
+		return;
+	} else {
+		var tr = $("#transaction_data").children();
+
+		tr.each(function() {
+			if ($(this).hasClass(s_class)) {
+				if ($(el).prop("checked")) {
+					$(this).show();
+				} else {
+					$(this).hide();
+				}
+			}
+		});
+	}
+}
 
 function set_select_all()
 {
@@ -326,6 +382,7 @@ function validate_selected()
 	});
 
 	toggle_activation();
+	$("#search").keyup();
 }
 
 
