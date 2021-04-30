@@ -644,6 +644,9 @@ class UserTypeAdmin(admin.ModelAdmin):
 	def has_delete_permission(self, request, obj=None):
 		return False
 
+if admin.site.is_registered(User):
+	admin.site.unregister(User)
+
 @register(User)
 class UserAdmin(admin.ModelAdmin):
 	filter_horizontal = ('groups', 'user_permissions', 'qualifications', 'projects', 'physical_access_levels', 'pi_delegates')

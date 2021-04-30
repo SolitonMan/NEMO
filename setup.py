@@ -24,7 +24,7 @@ setup(
 		'Programming Language :: Python :: 3.6',
 	],
 	install_requires=[
-		'cryptography==2.9.0',
+		'cryptography==3.1.0',
 		'Django==2.2.12',
 		'django-filter==2.2.0',
 		'djangorestframework==3.8.2',
@@ -32,6 +32,7 @@ setup(
 		'python-dateutil==2.8.1',
 		'requests==2.23.0',
 		'Pillow==7.1.1',
+		'pyjwt==1.7.1',
 	],
 	entry_points={
 		'console_scripts': ['nemo=NEMO.provisioning:entry_point'],

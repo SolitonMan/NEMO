@@ -919,9 +919,9 @@ def do_cancel_unused_reservations():
 def proxy_reservation(request):
 	if request.user.is_superuser:
 		users = User.objects.filter(is_active=True, projects__active=True).distinct()
-	elif request.session['core_admin'] or request.session['administrative_staff']:
+	elif request.user.groups.filter(name__in=("Administrative Staff","Core Admin")).exists():
 		users = User.objects.filter(is_active=True, projects__active=True).distinct()
-	elif request.session['technical_staff']:
+	elif request.user.groups.filter(name__in=("Technical Staff")).exists():
 		users = User.objects.filter(is_active=True, projects__active=True).distinct()
 	else:
 		users = User.objects.filter(id=request.user.id)

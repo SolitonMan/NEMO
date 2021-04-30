@@ -4,10 +4,16 @@ FROM python:3.6
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update --fix-missing
 RUN apt-get -y upgrade
-RUN apt-get install -y libsasl2-dev libldap2-dev
-RUN apt-get install -y slapd ldap-utils
-RUN pip install python-ldap
-RUN pip install django-auth-ldap
+#RUN apt-get install -y libsasl2-dev libldap2-dev
+#RUN apt-get install -y slapd ldap-utils
+#RUN pip install python-ldap
+#RUN pip install django-auth-ldap
+
+# memcached seems to be needed for the microsoft auth or other supporting software
+RUN pip install python-memcached
+
+# Install django_microsoft_auth
+RUN pip install django_microsoft_auth
 
 # Install PostgreSQL support
 RUN pip install psycopg2-binary
@@ -36,6 +42,7 @@ RUN mkdir /nemo
 WORKDIR /nemo
 ENV DJANGO_SETTINGS_MODULE "settings"
 ENV PYTHONPATH "/nemo/"
+ENV OAUTHLIB_RELAX_TOKEN_SCOPE "true"
 COPY gunicorn_configuration.py /etc/
 
 EXPOSE 8000/tcp

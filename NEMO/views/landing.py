@@ -63,7 +63,7 @@ def landing(request):
 
 
 	user_delegate = False
-	if not request.session['pi'] and not request.user.groups.filter(name__in=("Technical Staff","Financial Admin")).exists() and not request.user.is_superuser:
+	if not request.user.groups.filter(name__in=("Technical Staff","Financial Admin","PI")).exists() and not request.user.is_superuser:
 		if User.objects.filter(pi_delegates=request.user).exists():
 			user_delegate = True
 

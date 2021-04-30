@@ -112,23 +112,31 @@ class LDAPAuthenticationBackend(ModelBackend):
 
 @require_http_methods(['GET', 'POST'])
 @sensitive_post_parameters('password')
-def login_user(request):
+def login_user(request, context=None):
 	request.session['has_core'] = False
-	if 'NEMO.views.authentication.RemoteUserAuthenticationBackend' in settings.AUTHENTICATION_BACKENDS or 'NEMO.views.authentication.NginxKerberosAuthorizationHeaderAuthenticationBackend' in settings.AUTHENTICATION_BACKENDS:
-		if request.user.is_authenticated:
-			return HttpResponseRedirect(reverse('landing'))
-		else:
-			return render(request, 'authorization_failed.html')
 
 	dictionary = {
 		'login_banner': get_media_file_contents('login_banner.html'),
 		'user_name_or_password_incorrect': False,
 	}
-	if request.method == 'GET':
-		return render(request, 'login.html', dictionary)
-	username = request.POST.get('username', '')
-	password = request.POST.get('password', '')
-	user = authenticate(request, username=username, password=password)
+
+	if request.user is None:
+		bReturnContext = False
+		if 'NEMO.views.authentication.RemoteUserAuthenticationBackend' in settings.AUTHENTICATION_BACKENDS or 'NEMO.views.authentication.NginxKerberosAuthorizationHeaderAuthenticationBackend' in settings.AUTHENTICATION_BACKENDS:
+			if request.user.is_authenticated:
+				return HttpResponseRedirect(reverse('landing'))
+			else:
+				return render(request, 'authorization_failed.html')
+
+		if request.method == 'GET':
+			return render(request, 'login.html', dictionary)
+		username = request.POST.get('username', '')
+		password = request.POST.get('password', '')
+		user = authenticate(request, username=username, password=password)
+	else:
+		bReturnContext = True
+		user = request.user
+
 	if user:
 		# enforce the is_active flag
 		if not user.is_active:
@@ -200,6 +208,8 @@ def login_user(request):
 				next_page = request.GET[REDIRECT_FIELD_NAME]
 
 			resolve(next_page)  # Make sure the next page is a legitimate URL for NEMO
+			if bReturnContext:
+				return context
 		except:
 			next_page = reverse('landing')
 		return HttpResponseRedirect(next_page)
