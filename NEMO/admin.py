@@ -220,6 +220,13 @@ class TrainingSessionAdmin(admin.ModelAdmin):
 	def has_delete_permission(self, request, obj=None):
 		return False
 
+class StaffChargeAdminForm(forms.ModelForm):
+	def clean(self):
+		start_date = self.cleaned_data.get('start')
+		end_date = self.cleaned_data.get('end')
+		if start_date > end_date:
+			raise forms.ValidationError("Start date must be before end date.")
+		return self.cleaned_data
 
 @register(StaffCharge)
 class StaffChargeAdmin(admin.ModelAdmin):
@@ -227,6 +234,8 @@ class StaffChargeAdmin(admin.ModelAdmin):
 	list_filter = ('start',)
 	date_hierarchy = 'start'
 	ordering = ['-id']
+
+	form = StaffChargeAdminForm
 
 	search_fields = ('staff_member__first_name','staff_member__last_name','projects__project_number')
 
@@ -237,6 +246,7 @@ class StaffChargeAdmin(admin.ModelAdmin):
 
 	def has_delete_permission(self, request, obj=None):
 		return False
+
 
 @register(StaffChargeProject)
 class StaffChargeProjectAdmin(admin.ModelAdmin):
@@ -252,11 +262,21 @@ class StaffChargeProjectAdmin(admin.ModelAdmin):
 	def has_delete_permission(self, request, obj=None):
 		return False
 
+class AreaAccessRecordAdminForm(forms.ModelForm):
+	def clean(self):
+		start_date = self.cleaned_data.get('start')
+		end_date = self.cleaned_data.get('end')
+		if start_date > end_date:
+			raise forms.ValidationError("Start date must be before end date.")
+		return self.cleaned_data
+
 @register(AreaAccessRecord)
 class AreaAccessRecordAdmin(admin.ModelAdmin):
 	list_display = ('id', 'customer', 'area', 'project', 'start', 'end')
 	list_filter = ('area', 'start',)
 	date_hierarchy = 'start'
+
+	form = AreaAccessRecordAdminForm
 
 	search_fields = ('area__name', 'customers__first_name','customers__last_name','projects__project_number')
 
@@ -449,11 +469,21 @@ class ReservationProjectAdmin(admin.ModelAdmin):
 	def has_delete_permission(self, request, obj=None):
 		return False
 
+class UsageEventAdminForm(forms.ModelForm):
+	def clean(self):
+		start_date = self.cleaned_data.get('start')
+		end_date = self.cleaned_data.get('end')
+		if start_date > end_date:
+			raise forms.ValidationError("Start date must be before end date.")
+		return self.cleaned_data
+
 @register(UsageEvent)
 class UsageEventAdmin(admin.ModelAdmin):
 	list_display = ('id', 'tool', 'user', 'operator', 'project', 'start', 'end', 'duration', 'run_data')
 	list_filter = ('start', 'end')
 	date_hierarchy = 'start'
+
+	form = UsageEventAdminForm
 
 	search_fields = ('tool__name', 'projects__project_number', 'customers__first_name', 'customers__last_name')
 
@@ -464,6 +494,13 @@ class UsageEventAdmin(admin.ModelAdmin):
 
 	def has_delete_permission(self, request, obj=None):
 		return False
+
+	def clean(self):
+		start_date = self.cleaned_data.get('start')
+		end_date = self.cleaned_data.get('end')
+		if start_date > end_date:
+			raise forms.ValidationError("Start date must be before end date.")
+		return self.cleaned_data
 
 @register(UsageEventProject)
 class UsageEventProjectAdmin(admin.ModelAdmin):

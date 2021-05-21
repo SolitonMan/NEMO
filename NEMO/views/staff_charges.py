@@ -264,6 +264,10 @@ def ad_hoc_staff_charge(request):
 		ad_hoc_start = parse_datetime(ad_hoc_start)
 		ad_hoc_end = parse_datetime(ad_hoc_end)
 
+		if ad_hoc_start > ad_hoc_end:
+			msg = 'The start date must be before the end date.'
+			raise Exception(msg)
+
 		# check for validity of dates for closed month
 		if month_is_closed(ad_hoc_start) or month_is_closed(ad_hoc_end):
 			msg = 'Billing is closed for the chosen month.  Further changes to the billing cannot be made in LEO.  Please contact a financial administrator for help with your billing issue.'

@@ -24,17 +24,20 @@ def accounts_and_projects(request, kind=None, identifier=None):
 	account_list = None
 	accounts_and_projects = None
 
-	if request.user.is_superuser or request.user.groups.filter(name__in=("Technical Staff","Financial Admin")).exists():
+	if request.user.is_superuser or request.user.groups.filter(name="Technical Staff").exists() or request.user.groups.filter(name="Financial Admin").exists():
+#	if request.user.is_superuser or request.session['financial_admin'] or request.session['technical_staff']:
 		account_list = Account.objects.all()
 		accounts_and_projects = set(Account.objects.all()) | set(Project.objects.all())
 		projects = Project.objects.all()
 		user_delegate = False
-	elif request.user.groups.filter(name__in=("PI")).exists():
+	elif request.user.groups.filter(name="PI").exists():
+#	elif request.session['pi']:
 		account_list = Account.objects.filter(owner=request.user)
 		accounts_and_projects = set(Account.objects.filter(owner=request.user)) | set(Project.objects.filter(owner=request.user))
 		projects = Project.objects.filter(owner=request.user)
 		user_delegate = False
-	elif not request.user.groups.filter(name__in=("PI")).exists() and User.objects.filter(pi_delegates=request.user).exists():
+	elif not request.user.groups.filter(name="PI").exists() and User.objects.filter(pi_delegates=request.user).exists():
+#	elif not request.session['pi'] and User.objects.filter(pi_delegates=request.user).exists():
 		account_list = Account.objects.filter(owner__pi_delegates=request.user)
 		accounts_and_projects = set(Account.objects.filter(owner__pi_delegates=request.user)) | set(Project.objects.filter(owner__pi_delegates=request.user))
 		projects = Project.objects.filter(owner__pi_delegates=request.user)

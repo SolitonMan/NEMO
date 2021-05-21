@@ -8,6 +8,7 @@ from django.http import HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
 from django.utils.dateparse import parse_time, parse_date
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
@@ -65,8 +66,25 @@ def new_reservation(request, tool_id, date=None):
 
 @login_required
 @require_POST
+@csrf_exempt
 def make_reservation(request):
-	""" Create a reservation for a user. """
+	# due to unexplained CSRF failures for users try a workaround
+	http_origins = [
+		'https://rea-demo.mri.psu.edu:8080',
+		'https://rea-demo.mri.psu.edu:8888',
+		'https://leo.psu.edu'
+	]
+
+	if request.META.get('HTTP_ORIGIN') in http_origins:
+		origin = request.META.get('HTTP_ORIGIN')
+		referer = str(origin) + "/new_reservation/" + str(request.POST.get('tool_id')) + "/" + str(request.POST['date']) + "/"
+
+		if referer != request.META.get('HTTP_REFERER'):
+			return render(request, 'mobile/error.html', {'message': 'Unknown referer - request rejected'})
+	else:
+		return render(request, 'mobile/error.html', {'message': 'Unknown origin - request rejected'})
+
+	# Create a reservation for a user.
 	try:
 		date = parse_date(request.POST['date'])
 		start = localize(datetime.combine(date, parse_time(request.POST['start'])))

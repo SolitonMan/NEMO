@@ -5,7 +5,7 @@ from logging import exception, getLogger
 from django.conf import settings
 from django.contrib.auth import authenticate, login, REDIRECT_FIELD_NAME, logout
 from django.contrib.auth.backends import RemoteUserBackend, ModelBackend
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponseForbidden
 from django.shortcuts import render
 from django.urls import reverse, resolve
 from django.utils.decorators import method_decorator
@@ -16,6 +16,8 @@ from ldap3.core.exceptions import LDAPBindError, LDAPExceptionError
 
 from NEMO.models import User
 from NEMO.views.customization import get_media_file_contents
+
+from microsoft_auth.models import MicrosoftAccount
 
 
 class RemoteUserAuthenticationBackend(RemoteUserBackend):
@@ -248,4 +250,132 @@ def check_for_core(request):
 			else:
 				return False
 		return False
-	return False	
+	return False
+
+
+def set_ma_session(request, context):
+
+	# check if this is an anomalous user from django_microsoft_auth
+	email = request.user.email
+	username = request.user.username
+
+	if username.endswith("@psu.edu"):
+		dictionary = {}
+		namecheck = username.split("@")[0]
+		users = User.objects.filter(username__icontains=namecheck, is_active=True)
+		if users.count() > 1:
+			# should not be more than one active account for a user
+			if users.count() == 2:
+				# account with username including '@psu.edu' email address probably the one created by the backend
+				id_1 = users[0].id
+				id_2 = users[1].id
+
+				# adjust microsoft auth record and deactivate bad account
+				if users[0].type_id is None:
+					u = users[0]
+					if MicrosoftAccount.objects.filter(user_id=id_1).exists():
+						ma = MicrosoftAccount.objects.get(user_id=id_1)
+						ma.user_id = id_2
+						ma.save()
+						request.user = users[1]
+						u.is_active = False
+						u.save()
+				if users[1].type_id is None:
+					u = users[1]
+					if MicrosoftAccount.objects.filter(user_id=id_2).exists():
+						ma = MicrosoftAccount.objects.get(user_id=id_2)
+						ma.user_id = id_1
+						ma.save()
+						request.user = users[0]
+						u.is_active = False
+						u.save()
+
+
+				#dictionary['login_banner'] = get_media_file_contents('login_banner.html')
+				#dictionary['user_name_or_password_incorrect'] = True
+				#return render(request, 'login.html', dictionary)
+			else:
+				# not necessarily the django_microsoft_auth problem
+				#dictionary['login_banner'] = get_media_file_contents('login_banner.html')
+				#dictionary['user_name_or_password_incorrect'] = True
+				#return render(request, 'login.html', dictionary)
+				pass
+
+	login(request, request.user)
+	try:
+
+		if request.user.groups.filter(name="Administrative Staff").exists():
+			request.session['administrative_staff'] = True
+		else:
+			request.session['administrative_staff'] = False	
+
+		if request.user.groups.filter(name="Core Admin").exists():
+			request.session['core_admin'] = True
+		else:
+			request.session['core_admin'] = False
+
+		if request.user.groups.filter(name="Financial Admin").exists():
+			request.session['financial_admin'] = True
+		else:
+			request.session['financial_admin'] = False
+
+		if request.user.groups.filter(name="PI").exists():
+			request.session['pi'] = True
+		else:
+			request.session['pi'] = False
+
+		if request.user.groups.filter(name="Technical Staff").exists():
+			request.session['technical_staff'] = True
+		else:
+			request.session['technical_staff'] = False
+
+		count = request.user.core_ids.all().count()
+		if count == 0:
+			# send the user to the landing page; no Core relationship exists
+			request.session['active_core'] = "none"
+			request.session['active_core_id'] = 0
+			request.session['has_core'] = "false"
+
+		if count == 1:
+			# set the Core to the relevant option then redirect to the landing page
+			request.session['active_core'] = request.user.core_ids.values_list('name', flat=True).get()
+			request.session['active_core_id'] = request.user.core_ids.values_list('id', flat=True).get()
+			request.session['has_core'] = "true"
+
+		if count > 1:
+			request.session['has_core'] = "true"
+			names = request.user.core_ids.values_list('name', flat=True)
+			ids = request.user.core_ids.values_list('id', flat=True)
+			active_core = ""
+			active_core_ids = ""
+
+			for n in enumerate(names):
+				active_core = active_core + str(n[1]) + ","
+
+			for i in enumerate(ids):
+				active_core_ids = active_core_ids + str(i[1]) + ","
+
+
+			request.session['active_core'] = str(active_core)
+			request.session['active_core_id'] = str(active_core_ids)
+
+
+	except:
+		pass
+
+	return context
+
+
+def csrf_failure(request, reason=""):
+	response = HttpResponseForbidden()
+
+	msg = "<h1>CSRF Failure</h1>"
+
+	msg += "<br/><br/>"
+	msg += "Form Data: <br/>" 
+	msg += str(list(request.POST.items()))
+	msg += str(list(request.META.items()))
+
+	response.write(msg)
+
+	return response 

@@ -32,6 +32,7 @@
 		<link rel="stylesheet" type="text/css" href="{% static "admin/css/nav_sidebar.css" %}">
 		<script src="{% static 'admin/js/nav_sidebar.js' %}" defer></script>
 	{% endif %}
+	<script type="text/javascript" src="{% static "jquery.js" %}"></script>
 
 </head>
 <body style="background-color: #199BD7;">
@@ -61,6 +62,10 @@
 	{% endif %}
 
 	<div id="content-main">
+		<div id="notice" class="warning-highlight" style="display: none; color:white; background-color:#4444ff; font-weight: bold;">
+		<h1 style="display: none; color:white; background-color:#4444ff; font-weight: bold;">New Authentication Method</h1>
+		<p style="display: none; font-size: 16pt;">Due to a university requirement we have switched LEO’s sign on solution from Web Access to Microsoft Azure for increased security.  Your first login may end up with the unexpected result of a message stating you need to pass a tutorial prior to using LEO. This is the erroneous result of the creation of a new user account using your [username]@psu.edu email address. If this occurs please reach out to LEOHelp@psu.edu to resolve the problem.</p>
+		</div>
 		{% if user.is_authenticated %}
 			<p class="errornote">
 				You are authenticated as {{ username }}, but are not authorized to
@@ -69,11 +74,14 @@
 		{% endif %}
 
 		{% if microsoft_login_enabled %}
-			<div class="center">
-				<p>Log in with</p>
+			<div class="center" id="login_cover" style="display: none;">
+				<p style="color:white; background-color:#4444ff; font-weight: bold; font-size: 36pt;">&#8593;</p>
+				<p style="color:white; background-color:#4444ff; font-weight: bold; font-size: 24pt;">Read this</p>
+			</div>
+			<div class="center" id="login_div">
 				<div class="container">
-					<div>
-						<button id="microsoft-login" class="button" type="button">{{ microsoft_login_type_text }}</button>
+					<div style="margin: 25px;">
+						<button id="microsoft-login" class="button" type="button">PSU Microsoft Login</button>
 					</div>
 					<div style="display: none;">
 						<p>or</p>
@@ -124,6 +132,16 @@
 	</div>
 
 	<script>
+	/*
+	$(document).ready(function(){
+	//	$("#notice").fadeOut(15000);
+		$("#login_div").hide();
+		$("#login_cover").fadeOut(5000, function() {
+			$("#login_div").show();
+		});
+	});
+	*/
+
 	if(!navigator.cookieEnabled)
 	{
 		document.getElementById("login_form").style.display = "none";
