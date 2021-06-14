@@ -10,13 +10,13 @@ from django.db.models import Q
 from django.http import HttpResponseBadRequest, HttpResponse, HttpResponseNotFound, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404, redirect
 from django.template import Template, Context
-from django.utils import timezone
+from django.utils import timezone, dateformat
 from django.views.decorators.http import require_GET, require_POST
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 
 from NEMO.decorators import disable_session_expiry_refresh
-from NEMO.models import Tool, Reservation, Configuration, ReservationConfiguration, ReservationProject, Consumable, UsageEvent, UsageEventProject, AreaAccessRecord, StaffCharge, StaffChargeProject, User, Project, ScheduledOutage, ScheduledOutageCategory
+from NEMO.models import Tool, Reservation, Configuration, ReservationConfiguration, ReservationProject, ReservationNotification, Consumable, UsageEvent, UsageEventProject, AreaAccessRecord, StaffCharge, StaffChargeProject, User, Project, ScheduledOutage, ScheduledOutageCategory
 from NEMO.utilities import bootstrap_primary_color, extract_times, extract_dates, format_datetime, parse_parameter_string
 from NEMO.views.constants import ADDITIONAL_INFORMATION_MAXIMUM_LENGTH
 from NEMO.views.customization import get_customization, get_media_file_contents
@@ -124,14 +124,35 @@ def multiple_tool_feed(request, start, end):
 	else:
 		events = None
 
+	event_data = {}
+
 	if events is not None:
 		event_projects = ReservationProject.objects.filter(reservation__in=events)
+		event_notifications = ReservationNotification.objects.filter(reservation__in=events, user=request.user)
+
+		for e in events:
+			event_data[e.id] = {
+				'id': e.id,
+				'start': e.start,
+				'end': e.end,
+				'description': e.description(),
+				'user': e.user,
+				'tool': e.tool,
+				'creator': e.creator,
+				'additional_information': e.additional_information,
+				'title': e.title,
+				'get_visual_end': e.get_visual_end(),
+				'mark_for_notice': ReservationNotification.objects.filter(user=request.user, reservation=e).exists(),
+			}
 	else:
 		event_projects = None
+		event_notifications = None
+		event_data = None
 
 	dictionary = {
-		'events': events,
+		'events': event_data,
 		'event_projects': event_projects,
+		'event_notifications': event_notifications,
 		'outages': outages,
 	}
 
@@ -708,6 +729,22 @@ def cancel_reservation(request, reservation_id):
 		reservation.updated = timezone.now()
 		reservation.save()
 
+		# check for notification requests and fulfill
+		notify = ReservationNotification.objects.filter(reservation=reservation)
+
+		for n in notify:
+			details = {
+				'user': n.user,
+				'reservation': reservation,
+			}
+
+			email_contents = get_media_file_contents('notification_request.html')
+			if email_contents:
+				notification_email = Template(email_contents).render(Context(details))
+				n.user.email_user(str(dateformat.format(reservation.start, "m-d-Y g:i:s A")) + ' time slot for the ' + str(reservation.tool.name) + ' just opened', notification_email, n.user.email)
+			
+
+
 		if reason:
 			dictionary = {
 				'staff_member': request.user,
@@ -937,6 +974,64 @@ def send_missed_reservation_notification(reservation):
 	abuse_email = get_customization('abuse_email_address')
 	send_mail(subject, '', user_office_email, [reservation.user.email, abuse_email, user_office_email], html_message=message)
 
+	# check for notification requests and fulfill
+	notify = ReservationNotification.objects.filter(reservation=reservation)
+
+	for n in notify:
+		details = {
+			'user': n.user,
+			'reservation': reservation,
+		}
+
+		email_contents = get_media_file_contents('notification_request.html')
+		if email_contents:
+			notification_email = Template(email_contents).render(Context(details))
+			n.user.email_user(str(dateformat.format(reservation.start, "m-d-Y g:i:s A")) + ' time slot for the ' + str(reservation.tool.name) + ' just opened', notification_email, n.user.email)
 
 def is_valid_field(field):
 	return search("^(chosen_user|chosen_project|project_percent)__[0-9]+$", field) is not None
+
+
+@login_required
+@require_POST
+def create_notification(request):
+	res = get_object_or_404(Reservation, id=request.POST.get("reservation_id"))
+	user = get_object_or_404(User, id=request.POST.get("user_id"))
+
+	notify = ReservationNotification()
+	notify.reservation = res
+	notify.user = user
+	notify.save()
+
+	return HttpResponse()
+
+
+@login_required
+@require_POST
+def delete_notification(request):
+	res = get_object_or_404(Reservation, id=request.POST.get("reservation_id"))
+	user = get_object_or_404(User, id=request.POST.get("user_id"))
+
+	notify = ReservationNotification.objects.get(user=user, reservation=res)
+	notify.delete()
+
+	return HttpResponse()
+
+
+@login_required
+@require_POST
+def save_notifications(request):
+	tool_ids = request.POST.get("tool_ids")
+	tool_list = tool_ids.split(",")
+	reservations = Reservation.objects.filter(tool__id__in=tool_list, start__gt=request.POST.get("start"), start__lt=request.POST.get("end"))
+
+	for r in reservations:
+		rn = ReservationNotification()
+		rn.reservation = Reservation.objects.get(id=r.id)
+		rn.user = User.objects.get(id=request.user.id)
+		rn.save()
+
+	return HttpResponse()
+
+
+

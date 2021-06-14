@@ -1,5 +1,5 @@
 [
-	{% for x in events %}
+	{% for key, x in events.items %}
 	{
 		"title": "{{ x.tool.name|escapejs }} for {{ x.user }}",
 		"id": "Reservation {{ x.id }}",
@@ -8,7 +8,8 @@
 		"start": "{{ x.start|date:"c" }}",
 		"end": "{{ x.get_visual_end|date:"c" }}",
 		"details_url": "{% url 'reservation_details' x.id %}",
-		"description": "{{ x.description|escapejs }}"
+		"description": "{{ x.description|escapejs }}",
+		"mark_for_notice": {% if x.mark_for_notice %}true{% else %}false{% endif %}
 	}{% if not forloop.last %},{% elif outages %},{% endif %}
 	{% endfor %}
 	{% for x in outages %}

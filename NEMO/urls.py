@@ -90,6 +90,9 @@ urlpatterns = [
 	re_path(r'^event_details/usage/(?P<event_id>\d+)/$', calendar.usage_details, name='usage_details'),
 	re_path(r'^event_details/area_access/(?P<event_id>\d+)/$', calendar.area_access_details, name='area_access_details'),
 	re_path(r'^proxy_reservation/$', calendar.proxy_reservation, name='proxy_reservation'),
+	re_path(r'^create_notification/$', calendar.create_notification, name='create_notification'),
+	re_path(r'^delete_notification/$', calendar.delete_notification, name='delete_notification'),
+	re_path(r'^save_notifications/$', calendar.save_notifications, name='save_notifications'),
 
 	# Qualifications:
 	re_path(r'^qualifications/$', qualifications.qualifications, name='qualifications'),

@@ -892,6 +892,10 @@ class Reservation(CalendarDisplay):
 			d += "<tr><td>" + self.user.get_full_name() + "</td><td>" + str(self.project) + "</td></tr></tbody></table>"
 		return d
 
+	def mark_for_notice(self):
+
+		return true
+
 	class Meta:
 		ordering = ['-start']
 
@@ -914,6 +918,11 @@ class ReservationProject(models.Model):
 	customer = models.ForeignKey('User', on_delete=models.CASCADE)
 	created = models.DateTimeField(null=True, blank=True)
 	updated = models.DateTimeField(null=True, blank=True)
+
+
+class ReservationNotification(models.Model):
+	reservation = models.ForeignKey('Reservation', on_delete=models.CASCADE, null=True, blank=True)
+	user = models.ForeignKey('User', on_delete=models.CASCADE)
 
 
 class UsageEvent(CalendarDisplay):
