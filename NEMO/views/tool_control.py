@@ -739,76 +739,38 @@ def disable_tool(request, tool_id):
 
 	# check for no charge flag, which at this point can only exist for a fixed cost run
 	if current_usage_event.no_charge_flag:
-		# add a consumable record for a fixed cost per sample run
-		consumable_records_dollar = {}
-		consumable_records_cent = {}
-		sample_num = {}
-		quantity_num_dollar = {}
-		quantity_num_cent = {}
+		user_project_info = {}
 
 		for key, value in request.POST.items():
 			if is_valid_field(key):
 				attribute, separator, index = key.partition("__")
 				index = int(index)
-				if index not in consumable_records_dollar:
-					consumable_records_dollar[index] = ConsumableWithdraw()
-					consumable_records_dollar[index].consumable = Consumable.objects.filter(core_id=tool.core_id, name="Cost Per Sample $1")[0]
-					consumable_records_dollar[index].usage_event = current_usage_event
-					consumable_records_dollar[index].merchant = current_usage_event.operator
-					consumable_records_dollar[index].date = timezone.now()
-					consumable_records_dollar[index].project_percent = 100.0
-					consumable_records_dollar[index].updated = timezone.now()
-				if index not in consumable_records_cent:
-					consumable_records_cent[index] = ConsumableWithdraw()
-					consumable_records_cent[index].consumable = Consumable.objects.filter(core_id=tool.core_id, name="Cost Per Sample $0.01")[0]
-					consumable_records_cent[index].usage_event = current_usage_event
-					consumable_records_cent[index].merchant = current_usage_event.operator
-					consumable_records_cent[index].date = timezone.now()
-					consumable_records_cent[index].project_percent = 100.0
-					consumable_records_cent[index].updated = timezone.now()
+				if index not in user_project_info:
+					user_project_info[index] = {
+						'customer': None,
+						'project': None,
+						'notes': None,
+						'sample_num': None,
+						'cost_per_sample': None,
+					}
 				if attribute == "chosen_user":
-					consumable_records_dollar[index].customer = User.objects.get(id=value)
-					consumable_records_cent[index].customer = User.objects.get(id=value)
+					user_project_info[index]["customer"] = User.objects.get(id=value)
 				if attribute == "chosen_project":
-					consumable_records_dollar[index].project = Project.objects.get(id=value)
-					consumable_records_cent[index].project = Project.objects.get(id=value)
+					user_project_info[index]["project"] = Project.objects.get(id=value)
 				if attribute == "sample_notes":
-					consumable_records_dollar[index].notes = value
-					consumable_records_cent[index].notes = value
+					user_project_info[index]["notes"] = value
 				if attribute == "num_samples":
-					sample_num[index] = value
+					user_project_info[index]["sample_num"] = value
 				if attribute == "fixed_cost":
-					if value.count(".") > 0:
-						quantity_num_dollar[index] = value.split(".")[0]
-						quantity_num_cent[index] = value.split(".")[1]
-					else:
-						quantity_num_dollar[index] = value
-						quantity_num_cent[index] = 0
+					user_project_info[index]["cost_per_sample"] = value
 
-		for key in consumable_records_dollar:
-			num_to_save = int(sample_num[key]) - 1
-			amount = int(quantity_num_dollar[key])
+		for key in user_project_info:
+			cuep = UsageEventProject.objects.get(usage_event=current_usage_event, customer=user_project_info[key]["customer"], project=user_project_info[key]["project"])
+			cuep.sample_num = int(user_project_info[key]["sample_num"])
+			cuep.cost_per_sample = float(user_project_info[key]["cost_per_sample"])
+			cuep.updated = timezone.now()
+			cuep.save()
 
-			if amount > 0:
-				consumable_records_dollar[key].quantity = amount
-				consumable_records_dollar[key].save()
-
-				for i in range(num_to_save):
-					consumable_records_dollar[key].pk = None
-					consumable_records_dollar[key].save()
-
-		for key in consumable_records_cent:
-			num_to_save = int(sample_num[key]) - 1
-			amount = int(quantity_num_cent[key])
-
-			if amount > 0:
-				consumable_records_cent[key].quantity = amount
-				consumable_records_cent[key].save()
-
-				for i in range(num_to_save):
-					consumable_records_cent[key].pk = None
-					consumable_records_cent[key].save()
-			
 
 	if request.user.charging_staff_time():
 		existing_staff_charge = request.user.get_staff_charge()
@@ -865,69 +827,39 @@ def disable_tool_multi(request, tool_id, usage_event, dynamic_form):
 		sample_num = {}
 		quantity_num_dollar = {}
 		quantity_num_cent = {}
+		user_project_info = {}
 
 		for key, value in request.POST.items():
 			if is_valid_field(key):
 				attribute, separator, index = key.partition("__")
 				index = int(index)
-				if index not in consumable_records_dollar:
-					consumable_records_dollar[index] = ConsumableWithdraw()
-					consumable_records_dollar[index].consumable = Consumable.objects.filter(core_id=tool.core_id, name="Cost Per Sample $1")[0]
-					consumable_records_dollar[index].usage_event = current_usage_event
-					consumable_records_dollar[index].merchant = current_usage_event.operator
-					consumable_records_dollar[index].date = timezone.now()
-					consumable_records_dollar[index].project_percent = 100.0
-					consumable_records_dollar[index].updated = timezone.now()
-				if index not in consumable_records_cent:
-					consumable_records_cent[index] = ConsumableWithdraw()
-					consumable_records_cent[index].consumable = Consumable.objects.filter(core_id=tool.core_id, name="Cost Per Sample $0.01")[0]
-					consumable_records_cent[index].usage_event = current_usage_event
-					consumable_records_cent[index].merchant = current_usage_event.operator
-					consumable_records_cent[index].date = timezone.now()
-					consumable_records_cent[index].project_percent = 100.0
-					consumable_records_cent[index].updated = timezone.now()
+				if index not in user_project_info:
+					user_project_info[index] = {
+						'customer': None,
+						'project': None,
+						'notes': None,
+						'sample_num': None,
+						'num_samples': None,
+					}
 				if attribute == "chosen_user":
-					consumable_records_dollar[index].customer = User.objects.get(id=value)
-					consumable_records_cent[index].customer = User.objects.get(id=value)
+					user_project_info[index]["customer"] = User.objects.get(id=value)
 				if attribute == "chosen_project":
-					consumable_records_dollar[index].project = Project.objects.get(id=value)
-					consumable_records_cent[index].project = Project.objects.get(id=value)
+					user_project_info[index]["project"] = Project.objects.get(id=value)
 				if attribute == "sample_notes":
-					consumable_records_dollar[index].notes = value
-					consumable_records_cent[index].notes = value
+					user_project_info[index]["notes"] = value
 				if attribute == "num_samples":
-					sample_num[index] = value
+					user_project_info[index]["sample_num"] = value
 				if attribute == "fixed_cost":
-					if value.count(".") > 0:
-						quantity_num_dollar[index] = value.split(".")[0]
-						quantity_num_cent[index] = value.split(".")[1]
-					else:
-						quantity_num_dollar[index] = value
-						quantity_num_cent[index] = 0
+					user_project_info[index]["cost_per_sample"] = value
 
-		for key in consumable_records_dollar:
-			num_to_save = int(sample_num[key]) - 1
-			amount = int(quantity_num_dollar[key])
+		for key in user_project_info:
+			cuep = UsageEventProject.objects.get(usage_event=current_usage_event,customer=user_project_info[key]["customer"], project=user_project_info[key]["project"])
+			cuep.sample_num = int(user_project_info[key]["sample_num"])
+			cuep.cost_per_sample = float(user_project_info[key]["cost_per_sample"])
+			cuep.updated = timezone.now()
+			cuep.save()
 
-			if amount > 0:
-				consumable_records_dollar[key].quantity = amount
-				consumable_records_dollar[key].save()
 
-				for i in range(num_to_save):
-					consumable_records_dollar[key].pk = None
-					consumable_records_dollar[key].save()
-
-		for key in consumable_records_cent:
-			num_to_save = int(sample_num[key]) - 1
-			amount = int(quantity_num_cent[key])
-
-			if amount > 0:
-				consumable_records_cent[key].quantity = amount
-				consumable_records_cent[key].save()
-
-				for i in range(num_to_save):
-					consumable_records_cent[key].pk = None
-					consumable_records_cent[key].save()
 
 	try:
 		if uep.count() == 1:
@@ -975,21 +907,28 @@ def disable_tool_multi(request, tool_id, usage_event, dynamic_form):
 				return render(request, 'tool_control/disable_confirmation.html', {'tool': tool})
 	
 		else:
-			# gather records and send to form for editing
-			# first return event to active state to ensure proper completion of the details
-			usage_event.end = None
-			usage_event.updated = timezone.now()
-			usage_event.save()
+			if current_usage_event.no_charge_flag:
+				for cuep in uep:
+					cuep.project_percent = 100.0
+					cuep.updated = timezone.now()
+					cuep.save()
+				return render(request, 'tool_control/disable_confirmation.html', {'tool': tool})
+			else:
+				# gather records and send to form for editing
+				# first return event to active state to ensure proper completion of the details
+				usage_event.end = None
+				usage_event.updated = timezone.now()
+				usage_event.save()
 
-			params = {
-				'usage_event': usage_event,
-				'uep': uep,
-				'tool_id': tool_id,
-				'downtime': request.POST.get('downtime'),
-				'operator_comment': usage_event.operator_comment,
-				'total_minutes': (timezone.now() - usage_event.start).total_seconds()//60
-			}
-			return render(request, 'tool_control/multiple_projects_finish.html', params)
+				params = {
+					'usage_event': usage_event,
+					'uep': uep,
+					'tool_id': tool_id,
+					'downtime': request.POST.get('downtime'),
+					'operator_comment': usage_event.operator_comment,
+					'total_minutes': (timezone.now() - usage_event.start).total_seconds()//60
+				}
+				return render(request, 'tool_control/multiple_projects_finish.html', params)
 
 	except StaffChargeProject.DoesNotExist:
 		existing_staff_charge = request.user.get_staff_charge()

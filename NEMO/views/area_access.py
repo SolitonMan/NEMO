@@ -237,7 +237,7 @@ def unlock_door(door_id):
 
 
 @login_required
-@permission_required('NEMO.change_areaaccessrecord')
+#@permission_required('NEMO.change_areaaccessrecord')
 @require_POST
 def logout_of_area(request, door_id=None, area_id=None):
 	try:
@@ -254,7 +254,8 @@ def logout_of_area(request, door_id=None, area_id=None):
 		record.comment = request.POST.get("comment")
 		record.save()
 		#return render(request, 'area_access/logout_success.html', {'area': record.area, 'name': user.first_name})
-		return HttpResponseRedirect(reverse('landing'))
+		return HttpResponseRedirect('/new_area_access_record/' + str(user.id) + '/')
+		#return HttpResponse()
 	else:
 		return render(request, 'area_access/not_logged_in.html')
 

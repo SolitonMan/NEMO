@@ -5,7 +5,7 @@ from logging import exception, getLogger
 from django.conf import settings
 from django.contrib.auth import authenticate, login, REDIRECT_FIELD_NAME, logout
 from django.contrib.auth.backends import RemoteUserBackend, ModelBackend
-from django.http import HttpResponseRedirect, HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden
 from django.shortcuts import render
 from django.urls import reverse, resolve
 from django.utils.decorators import method_decorator
@@ -140,6 +140,11 @@ def login_user(request, context=None):
 		user = request.user
 
 	if user:
+
+		# just continue if user is authenticated
+		#if user.is_authenticated:
+		#	return HttpResponse()
+
 		# enforce the is_active flag
 		if not user.is_active:
 			dictionary['user_name_or_password_incorrect'] = True
