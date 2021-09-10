@@ -16,6 +16,15 @@ p {
 
 	<p>The table lists all the charges sorted by the most recent Start date.  You can filter the table using the search field input below.</p>
 
+	<p>The individual transaction entries have been color-coded for identification.  The transaction types and associated colors are as follows:<br/>
+		<ul>
+			<li style="background-color: rgb(182,216,255)">Tool Use</li>
+			<li style="background-color: rgb(203,206,202)">Staff Charge</li>
+			<li style="background-color: rgb(253,225,227)">Area Access Record</li>
+			<li style="background-color: rgb(247,247,146)">Consumable Withdraw</li>
+		</ul>
+	</p>
+
 	<p>The table cells containing notes, for <span style="background-color: #ddffdd;">individual customers</span> or for <span style="background-color: #ddddff;">transactions generally</span>, are editable in this page.  Simply click on the desired cell and a pop up dialog will allow you to add or edit a comment.  Changes are saved immediately to the database.</p>
 
 	<p>Each charge can be validated, which means that you have confirmed that the charge is legitimate and correct, and no adjustment needs to
@@ -83,10 +92,28 @@ th {
 	<span style="display: inline; padding-right: 20px;">
 		<input type="checkbox" id="show_validated" checked onclick="toggle_transaction_view(this, 'success-highlight');" /> 
 		<b>Show Validated Transactions</b>
-	</span>
+	</span><br/>
 	<span style="display: inline; padding-right: 20px;">
 		<input type="checkbox" id="show_contested" checked onclick="toggle_transaction_view(this, 'warning-highlight');" />
 		<b>Show Contested Transactions</b>
+	</span><br/>
+	<span style="display: inline; padding-right: 20px;">
+		<input type="checkbox" id="show_validated" checked onclick="toggle_transaction_view(this, 'tool-use');" />
+		<b>Show Tool Use Transactions</b>
+	</span><br/>
+	{% if request.user.is_staff %}
+	<span style="display: inline; padding-right: 20px;">
+		<input type="checkbox" id="show_validated" checked onclick="toggle_transaction_view(this, 'staff-charge');" />
+		<b>Show Staff Charge Transactions</b>
+	</span><br/>
+	{% endif %}
+	<span style="display: inline; padding-right: 20px;">
+		<input type="checkbox" id="show_validated" checked onclick="toggle_transaction_view(this, 'area-access');" />
+		<b>Show Area Access Transactions</b>
+	</span><br/>
+	<span style="display: inline; padding-right: 20px;">
+		<input type="checkbox" id="show_validated" checked onclick="toggle_transaction_view(this, 'withdraw');" />
+		<b>Show Withdraw Transactions</b>
 	</span>
 </div>
 </div>
@@ -122,46 +149,59 @@ th {
 			</table-->
 		</td>
 	</tr>
-	
 	</thead>
 	<tbody id="transaction_data">
 {% for key, value in transactions.items %}
-	<tr{% if value.class != '' %} class="{{ value.class }}"{% endif %} id="transaction_row_{{ forloop.counter }}" {% if forloop.counter|divisibleby:"2" %}style="background-color: #e0e0e0; border: 2px solid #c0c0c0;"{% else %}style="border: 2px solid #c0c0c0;"{% endif %}>
-		<td rowspan="2" style="width:40px;" title="ID={{ value.id }}">
+	<tr class="{{ value.class }} {% if value.type == "Tool Use" %}tool-use{% endif %} {% if value.type == "Staff Charge" %}staff-charge{% endif %} {% if value.type == "Area Access" %}area-access{% endif %} {% if value.type == "Withdraw" %}withdraw{% endif %}" id="transaction_row_{{ forloop.counter }}" style="background-color: {% if value.type == "Tool Use"%}rgb(182,216,255);{% endif %}{% if value.type == "Staff Charge" %}rgb(203,206,202);{% endif %}{% if value.type == "Area Access" %}rgb(253,225,227);{% endif %}{% if value.type == "Withdraw" %}rgb(247,247,146);{% endif %}border: 2px solid #c0c0c0;">
+		<td rowspan="2" style="width:40px; background-color: inherit;" title="ID={{ value.id }}">
 			<b>{% if value.ad_hoc_created %}Ad Hoc {% endif %}{{ value.type }}</b>
+			<br/>
+			Record ID = {{ value.id }}
 			{% if not value.validated and not value.contested %}
-			<br/><br/>
+			<br/>
 			<input type="checkbox" id="c_{{ forloop.counter }}" onclick="toggle_activation();"> <b>Select</b>
 			{% endif %}
+			<br/><br/>
+			{% if value.related_usage_event %}
+			Related Tool Use ID = {{ value.related_usage_event.id }}
+			{% endif %}
 		</td>
-		<td style="padding: 20px;">
-			<table style="border: 2px solid black; font-weight: bold;">
-			<tr>
-			<th style="width:120px;" title="This column refers to the person who operated the tool, performed the staff work, or sold the consumable">Merchant</th>
-			<th style="width:120px;">Start</th>
-			<th style="width:120px;">End</th>
-			<th style="width:70px;">Duration/Quantity</th>
-			<th style="width:150px;">Tool/Item/Area</th>
-			<th style="width:75px;" class="sort-validate">Validate</th>
-			<th style="width:75px;" class="sort-contest">Contest</th>
+		<td style="padding: 20px; background-color: inherit;">
+			<table style="border: 2px solid black; font-weight: bold; background-color: inherit;">
+			<tr style="background-color: inherit;">
+			<th style="width:120px; background-color: inherit;" title="This column refers to the person who operated the tool, performed the staff work, or sold the consumable">Merchant</th>
+			<th style="width:120px; background-color: inherit;">Start</th>
+			<th style="width:120px; background-color: inherit;">End</th>
+			<th style="width:70px; background-color: inherit;">Duration/Quantity</th>
+			<th style="width:150px; background-color: inherit;">Tool/Item/Area</th>
+			<th style="width:75px; background-color: inherit;" class="sort-validate">Validate</th>
+			<th style="width:75px; background-color: inherit;" class="sort-contest">Contest</th>
 			</tr>
-			<tr>
-			<td style="width:120px;">{{ value.operator }}</td>
-			<td style="width:120px;">{{ value.start|date:"m-d-Y g:i:s A" }}</td>
-			<td style="width:120px;">{{ value.end|date:"m-d-Y g:i:s A" }}</td>
-			<td style="width:120px;">{% if value.duration != '' %}{{ value.duration|smooth_timedelta }}{% else %}{{ value.quantity }}{% endif %}</td>
-			<td style="width:150px;">{{ value.tool }}</td>
-			<td style="width:50px; text-align:center;">
+			<tr style="background-color: inherit;">
+			<td style="width:120px; background-color: inherit;">{{ value.operator }}</td>
+			<td style="width:120px; background-color: inherit;">{{ value.start|date:"m-d-Y g:i:s A" }}</td>
+			<td style="width:120px; background-color: inherit;">{{ value.end|date:"m-d-Y g:i:s A" }}</td>
+			<td style="width:120px; background-color: inherit;">{% if value.duration != '' %}{{ value.duration|smooth_timedelta }}{% else %}{{ value.quantity }}{% endif %}</td>
+			<td style="width:150px; background-color: inherit;">{{ value.tool }}</td>
+			<td style="width:50px; text-align:center; background-color: inherit;">
 			{% if show_buttons %}
 				{% if not value.validated %}
 					{% if value.type == "Tool Use" %}
 			<button id="b_c_{{ forloop.counter }}" {% if value.contested %}disabled{% endif %}  class="btn btn-success" onclick="validate_charge('{% url 'validate_usage_event' value.id %}', this, '#transaction_row_{{ forloop.counter }}')">Validate</button>
 					{% endif %}
 					{% if value.type == "Staff Charge" %}
+						{% if not value.cost_per_sample_run %}
 			<button id="b_c_{{ forloop.counter }}" {% if value.contested %}disabled{% endif %}  class="btn btn-success" onclick="validate_charge('{% url 'validate_staff_charge' value.id %}', this, '#transaction_row_{{ forloop.counter }}')">Validate</button>
+						{% else %}
+						Cost Per Sample Run
+						{% endif %}
 					{% endif %}
 					{% if value.type == "Area Access" %}
+						{% if not value.cost_per_sample_run %}
 			<button id="b_c_{{ forloop.counter }}" {% if value.contested %}disabled{% endif %}  class="btn btn-success" onclick="validate_charge('{% url 'validate_area_access_record' value.id %}', this, '#transaction_row_{{ forloop.counter }}')">Validate</button>
+						{% else %}
+						Cost Per Sample Run
+						{% endif %}
 					{% endif %}
 					{% if value.type == "Withdraw" %}
 			<button id="b_c_{{ forloop.counter }}" {% if value.contested %}disabled{% endif %}  class="btn btn-success" onclick="validate_charge('{% url 'validate_consumable_withdraw' value.id %}', this, '#transaction_row_{{ forloop.counter }}')">Validate</button>
@@ -169,7 +209,7 @@ th {
 				{% endif %}
 			{% endif %}
 			</td>
-			<td style="width:50px; text-align:center;">
+			<td style="width:50px; text-align:center; background-color: inherit;">
 			{% if show_buttons %}
 				{% if not value.validated %}
 					{% if value.type == "Tool Use" %}
@@ -189,7 +229,11 @@ th {
 			<input type="hidden" name="consumable_withdraw_id" value="{{ value.id }}" />
 					{% endif %}
 			{% csrf_token %}
+				{% if value.type == "Tool Use" or value.type == "Withdraw" or not value.cost_per_sample_run %}
 			<input {% if value.contested %}disabled{% endif %}  type="submit" class="btn btn-warning" value="Contest" />
+				{% else %}
+				Cost Per Sample Run
+				{% endif %}
 			</form>
 				{% endif %}
 			{% endif %}
@@ -198,22 +242,32 @@ th {
 			</table>
 		</td>
 	</tr>
-	<tr{% if value.class != '' %} class="{{ value.class }}"{% endif %} id="transaction_row_{{ forloop.counter }}_customers" {% if forloop.counter|divisibleby:"2" %}style="background-color: #e0e0e0; border: 2px solid #c0c0c0;"{% else %}style="border: 2px solid #c0c0c0;"{% endif %}>
-		<td style="padding: 20px;">
-			<table>
-			<tr>
-			<th style="width:100px;" class="sort-customer">Customer</th>
-			<th style="width:200px;" class="sort-project">Project</th>
-			<th style="width:70px;" class="sort-percent">Percent</th>
+	<tr class="{{ value.class }} {% if value.type == "Tool Use" %}tool-use{% endif %} {% if value.type == "Staff Charge" %}staff-charge{% endif %} {% if value.type == "Area Access" %}area-access{% endif %} {% if value.type == "Withdraw" %}withdraw{% endif %}" id="transaction_row_{{ forloop.counter }}_customers" style="background-color: {% if value.type == "Tool Use"%}rgb(182,216,255);{% endif %}{% if value.type == "Staff Charge" %}rgb(203,206,202);{% endif %}{% if value.type == "Area Access" %}rgb(253,225,227);{% endif %}{% if value.type == "Withdraw" %}rgb(247,247,146);{% endif %}border: 2px solid #c0c0c0;">
+		<td style="padding: 20px; background-color: inherit;">
+			<table style="background-color: inherit;">
+			<tr style="background-color: inherit;">
+			<th style="width:100px; background-color: inherit;" class="sort-customer">Customer</th>
+			<th style="width:200px; background-color: inherit;" class="sort-project">Project</th>
+			{% if value.cost_per_sample_run %}
+			<th style="width:90px; background-color: inherit;" class="sort-percent">No. of samples</th>
+			<th style="width:90px; background-color: inherit;" class="sort-percent">Cost per sample</th>
+			{% else %}
+			<th style="width:70px; background-color: inherit;" class="sort-percent">Percent</th>
+			{% endif %}
 			{% if value.type != "Withdraw" %}
 			<th style="width:70px;" class="sort-percent">Customer Comment</th>
 			{% endif %}
 			</tr>
 			{% for k, v in value.customers.items %}
-			<tr>
-			<td style="width:100px;">{{ v.customer }}</td>
-			<td style="width:200px;">{{ v.project }}</td>
-			<td style="width:70px;">{{ v.percent }}</td>
+			<tr style="background-color: inherit;">
+			<td style="width:100px; background-color: inherit;">{{ v.customer }}</td>
+			<td style="width:200px; background-color: inherit;">{{ v.project }}</td>
+			{% if value.cost_per_sample_run %}
+			<td style="width:90px; background-color: inherit;" class="sort-percent">{{ v.sample_num }}</td>
+			<td style="width:90px; background-color: inherit;" class="sort-percent">{{ v.cost_per_sample }}</td>
+			{% else %}
+			<td style="width:70px; background-color: inherit;">{{ v.percent }}</td>
+			{% endif %}
 			{% if value.type != "Withdraw" %}
 			<td title="Click to edit this customer comment" style="width:70px; background-color: #ddffdd; padding: 5px;" onclick="edit_comment({{ v.id }}, '{{ value.type }} customer', $('#cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa{% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__customer__{{ v.id }}').html())" onmouseover="$(this).css({ 'background-color':'#2222dd', 'font-weight':'bold', 'color':'#ffffff', 'padding': '0px' });" onmouseout="$(this).css({ 'background-color':'#ddffdd', 'font-weight':'', 'color':'', 'padding': '5px' });">
 				<span style="width: 90%;" id="cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa{% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__customer__{{ v.id }}">{% if v.comment is not None %}{{ v.comment }}{% endif %}</span>
@@ -221,15 +275,15 @@ th {
 			{% endif %}
 			</tr>
 			{% endfor %}
-			<tr>
-				<td style="background-color: #ddddff;" title="Click to edit this general comment" colspan="4" onclick="edit_comment({{ value.id }}, '{{ value.type }}', $('#cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa{% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__{{ value.id }}').html())" onmouseover="$(this).css({ 'background-color':'#2222dd', 'font-weight':'bold', 'color':'#ffffff' });" onmouseout="$(this).css({ 'background-color':'#ddddff', 'font-weight':'', 'color':'' });">
+			<tr style="background-color: inherit;">
+				<td style="background-color: #ddddff;" title="Click to edit this general comment" {%if value.cost_per_sample_run%}colspan="5"{%else%}colspan="4"{%endif%} onclick="edit_comment({{ value.id }}, '{{ value.type }}', $('#cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa{% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__{{ value.id }}').html())" onmouseover="$(this).css({ 'background-color':'#2222dd', 'font-weight':'bold', 'color':'#ffffff' });" onmouseout="$(this).css({ 'background-color':'#ddddff', 'font-weight':'', 'color':'' });">
 					<span style="font-weight: bold;">General Comment: </span>
 					<span id="cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa{% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__{{ value.id }}">{% if value.comment is not None %}{{ value.comment }}{% endif %}</span>
 				</td>
 			</tr>
 			{% if value.contest_rejection_reason != '' %}
-			<tr>
-				<td colspan="4">
+			<tr style="background-color: inherit;">
+				<td colspan="4" style="background-color: inherit;">
 					<span title="ID={{ value.contest_id }} DATE={{ value.contest_resolved_date }}" style="font-weight: bold; background-color: #eeeeff;">Contest rejected: </span>{{ value.contest_rejection_reason }}
 				</td>
 			</tr>

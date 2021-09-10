@@ -93,6 +93,32 @@
 					</td>
 					{% endif %}
 				</tr>
+				{% if usage_event.cost_per_sample_run %}
+				<tr {% if value.delete_flag %}style="background-color: #c0c0c0;"{% endif %}>
+					<th>Cost Per Sample</th>
+					<td>{{ value.cost_per_sample }}</td>
+					{% if value.delete_flag %}
+					<td>&nbsp;</td>
+					{% else %}
+					<td>
+						<span style="font-weight:bold; color:red;">{{ value.proposed_cost_per_sample }}</span>
+						<input type="hidden" name="proposed__cost_per_sample__{{ key }}" value="{{ value.proposed_cost_per_sample }}" />
+					</td>
+					{% endif %}
+				</tr>
+				<tr {% if value.delete_flag %}style="background-color: #c0c0c0;"{% endif %}>
+					<th>No. of Samples</th>
+					<td>{{ value.sample_num }}</td>
+					{% if value.delete_flag %}
+					<td>&nbsp;</td>
+					{% else %}
+					<td>
+						<span style="font-weight:bold; color:red;">{{ value.proposed_sample_num }}</span>
+						<input type="hidden" name="proposed__sample_num__{{ key }}" value="{{ value.proposed_sample_num }}" />
+					</td>
+					{% endif %}
+				</tr>
+				{% else %}
 				<tr {% if value.delete_flag %}style="background-color: #c0c0c0;"{% endif %}>
 					<th>Percent</th>
 					<td>{{ value.project_percent }}</td>
@@ -101,10 +127,11 @@
 					{% else %}
 					<td>
 						<span style="font-weight:bold; color:red;">{{ value.proposed_project_percent }}</span>
-						<input type="hidden" name="proposed__project_percent__{{ uep.id }}" value="{{ ucp.proposed_value }}" />
+						<input type="hidden" name="proposed__project_percent__{{ key }}" value="{{ value.proposed_project_percent }}" />
 					</td>
 					{% endif %}
 				</tr>
+				{% endif %}
 			{% endfor %}
 			{% endif %}
 			{% if newdata %}
@@ -133,6 +160,32 @@
 					</td>
 					<td>&nbsp;</td>
 				</tr>
+				{% if usage_event.cost_per_sample_run %}
+				<tr>
+					<th><span style="font-weight:bold; color:red;">Cost Per Sample</th>
+					<td>
+						{% for key, value in v.items %}
+							{% if key == "cost_per_sample" %}
+						<span style="font-weight:bold; color:red;">{{ value }}</span>
+						<input type="hidden" name="proposed__cost_per_sample__{{ fg }}" value="{{ value }}" />
+							{% endif %}
+						{% endfor %}
+					</td>
+					<td>&nbsp;</td>
+				</tr>
+				<tr>
+					<th><span style="font-weight:bold; color:red;">No. of Samples</th>
+					<td>
+						{% for key, value in v.items %}
+							{% if key == "sample_num" %}
+						<span style="font-weight:bold; color:red;">{{ value }}</span>
+						<input type="hidden" name="proposed__sample_num__{{ fg }}" value="{{ value }}" />
+							{% endif %}
+						{% endfor %}
+					</td>
+					<td>&nbsp;</td>
+				</tr>
+				{% else %}
 				<tr>
 					<th><span style="font-weight:bold; color:red;">Percent</span></th>
 					<td>
@@ -145,6 +198,7 @@
 					</td>
 					<td>&nbsp;</td>
 				</tr>
+				{% endif %}
 			{% endfor %}	
 			{% endif %}
 			</table>

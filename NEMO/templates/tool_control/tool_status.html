@@ -233,7 +233,7 @@
 
 					{% with tool.get_current_usage_event as current_usage_event %}
 
-						{% if current_usage_event.no_charge_flag %}
+						{% if current_usage_event.cost_per_sample_run %}
 
 							{% if current_usage_event.customers.all|length > 0 %}
 								<table class="table">

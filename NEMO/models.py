@@ -605,6 +605,8 @@ class StaffCharge(CalendarDisplay):
 	ad_hoc_created = models.BooleanField(default=False)
 	active_flag = models.BooleanField(default=True)
 	core_id_override = models.PositiveIntegerField(null=True, blank=True)
+	cost_per_sample_run = models.BooleanField(default=False)
+	related_usage_event = models.ForeignKey('UsageEvent', on_delete=models.SET_NULL, related_name='sc_related_usage_event', null=True, blank=True)
 
 	def duration(self):
 		return calculate_duration(self.start, self.end, "In progress")
@@ -683,6 +685,8 @@ class AreaAccessRecord(CalendarDisplay):
 	no_charge_flag = models.BooleanField(default=False)
 	ad_hoc_created = models.BooleanField(default=False)
 	active_flag = models.BooleanField(default=True)
+	cost_per_sample_run = models.BooleanField(default=False)
+	related_usage_event = models.ForeignKey('UsageEvent', on_delete=models.SET_NULL, related_name='aar_related_usage_event', null=True, blank=True)
 
 	def duration(self):
 		return calculate_duration(self.start, self.end, "In progress")
@@ -948,6 +952,8 @@ class UsageEvent(CalendarDisplay):
 	ad_hoc_created = models.BooleanField(default=False)
 	active_flag = models.BooleanField(default=True)
 	end_scheduled_outage = models.BooleanField(default=False)
+	cost_per_sample_run = models.BooleanField(default=False)
+
 
 	# a feature to allow for a tool use to be stopped automatically requires some new fields
 	end_time = models.DateTimeField(null=True, blank=True)
@@ -1066,6 +1072,7 @@ class ConsumableWithdraw(models.Model):
 	auto_validated = models.BooleanField(default=False)
 	no_charge_flag = models.BooleanField(default=False)
 	active_flag = models.BooleanField(default=True)
+	cost_per_sample_run = models.BooleanField(default=False)
 
 	# adding related field for UsageEvent for the situation where a consumable is used during tool usage and then the charge is contested
 	usage_event = models.ForeignKey('UsageEvent', on_delete=models.SET_NULL, related_name="consumable_usage_event", null=True, blank=True)

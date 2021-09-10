@@ -344,7 +344,7 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge, billing_mod
 		new_usage_event.created = timezone.now()
 		new_usage_event.updated = timezone.now()
 		if billing_mode:
-			new_usage_event.no_charge_flag = True
+			new_usage_event.cost_per_sample_run = True
 		if set_for_autologout:
 			new_usage_event.set_for_autologout = True
 			new_usage_event.end_time = autologout_endtime
@@ -369,7 +369,9 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge, billing_mod
 			new_staff_charge.project = project
 			new_staff_charge.created = timezone.now()
 			new_staff_charge.updated = timezone.now()
+			new_staff_charge.related_usage_event = new_usage_event
 			if billing_mode:
+				new_staff_charge.cost_per_sample_run = True
 				new_staff_charge.no_charge_flag = True
 			new_staff_charge.save()
 
@@ -395,12 +397,14 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge, billing_mod
 			aar.user = request.user
 			aar.project = project
 			aar.start = timezone.now()
+			aar.related_usage_event = new_usage_event
 			aar.created = timezone.now()
 			aar.updated = timezone.now()
 
 			if staff_charge:
 				aar.staff_charge = new_staff_charge
 			if billing_mode:
+				aar.cost_per_sample_run = True
 				aar.no_charge_flag = True
 
 			aar.save()
@@ -455,7 +459,7 @@ def enable_tool_multi(request):
 		new_usage_event.created = timezone.now()
 		new_usage_event.updated = timezone.now()
 		if billing_mode:
-			new_usage_event.no_charge_flag = True
+			new_usage_event.cost_per_sample_run = True
 		if set_for_autologout:
 			new_usage_event.set_for_autologout = True
 			new_usage_event.end_time = autologout_endtime
@@ -541,7 +545,9 @@ def enable_tool_multi(request):
 				new_staff_charge.staff_member = request.user
 				new_staff_charge.created = timezone.now()
 				new_staff_charge.updated = timezone.now()
+				new_staff_charge.related_usage_event = new_usage_event
 				if billing_mode:
+					new_staff_charge.cost_per_sample_run = True
 					new_staff_charge.no_charge_flag = True
 				new_staff_charge.save()
 			else:
@@ -551,8 +557,9 @@ def enable_tool_multi(request):
 			new_staff_charge.staff_member = request.user
 			new_staff_charge.created = timezone.now()
 			new_staff_charge.updated = timezone.now()
+			new_staff_charge.related_usage_event = new_usage_event
 			if billing_mode:
-				new_staff_charge.no_charge_flag = True
+				new_staff_charge.cost_per_sample_run = True
 			new_staff_charge.save()
 	
 		project_charges = {}
@@ -621,12 +628,14 @@ def enable_tool_multi(request):
 			aar.area = tool.requires_area_access
 			aar.user = request.user
 			aar.start = timezone.now()
+			aar.related_usage_event = new_usage_event
 			aar.created = timezone.now()
 			aar.updated = timezone.now()
 
 			if new_staff_charge:
 				aar.staff_charge = new_staff_charge
 			if billing_mode:
+				aar.cost_per_sample_run = True
 				aar.no_charge_flag = True
 
 			aar.save()
@@ -720,7 +729,7 @@ def disable_tool(request, tool_id):
 
 
 	# Charge for consumables
-	dynamic_form.charge_for_consumable(current_usage_event.user, current_usage_event.operator, current_usage_event.project, current_usage_event.run_data, current_usage_event)
+	dynamic_form.charge_for_consumable(current_usage_event.user, current_usage_event.operator, current_usage_event.project, current_usage_event.run_data, current_usage_event, 100.0, current_usage_event.cost_per_sample_run)
 
 	# check for end of scheduled outage
 	try:
@@ -738,7 +747,7 @@ def disable_tool(request, tool_id):
 	current_usage_event.save()
 
 	# check for no charge flag, which at this point can only exist for a fixed cost run
-	if current_usage_event.no_charge_flag:
+	if current_usage_event.cost_per_sample_run:
 		user_project_info = {}
 
 		for key, value in request.POST.items():
@@ -818,15 +827,8 @@ def disable_tool_multi(request, tool_id, usage_event, dynamic_form):
 	except:
 		pass
 
-	# check for no charge flag, which at this point can only exist for a fixed cost run
-	if current_usage_event.no_charge_flag:
-		# add a consumable record for a fixed cost per sample run
+	if current_usage_event.cost_per_sample_run:
 
-		consumable_records_dollar = {}
-		consumable_records_cent = {}
-		sample_num = {}
-		quantity_num_dollar = {}
-		quantity_num_cent = {}
 		user_project_info = {}
 
 		for key, value in request.POST.items():
@@ -871,7 +873,7 @@ def disable_tool_multi(request, tool_id, usage_event, dynamic_form):
 			uep.save()
 
 			# run dynamic form processing
-			dynamic_form.charge_for_consumable(uep.customer, uep.usage_event.operator, uep.project, uep.usage_event.run_data, usage_event, 100.0)
+			dynamic_form.charge_for_consumable(uep.customer, uep.usage_event.operator, uep.project, uep.usage_event.run_data, usage_event, 100.0, usage_event.cost_per_sample_run)
 
 			if request.user.charging_staff_time():
 				existing_staff_charge = request.user.get_staff_charge()
@@ -907,7 +909,7 @@ def disable_tool_multi(request, tool_id, usage_event, dynamic_form):
 				return render(request, 'tool_control/disable_confirmation.html', {'tool': tool})
 	
 		else:
-			if current_usage_event.no_charge_flag:
+			if current_usage_event.cost_per_sample_run:
 				for cuep in uep:
 					cuep.project_percent = 100.0
 					cuep.updated = timezone.now()
@@ -995,7 +997,7 @@ def usage_event_projects_save(request):
 					uep.project_percent = value
 					uep.updated = timezone.now()
 					uep.save()
-					dynamic_form.charge_for_consumable(uep.customer, event.operator, uep.project, event.run_data, event, value)
+					dynamic_form.charge_for_consumable(uep.customer, event.operator, uep.project, event.run_data, event, value, event.cost_per_sample_run)
 
 		event.end = timezone.now() + downtime
 		event.updated = timezone.now()

@@ -63,7 +63,12 @@
 						<th>Delete</th>
 						<th>Customer</th>
 						<th>Project</th>
+						{% if usage_event.cost_per_sample_run %}
+						<th>Cost Per Sample</th>
+						<th>No. Samples</th>
+						{% else %}
 						<th>Percent</th>
+						{% endif %}
 					</tr>
 					</thead>
 					<tbody>
@@ -93,17 +98,28 @@
 								{% endfor %}
 							</select>
 							{% endif %}
+							<input type="hidden" id="original__chosen_project__{{ u.id }}" name="original__chosen_project__{{ u.id }}" value="{{ u.project.id }}" />
 						</td>
+						{% if usage_event.cost_per_sample_run %}
+						<td>
+							<input type="text" class="form-control" name="proposed__cost_per_sample__{{ u.id }}" id="proposed__cost_per_sample__{{ u.id }}" value="{{ u.cost_per_sample }}" />
+							<input type="hidden" id="original__cost_per_sample__{{ u.id }}" name="original__cost_per_sample__{{ u.id }}" value="{{ u.cost_per_sample }}" />
+						</td>
+						<td>
+							<input type="text" class="form-control" name="proposed__sample_num__{{ u.id }}" id="proposed__sample_num__{{ u.id }}" value="{{ u.sample_num }}" />
+							<input type="hidden" id="original__sample_num__{{ u.id }}" name="original__sample_num__{{ u.id }}" value="{{ u.sample_num }}" />
+						</td>
+						{% else %}
 						<td>
 							<input type="text" class="form-control" name="proposed__project_percent__{{ u.id }}" id="proposed__project_percent__{{ u.id }}" value="{{ u.project_percent }}" />
 							<input type="hidden" id="original__project_percent__{{ u.id }}" name="original__project_percent__{{ u.id }}" value="{{ u.project_percent }}" />
-							<input type="hidden" id="original__chosen_project__{{ u.id }}" name="original__chosen_project__{{ u.id }}" value="{{ u.project.id }}" />
 						</td>
+						{% endif %}
 					</tr>	
 					{% endfor %}
 					{% if request.user.is_superuser or request.user.is_staff %}
 					<tr>
-						<td colspan="4" style="text-align:center"><a href="javascript:void(0)" id="add_customer_link">Add another customer</a></td>
+						<td {% if usage_event.cost_per_sample_run %}colspan="5"{% else %}colspan="4"{% endif %} style="text-align:center"><a href="javascript:void(0)" id="add_customer_link">Add another customer</a></td>
 					</tr>
 					{% endif %}
 					</tbody>
@@ -666,6 +682,42 @@
 			}
 		}
 
+		{% if usage_event is not None and usage_event.cost_per_sample_run %}
+		$("input[name*='proposed__sample_num__']").each(
+			function(index, element) {
+				if (!$(element).prop("disabled")) {
+					if ($(element).val() == "" || isNaN(parseInt($(element).val()))) {
+						error_message = "Please enter an integer value for each number of samples field";
+						$(element).focus();
+						bSubmit = false;
+						bContinue = false;
+					} else {
+						s = "#original__sample_num__" + $(element).prop("name").split("__")[2];
+						if ($(s).val() != $(element).val()) {
+							bChanged = true;
+						}
+					}
+				}
+			}
+		);
+		$("input[name*='proposed__cost_per_sample__']").each(
+			function(index, element) {
+				if (!$(element).prop("disabled")) {
+					if ($(element).val() == "" || isNaN(parseFloat($(element).val()))) {
+						error_message = "Please enter a numerical value for each cost per sample field";
+						$(element).focus();
+						bSubmit = false;
+						bContinue = false;
+					} else {
+						s = "#original__cost_per_sample__" + $(element).prop("name").split("__")[2];
+						if ($(s).val() != $(element).val()) {
+							bChanged = true;
+						}
+					}
+				}
+			}
+		);
+		{% else %}
 		var percent = 0.0;
 
 		$("input[name*='proposed__project_percent__']").each(
@@ -699,7 +751,9 @@
 				}
 			}
 		}
+		{% endif %}
 
+		
 		{% endif %}
 
 		{% if area_access_record is not None %}
@@ -875,7 +929,7 @@
 	function add_customer() {
 		// need to account for differences between this and creating a staff charge or usage event record
 		var failure_dialog = ajax_failure_callback("Cannot add new entry", "The web browser was not able to communicate with the server.");
-		ajax_get("{% url 'contest_transaction_entry' %}", { "entry_number": current_entry_number }, add_entry_success_callback, failure_dialog);
+		ajax_get("{% url 'contest_transaction_entry' %}", { "entry_number": current_entry_number, "cost_per_sample_run":{% if usage_event is not None %}{% if usage_event.cost_per_sample_run %}1{% else %}0{% endif %}{% else %}0{% endif %} }, add_entry_success_callback, failure_dialog);
 		function add_entry_success_callback(response, status, xml_http_request)
 		{
 			$("#customer_project_entries tr:last").before(response);
@@ -883,11 +937,20 @@
 			enable_autocompletion(identifier);
 			current_entry_number++;
 
+			{% if usage_event is not None %}
+				{% if not usage_event.cost_per_sample_run %}
 			// since a new customer is joining, set all project percentages to blank
 			s = "input[name*='proposed__project_percent__']";
 			$(s).each(function() {
 				$(this).val("");
 			});
+				{% endif %}
+			{% else %}
+			s = "input[name*='proposed__project_percent__']";
+			$(s).each(function() {
+				$(this).val("");
+			});
+			{% endif %}
 		}
 	}
 	function enable_autocompletion(i)

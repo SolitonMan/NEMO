@@ -9,7 +9,16 @@
 	<td id="user_project__newentry_{{ entry_number }}" style="vertical-align: middle">
 
 	</td>
+	{% if cost_per_sample_run == 1 or cost_per_sample_run == "1" %}
+	<td>
+		<input type="text" class="form-control" name="proposed__cost_per_sample__newentry_{{ entry_number }}" id="proposed__cost_per_sample__newentry_{{ entry_number }}" value="" />
+	</td>
+	<td>
+		<input type="text" class="form-control" name="proposed__sample_num__newentry_{{ entry_number }}" id="proposed__sample_num__newentry_{{ entry_number }}" value="" />
+	</td>
+	{% else %}
 	<td>
 		<input type="text" class="form-control" name="proposed__project_percent__newentry_{{ entry_number }}" id="proposed__project_percent__newentry_{{ entry_number }}" value="" />
 	</td>
+	{% endif %}
 </tr>

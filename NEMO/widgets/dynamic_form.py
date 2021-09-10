@@ -56,7 +56,7 @@ class DynamicForm:
 				results[question['consumable_id']] = request.POST[question['name']]
 		return dumps(results, indent='\t', sort_keys=True) if len(results) else ''
 
-	def charge_for_consumable(self, customer, merchant, project, run_data, usage_event=None, project_percent=None):
+	def charge_for_consumable(self, customer, merchant, project, run_data, usage_event=None, project_percent=None, cost_per_sample_run=False):
 		try:
 			run_data = loads(run_data)
 		except:
@@ -73,6 +73,6 @@ class DynamicForm:
 						quantity = 1
 	
 					if quantity > 0:
-						ConsumableWithdraw.objects.create(customer=customer, merchant=merchant, consumable=consumable, quantity=quantity, project=project, usage_event=usage_event, project_percent=project_percent, date=timezone.now(), updated=timezone.now())
+						ConsumableWithdraw.objects.create(customer=customer, merchant=merchant, consumable=consumable, quantity=quantity, project=project, usage_event=usage_event, project_percent=project_percent, cost_per_sample_run=cost_per_sample_run, date=timezone.now(), updated=timezone.now())
 			except:
 				pass

@@ -107,6 +107,7 @@ def remote_work(request):
 				'class': '',
 				'customers': '',
 				'ad_hoc_created': u.ad_hoc_created,
+				'cost_per_sample_run': u.cost_per_sample_run,
 			}
 
 			if u.validated:
@@ -144,6 +145,8 @@ def remote_work(request):
 						'project': str(uep.project),
 						'percent': uep.project_percent,
 						'comment': uep.comment,
+						'cost_per_sample': uep.cost_per_sample,
+						'sample_num': uep.sample_num,
 					}
 			transactions[transaction_key]['customers'] = customers
 
@@ -173,6 +176,8 @@ def remote_work(request):
 				'class': '',
 				'customers': '',
 				'ad_hoc_created': s.ad_hoc_created,
+				'cost_per_sample_run': s.cost_per_sample_run,
+				'related_usage_event': s.related_usage_event,
 			}
 
 			if s.validated:
@@ -239,6 +244,8 @@ def remote_work(request):
 				'class': '',
 				'customers': '',
 				'ad_hoc_created': a.ad_hoc_created,
+				'cost_per_sample_run': a.cost_per_sample_run,
+				'related_usage_event': a.related_usage_event,
 			}
 
 			if a.validated:
@@ -315,6 +322,7 @@ def remote_work(request):
 				'class': '',
 				'customers': '',
 				'ad_hoc_created': False,
+				'related_usage_event': c.usage_event,
 			}
 
 			if c.validated:
@@ -425,7 +433,8 @@ def validate_area_access_record(request, area_access_record_id):
 	return HttpResponse()
 
 
-@staff_member_required(login_url=None)
+#@staff_member_required(login_url=None)
+@login_required
 @require_POST
 def validate_consumable_withdraw(request, consumable_withdraw_id):
 	consumable_withdraw = get_object_or_404(ConsumableWithdraw, id=consumable_withdraw_id)
@@ -516,7 +525,7 @@ def contest_consumable_withdraw(request, consumable_withdraw_id):
 
 
 def is_valid_field(field):
-	return search("^(proposed|original)__(area|consumable|quantity|chosen_user|chosen_project|project_percent|tool_id|start|end)__(newentry_)?[0-9_]+$", field) is not None
+	return search("^(proposed|original)__(area|consumable|quantity|chosen_user|chosen_project|project_percent|tool_id|start|end|sample_num|cost_per_sample)__(newentry_)?[0-9_]+$", field) is not None
 
 @login_required
 @require_POST
@@ -677,7 +686,7 @@ def save_contest(request):
 						del deletion[idstr]
 					else:
 						for field in submission[id]:
-							if submission[id][field]["proposed"] != submission[id][field]["original"]:
+							if str(submission[id][field]["proposed"]) != str(submission[id][field]["original"]):
 								if field in ("tool_id", "start", "end"):
 									content_object = UsageEvent.objects.get(id=id)
 								else:
@@ -943,11 +952,9 @@ def resolve_usage_event_contest(request):
 	dictionary['usage_event'] = usage_event
 	dictionary['contest_type'] = "Usage Event"
 
-	""" 
-	as an alternative to the clunky template-based generation, create the HTML here and pass as a string
-	This string will contain the form elements, but in order to easily preserve the csrf_token the form 
-	will be defined in the template
-	"""
+	# as an alternative to the clunky template-based generation, create the HTML here and pass as a string
+	# This string will contain the form elements, but in order to easily preserve the csrf_token the form 
+	# will be defined in the template
 	usage_event_type = ContentType.objects.get_for_model(usage_event)
 	contest_transaction = ContestTransaction.objects.get(content_type__pk=usage_event_type.id, object_id=usage_event.id, contest_resolved=False)
 	dictionary['contest_transaction'] = contest_transaction
@@ -1003,6 +1010,12 @@ def resolve_usage_event_contest(request):
 					if cd.field_name == "project_percent":
 						project_data[uep.id]["proposed_project_percent"] = cd.proposed_value
 
+					if cd.field_name == "sample_num":
+						project_data[uep.id]["proposed_sample_num"] = int(cd.proposed_value)
+
+					if cd.field_name == "cost_per_sample":
+						project_data[uep.id]["proposed_cost_per_sample"] = cd.proposed_value
+
 			if "delete_flag" not in project_data[uep.id]:
 				project_data[uep.id]["delete_flag"] = False
 
@@ -1024,6 +1037,10 @@ def resolve_usage_event_contest(request):
 				newdata[ctnd.field_group][ctnd.field_name] = User.objects.get(id=int(ctnd.field_value))
 			if ctnd.field_name == "chosen_project":
 				newdata[ctnd.field_group][ctnd.field_name] = Project.objects.get(id=int(ctnd.field_value))
+			if ctnd.field_name == "sample_num":
+				newdata[ctnd.field_group][ctnd.field_name] = ctnd.field_value
+			if ctnd.field_name == "cost_per_sample":
+				newdata[ctnd.field_group][ctnd.field_name] = ctnd.field_value
 
 		dictionary['newdata'] = newdata
 
@@ -1323,6 +1340,12 @@ def save_contest_resolution(request):
 				if field_name == "tool_id":
 					c.content_object.tool = Tool.objects.get(id=int(c.proposed_value))
 
+				if field_name == "cost_per_sample":
+					c.content_object.cost_per_sample = float(c.proposed_value)
+
+				if field_name == "sample_num":
+					c.content_object.sample_num = int(c.proposed_value)
+
 				if no_charge_flag is not None:
 					if int(no_charge_flag) == 1:
 						c.content_object.no_charge_flag = True
@@ -1388,6 +1411,12 @@ def save_contest_resolution(request):
 					if field_name == "tool_id":
 						content_object.tool = Tool.objects.get(id=int(value))
 
+					if field_name == "cost_per_sample":
+						content_object.cost_per_sample = float(value)
+
+					if field_name == "sample_num":
+						content_object.sample_num = int(value)
+
 				content_object.updated = timezone.now()
 				content_object.save()
 
@@ -1412,4 +1441,5 @@ def save_contest_resolution(request):
 @require_GET
 def contest_transaction_entry(request):
 	entry_number = int(request.GET['entry_number'])
-	return render(request, 'contest_transaction_entry.html', {'entry_number': entry_number})
+	cost_per_sample_run = int(request.GET['cost_per_sample_run'])
+	return render(request, 'contest_transaction_entry.html', {'entry_number': entry_number, 'cost_per_sample_run': cost_per_sample_run })
