@@ -1,6 +1,7 @@
 import requests
 
 from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotFound, HttpResponseServerError, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -35,6 +36,18 @@ def pulse_interlock(request, interlock_id=None):
 def pulse_all(request):
 	pulse_interlocks()
 	return HttpResponse("Pulse all interlocks initiated.  All interlocks not currently in use will be pulsed.")
+
+@login_required
+@require_GET
+def open_interlock(request, interlock_id=None):
+	try:
+		ilock = Interlock.objects.get(id=interlock_id)
+		ilock.unlock()
+		return HttpResponse("The interlock was opened")
+	except Interlock.DoesNotExist:
+		return HttpResponeBadRequest("No interlock was found matching your request.")
+
+
 
 """
 @staff_member_required(login_url=None)

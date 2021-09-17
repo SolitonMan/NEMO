@@ -267,7 +267,10 @@
 						<textarea name="operator_comment" id="operator_comment" onblur="save_operator_comment()" rows="6" cols="50" placeholder="Please enter a brief description of the work performed, or make any notes you'd find useful for reference">{% if current_usage_event.operator_comment is not None %}{{ current_usage_event.operator_comment }}{% endif %}</textarea>
 					</div>
 					{% endwith %}
-					<div id="stop_wrapper" style="display:inline-block" data-toggle="tooltip" data-placement="bottom" title="Please answer the required questions (above) to proceed"><button id="stop" class="btn btn-default" onclick="disable_tool('{% url 'disable_tool' tool.id %}'); return false"><span class="glyphicon glyphicon-stop"></span> Stop using the {{ tool.name }}</button></div><p>
+					<div id="stop_wrapper" style="display:inline-block" data-toggle="tooltip" data-placement="bottom" title="Please answer the required questions (above) to proceed">
+						<button id="stop" class="btn btn-default" onclick="disable_tool('{% url 'disable_tool' tool.id %}'); return false"><span class="glyphicon glyphicon-stop"></span> Stop using the {{ tool.name }}</button>
+						<button id="pulse" class="btn btn-danger" onclick="pulse_interlock({{ tool.interlock.id }});return false;" title="Use this button if the interlock for the {{ tool.name }} failed to open when you started your session"><span class="glyphicon glyphicon-exclamation-sign"></span> Open Interlock</button>
+					</div><p>
 				{% endif %}
 			{% else %}
 				{% if user.is_staff %}
@@ -628,6 +631,19 @@
 			$("#auto_logout_feature").hide();
 			$("#set_for_autologout").prop("checked", false);
 			$("#autologout_endtime").val("");
+		}
+	}
+
+	function pulse_interlock(interlock_id)
+	{
+		if (isNaN(interlock_id) || interlock_id == '') {
+			alert("No interlock found for the {{ tool.name }}");
+			return false;
+		} else {
+			var url = "/open_interlock/" + interlock_id + "/";
+			var contents = {};
+		
+			ajax_get(url, contents, null, null, null, null);
 		}
 	}
 

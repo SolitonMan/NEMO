@@ -19,7 +19,7 @@ p {
 	<p>The individual transaction entries have been color-coded for identification.  The transaction types and associated colors are as follows:<br/>
 		<ul>
 			<li style="background-color: rgb(182,216,255)">Tool Use</li>
-			<li style="background-color: rgb(203,206,202)">Staff Charge</li>
+			<li style="background-color: rgb(237,237,237)">Staff Charge</li>
 			<li style="background-color: rgb(253,225,227)">Area Access Record</li>
 			<li style="background-color: rgb(247,247,146)">Consumable Withdraw</li>
 		</ul>
@@ -152,7 +152,7 @@ th {
 	</thead>
 	<tbody id="transaction_data">
 {% for key, value in transactions.items %}
-	<tr class="{{ value.class }} {% if value.type == "Tool Use" %}tool-use{% endif %} {% if value.type == "Staff Charge" %}staff-charge{% endif %} {% if value.type == "Area Access" %}area-access{% endif %} {% if value.type == "Withdraw" %}withdraw{% endif %}" id="transaction_row_{{ forloop.counter }}" style="background-color: {% if value.type == "Tool Use"%}rgb(182,216,255);{% endif %}{% if value.type == "Staff Charge" %}rgb(203,206,202);{% endif %}{% if value.type == "Area Access" %}rgb(253,225,227);{% endif %}{% if value.type == "Withdraw" %}rgb(247,247,146);{% endif %}border: 2px solid #c0c0c0;">
+	<tr class="{{ value.class }} {% if value.type == "Tool Use" %}tool-use{% endif %} {% if value.type == "Staff Charge" %}staff-charge{% endif %} {% if value.type == "Area Access" %}area-access{% endif %} {% if value.type == "Withdraw" %}withdraw{% endif %}" id="transaction_row_{{ forloop.counter }}" style="background-color: {% if value.type == "Tool Use" and not value.validated and not value.contested %}rgb(182,216,255);{% endif %}{% if value.type == "Staff Charge" and not value.validated and not value.contested%}rgb(237,237,237);{% endif %}{% if value.type == "Area Access" and not value.validated and not value.contested %}rgb(253,225,227);{% endif %}{% if value.type == "Withdraw" and not value.validated and not value.contested %}rgb(247,247,146);{% endif %}border: 2px solid #c0c0c0;">
 		<td rowspan="2" style="width:40px; background-color: inherit;" title="ID={{ value.id }}">
 			<b>{% if value.ad_hoc_created %}Ad Hoc {% endif %}{{ value.type }}</b>
 			<br/>
@@ -242,7 +242,7 @@ th {
 			</table>
 		</td>
 	</tr>
-	<tr class="{{ value.class }} {% if value.type == "Tool Use" %}tool-use{% endif %} {% if value.type == "Staff Charge" %}staff-charge{% endif %} {% if value.type == "Area Access" %}area-access{% endif %} {% if value.type == "Withdraw" %}withdraw{% endif %}" id="transaction_row_{{ forloop.counter }}_customers" style="background-color: {% if value.type == "Tool Use"%}rgb(182,216,255);{% endif %}{% if value.type == "Staff Charge" %}rgb(203,206,202);{% endif %}{% if value.type == "Area Access" %}rgb(253,225,227);{% endif %}{% if value.type == "Withdraw" %}rgb(247,247,146);{% endif %}border: 2px solid #c0c0c0;">
+	<tr class="{{ value.class }} {% if value.type == "Tool Use" %}tool-use{% endif %} {% if value.type == "Staff Charge" %}staff-charge{% endif %} {% if value.type == "Area Access" %}area-access{% endif %} {% if value.type == "Withdraw" %}withdraw{% endif %}" id="transaction_row_{{ forloop.counter }}_customers" style="background-color: {% if value.type == "Tool Use" and not value.validated and not value.contested %}rgb(182,216,255);{% endif %}{% if value.type == "Staff Charge" and not value.validated and not value.contested %}rgb(237,237,237);{% endif %}{% if value.type == "Area Access" and not value.validated and not value.contested %}rgb(253,225,227);{% endif %}{% if value.type == "Withdraw" and not value.validated and not value.contested %}rgb(247,247,146);{% endif %}border: 2px solid #c0c0c0;">
 		<td style="padding: 20px; background-color: inherit;">
 			<table style="background-color: inherit;">
 			<tr style="background-color: inherit;">

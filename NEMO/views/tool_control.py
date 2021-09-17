@@ -372,7 +372,6 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge, billing_mod
 			new_staff_charge.related_usage_event = new_usage_event
 			if billing_mode:
 				new_staff_charge.cost_per_sample_run = True
-				new_staff_charge.no_charge_flag = True
 			new_staff_charge.save()
 
 			# create a staff_charge_project record
@@ -405,7 +404,6 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge, billing_mod
 				aar.staff_charge = new_staff_charge
 			if billing_mode:
 				aar.cost_per_sample_run = True
-				aar.no_charge_flag = True
 
 			aar.save()
 
@@ -548,7 +546,6 @@ def enable_tool_multi(request):
 				new_staff_charge.related_usage_event = new_usage_event
 				if billing_mode:
 					new_staff_charge.cost_per_sample_run = True
-					new_staff_charge.no_charge_flag = True
 				new_staff_charge.save()
 			else:
 				new_staff_charge = request.user.get_staff_charge()
@@ -636,7 +633,6 @@ def enable_tool_multi(request):
 				aar.staff_charge = new_staff_charge
 			if billing_mode:
 				aar.cost_per_sample_run = True
-				aar.no_charge_flag = True
 
 			aar.save()
 

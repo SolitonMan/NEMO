@@ -255,6 +255,7 @@ if settings.ALLOW_CONDITIONAL_URLS:
 		re_path(r'^interlocks/$', interlock.interlocks, name='interlocks'),
 		re_path(r'^pulse_interlock/(?P<interlock_id>\d+)/$', interlock.pulse_interlock, name='pulse_interlock'),
 		re_path(r'^pulse_all/$', interlock.pulse_all, name='pulse_all_interlocks'),
+		re_path(r'^open_interlock/(?P<interlock_id>\d+)/$', interlock.open_interlock, name='open_interlock'),
 
 		# User management:
 		re_path(r'^users/$', users.users, name='users'),

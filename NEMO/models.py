@@ -1232,7 +1232,7 @@ class Interlock(models.Model):
 			uri2 = 'http://' + str(self.card.server) + '/state.xml?relay2State=' + str(cmdst)
 			req2 = requests.get(uri2, timeout=3.0)
 
-			self.most_recent_reply = "Executed " + uri + " successfully."
+			self.most_recent_reply = "Executed " + uri + " successfully at " + str(timezone.now())
 			self.state = command_type
 			self.save()
 			return self.state == command_type
