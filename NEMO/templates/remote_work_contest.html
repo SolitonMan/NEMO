@@ -76,6 +76,7 @@
 					<tr id="row_{{ u.id }}">
 						<td>
 							<input type="checkbox" name="delete_customer__{{ u.id }}" id="delete_customer__{{ u.id }}" value="1" onclick="mark_for_delete({{ u.id }});" {% if not request.user.is_superuser and not request.user.is_staff %}disabled{% endif %}/>
+							<input type="hidden" id="original__chosen_project__{{ u.id }}" name="original__chosen_project__{{ u.id }}" value="{{ u.project.id }}" />
 						</td>
 						<td>
 							<input type="hidden" value="{{ u.customer.id }}" name="original__chosen_user__{{ u.id }}" id="original__chosen_user__{{ u.id }}" />
@@ -98,7 +99,6 @@
 								{% endfor %}
 							</select>
 							{% endif %}
-							<input type="hidden" id="original__chosen_project__{{ u.id }}" name="original__chosen_project__{{ u.id }}" value="{{ u.project.id }}" />
 						</td>
 						{% if usage_event.cost_per_sample_run %}
 						<td>
@@ -174,6 +174,7 @@
 					<tr id="row_{{ s.id }}">
 						<td>
 							<input type="checkbox" name="delete_customer__{{ s.id }}" id="delete_customer__{{ s.id }}" value="1" onclick="mark_for_delete({{ s.id }});" />
+							<input type="hidden" id="original__chosen_project__{{ s.id }}" name="original__chosen_project__{{ s.id }}" value="{{ s.project.id }}" />
 						</td>
 						<td>
 							<input type="button" class="btn btn-default" value="{{ s.customer }}" name="button__chosen_user__{{ s.id }}" id="button__chosen_user__{{ s.id }}" onclick="change_customer({{ s.id }});" />
@@ -195,7 +196,6 @@
 						<td>
 							<input type="text" class="form-control" name="proposed__project_percent__{{ s.id }}" id="proposed__project_percent__{{ s.id }}" value="{{ s.project_percent }}" />
 							<input type="hidden" id="original__project_percent__{{ s.id }}" name="original__project_percent__{{ s.id }}" value="{{ s.project_percent }}" />
-							<input type="hidden" id="original__chosen_project__{{ s.id }}" name="original__chosen_project__{{ s.id }}" value="{{ s.project.id }}" />
 						</td>
 					</tr>
 					{% endfor %}
@@ -247,6 +247,7 @@
 					<tr id="row_{{ a.id }}">
 						<td>
 							<input type="checkbox" name="delete_customer__{{ a.id }}" id="delete_customer__{{ a.id }}" value="1" onclick="mark_for_delete({{ a.id }});" {% if not request.user.is_superuser and not request.user.is_staff %}disabled{% endif %}/>
+							<input type="hidden" id="original__chosen_project__{{ a.id }}" name="original__chosen_project__{{ a.id }}" value="{{ a.project.id }}" />
 						</td>
 						<td>
 							<input type="hidden" value="{{ a.customer.id }}" name="original__chosen_user__{{ a.id }}" id="original__chosen_user__{{ a.id }}" />
@@ -273,7 +274,6 @@
 						<td>
 							<input type="text" class="form-control" name="proposed__project_percent__{{ a.id }}" id="proposed__project_percent__{{ a.id }}" value="{{ a.project_percent }}" />
 							<input type="hidden" id="original__project_percent__{{ a.id }}" name="original__project_percent__{{ a.id }}" value="{{ a.project_percent }}" />
-							<input type="hidden" id="original__chosen_project__{{ a.id }}" name="original__chosen_project__{{ a.id }}" value="{{ a.project.id }}" />
 						</td>
 					</tr>
 					{% endfor %}
@@ -550,6 +550,7 @@
 			$("#contest_reason").focus();
 			bSubmit = false;
 			bContinue = false;
+			bChanged = true;
 		}
 		if (bContinue) {
 			if ($("#contest_description").val() == "") {
@@ -557,6 +558,7 @@
 				$("#contest_description").focus();
 				bSubmit = false;
 				bContinue = false;
+				bChanged = true;
 			}
 		}
 
@@ -584,32 +586,35 @@
 		var orig_end = $("#original__end__{{ area_access_record.id }}");
 		{% endif %}
 
-		var prop_start_date = new Date(prop_start.val());
-		var prop_end_date = new Date(prop_end.val());
-
 		if (bContinue) {
-			if (prop_start_date == "") {
+			if (prop_start.val() == "") {
 				error_message = "The start date may not be blank";
 				prop_start.focus();
 				bSubmit = false;
 				bContinue = false;
+				bChanged = true;
 			}
 		}
 
 		if (bContinue) {
-			if (prop_end_date == "") {
+			if (prop_end.val() == "") {
 				error_message = "The end date may not be blank";
 				prop_end.focus();
 				bSubmit = false;
 				bContinue = false;
+				bChanged = true;
 			}
 		}
+
+		var prop_start_date = new Date(prop_start.val());
+		var prop_end_date = new Date(prop_end.val());
 
 		if (bContinue) {
 			if (prop_end_date <= prop_start_date) {
 				error_message = "The end date must be after the start date.  Please adjust your dates to correct this.";
 				bSubmit = false;
 				bContinue = false;
+				bChanged = true;
 			}
 		}
 
@@ -628,6 +633,7 @@
 							$(element).focus();
 							bSubmit = false;
 							bContinue = false;
+							bChanged = true;
 						} else {
 							s = "#original__chosen_user__" + $(element).prop("name").split("__")[2];
 							if ($(s).val() != $(element).val()) {
@@ -644,6 +650,7 @@
 				error_message = "There must be at least one customer.  Please adjust your submission, or cancel and restart if that would be easier.";
 				bSubmit = false;
 				bContinue = false;
+				bChanged = true;
 			}
 		}
 
@@ -656,6 +663,7 @@
 							$(element).focus();
 							bSubmit = false;
 							bContinue = false;
+							bChanged = true;
 						} else {
 							s = "#original__chosen_project__" + $(element).prop("name").split("__")[2];
 
@@ -679,6 +687,7 @@
 				error_message = "There must be at least one project selected for this transaction.  Please adjust your submission, or cancel and restart if that would be easier.";
 				bSubmit = false;
 				bContinue = false;
+				bChanged = true;
 			}
 		}
 
@@ -691,6 +700,7 @@
 						$(element).focus();
 						bSubmit = false;
 						bContinue = false;
+						bChanged = true;
 					} else {
 						s = "#original__sample_num__" + $(element).prop("name").split("__")[2];
 						if ($(s).val() != $(element).val()) {
@@ -708,6 +718,7 @@
 						$(element).focus();
 						bSubmit = false;
 						bContinue = false;
+						bChanged = true;
 					} else {
 						s = "#original__cost_per_sample__" + $(element).prop("name").split("__")[2];
 						if ($(s).val() != $(element).val()) {
@@ -729,6 +740,7 @@
 							$(element).focus();
 							bSubmit = false;
 							bContinue = false;
+							bChanged = true;
 						} else {
 							percent += parseFloat($(element).val());
 
@@ -748,6 +760,7 @@
 					error_message = "Percent totals must equal 100";
 					bSubmit = false;
 					bContinue = false;
+					bChanged = true;
 				}
 			}
 		}
@@ -766,6 +779,7 @@
 							$(element).focus();
 							bSubmit = false;
 							bContinue = false;
+							bChanged = true;
 						} else {
 							s = "#original__area__" + $(element).prop("name").split("__")[2];
 							if ($(s).val() != $(element).val()) {
@@ -788,6 +802,7 @@
 				quantity.focus();
 				bSubmit = false;
 				bContinue = false;
+				bChanged = true;
 			}
 		}
 
@@ -797,6 +812,7 @@
 				quantity.focus();
 				bSubmit = false;
 				bContinue = false;
+				bChanged = true;
 			}
 		}
 
@@ -815,6 +831,7 @@
 							$(element).focus();
 							bSubmit = false;
 							bContinue = false;
+							bChanged = true;
 						} else {
 							s = "#original__chosen_user__" + $(element).prop("name").split("__")[2];
 
@@ -832,6 +849,7 @@
 				error_message = "There must be at least one customer.  Please adjust your submission, or cancel and restart if that would be easier.";
 				bSubmit = false;
 				bContinue = false;
+				bChanged = true;
 			}
 		}
 
@@ -844,6 +862,7 @@
 							$(element).focus();
 							bSubmit = false;
 							bContinue = false;
+							bChanged = true;
 						} else {
 							s = "#original__chosen_project__" + $(element).prop("name").split("__")[2];
 
@@ -867,6 +886,7 @@
 				error_message = "There must be at least one project chosen for this transaction.  Please adjust your submission, or cancel and restart if that would be easier.";
 				bSubmit = false;
 				bContinue = false;
+				bChanged = true;
 			}
 		}
 
@@ -881,6 +901,7 @@
 							$(element).focus();
 							bSubmit = false;
 							bContinue = false;
+							bChanged = true;
 						} else {
 							percent += parseFloat($(element).val());
 

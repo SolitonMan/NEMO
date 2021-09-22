@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from logging import getLogger
 from schedule import Scheduler
 import threading
 import time
@@ -8,27 +9,33 @@ from NEMO.models import Interlock, Tool, UsageEvent, StaffCharge, AreaAccessReco
 #end_run = None
 
 def pulse_interlocks():
-	# print("pulse_interlocks() called")
+	logger = getLogger(__name__)
+	#logger.critical("pulse_interlocks() called at " + str(datetime.now()))
+	#print("pulse_interlocks() called at " + str(datetime.now()))
 
-	d = datetime.now()
-	d1 = d - timedelta(minutes=1)
-	i = 8
+	#d = datetime.now()
+	#d1 = d - timedelta(minutes=1)
+	#i = 8
 
-	while i < 21:
+	#while i < 21:
 
-		t = datetime(d.year, d.month, d.day, i, 0, 0)
-		if d1 < t < d:
-			print("pulse_interlocks() called at " + str(d))
+	#	t = datetime(d.year, d.month, d.day, i, 0, 0)
+	#	if d1 < t < d:
+	#		print("pulse_interlocks() called at " + str(d))
 
-		i += 1
+	#	i += 1
 
 	tools = Tool.objects.all()
 	for t in tools:
 		if not t.in_use():
 			if t.interlock is not None:
 				t.interlock.pulse()
-	#	else:
-	#		print(t.name + " has been detected as being in use")
+			#else:
+				#logger.critical(str(t.name) + " has no interlock assigned")
+				#print(str(t.name) + " has no interlock assigned")
+		#else:
+			#logger.critical(str(t.name) + " has been detected as being in use")
+			#print(str(t.name) + " has been detected as being in use")
 
 
 def daily_validate_transactions():

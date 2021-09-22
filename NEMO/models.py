@@ -1259,16 +1259,18 @@ class Interlock(models.Model):
 		uri2 = 'http://' + str(self.card.server) + '/state.xml?relay2State=2'
 
 		try:
-			req1 = requests.get(uri1, timeout=0.01)
-			req2 = requests.get(uri2, timeout=0.01)
+			req1 = requests.get(uri1, timeout=3.0)
+			req2 = requests.get(uri2, timeout=3.0)
 
-			self.most_recent_reply = "Pulsed " + uri1 + " successfully."
+			self.most_recent_reply = "Pulsed " + uri1 + " successfully at " + str(timezone.now()) 
 			# print(self.most_recent_reply)
 			self.state = 2
 			self.save()
 
 		except requests.exceptions.RequestException as e:
 			#print(e)
+			self.most_recent_reply = str(e)
+			self.save()
 			return False
 			
 		return self.state == 2
