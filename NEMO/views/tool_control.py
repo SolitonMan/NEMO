@@ -1057,7 +1057,7 @@ def ten_most_recent_past_comments_and_tasks(request, tool_id):
 @staff_member_required(login_url=None)
 def create_usage_event(request):
 	if request.user.core_ids.all().count() > 0 and not request.user.is_superuser:
-		tools = Tool.objects.filter(core_id__in=request.user.core_ids.all())
+		tools = Tool.objects.filter(Q(core_id__in=request.user.core_ids.all()) | Q(id__in=request.user.qualifications.all()))
 	else:
 		tools = Tool.objects.all()
 

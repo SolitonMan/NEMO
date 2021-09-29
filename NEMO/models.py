@@ -795,6 +795,7 @@ class Project(models.Model):
 	owner = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, help_text="The owner or person responsible for the Project (Internal Order or WBS Element in SIMBA) as imported via SIMBA download nightly", related_name="project_owner")
 	organization = models.ForeignKey('Organization', on_delete=models.SET_NULL, null=True, blank=True)
 	bill_to =  models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, help_text="The person to contact with an invoice", related_name="bill_to_contact")
+	bill_to_alt = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, help_text="The alternate person to contact with an invoice", related_name="bill_to_contact_alt")
 	rate_type_id = models.PositiveIntegerField(null=True, blank=True)
 	fa_type_id = models.PositiveIntegerField(null=True, blank=True)
 	billing_type = models.ForeignKey('BillingType', on_delete=models.SET_NULL, null=True, blank=True, help_text="This field will replace the rate_type_id")

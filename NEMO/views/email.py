@@ -252,11 +252,14 @@ def send_broadcast_email(request):
 	if form.cleaned_data['copy_me']:
 		users += [request.user.email]
 	try:
-		email = EmailMultiAlternatives(subject, from_email=request.user.email, bcc=set(users))
 		content = content.replace("\r\n\r\n", "</p><p>")
 		content = content.replace("\r\n", "<br />")
-		email.attach_alternative(content, 'text/html')
-		email.send()
+
+		for u in users:
+			#email = EmailMultiAlternatives(subject, from_email=request.user.email, bcc=set(users))
+			email = EmailMultiAlternatives(subject, from_email=request.user.email, u)
+			email.attach_alternative(content, 'text/html')
+			email.send()
 	except SMTPException as error:
 		error_message = 'NEMO was unable to send the email through the email server. The error message that NEMO received is: ' + str(error)
 		logger.exception(error_message)
