@@ -5,6 +5,9 @@
 	<h1>
 		Users
 	</h1>
+	<p>
+	Users displayed with a <span style="background-color: #d0d0d0;">grey background</span> are inactive.
+	</p>
 	<div class="row">
 		<div class="col-md-4">
 			<input id="search" type="text" placeholder="Search for a user" class="form-control" autofocus>
@@ -48,7 +51,7 @@
 		</thead>
 		<tbody id="user_data">
 	{% for u in users %}
-		<tr>
+		<tr {% if not u.is_active %}style="background-color: #d0d0d0;"{% endif %}>
 			<td>{{ u.last_name }}</td>
 			<td>{{ u.first_name }}</td>
 			<td><a href="{% url 'create_or_modify_user' u.id %}">{{ u.username }}</a></td>

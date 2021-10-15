@@ -205,9 +205,16 @@
 		</div>
 		{% endif %}
 		<div class="form-group">
+			{% if not request.user.is_superuser %}
+			<label class="control-label col-sm-2" for="project-list">Projects</label>
+			<div id="project-list" class="col-sm-4">
+				This user has no assigned projects.
+			</div>
+			{% else %}
 			<div id="project-list" class="col-sm-offset-2 col-sm-4">
 				This user has no assigned projects.
 			</div>
+			{% endif %}
 		</div>
 		<div class="form-group">
 			<label class="control-label col-sm-2" for="add_a_tool_qualification">Tool qualifications</label>
@@ -288,7 +295,7 @@
 		{
 			$(this).typeahead('val', '').focus();
 			if(dataset_name === 'projects')
-				add_project(search_selection.name + ' - ' + search_selection.owner, search_selection.id);
+				add_project(search_selection.name + ' - ' + search_selection.owner + ' of ' + search_selection.organization, search_selection.id);
 			else if(dataset_name === 'tools')
 				add_tool_qualification(search_selection.name, search_selection.id);
 		}
@@ -312,14 +319,14 @@
 		{
 			$('[data-toggle="tooltip"]').tooltip();
 			$("#access_expiration").datetimepicker({format: 'MM/DD/YYYY'});
-			$('#add_a_project').autocomplete('projects', on_search_selection, {% json_search_base_with_extra_fields projects '__str__' 'owner' %});
+			$('#add_a_project').autocomplete('projects', on_search_selection, {% json_search_base_with_extra_fields projects '__str__' 'owner' 'organization' %});
 			$('#add_a_tool_qualification').autocomplete('tools', on_search_selection, {{ tools|json_search_base }});
 			{% if form.instance.id %} {# Only look for projects and qualifications if this is an existing user (and not a new user). #}
 				{% for project in form.instance.projects.all %}
 					{% if project.active %}
-					add_project('{{ project }} - {{ project.owner }}', {{ project.id }});
+					add_project('{{ project }} - {{ project.owner }} of {{ project.organization }}', {{ project.id }});
 					{% else %}
-					add_project('<span style="background-color: #f0f0f0;">{{ project }} - {{ project.owner }}</span>', {{ project.id }});
+					add_project('<span style="background-color: #f0f0f0;">{{ project }} - {{ project.owner }} of {{ project.organization }}</span>', {{ project.id }});
 					{% endif %}
 				{% endfor %}
 				{% for tool in form.instance.qualifications.all %}

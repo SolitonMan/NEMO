@@ -4,14 +4,16 @@ from smtplib import SMTPException
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group
-from django.core.mail import EmailMultiAlternatives
+from django.core import mail
 from django.core.validators import validate_email
 from django.db.models import Q
 from django.db.models.functions import Length
 from django.http import HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.template import Template, Context
+from django.template.loader import render_to_string
 from django.utils import timezone
+from django.utils.html import strip_tags
 from django.views.decorators.http import require_GET, require_POST
 
 from NEMO.forms import EmailBroadcastForm
@@ -219,21 +221,22 @@ def send_broadcast_email(request):
 	if not get_media_file_contents('generic_email.html'):
 		return HttpResponseBadRequest('Generic email template not defined. Visit the NEMO customizable_key_values page to upload a template.')
 	recipients = request.POST.getlist('recipient', None)
-	form = EmailBroadcastForm(request.POST)
-	if not form.is_valid():
-		return render(request, 'email/compose_email.html', {'form': form})
+	title = request.POST.get('title')
+	#form = EmailBroadcastForm(request.POST)
+	#if not form.is_valid():
+		#return render(request, 'email/compose_email.html', {'form': form})
 	dictionary = {
-		'title': form.cleaned_data['title'],
-		'greeting': form.cleaned_data['greeting'],
-		'contents': form.cleaned_data['contents'],
-		'template_color': form.cleaned_data['color'],
+		'title': title.upper(),#  form.cleaned_data['title'],
+		'greeting': request.POST.get('greeting'),#  form.cleaned_data['greeting'],
+		'contents': request.POST.get('contents'),#  form.cleaned_data['contents'],
+		'template_color': request.POST.get('color'),#  form.cleaned_data['color'],
 	}
 	content = get_media_file_contents('generic_email.html')
 	content = Template(content).render(Context(dictionary))
 	users = None
-	audience = form.cleaned_data['audience']
-	selection = form.cleaned_data['selection']
-	active_choice = form.cleaned_data['only_active_users']
+	audience = request.POST.get('audience'),#  form.cleaned_data['audience']
+	selection = int(request.POST.get('selection')),#  form.cleaned_data['selection']
+	active_choice = request.POST.get('only_active_users'),#  form.cleaned_data['only_active_users']
 	try:
 		users = User.objects.filter(id__in=recipients)
 
@@ -247,9 +250,11 @@ def send_broadcast_email(request):
 	if not users:
 		dictionary = {'error': 'The audience you specified is empty. You must send the email to at least one person.'}
 		return render(request, 'email/compose_email.html', dictionary)
-	subject = form.cleaned_data['subject']
+	subject = request.POST.get('subject')#  form.cleaned_data['subject']
+	if subject == '' or subject is None:
+		subject = 'LEO System Email from ' + str(request.user)
 	users = [x.email for x in users]
-	if form.cleaned_data['copy_me']:
+	if request.POST.get('copy_me'):#  form.cleaned_data['copy_me']:
 		users += [request.user.email]
 	try:
 		content = content.replace("\r\n\r\n", "</p><p>")
@@ -257,9 +262,11 @@ def send_broadcast_email(request):
 
 		for u in users:
 			#email = EmailMultiAlternatives(subject, from_email=request.user.email, bcc=set(users))
-			email = EmailMultiAlternatives(subject, from_email=request.user.email, u)
-			email.attach_alternative(content, 'text/html')
-			email.send()
+			#email = EmailMessage(subject, from_email=request.user.email, to=set(u))
+			#email.attach_alternative(content, 'text/html')
+			#email.send()
+			mail.send_mail(subject, strip_tags(content), request.user.email, [u], html_message=content)
+
 	except SMTPException as error:
 		error_message = 'NEMO was unable to send the email through the email server. The error message that NEMO received is: ' + str(error)
 		logger.exception(error_message)

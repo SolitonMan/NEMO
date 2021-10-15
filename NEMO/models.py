@@ -179,17 +179,23 @@ class User(models.Model):
 		send_mail(subject=subject, message='', from_email=from_email, recipient_list=[self.email], html_message=message)
 
 	def get_full_name(self):
-		return self.first_name + ' ' + self.last_name + ' (' + self.username + ')'
+		fname = ""
+
+		if not self.is_active:
+			fname += "[INACTIVE] "
+
+		fname += self.first_name + ' ' + self.last_name + ' (' + self.username + ')'
+		return fname
 
 	def get_short_name(self):
 		return self.first_name
 
 	def in_area(self):
-		return AreaAccessRecord.objects.filter(customer=self, staff_charge=None, end=None, active_flag=True).exists()
+		return AreaAccessRecord.objects.filter(user=self, end=None, active_flag=True).exists()
 
 	def area_access_record(self):
 		try:
-			return AreaAccessRecord.objects.get(customer=self, staff_charge=None, end=None)
+			return AreaAccessRecord.objects.get(user=self, end=None)
 		except AreaAccessRecord.DoesNotExist:
 			return None
 
@@ -820,8 +826,8 @@ class Project(models.Model):
 
 		s += '[' + str(self.project_number) + '] ' + str(self.application_identifier) + ' [' + str(self.get_project()) + ']'
 
-		if self.account is not None:
-			s += '[IBIS:' + str(self.account.ibis_account) + ']'
+		#if self.account is not None:
+		#	s += '[IBIS:' + str(self.account.ibis_account) + ']'
 
 		return s
 

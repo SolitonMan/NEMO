@@ -9,7 +9,7 @@
 	<h1>Compose an email</h1>
 	{% if generic_email_sample %}
 		<div class="row">
-			<form action="{% url 'send_broadcast_email' %}" method="post" id="compose_email">
+			<form action="{% url 'send_broadcast_email' %}" method="post" id="compose_email" onsubmit="return on_submit();">
 				{% csrf_token %}
 				<div class="col-sm-6">
 					<h3>Recipients</h3>
@@ -53,7 +53,7 @@
 					<input type="hidden" name="audience" value="{{ audience }}">
 					<input type="hidden" name="selection" value="{{ selection }}">
 					<div class="form-group">
-						<input type="text" name="subject" class="form-control" placeholder="Subject line" autofocus>
+						<input type="text" id="subject" name="subject" class="form-control" placeholder="Subject line" autofocus>
 					</div>
 					<div class="form-group">
 						Title background color:
@@ -83,13 +83,13 @@
 						</div>
 					</div>
 					<div class="form-group">
-						<input type="text" name="title" class="form-control" style="text-transform:uppercase" placeholder="Title (always uppercase)">
+						<input type="text" id="title" name="title" class="form-control" style="text-transform:uppercase" placeholder="Title (always uppercase)">
 					</div>
 					<div class="form-group">
-						<input type="text" name="greeting" class="form-control" placeholder="Greeting">
+						<input type="text" id="greeting" name="greeting" class="form-control" placeholder="Greeting">
 					</div>
 					<div class="form-group">
-						<textarea class="form-control" name="contents" rows="6" placeholder="What would you like to say?"></textarea>
+						<textarea class="form-control" id="contents" name="contents" rows="6" placeholder="What would you like to say?"></textarea>
 					</div>
 					<input type="submit" class="btn btn-success" value="Send">
 					<div style="height:50px"></div>
@@ -121,6 +121,16 @@
 			var s = "#rec_" + id;
 			$(s).next().remove();
 			$(s).remove();
+		}
+		function on_submit() 
+		{
+			if ($("#contents").val() == '') {
+				alert("Please include a message");
+				$("#contents").focus();
+				return false;
+			}
+
+			return true;
 		}
 		</script>
 	{% else %}

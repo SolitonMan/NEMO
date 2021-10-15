@@ -325,7 +325,7 @@ function matcher(items, search_fields)
 {
 	$.fn.autocomplete = function(dataset_name, select_callback, items_to_search)
 	{
-		let search_fields = ['name', 'application_identifier'];
+		let search_fields = ['name', 'application_identifier', 'owner', 'organization'];
 		let datasets =
 		{
 				source: matcher(items_to_search, search_fields),
@@ -341,6 +341,13 @@ function matcher(items, search_fields)
 					result += '<br><span style="font-size:small; font-weight:bold; color:#bbbbbb">' + data['type'] + '</span>';
 				if(data['application_identifier'])
 					result += '<span style="font-size:small; font-weight:bold; color:#bbbbbb" class="pull-right">' + data['application_identifier'] + '</span>';
+
+				if(data['owner'])
+					result += '<span style="font-size:small; font-weight:bold; color:#bbbbbb" class="pull-right">' + data['owner'] + '</span>';
+
+				//if(data['organization'])
+					//result += '<span style="font-size:small; font-weight:bold; color:#bbbbbb" class="pull-right">' + data['organization'] + '</span>';
+
 				return result;
 			}
 		};

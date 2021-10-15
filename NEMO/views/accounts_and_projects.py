@@ -52,7 +52,7 @@ def accounts_and_projects(request, kind=None, identifier=None):
 		'account': account,
 		'account_list': account_list,
 		'accounts_and_projects': accounts_and_projects,
-		'users': User.objects.all(),
+		'users': User.objects.filter(is_active=True),
 		'projects': projects,
 		'user_delegate': user_delegate,
 	}

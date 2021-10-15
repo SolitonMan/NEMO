@@ -19,7 +19,7 @@ def status_dashboard(request):
 	if interest is None:
 		dictionary = {
 			'tool_summary': create_tool_summary(request),
-			'nanofab_occupants': AreaAccessRecord.objects.filter(end=None, staff_charge=None, active_flag=True).prefetch_related('customer', 'project', 'area'),
+			'nanofab_occupants': AreaAccessRecord.objects.filter(end=None, active_flag=True).prefetch_related('customer', 'project', 'area', 'user'),
 			'user_current_logins': request.user.in_area()
 		}
 		if request.user.is_superuser:
@@ -42,7 +42,7 @@ def status_dashboard(request):
 		return render(request, 'status_dashboard/tools.html', dictionary)
 	elif interest == "occupancy":
 		dictionary = {
-			'nanofab_occupants': AreaAccessRecord.objects.filter(end=None, staff_charge=None, active_flag=True).prefetch_related('customer', 'project', 'area'),
+			'nanofab_occupants': AreaAccessRecord.objects.filter(end=None, active_flag=True).prefetch_related('customer', 'project', 'area', 'user'),
 		}
 		return render(request, 'status_dashboard/occupancy.html', dictionary)
 

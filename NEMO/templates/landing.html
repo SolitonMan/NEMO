@@ -98,6 +98,7 @@
 					</a>
 				{% endfor %}
 				{% if user.in_area %}
+					{% if not user.charging_staff_time %}
 					{% with user.active_project_count as active_project_count %}
 						{% if active_project_count > 1 %}<a href="{% url 'change_project' %}" style="text-decoration: none">{% endif %}
 						<div class="alert alert-info">
@@ -108,8 +109,10 @@
 						</div>
 						{% if active_project_count > 1 %}</a>{% endif %}
 					{% endwith %}
+					{% endif %}
 						<div class="alert alert-info" onclick="force_user_out_of_the_area('{% url 'force_area_logout' user.id %}')">
 						You are logged into the <b>{{ user.area_access_record.area|lower }}</b>.  Click here to log out of the area.
+						</div>
 				{% endif %}
 				{% if self_log_in %}
 					<a href="{% url 'self_log_in' %}" style="text-decoration: none">
