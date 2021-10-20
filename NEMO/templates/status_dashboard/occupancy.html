@@ -25,13 +25,26 @@
 				{% for o in area.list %}
 					<tr>
 						<td>
-							{% if user.is_staff %}
-								<span class="glyphicon glyphicon-remove-circle grey pointer" onclick="force_user_out_of_the_area('{% url 'force_area_logout' o.user.id %}')" title="Force {{ o.user }} to log out of the {{ o.area }}"></span>
-							{% endif %}
+							{% if user.is_staff and o.user.id is not None %}
+							<span class="glyphicon glyphicon-remove-circle grey pointer" onclick="force_user_out_of_the_area('{% url 'force_area_logout' o.user.id %}')" title="Force {{ o.user }} to log out of the {{ o.area }}"></span>
 							<span {% if o.user.is_staff %}class="success-highlight"{% endif %}>{{ o.user.first_name }} {{ o.user.last_name }}</span>
+							{% elif user.is_staff and o.customer.id is not None%}
+							<span class="glyphicon glyphicon-remove-circle grey pointer" onclick="force_user_out_of_the_area('{% url 'force_area_logout' o.customer.id %}')" title="Force {{ o.customer }} to log out of the {{ o.area }}"></span>
+							<span {% if o.customer.is_staff %}class="success-highlight"{% endif %}>{{ o.customer.first_name }} {{ o.customer.last_name }}</span>
+							{% endif %}
 						</td>
 						<td>{{ o.start|date:"l, M jS @ g:i A" }}</td>
-						<td>{% if o.project is not None %}{{ o.project }}{% else %}Unavailable{%endif%}</td>
+						<td>
+							{% if o.project is not None %}
+							{{ o.project }}
+							{% else %}
+							{% for aarp in aar_projects %}
+								{% if o == aarp.area_access_record %}
+								<p>{{ aarp.project }}</p>
+								{% endif %}
+							{% endfor %}
+							{%endif%}
+						</td>
 					</tr>
 				{% endfor %}
 				</tbody>

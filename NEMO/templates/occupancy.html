@@ -19,9 +19,19 @@
 			<tbody>
 			{% for o in occupants %}
 				<tr>
-					<td><span {% if o.customer.is_staff %}class="success-highlight"{% endif %}>{{ o.customer.first_name }} {{ o.customer.last_name }}</span></td>
+					<td><span {% if o.user.is_staff %}class="success-highlight"{% elif o.customer.is_staff %}class="success-highlight"{% endif %}>{% if o.user is not None %}{{ o.user.first_name }} {{ o.user.last_name }}{% else %}{{ o.customer.first_name }} {{ o.customer.last_name }}{% endif %}</span></td>
 					<td>{{ o.start|date:"l @ g:i A" }}</td>
-					<td>{{ o.project }}</td>
+					<td>
+					{% if o.project is not None %}
+						{{ o.project }}
+					{% else %}
+						{% for aarp in aar_projects %}
+							{% if o == aarp.area_access_record %}
+							<p>{{ aarp.project }}</p>
+							{% endif %}
+						{% endfor %}
+					{% endif %}
+					</td>
 				</tr>
 			{% endfor %}
 			</tbody>

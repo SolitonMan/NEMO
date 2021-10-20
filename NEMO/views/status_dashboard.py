@@ -5,7 +5,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_GET
 
 from NEMO.decorators import disable_session_expiry_refresh
-from NEMO.models import Area, AreaAccessRecord, Resource, ScheduledOutage, Task, Tool, UsageEvent
+from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, Resource, ScheduledOutage, Task, Tool, UsageEvent
 
 
 @login_required
@@ -41,8 +41,12 @@ def status_dashboard(request):
 		}
 		return render(request, 'status_dashboard/tools.html', dictionary)
 	elif interest == "occupancy":
+		aar = AreaAccessRecord.objects.filter(end=None, active_flag=True).prefetch_related('customer', 'project', 'area', 'user')
+		aarp = AreaAccessRecordProject.objects.filter(area_access_record__in=aar)
+
 		dictionary = {
-			'nanofab_occupants': AreaAccessRecord.objects.filter(end=None, active_flag=True).prefetch_related('customer', 'project', 'area', 'user'),
+			'nanofab_occupants': aar,
+			'aar_projects': aarp,
 		}
 		return render(request, 'status_dashboard/occupancy.html', dictionary)
 
@@ -119,8 +123,12 @@ def occupancy(request):
 	area = request.GET.get('occupancy')
 	if area is None or not Area.objects.filter(name=area).exists():
 		return HttpResponse()
+	aar = AreaAccessRecord.objects.filter(area__name=area, end=None, active_flag=True).prefetch_related('customer', 'user', 'project', 'area')
+	aarp = AreaAccessRecordProject.objects.filter(area_access_record__in=aar)
+
 	dictionary = {
 		'area': area,
-		'occupants': AreaAccessRecord.objects.filter(area__name=area, end=None, staff_charge=None, active_flag=True).prefetch_related('customer'),
+		'occupants': aar,
+		'aar_projects': aarp,
 	}
 	return render(request, 'occupancy.html', dictionary)
