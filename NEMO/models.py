@@ -1007,7 +1007,7 @@ class UsageEventProject(models.Model):
 	no_charge_flag = models.BooleanField(default=False)
 	active_flag = models.BooleanField(default=True)
 	sample_num = models.IntegerField(null=True, blank=True)
-	cost_per_sample = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+	cost_per_sample = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
 
 class Consumable(models.Model):

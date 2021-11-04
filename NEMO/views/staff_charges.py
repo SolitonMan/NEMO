@@ -442,6 +442,7 @@ def ad_hoc_staff_charge(request):
 			aar = AreaAccessRecord()
 			aar.area = Area.objects.get(id=area_id)
 			aar.staff_charge = charge
+			aar.user = request.user
 			aar.ad_hoc_created = True
 			aar.start = ad_hoc_start
 			aar.end = ad_hoc_end

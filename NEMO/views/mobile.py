@@ -7,8 +7,8 @@ from django.db.models import Q
 from django.http import HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
-from django.utils.dateparse import parse_time, parse_date
-from django.views.decorators.csrf import csrf_exempt
+from django.utils.dateparse import parse_time, parse_date, parse_datetime
+from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.views.decorators.http import require_GET, require_POST
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
@@ -56,10 +56,15 @@ def new_reservation(request, tool_id, date=None):
 		return render(request, 'mobile/no_active_projects.html')
 
 	tool = get_object_or_404(Tool, id=tool_id)
+	start_value = ''
+	end_value = ''
 	dictionary = tool.get_configuration_information(user=request.user, start=None)
 	dictionary['tool'] = tool
 	dictionary['date'] = date
 	dictionary['users'] = User.objects.filter(is_active=True, projects__active=True).distinct()
+	#dictionary['start_value'] = start_value
+	#dictionary['end_value'] = end_value
+	#dictionary['start_date'] = str(datetime.today().year) + '-' + str(datetime.today().month) + '-' + str(datetime.today().day) 
 
 	return render(request, 'mobile/new_reservation.html', dictionary)
 
@@ -68,38 +73,25 @@ def new_reservation(request, tool_id, date=None):
 @require_POST
 @csrf_exempt
 def make_reservation(request):
-	# due to unexplained CSRF failures for users try a workaround
-	http_origins = [
-		'https://rea-demo.mri.psu.edu:8080',
-		'https://rea-demo.mri.psu.edu:8888',
-		'https://leo.psu.edu'
-	]
-
-	if request.META.get('HTTP_ORIGIN') in http_origins:
-		origin = request.META.get('HTTP_ORIGIN')
-		referer = str(origin) + "/new_reservation/" + str(request.POST.get('tool_id')) + "/" + str(request.POST['date']) + "/"
-
-		if referer != request.META.get('HTTP_REFERER'):
-			return render(request, 'mobile/error.html', {'message': 'Unknown referer - request rejected'})
-	else:
-		return render(request, 'mobile/error.html', {'message': 'Unknown origin - request rejected'})
-
-	# Create a reservation for a user.
 	try:
-		date = parse_date(request.POST['date'])
-		start = localize(datetime.combine(date, parse_time(request.POST['start'])))
-		end = localize(datetime.combine(date, parse_time(request.POST['end'])))
+		#date = parse_date(request.POST['date'])
+		#start = localize(datetime.combine(date, parse_time(request.POST['start'])))
+		#end = localize(datetime.combine(date, parse_time(request.POST['end'])))
+		start = request.POST['start']
+		end = request.POST['end']
 	except:
 		return render(request, 'mobile/error.html', {'message': 'Please enter a valid date, start time, and end time for the reservation.'})
+	start_value = parse_datetime(start)
+	end_value = parse_datetime(end)
 	tool = get_object_or_404(Tool, id=request.POST.get('tool_id'))
 	# Create the new reservation:
 	reservation = Reservation()
 	reservation.user = request.user
 	reservation.creator = request.user
 	reservation.tool = tool
-	reservation.start = start
-	reservation.end = end
-	reservation.short_notice = determine_insufficient_notice(tool, start)
+	reservation.start = start_value
+	reservation.end = end_value
+	reservation.short_notice = determine_insufficient_notice(tool, start_value)
 	policy_problems, overridable = check_policy_to_save_reservation(request, None, reservation, request.user, False)
 
 	# If there was a problem in saving the reservation then return the error...

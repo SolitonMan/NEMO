@@ -1,13 +1,10 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load custom_tags_and_filters %}
 {% block title %}New reservation{% endblock %}
 {% block extrahead %}
-	<script type="text/javascript" src="{% static "pickadate/picker.js" %}"></script>
-	<script type="text/javascript" src="{% static "pickadate/picker.date.js" %}"></script>
-	<script type="text/javascript" src="{% static "pickadate/picker.time.js" %}"></script>
-	<link rel="stylesheet" type="text/css" href="{% static "pickadate/default.css" %}"/>
-	<link rel="stylesheet" type="text/css" href="{% static "pickadate/default.date.css" %}"/>
-	<link rel="stylesheet" type="text/css" href="{% static "pickadate/default.time.css" %}"/>
+	{% load static %}
+	<script type="text/javascript" src="{% static "datetimepicker/bootstrap-datetimepicker.js" %}"></script>
+	<link rel="stylesheet" type="text/css" href="{% static "datetimepicker/bootstrap-datetimepicker.css" %}"/>
 {% endblock %}
 {% block content %}
 	<h3>Create a new reservation</h3>
@@ -63,14 +60,11 @@
 			{% include 'calendar/configuration_helper.html' %}
 		{% endif %}
 		<h4>When would you like to reserve the {{ tool }}?</h4>
-		<div class="form-group">
-			<input type="text" id="date" name="date" class="form-control" placeholder="Choose a date">
+		<div class="datetimepicker-container">
+			<input type="text" id="start" name="start" placeholder="Choose a start time" />
 		</div>
-		<div class="form-group">
-			<input type="text" id="start" name="start" class="form-control" placeholder="Choose a start time">
-		</div>
-		<div class="form-group">
-			<input type="text" id="end" name="end" class="form-control" placeholder="Choose an end time">
+		<div class="datetimepicker-container">
+			<input type="text" id="end" name="end" placeholder="Choose an end time" />
 		</div>
 		<div class="form-group text-center" style="margin-top:40px">
 			<input type="submit" value="Create the reservation" class="btn btn-success">
@@ -78,8 +72,6 @@
 	</form>
 	<div style="height:350px"></div>
 	<script type="text/javascript">
-	{% load custom_tags_and_filters %}
-
 	function set_project(id)
 	{
 		if (id == "") return false;
@@ -236,9 +228,6 @@
 	
 	}
 
-	$('#date').pickadate({format: "dddd, mmmm d", formatSubmit: "yyyy-mm-dd", firstDay: 1, hiddenName: true, onStart: set_initial_date});
-	$('#start').pickatime({interval: 15, formatSubmit: "H:i", hiddenName: true});
-	$('#end').pickatime({interval: 15, formatSubmit: "H:i", hiddenName: true});
 	function set_initial_date()
 	{
 		if('{{ date }}')
@@ -248,6 +237,8 @@
 	function on_load()
 	{
 		add_customer();
+		$('#start').datetimepicker({format: 'YYYY-MM-DD HH:mm:ss'});
+		$('#end').datetimepicker({format: 'YYYY-MM-DD HH:mm:ss'});
 	}
 
 	$(on_load);

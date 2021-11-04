@@ -1238,6 +1238,7 @@ def save_usage_event(request):
 			if request.POST.get("operator_comment") is not None:
 				new_staff_charge.staff_member_comment = request.POST.get("operator_comment")
 			new_staff_charge.ad_hoc_created = True
+			new_staff_charge.related_usage_event = new_usage_event
 			new_staff_charge.save()
 
 			project_charges = {}
@@ -1254,6 +1255,9 @@ def save_usage_event(request):
 					if attribute == "chosen_user":
 						if value is not None and value != "":
 							project_charges[index].customer = User.objects.get(id=value)
+							if new_staff_charge.customer is None:
+								new_staff_charge.customer = User.objects.get(id=value)
+								new_staff_charge.save()
 						else:
 							new_staff_charge.delete()
 							new_usage_event.delete()
@@ -1263,6 +1267,9 @@ def save_usage_event(request):
 							cp = Project.objects.get(id=value)
 							if cp.check_date_range(new_usage_event.start, new_usage_event.end):
 								project_charges[index].project = Project.objects.get(id=value)
+								if new_staff_charge.project is None:
+									new_staff_charge.project = Project.objects.get(id=value)
+									new_staff_charge.save()
 							else:
 								msg = 'The project ' + str(cp.project_number) + ' cannot be used for a transaction with a date range of ' + str(new_usage_event.start) + ' to ' + str(new_usage_event.end) + ' because the project active date range is ' + str(cp.start_date) + ' to ' + str(cp.end_date)
 								new_staff_charge.delete()
@@ -1297,9 +1304,17 @@ def save_usage_event(request):
 			new_aar.comment = new_usage_event.operator_comment
 			new_aar.created = timezone.now()
 			new_aar.updated = timezone.now()
+			new_aar.user = request.user
+			new_aar.related_usage_event = new_usage_event
 			new_aar.save()
 
 			for p in project_events:
+				if new_aar.customer is None:
+					new_aar.customer = project_events[p].customer
+					new_aar.save()
+				if new_aar.project is None:
+					new_aar.project = project_events[p].project
+					new_aar.save()
 				aarp = AreaAccessRecordProject()
 				aarp.area_access_record = new_aar
 				aarp.customer = project_events[p].customer

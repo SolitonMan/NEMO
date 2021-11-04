@@ -31,6 +31,8 @@
 							{% elif user.is_staff and o.customer.id is not None%}
 							<span class="glyphicon glyphicon-remove-circle grey pointer" onclick="force_user_out_of_the_area('{% url 'force_area_logout' o.customer.id %}')" title="Force {{ o.customer }} to log out of the {{ o.area }}"></span>
 							<span {% if o.customer.is_staff %}class="success-highlight"{% endif %}>{{ o.customer.first_name }} {{ o.customer.last_name }}</span>
+							{% else %}
+							<span>{{ o.user.first_name }} {{ o.user.last_name }}</span>
 							{% endif %}
 						</td>
 						<td>{{ o.start|date:"l, M jS @ g:i A" }}</td>
