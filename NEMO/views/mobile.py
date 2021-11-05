@@ -79,8 +79,11 @@ def make_reservation(request):
 		#end = localize(datetime.combine(date, parse_time(request.POST['end'])))
 		start = request.POST['start']
 		end = request.POST['end']
+
+		if start is None or start == '' or end is None or end == '':
+			raise Exception()
 	except:
-		return render(request, 'mobile/error.html', {'message': 'Please enter a valid date, start time, and end time for the reservation.'})
+		return render(request, 'mobile/error.html', {'message': 'Please enter a valid start time and end time for the reservation.'})
 	start_value = parse_datetime(start)
 	end_value = parse_datetime(end)
 	tool = get_object_or_404(Tool, id=request.POST.get('tool_id'))
