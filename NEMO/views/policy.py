@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta, datetime, date, time
 
 from django.core.mail import send_mail
 from django.db.models import Q
@@ -6,7 +6,7 @@ from django.http import HttpResponse, HttpResponseBadRequest
 from django.template import Template, Context
 from django.utils import timezone
 
-from NEMO.models import Reservation, AreaAccessRecord, ScheduledOutage, PhysicalAccessLevel, User
+from NEMO.models import Reservation, AreaAccessRecord, ScheduledOutage, PhysicalAccessLevel, User, Tool, ProbationaryQualifications
 from NEMO.utilities import format_datetime
 from NEMO.views.customization import get_customization, get_media_file_contents
 
@@ -65,6 +65,16 @@ def check_policy_to_enable_tool(tool, operator, user, project, staff_charge, req
 	# The tool operator must not have a lock on usage
 	if operator.training_required:
 		return HttpResponseBadRequest("You are blocked from using all tools in the laboratory. Please complete the laboratory rules tutorial in order to use tools.")
+
+	if ProbationaryQualifications.objects.filter(tool=tool, user=operator).exists():
+		# check if user is probationary, and if they are running the tool within business hours
+		if ProbationaryQualifications.objects.filter(tool=tool, user=operator, probationary_user=True).exists():
+			business_start = time(8,0,0)
+			business_end = time(17,0,0)
+			current_time = timezone.now().time()
+			intDay = timezone.now().weekday()
+			if (intDay == 5 or intDay == 6 or current_time < business_start or current_time > business_end) and not operator.is_staff:
+				return HttpResponseBadRequest("You are a probationary user of the {}.  You may only operate the tool during normal business hours of 8 am to 5 pm Monday - Friday.".format(tool.name))
 
 	# Users may only use a tool when delayed logoff is not in effect. Staff are exempt from this rule.
 	if tool.delayed_logoff_in_progress() and not operator.is_staff:
@@ -289,6 +299,17 @@ def check_policy_to_save_reservation(request, cancelled_reservation, new_reserva
 	# An explicit policy override allows this rule to be broken.
 	if new_reservation.tool not in user.qualifications.all():
 		policy_problems.append("You are not qualified to use this tool. Creating, moving, and resizing reservations is forbidden.")
+
+	# probationary users may only reserve a tool during regular business hours
+	if ProbationaryQualifications.objects.filter(tool=new_reservation.tool, user=user).exists():
+		# check if user is probationary, and if they are running the tool within business hours
+		if ProbationaryQualifications.objects.filter(tool=new_reservation.tool, user=user, probationary_user=True).exists():
+			business_start = time(8,0,0)
+			business_end = time(17,0,0)
+			intDay = new_reservation.start.weekday()
+			reservation_time = new_reservation.start.time()
+			if (intDay == 5 or intDay == 6 or reservation_time < business_start or reservation_time > business_end) and not user.is_staff:
+				policy_problems.append("You are a probationary user of the {}.  You may only reserve the tool for times during normal business hours of 8 am to 5 pm Monday - Friday.".format(new_reservation.tool.name))
 
 	# The reservation start time may not exceed the tool's reservation horizon.
 	# Staff may break this rule.

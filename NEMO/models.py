@@ -104,6 +104,7 @@ class User(models.Model):
 	last_login = models.DateTimeField(null=True, blank=True)
 
 	# Laboratory information:
+	probationary_qualifications = models.ManyToManyField('Tool', blank=True, help_text='A detailed table for user qualifications', through='ProbationaryQualifications', related_name='probationary_qualifications')
 	qualifications = models.ManyToManyField('Tool', blank=True, help_text='Select the tools that the user is qualified to use.')
 	projects = models.ManyToManyField('Project', blank=True, help_text='Select the projects that this user is currently working on.')
 
@@ -256,6 +257,13 @@ class User(models.Model):
 
 	def __str__(self):
 		return self.get_full_name()
+
+class ProbationaryQualifications(models.Model):
+	user = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True)
+	tool = models.ForeignKey('Tool', on_delete=models.SET_NULL, null=True, blank=True)
+	qualification_date = models.DateTimeField(default=timezone.now, null=True, blank=True)
+	probationary_user = models.BooleanField(default=False)
+	tool_last_used = models.DateTimeField(null=True, blank=True)
 
 class UserRelationshipType(models.Model):
 	name = models.CharField(max_length=255, unique=True)
