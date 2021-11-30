@@ -306,6 +306,7 @@ class Tool(models.Model):
 	post_usage_questions = models.TextField(null=True, blank=True, help_text="")
 	reservation_required = models.BooleanField(default=False, help_text='Require that users have a current (within 15 minutes) reservation in order to use the tool')
 	allow_autologout = models.BooleanField(default=False, help_text='Allow users to set an end time for the tool run.')
+	qualification_duration = models.PositiveIntegerField(default=182, null=True, blank=True, help_text="The tool may indicate the number of days without use a user will be considered qualified.  The default is 182 days (6 months).  Each night a script will run to check a user's last date of use for a tool against this time period.  If the date of last use is greater than the qualification_duration value the user will be set to probationary status.  This change can be reversed in LEO.")
 
 	# Core info
 	core_id = models.ForeignKey('Core', related_name="tool_core", on_delete=models.SET_NULL, help_text="The core facility of which this tool is part.", null=True)

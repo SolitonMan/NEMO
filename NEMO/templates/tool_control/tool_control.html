@@ -315,6 +315,19 @@
 			{
 				$(this).typeahead('val', '');
 				var failure_dialog = ajax_failure_callback("Failed to qualify user", "There was a problem qualifying this user.");
+				$("#chosen_tools_full").val($("#qualification_tool_id").val());
+				$("#chosen_tools_prob").val('');
+				var data = serialize("#add_qualified_user_form");
+				data['chosen_user[]'] = search_selection.id;
+				ajax_post("{% url 'modify_qualifications' %}", data, reload_qualified_users, failure_dialog)
+			}
+
+			function add_probationary_user(jquery_event, search_selection, dataset_name)
+			{
+				$(this).typeahead('val', '');
+				var failure_dialog = ajax_failure_callback("Failed to qualify user", "There was a problem qualifying this user.");
+				$("#chosen_tools_prob").val($("#qualification_tool_id").val());
+				$("#chosen_tools_full").val('');
 				var data = serialize("#add_qualified_user_form");
 				data['chosen_user[]'] = search_selection.id;
 				ajax_post("{% url 'modify_qualifications' %}", data, reload_qualified_users, failure_dialog)

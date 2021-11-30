@@ -32,6 +32,11 @@
 	<h1>{% if form.instance.id %}Modify user{% else %}New user{% endif %}</h1>
 	<form class="form-horizontal" method="post" action="{% if form.instance.id %}{% url 'create_or_modify_user' form.instance.id %}{% else %}{% url 'create_or_modify_user' 'new' %}{% endif %}">
 		{% csrf_token %}
+		{% if current_user.is_staff %}
+		<input type="hidden" name="check_probationary" id="check_probationary" value="0" />
+		{% else %}
+		<input type="hidden" name="check_probationary" id="check_probationary" value="1" />
+		{% endif %}
 		{% if form.instance.id %}<input type="hidden" value="{{ form.instance.id }}" name="user_id">{% endif %}
 		<div class="form-group">
 			<label class="control-label col-sm-2" for="first_name"><strong>First name</strong></label>

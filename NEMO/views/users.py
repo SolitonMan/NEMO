@@ -62,6 +62,7 @@ def create_or_modify_user(request, user_id):
 
 	if request.method == 'GET':
 		dictionary['form'] = UserForm(instance=user)
+		dictionary['current_user'] = user
 		try:
 			if dictionary['identity_service_available'] and user and user.is_active and user.domain:
 				parameters = {

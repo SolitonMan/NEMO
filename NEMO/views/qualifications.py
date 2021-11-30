@@ -5,9 +5,10 @@ from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.http import HttpResponseBadRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
+from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
-from NEMO.models import Tool, MembershipHistory, User
+from NEMO.models import Tool, MembershipHistory, User, ProbationaryQualifications
 
 
 @staff_member_required(login_url=None)
@@ -28,17 +29,60 @@ def modify_qualifications(request):
 		return HttpResponseBadRequest("You must specify that you are qualifying or disqualifying users.")
 	users = request.POST.getlist('chosen_user[]') or request.POST.get('chosen_user') or []
 	users = User.objects.in_bulk(users)
+
 	if users == {}:
 		return HttpResponseBadRequest("You must specify at least one user.")
-	tools = request.POST.getlist('chosen_tool[]') or request.POST.get('chosen_tool') or []
-	tools = Tool.objects.in_bulk(tools)
-	if tools == {}:
-		return HttpResponseBadRequest("You must specify at least one tool.")
 
+
+	tools = request.POST.getlist('chosen_tool[]') or request.POST.get('chosen_tool') or []
+	tools_full = request.POST.getlist('chosen_tools_full[]') or request.POST.get('chosen_tools_full') or []
+	if tools_full == '' or tools_full is None:
+		tools_full = []
+	tools_prob = request.POST.getlist('chosen_tools_prob[]') or request.POST.get('chosen_tools_prob') or []
+	if tools_prob == '' or tools_prob is None:
+		tools_prob = []
+
+#	tools = Tool.objects.in_bulk(tools)
+#	if tools == {}:
+#		return HttpResponseBadRequest("You must specify at least one tool.")
+
+	
+#	users = User.objects.in_bulk(users_full)
 	for user in users.values():
 		original_qualifications = set(user.qualifications.all())
+		original_probationary_qualifications = set(user.probationary_qualifications.all())
 		if action == 'qualify':
-			user.qualifications.add(*tools)
+			try:
+				tools = Tool.objects.in_bulk(tools_full)
+				user.qualifications.add(*tools)
+
+				for t in tools.values():
+					pq = ProbationaryQualifications()
+					pq.tool = t
+					pq.user = user
+					pq.probationary_user = False
+					pq.qualification_date = timezone.now()
+					pq.save()
+
+			except: 
+				pass
+
+			try:
+				# add probationary tool records and user qualified records
+				tools = Tool.objects.in_bulk(tools_prob)
+				user.qualifications.add(*tools)
+
+				for t in tools.values():
+					pq = ProbationaryQualifications()
+					pq.tool = t
+					pq.user = user
+					pq.probationary_user = True
+					pq.qualification_date = timezone.now()
+					pq.save()
+
+			except: 
+				pass
+				
 			original_physical_access_levels = set(user.physical_access_levels.all())
 			physical_access_level_automatic_enrollment = list(set([t.grant_physical_access_level_upon_qualification for t in tools.values() if t.grant_physical_access_level_upon_qualification]))
 			user.physical_access_levels.add(*physical_access_level_automatic_enrollment)
@@ -63,6 +107,7 @@ def modify_qualifications(request):
 						requests.put(urljoin(settings.IDENTITY_SERVICE['url'], '/add/'), data=parameters, timeout=3)
 		elif action == 'disqualify':
 			user.qualifications.remove(*tools)
+			user.probationary_qualifications.remove(*tools)
 		current_qualifications = set(user.qualifications.all())
 		# Record the qualification changes for each tool:
 		added_qualifications = set(current_qualifications) - set(original_qualifications)

@@ -2,6 +2,7 @@ from decimal import *
 from re import search
 
 import requests
+import json
 
 from copy import deepcopy
 from datetime import timedelta
@@ -213,8 +214,21 @@ def tool_status(request, tool_id):
 
 	# Staff need the user list to be able to qualify users for the tool.
 	if request.user.is_staff:
+#		user_records = User.objects.filter(is_active=True, projects__active=True).distinct()
+#		users = []
+#		for u in user_records:
+#			data = {
+#				"name": str(u) + " - Probationary",
+#				"id": str(u.id) + "-P",
+#			}
+#			users.append(data)
+#			data = {
+#				"name": str(u) + " - Fully Qualified",
+#				"id": str(u.id) + "-F",
+#			}
+#			users.append(data)
+#		dictionary['users'] = mark_safe(json.dumps(users))
 		dictionary['users'] = User.objects.filter(is_active=True, projects__active=True).distinct()
-
 	return render(request, 'tool_control/tool_status.html', dictionary)
 
 
