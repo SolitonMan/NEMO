@@ -98,6 +98,9 @@ urlpatterns = [
 	re_path(r'^qualifications/$', qualifications.qualifications, name='qualifications'),
 	re_path(r'^modify_qualifications/$', qualifications.modify_qualifications, name='modify_qualifications'),
 	re_path(r'^get_qualified_users/$', qualifications.get_qualified_users, name='get_qualified_users'),
+	re_path(r'^promote_user/(?P<user_id>\d+)/(?P<tool_id>\d+)/$', qualifications.promote_user, name='promote_user'),
+	re_path(r'^demote_user/(?P<user_id>\d+)/(?P<tool_id>\d+)/$', qualifications.demote_user, name='demote_user'),
+
 
 	# Staff charges:
 	re_path(r'^staff_charges/$', staff_charges.staff_charges, name='staff_charges'),

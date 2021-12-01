@@ -25,7 +25,7 @@ from django.utils.safestring import mark_safe
 from django.urls import reverse
 
 from NEMO.forms import CommentForm, nice_errors, ToolForm
-from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableWithdraw, LockBilling, Project, Reservation, ReservationConfiguration, ReservationProject, ScheduledOutage, ScheduledOutageCategory, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskStatus, Tool, UsageEvent, UsageEventProject, User
+from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableWithdraw, LockBilling, ProbationaryQualifications, Project, Reservation, ReservationConfiguration, ReservationProject, ScheduledOutage, ScheduledOutageCategory, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskStatus, Tool, UsageEvent, UsageEventProject, User
 from NEMO.utilities import extract_times, quiet_int
 from NEMO.views.policy import check_policy_to_disable_tool, check_policy_to_enable_tool, check_policy_to_enable_tool_for_multi
 from NEMO.views.staff_charges import month_is_locked, month_is_closed, get_billing_date_range
@@ -228,6 +228,11 @@ def tool_status(request, tool_id):
 #			}
 #			users.append(data)
 #		dictionary['users'] = mark_safe(json.dumps(users))
+		pqd = {}
+		probationary_qualifications = ProbationaryQualifications.objects.filter(tool=tool)
+		for pq in probationary_qualifications:
+			pqd[pq.user.id] = pq.probationary_user
+		dictionary['probationary_qualifications'] = pqd
 		dictionary['users'] = User.objects.filter(is_active=True, projects__active=True).distinct()
 	return render(request, 'tool_control/tool_status.html', dictionary)
 

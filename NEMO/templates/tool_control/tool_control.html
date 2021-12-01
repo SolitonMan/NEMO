@@ -350,6 +350,22 @@
 				$("#qualified_users_container").load(url);
 			}
 
+			function promote_user(user_id, tool_id)
+			{
+				var url = '/promote_user/' + user_id + '/' + tool_id + '/';
+				var failure_dialog = ajax_failure_callback("Failed to promote user", "There was a problem promoting this user.");
+				var data = {};
+				ajax_get(url, data, reload_qualified_users, failure_dialog);
+			}
+
+			function demote_user(user_id, tool_id)
+			{
+				var url = '/demote_user/' + user_id + '/' + tool_id + '/';
+				var failure_dialog = ajax_failure_callback("Failed to demote user", "There was a problem demoting this user.");
+				var data = {};
+				ajax_get(url, data, reload_qualified_users, failure_dialog);
+			}
+
 			function end_staff_charge()
 			{
 				var failure_dialog = ajax_failure_callback("Unable to end staff charge", "There was a problem ending your staff charge.");

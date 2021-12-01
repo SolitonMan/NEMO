@@ -143,9 +143,36 @@ def modify_qualifications(request):
 def get_qualified_users(request):
 	tool = get_object_or_404(Tool, id=request.GET.get('tool_id'))
 	users = User.objects.filter(is_active=True)
+	probationary_qualifications = ProbationaryQualifications.objects.filter(tool=tool)
+	pqd = {}
+	for pq in probationary_qualifications:
+		pqd[pq.user.id] = pq.probationary_user
+
 	dictionary = {
 		'tool': tool,
 		'users': users,
-		'expanded': True
+		'expanded': True,
+		'probationary_qualifications': pqd,
 	}
 	return render(request, 'tool_control/qualified_users.html', dictionary)
+
+
+@staff_member_required(login_url=None)
+@require_GET
+def promote_user(request, user_id, tool_id):
+	user = User.objects.get(id=user_id)
+	tool = Tool.objects.get(id=tool_id)
+	pq = ProbationaryQualifications.objects.get(tool=tool,user=user)
+	pq.probationary_user = False
+	pq.save()
+	return HttpResponse()
+
+@staff_member_required(login_url=None)
+@require_GET
+def demote_user(request, user_id, tool_id):
+	user = User.objects.get(id=user_id)
+	tool = Tool.objects.get(id=tool_id)
+	pq = ProbationaryQualifications.objects.get(tool=tool,user=user)
+	pq.probationary_user = True
+	pq.save()
+	return HttpResponse()
