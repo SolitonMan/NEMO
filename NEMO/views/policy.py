@@ -74,7 +74,9 @@ def check_policy_to_enable_tool(tool, operator, user, project, staff_charge, req
 			current_time = timezone.now().time()
 			intDay = timezone.now().weekday()
 			if (intDay == 5 or intDay == 6 or current_time < business_start or current_time > business_end) and not operator.is_staff:
-				return HttpResponseBadRequest("You are a probationary user of the {}.  You may only operate the tool during normal business hours of 8 am to 5 pm Monday - Friday.".format(tool.name))
+				td=timedelta(minutes=15)
+				if not Reservation.objects.filter(start__lt=timezone.now()+td, end__gt=timezone.now(), cancelled=False, missed=False, shortened=False, user=operator, tool=tool).exists():
+					return HttpResponseBadRequest("You are a probationary user of the {}.  You may only operate the tool during normal business hours of 8 am to 5 pm Monday - Friday.".format(tool.name))
 
 	# Users may only use a tool when delayed logoff is not in effect. Staff are exempt from this rule.
 	if tool.delayed_logoff_in_progress() and not operator.is_staff:

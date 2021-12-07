@@ -214,20 +214,6 @@ def tool_status(request, tool_id):
 
 	# Staff need the user list to be able to qualify users for the tool.
 	if request.user.is_staff:
-#		user_records = User.objects.filter(is_active=True, projects__active=True).distinct()
-#		users = []
-#		for u in user_records:
-#			data = {
-#				"name": str(u) + " - Probationary",
-#				"id": str(u.id) + "-P",
-#			}
-#			users.append(data)
-#			data = {
-#				"name": str(u) + " - Fully Qualified",
-#				"id": str(u.id) + "-F",
-#			}
-#			users.append(data)
-#		dictionary['users'] = mark_safe(json.dumps(users))
 		pqd = {}
 		probationary_qualifications = ProbationaryQualifications.objects.filter(tool=tool)
 		for pq in probationary_qualifications:
@@ -611,25 +597,9 @@ def enable_tool_multi(request):
 						new_usage_event.delete()
 						return HttpResponseBadRequest('Please choose a project for charges made during this run.')
 
-		# if set for autologout, automatically divide 100 percent by the total number of customers
-#		customer_count = 0
-#		for p in project_events.values():
-#			customer_count += 1
-
-#		if set_for_autologout:
-#			current_count = 0
-#			for p in project_events.values():
-#				current_count += 1
-#				if current_count < customer_count:
-#					p.project_percent = round(Decimal(100/customer_count),2)
-#				else:
-#					p.project_percent = round(Decimal(100 - (customer_count - 1)*(100/customer_count)),2)
 
 		for p in project_charges.values():
 			if not StaffChargeProject.objects.filter(staff_charge=p.staff_charge, customer=p.customer, project=p.project, active_flag=True).exists():
-#				if set_for_autologout:
-#					p.full_clean()
-#				else:
 				p.full_clean(exclude='project_percent')
 				p.save()
 		 
@@ -663,8 +633,6 @@ def enable_tool_multi(request):
 					aarp.area_access_record = aar
 					aarp.project = s.project
 					aarp.customer = s.customer
-#					if s.project_percent is not None:
-#						aarp.project_percent = s.project_percent
 					aarp.created = timezone.now()
 					aarp.updated = timezone.now()
 					aarp.save()
@@ -739,6 +707,13 @@ def disable_tool(request, tool_id):
 		# multi user event possibility, check
 		current_usage_event.updated = timezone.now()
 		current_usage_event.save()
+
+		# update the user's tool_last_used date in the ProbationaryQualifications table
+		if ProbationaryQualifications.objects.filter(user=current_usage_event.operator, tool=tool).exists():
+			pq = ProbationaryQualifications.objects.get(user=current_usage_event.operator, tool=tool)
+			pq.tool_last_used = current_usage_event.end
+			pq.save()
+
 		if UsageEventProject.objects.filter(usage_event=current_usage_event, active_flag=True).exists():
 			return disable_tool_multi(request, tool_id, current_usage_event, dynamic_form)
 
@@ -760,6 +735,12 @@ def disable_tool(request, tool_id):
 
 	current_usage_event.updated = timezone.now()
 	current_usage_event.save()
+
+	# update the user's tool_last_used date in the ProbationaryQualifications table
+	if ProbationaryQualifications.objects.filter(user=current_usage_event.operator, tool=tool).exists():
+		pq = ProbationaryQualifications.objects.get(user=current_usage_event.operator, tool=tool)
+		pq.tool_last_used = current_usage_event.end
+		pq.save()
 
 	# check for no charge flag, which at this point can only exist for a fixed cost run
 	if current_usage_event.cost_per_sample_run:
@@ -907,14 +888,9 @@ def disable_tool_multi(request, tool_id, usage_event, dynamic_form):
 						b_current = False
 
 				
-				#if existing_staff_charge.customers == usage_event.customers and existing_staff_charge.projects == usage_event.projects:
 
 				if b_current:
 					response = render(request, 'staff_charges/reminder.html', {'tool': tool, 'staff_charge': existing_staff_charge })
-				#elif existing_staff_charge.customer is None and existing_staff_charge.project is None:
-				#	scp = StaffChargeProject.objects.get(staff_charge=existing_staff_charge, project=uep.project, customer=uep.customer)
-				#	if scp is not None:
-				#		response = render(request, 'staff_charges/reminder.html', {'tool': tool})
 				else:
 					response = render(request, 'staff_charges/general_reminder.html', { 'staff_charge': existing_staff_charge})
 

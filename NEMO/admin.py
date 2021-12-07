@@ -163,10 +163,10 @@ class ToolAdmin(admin.ModelAdmin):
 	def change_view(self, request, object_id, form_url='', extra_context=None):
 		if request.user.is_superuser:
 			self.fieldsets = (
-				(None, {'fields': ('name', 'category', 'core_id', 'credit_cost_collector', 'qualified_users'),}),
+				(None, {'fields': ('name', 'category', 'core_id', 'credit_cost_collector'),}),
 				('Current state', {'fields': ('post_usage_questions', 'visible', 'operational'),}),
 				('Contact information', {'fields': ('primary_owner', 'backup_owners', 'notification_email_address', 'location', 'phone_number'),}),
-				('Usage policy', {'fields': ('reservation_horizon', 'minimum_usage_block_time', 'maximum_usage_block_time', 'maximum_reservations_per_day', 'minimum_time_between_reservations', 'maximum_future_reservation_time', 'missed_reservation_threshold', 'requires_area_access', 'grant_physical_access_level_upon_qualification', 'grant_badge_reader_access_upon_qualification', 'interlock', 'allow_delayed_logoff', 'reservation_required', 'allow_autologout'),}),
+				('Usage policy', {'fields': ('qualification_duration', 'reservation_horizon', 'minimum_usage_block_time', 'maximum_usage_block_time', 'maximum_reservations_per_day', 'minimum_time_between_reservations', 'maximum_future_reservation_time', 'missed_reservation_threshold', 'requires_area_access', 'grant_physical_access_level_upon_qualification', 'grant_badge_reader_access_upon_qualification', 'interlock', 'allow_delayed_logoff', 'reservation_required', 'allow_autologout'),}),
 				('Dependencies', {'fields': ('required_resources', 'nonrequired_resources'),}),
 			)
 		else:
@@ -686,12 +686,11 @@ if admin.site.is_registered(User):
 
 @register(User)
 class UserAdmin(admin.ModelAdmin):
-	filter_horizontal = ('groups', 'user_permissions', 'qualifications', 'projects', 'physical_access_levels', 'pi_delegates')
+	filter_horizontal = ('groups', 'user_permissions', 'projects', 'physical_access_levels', 'pi_delegates')
 	fieldsets = (
-		('Personal information', {'fields': ('first_name', 'last_name', 'username', 'email', 'badge_number', 'type', 'domain', 'credit_cost_collector', 'core_ids', 'contact')}),
+		('Personal information', {'fields': ('first_name', 'last_name', 'username', 'email', 'badge_number', 'type', 'domain', 'credit_cost_collector', 'core_ids', 'contact', 'projects')}),
 		('Permissions', {'fields': ('is_active', 'is_staff', 'is_technician', 'is_superuser', 'training_required', 'groups', 'user_permissions', 'physical_access_levels', 'pi_delegates')}),
 		('Important dates', {'fields': ('date_joined', 'last_login', 'access_expiration')}),
-		('Laboratory information', {'fields': ('qualifications', 'projects')}),
 	)
 	search_fields = ('first_name', 'last_name', 'username', 'email')
 	list_display = ('first_name', 'last_name', 'username', 'email', 'is_active', 'domain', 'is_staff', 'is_technician', 'is_superuser', 'date_joined', 'last_login')
@@ -701,7 +700,7 @@ class UserAdmin(admin.ModelAdmin):
 		""" Audit project membership and qualifications when a user is saved. """
 		super().save_model(request, obj, form, change)
 		record_local_many_to_many_changes(request, obj, form, 'projects')
-		record_local_many_to_many_changes(request, obj, form, 'qualifications')
+		#record_local_many_to_many_changes(request, obj, form, 'qualifications')
 		record_local_many_to_many_changes(request, obj, form, 'physical_access_levels')
 		record_local_many_to_many_changes(request, obj, form, 'core_ids')
 		record_active_state(request, obj, form, 'is_active', not change)
