@@ -172,7 +172,15 @@ def reservation_event_feed(request, start, end):
 
 	# Filter events that only have to do with the relevant tool.
 	tool = request.GET.get('tool_id')
+	personal_schedule = request.GET.get('personal_schedule')
 	if tool:
+		ps_events = events.filter(user=request.user)
+		ps_events = ps_events.exclude(tool__id=tool)
+
+		ps_overlay = request.GET.get('ps_overlay')
+		if ps_overlay == '0' or ps_overlay is None:
+			ps_events = None
+
 		events = events.filter(tool__id=tool)
 
 		outages = ScheduledOutage.objects.filter(Q(tool=tool) | Q(resource__fully_dependent_tools__in=[tool]))
@@ -184,8 +192,8 @@ def reservation_event_feed(request, start, end):
 		current = current.exclude(start__gt=end, end__gt=end)
 
 	# Filter events that only have to do with the current user.
-	personal_schedule = request.GET.get('personal_schedule')
 	if personal_schedule:
+		ps_events = None
 		events = events.filter(user=request.user)
 
 	if not tool and not personal_schedule:
@@ -203,6 +211,7 @@ def reservation_event_feed(request, start, end):
 		'personal_schedule': personal_schedule,
 		'current': current,
 		'current_time': timezone.now(),
+		'ps_events': ps_events,
 	}
 	return render(request, 'calendar/reservation_event_feed.html', dictionary)
 

@@ -17,7 +17,7 @@
 		{% else %}
 		"description": ""
 		{% endif %}
-	}{% if not forloop.last %},{% elif outages or current %},{% endif %}
+	}{% if not forloop.last %},{% elif outages or current or ps_events %},{% endif %}
 	{% endfor %}
 	{% for x in outages %}
 	{
@@ -29,7 +29,7 @@
 		"end": "{{ x.end|date:"c" }}",
 		"details_url": "{% url 'outage_details' x.id %}",
 		"description": ""
-	}{% if not forloop.last %},{% elif current %},{% endif %}
+	}{% if not forloop.last %},{% elif current or ps_events %},{% endif %}
 	{% endfor %}
 	{% for x in current %}
 	{
@@ -57,6 +57,18 @@
 		{% else %}
 		"description": ""
 		{% endif %}
+	}{% if not forloop.last %},{% elif ps_events %},{% endif %}
+	{% endfor %}
+	{% for x in ps_events %}
+	{
+		"title": "{{ x.title|default:''|escapejs }}\n {{ x.tool.name|escapejs }}",
+		"id": "Reservation {{ x.id }}",
+		"start": "{{ x.start|date:"c" }}",
+		"end": "{{ x.get_visual_end|date:"c" }}",
+		"color": "#33ad33",
+		"details_url": "{% url 'reservation_details' x.id %}",
+		"description": "",
+		"className": "calendar_ps_events"
 	}{% if not forloop.last %},{% endif %}
 	{% endfor %}
 ]

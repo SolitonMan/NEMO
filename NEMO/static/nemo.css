@@ -298,3 +298,7 @@ Twitter Typeahead autocomplete dropdown menu isn't chopped off. */
 table {
 	width: 100%;
 }
+
+.calendar_ps_events {
+	opacity:0.5;
+}

@@ -75,7 +75,10 @@ def get_month_timeframe(date):
 	start_day = start.day
 
 	if start_day > 24:
-		start_month += 1
+		if start_month < 12:
+			start_month += 1
+		else:
+			start_month = 1
 
 	if start_month > 1:
 		first_of_the_month = localize(datetime(start.year, start_month-1, 25))

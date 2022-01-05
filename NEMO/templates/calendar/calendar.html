@@ -48,6 +48,7 @@
 
 <div id="calendar" class="application-content"></div>
 <input type="hidden" id="impersonate" name="impersonate" value="test">
+<input type="hidden" id="ps_overlay" name="ps_overlay" value="0" />
 
 <script type="text/javascript">
 function update_tool_filter(btn)
@@ -124,6 +125,9 @@ function update_event_sources()
 			tool_event_source.data.tool_id = item;
 		else
 			tool_event_source.data.tool_id = 0;
+
+		var ps_overlay = $("#ps_overlay").val();
+		tool_event_source.data.ps_overlay = ps_overlay;
 	}
 	else if(event_type === 'specific user')
 	{
@@ -177,7 +181,16 @@ function update_event_sources()
 	$("#calendar").fullCalendar("addEventSource", tool_event_source);
 	//$("#calendar").fullCalendar("refetchEvents");
 
+	//setTimeout(transform_ps,1000);
+
 	refresh_sidebar_icons();
+}
+
+function transform_ps()
+{
+	$("a[class~='calendar_ps_events']").each(function() {
+		$(this).parent().css("opacity","0.25");
+	});
 }
 
 {# This function is a callback for when a reservation is successfully created by the user. #}
@@ -400,7 +413,7 @@ function create_calendar()
 	{
 		"header":
 		{
-			left: "prev,next today{% if user.is_staff %} proxyReservation scheduledOutage{% endif %}",
+			left: "prev,next today{% if user.is_staff %} proxyReservation scheduledOutage{% endif %} togglePSOverlay",
 			center: "title",
 			right: "agendaDay,agendaWeek,month"
 		},
@@ -453,6 +466,10 @@ function create_calendar()
 			"scheduledOutage": {
 				"text": "Schedule an outage",
 				"click": scheduled_outage
+			},
+			"togglePSOverlay": {
+				"text": "Show Personal Schedule Overlay",
+				"click": toggle_ps_overlay
 			}
 		},
 		"eventRender": function(event, element) {
@@ -514,6 +531,20 @@ function scheduled_outage()
 	}
 }
 
+function toggle_ps_overlay()
+{
+	var state = $("#ps_overlay").val();
+	var btn = $("button[class*='togglePSOverlay']")
+	if (state == 0) {
+		$("#ps_overlay").val(1);
+		$(btn).html("Remove Personal Schedule Overlay");
+	} else {
+		$("#ps_overlay").val(0);
+		$(btn).html("Show Personal Schedule Overlay");
+	}
+	update_event_sources();
+}
+
 function refresh_calendar_and_sidebar()
 {
 	$("#calendar").fullCalendar('refetchEvents');
@@ -553,11 +584,6 @@ function save_cancel_option(e)
 
 function change_calendar_event_type(calling_element)
 {
-	//$("#calendar").fullCalendar("destroy");
-	//create_calendar();
-	//$("#calendar").fullCalendar("removeEventSource", "{% url 'event_feed' %}");
-	//$("#calendar").fullCalendar("removeEvents");
-	//$("#sidebar a").removeClass('selected');
 	set_event_type(calling_element.text);
 	var expand_collapse = $("#expand-collapse").hide();
 	var tool_search = $("#tool_search").hide();

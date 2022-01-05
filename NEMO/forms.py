@@ -13,7 +13,7 @@ from NEMO.utilities import bootstrap_primary_color, format_datetime
 class UserForm(ModelForm):
 	class Meta:
 		model = User
-		fields = ['username', 'first_name', 'last_name', 'email', 'badge_number', 'access_expiration', 'type', 'domain', 'is_active', 'training_required', 'physical_access_levels', 'qualifications', 'projects']
+		fields = ['username', 'first_name', 'last_name', 'email', 'badge_number', 'access_expiration', 'type', 'domain', 'is_active', 'training_required', 'physical_access_levels', 'projects']
 
 
 class ToolForm(ModelForm):

@@ -57,12 +57,13 @@ def modify_qualifications(request):
 				user.qualifications.add(*tools)
 
 				for t in tools.values():
-					pq = ProbationaryQualifications()
-					pq.tool = t
-					pq.user = user
-					pq.probationary_user = False
-					pq.qualification_date = timezone.now()
-					pq.save()
+					if not ProbationaryQualifications.objects.filter(tool=t,user=user).exists():
+						pq = ProbationaryQualifications()
+						pq.tool = t
+						pq.user = user
+						pq.probationary_user = False
+						pq.qualification_date = timezone.now()
+						pq.save()
 
 			except: 
 				pass
@@ -73,12 +74,13 @@ def modify_qualifications(request):
 				user.qualifications.add(*tools)
 
 				for t in tools.values():
-					pq = ProbationaryQualifications()
-					pq.tool = t
-					pq.user = user
-					pq.probationary_user = True
-					pq.qualification_date = timezone.now()
-					pq.save()
+					if not ProbationaryQualifications.objects.filter(tool=t,user=user).exists():
+						pq = ProbationaryQualifications()
+						pq.tool = t
+						pq.user = user
+						pq.probationary_user = True
+						pq.qualification_date = timezone.now()
+						pq.save()
 
 			except: 
 				pass
@@ -107,7 +109,12 @@ def modify_qualifications(request):
 						requests.put(urljoin(settings.IDENTITY_SERVICE['url'], '/add/'), data=parameters, timeout=3)
 		elif action == 'disqualify':
 			user.qualifications.remove(*tools)
+			user.qualifications.remove(*tools_full)
+			user.qualifications.remove(*tools_prob)
 			user.probationary_qualifications.remove(*tools)
+			user.probationary_qualifications.remove(*tools_full)
+			user.probationary_qualifications.remove(*tools_prob)
+			user_probationary_qualifications = ProbationaryQualifications.objects.filter(user=user, tool__in=tools)
 		current_qualifications = set(user.qualifications.all())
 		# Record the qualification changes for each tool:
 		added_qualifications = set(current_qualifications) - set(original_qualifications)

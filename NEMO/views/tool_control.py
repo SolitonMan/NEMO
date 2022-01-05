@@ -388,8 +388,8 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge, billing_mod
 			scp.updated = timezone.now()
 			scp.save()
 
-		if tool.requires_area_access and AreaAccessRecord.objects.filter(area=tool.requires_area_access,customer=operator,end=None, active_flag=True).count() == 0:
-			if AreaAccessRecord.objects.filter(customer=operator,end=None, active_flag=True).count() > 0:
+		if tool.requires_area_access and AreaAccessRecord.objects.filter(area=tool.requires_area_access,user=operator,end=None, active_flag=True).count() == 0:
+			if AreaAccessRecord.objects.filter(user=operator,end=None, active_flag=True).count() > 0:
 				areas = AreaAccessRecord.objects.filter(customer=operator,end=None, active_flag=True)
 				for a in areas:
 					a.end = timezone.now()
@@ -603,8 +603,8 @@ def enable_tool_multi(request):
 				p.full_clean(exclude='project_percent')
 				p.save()
 		 
-		if tool.requires_area_access and AreaAccessRecord.objects.filter(area=tool.requires_area_access,customer=operator,end=None, active_flag=True).count() == 0:
-			if AreaAccessRecord.objects.filter(customer=operator,end=None, active_flag=True).count() > 0:
+		if tool.requires_area_access and AreaAccessRecord.objects.filter(area=tool.requires_area_access,user=operator,end=None, active_flag=True).count() == 0:
+			if AreaAccessRecord.objects.filter(user=operator,end=None, active_flag=True).count() > 0:
 				areas = AreaAccessRecord.objects.filter(customer=operator,end=None, active_flag=True)
 				for a in areas:
 					a.end = timezone.now()
