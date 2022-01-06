@@ -234,6 +234,61 @@
 			</div>
 		</div>
 -->
+		<div id="qualified_tools">
+		<form id="add_qualified_tool_form" class="form-inline" style="margin-bottom:10px">
+			<div class="container">
+				<div class="row" style="width: 570px;">
+					<div class="col-md-6">
+						<div class="form-group">
+						<label class="control-label">Add a fully qualified tool <input type="text" id="add_qualified_tool_search_box" placeholder="Search for a tool" class="form-control"></label>
+						</div>
+					</div>
+					<div class="col-md-6">
+						<div class="form-group">
+						<label class="control-label">Add a probationary tool <input type="text" id="add_probationary_tool_search_box" placeholder="Search for a tool" class="form-control"></label>
+						</div>
+					</div>
+				</div>
+			</div>
+			<input type="hidden" name="action" value="qualify">
+			<input type="hidden" name="chosen_tools_full[]" id="chosen_tools_full" value="">
+			<input type="hidden" name="chosen_tools_prob[]" id="chosen_tools_prob" value="">
+			<input type="hidden" name="qualification_user_id" id="qualification_user_id" value="{{ form.instance.id }}">
+		</form>
+		{% with form.instance.qualifications.all as toolset %}
+			{% if toolset %}
+			<p>
+				Currently qualified tools are listed below.<br/>
+
+				{% for t in toolset %}
+					<span>
+					<a href="javascript:remove_qualified_user('{{ form.instance.id }}', '{{ t.id }}')" class="grey hover-black" title="Disqualify {{ form.first_name.value }}">
+						<span class="glyphicon glyphicon-remove-circle"></span>
+					</a>
+					{% if probationary_qualifications is not None %}
+					{% if probationary_qualifications|get_item:t.id %}
+					<a href="javascript:promote_user('{{ form.instance.id }}', '{{ t.id }}')" class="grey hover-black" title="Promote {{ form.first_name.value }}">
+						<span class="glyphicon glyphicon-arrow-up"></span>
+					</a>
+					{% else %}
+					<a href="javascript:demote_user('{{ form.instance.id }}', '{{ t.id }}')" class="grey hover-black" title="Demote {{ form.first_name.value }}">
+					<span class="glyphicon glyphicon-arrow-down"></span>
+					</a>
+					{% endif %}
+					{% endif %}
+					{{ t }}
+					{% if probationary_qualifications is not None %}
+						{% if probationary_qualifications|get_item:t.id %} - probationary
+						{% else %} - full
+						{% endif %}
+					{% endif %}
+					</span><br/>
+				{% endfor %}
+			</p>
+			{% endif %}
+		{% endwith %}
+
+		</div>
 		{% if physical_access_levels or externally_managed_access_levels %}
 			<div class="form-group">
 				<span class="control-label col-sm-2">Physical access levels</span>
@@ -322,12 +377,53 @@
 		{
 			remove_from_list("#qualification-list", "#qualifications_" + tool_id, "This user is not qualified to use any tools.");
 		}
+
+		function add_qualified_user(jquery_event, search_selection, dataset_name)
+		{
+			$(this).typeahead('val', '');
+			var failure_dialog = ajax_failure_callback("Failed to qualify user", "There was a problem qualifying this user.");
+			$("#chosen_tools_full").val(search_selection.id);
+			$("#chosen_tools_prob").val('');
+			var data = serialize("#add_qualified_tool_form");
+			data['chosen_user[]'] = {{ form.instance.id }};
+			ajax_post("{% url 'modify_qualifications' %}", data, reload_qualified_tools, failure_dialog)
+		}
+
+		function add_probationary_user(jquery_event, search_selection, dataset_name)
+		{
+			$(this).typeahead('val', '');
+			var failure_dialog = ajax_failure_callback("Failed to qualify user", "There was a problem qualifying this user.");
+			$("#chosen_tools_full").val('');
+			$("#chosen_tools_prob").val(search_selection.id);
+			var data = serialize("#add_qualified_tool_form");
+			data['chosen_user[]'] = {{ form.instance.id }};
+			ajax_post("{% url 'modify_qualifications' %}", data, reload_qualified_tools, failure_dialog)
+		}
+
+		function remove_qualified_user(user_id, tool_id)
+		{
+			var failure_dialog = ajax_failure_callback("Failed to remove qualified user", "There was a problem revoking this user's tool qualification.");
+			var data = {
+				'action': 'disqualify',
+				'chosen_tool[]': tool_id,
+				'chosen_user[]': user_id
+			};
+			ajax_post("{% url 'modify_qualifications' %}", data, reload_qualified_tools, failure_dialog);
+		}
+
+		function reload_qualified_tools()
+		{
+			var url = "/user/{{ form.instance.id }}/";
+			window.location.href = url;
+		}
+
 		function on_load()
 		{
 			$('[data-toggle="tooltip"]').tooltip();
 			$("#access_expiration").datetimepicker({format: 'MM/DD/YYYY'});
 			$('#add_a_project').autocomplete('projects', on_search_selection, {% json_search_base_with_extra_fields projects '__str__' 'owner' 'organization' %});
-			$('#add_a_tool_qualification').autocomplete('tools', on_search_selection, {{ tools|json_search_base }});
+			$('#add_qualified_tool_search_box').autocomplete('tools', add_qualified_user, {{ tools|json_search_base }});
+			$('#add_probationary_tool_search_box').autocomplete('tools', add_probationary_user, {{ tools|json_search_base }});
 			{% if form.instance.id %} {# Only look for projects and qualifications if this is an existing user (and not a new user). #}
 				{% for project in form.instance.projects.all %}
 					{% if project.active %}
@@ -335,9 +431,6 @@
 					{% else %}
 					add_project('<span style="background-color: #f0f0f0;">{{ project }} - {{ project.owner }} of {{ project.organization }}</span>', {{ project.id }});
 					{% endif %}
-				{% endfor %}
-				{% for tool in form.instance.qualifications.all %}
-					add_tool_qualification('{{ tool.name }}', {{ tool.id }});
 				{% endfor %}
 			{% endif %}
 		}

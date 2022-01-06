@@ -13,7 +13,7 @@ from django.views.decorators.http import require_GET, require_http_methods, requ
 
 from NEMO.admin import record_local_many_to_many_changes, record_active_state
 from NEMO.forms import UserForm
-from NEMO.models import Account, UserRelationship, UserRelationshipType, User, Project, Tool, PhysicalAccessLevel, Reservation, StaffCharge, UsageEvent, AreaAccessRecord, ActivityHistory
+from NEMO.models import Account, UserRelationship, UserRelationshipType, User, Project, Tool, PhysicalAccessLevel, Reservation, StaffCharge, UsageEvent, AreaAccessRecord, ActivityHistory, ProbationaryQualifications
 
 
 @staff_member_required(login_url=None)
@@ -27,9 +27,13 @@ def users(request):
 @require_http_methods(['GET', 'POST'])
 def create_or_modify_user(request, user_id):
 	logger = getLogger(__name__)
+	if request.user.is_superuser:
+		tools = Tool.objects.filter(visible=True)
+	else:
+		tools = Tool.objects.filter(visible=True, core_id__in=request.user.core_ids.all())
 	dictionary = {
 		'projects': Project.objects.filter(active=True),
-		'tools': Tool.objects.filter(visible=True),
+		'tools': tools,
 		'physical_access_levels': PhysicalAccessLevel.objects.all(),
 		'one_year_from_now': timezone.now() + timedelta(days=365),
 		'identity_service_available': settings.IDENTITY_SERVICE['available'],
@@ -86,6 +90,13 @@ def create_or_modify_user(request, user_id):
 			dictionary['warning'] = warning_message
 			warning_message += ' An exception was encountered: ' + type(e).__name__ + ' - ' + str(e)
 			logger.error(warning_message)
+
+		pqd = {}
+		probationary_qualifications = ProbationaryQualifications.objects.filter(user=user)
+		for pq in probationary_qualifications:
+			pqd[pq.tool.id] = pq.probationary_user
+		dictionary['probationary_qualifications'] = pqd
+
 		return render(request, 'users/create_or_modify_user.html', dictionary)
 	elif request.method == 'POST':
 		form = UserForm(request.POST, instance=user)
