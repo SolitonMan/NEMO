@@ -2,12 +2,84 @@
 {% load custom_tags_and_filters %}
 {% block title %}Modify Tool{% endblock %}
 {% block content %}
-	<h1>Modify Tool</h1>
+	<script>
+	function add_qualified_user(jquery_event, search_selection, dataset_name)
+	{
+		$(this).typeahead('val', '');
+		var failure_dialog = ajax_failure_callback("Failed to qualify user", "There was a problem qualifying this user.");
+		$("#chosen_tools_full").val($("#qualification_tool_id").val());
+		$("#chosen_tools_prob").val('');
+		var data = serialize("#add_qualified_user_form");
+		data['chosen_user[]'] = search_selection.id;
+		ajax_post("{% url 'modify_qualifications' %}", data, reload_qualified_users, failure_dialog);
+	}
+
+	function add_probationary_user(jquery_event, search_selection, dataset_name)
+	{
+		$(this).typeahead('val', '');
+		var failure_dialog = ajax_failure_callback("Failed to qualify user", "There was a problem qualifying this user.");
+		$("#chosen_tools_prob").val($("#qualification_tool_id").val());
+		$("#chosen_tools_full").val('');
+		var data = serialize("#add_qualified_user_form");
+		data['chosen_user[]'] = search_selection.id;
+		ajax_post("{% url 'modify_qualifications' %}", data, reload_qualified_users, failure_dialog);
+	}
+
+	function remove_qualified_user(user_id, tool_id)
+	{
+		var failure_dialog = ajax_failure_callback("Failed to remove qualified user", "There was a problem revoking this user's tool qualification.");
+		var data = {
+			'action': 'disqualify',
+			'chosen_tool[]': tool_id,
+			'chosen_user[]': user_id
+		};
+		ajax_post("{% url 'modify_qualifications' %}", data, reload_qualified_users, failure_dialog);
+	}
+
+	function reload_qualified_users()
+	{
+		var url = "{% url 'get_qualified_users' %}?tool_id={{ tool.id }}";
+		$("#qualified_users_container").load(url);
+	}
+
+	function promote_user(user_id, tool_id)
+	{
+		var url = '/promote_user/' + user_id + '/' + tool_id + '/';
+		var failure_dialog = ajax_failure_callback("Failed to promote user", "There was a problem promoting this user.");
+		var data = {};
+		ajax_get(url, data, reload_qualified_users, failure_dialog);
+	}
+
+	function demote_user(user_id, tool_id)
+	{
+		var url = '/demote_user/' + user_id + '/' + tool_id + '/';
+		var failure_dialog = ajax_failure_callback("Failed to demote user", "There was a problem demoting this user.");
+		var data = {};
+		ajax_get(url, data, reload_qualified_users, failure_dialog);
+	}
+	</script>
+	<h1>Modify Tool: {{ form.instance.name }}</h1>
+	<div id="qualified_users_container" class="media" style="padding: 5px; margin: 5px;">
+		{% include 'tool_control/qualified_users.html' %}
+	</div>
 	<form action="{% url 'create_or_modify_tool' tool_id %}" method="post">
 		{% csrf_token %}
 		<table class="table">
 		{{ form.as_table }}
 		</table>
-		<input type="submit" value="Submit" class="btn btn-default" />
+		<input type="submit" value="Submit" class="btn btn-success" />
 	</form>
+	<div id="bulk_buttons">
+		<input type="button" value="Promote all users to full" class="btn btn-success" onclick="alert('Promote clicked');" />
+		<input type="button" value="Demote all users to probationary" class="btn btn-danger" onclick="alert('Demote clicked');" />
+		<input type="button" value="Disqualify all users from tool" class="btn btn-danger" onclick="alert('Disqualify clicked');" />
+	</div>
+
+	<script>
+	function on_load()
+	{
+		$("#bulk_buttons").insertAfter("#qualified_users_container #qualified_users #btn_target");
+	}
+	$(on_load);
+	</script>
 {% endblock %}

@@ -13,11 +13,6 @@
 			{{ form.non_field_errors }}
 		</div>
 	{% endif %}
-	{% if warning %}
-		<div class="alert alert-warning">
-			{{ warning }}
-		</div>
-	{% endif %}
 	<div class="row">
 		<div class="col-sm-12">
 			<div class="form-group">
@@ -30,6 +25,71 @@
 		</div>
 	</div>
 	<h1>{% if form.instance.id %}Modify user{% else %}New user{% endif %}</h1>
+
+
+	<div id="qualified_tools" style="position:absolute; top:300px; left:1100px">
+	<h2>Tools</h2>
+	<div>
+		<input type="button" value="Promote all tools to full" class="btn btn-success" onclick="promote_all_tools();" />
+		<input type="button" value="Demote all tools to probationary" class="btn btn-danger" onclick="demote_all_tools();" />
+		<input type="button" value="Disqualify user from all tools" class="btn btn-danger" onclick="disqualify_all_tools();" />
+	</div>
+	<form id="add_qualified_tool_form" class="form-inline" style="margin-bottom:10px">
+		<div class="container">
+			<div class="row" style="width: 570px;">
+				<div class="col-md-6">
+					<div class="form-group">
+					<label class="control-label">Add a fully qualified tool <input type="text" id="add_qualified_tool_search_box" placeholder="Search for a tool" class="form-control"></label>
+					</div>
+				</div>
+				<div class="col-md-6">
+					<div class="form-group">
+					<label class="control-label">Add a probationary tool <input type="text" id="add_probationary_tool_search_box" placeholder="Search for a tool" class="form-control"></label>
+					</div>
+				</div>
+			</div>
+		</div>
+		<input type="hidden" name="action" value="qualify">
+		<input type="hidden" name="chosen_tools_full[]" id="chosen_tools_full" value="">
+		<input type="hidden" name="chosen_tools_prob[]" id="chosen_tools_prob" value="">
+		<input type="hidden" name="qualification_user_id" id="qualification_user_id" value="{{ form.instance.id }}">
+	</form>
+	{% with form.instance.qualifications.all as toolset %}
+		{% if toolset %}
+		<p>
+			Currently qualified tools are listed below.<br/>
+
+			{% for t in toolset %}
+				<span>
+				<a href="javascript:remove_qualified_user('{{ form.instance.id }}', '{{ t.id }}')" class="grey hover-black" title="Disqualify {{ form.first_name.value }}">
+					<span class="glyphicon glyphicon-remove-circle"></span>
+				</a>
+				{% if probationary_qualifications is not None %}
+				{% if probationary_qualifications|get_item:t.id %}
+				<a href="javascript:promote_user('{{ form.instance.id }}', '{{ t.id }}')" class="grey hover-black" title="Promote {{ form.first_name.value }}">
+					<span class="glyphicon glyphicon-arrow-up"></span>
+				</a>
+				{% else %}
+				<a href="javascript:demote_user('{{ form.instance.id }}', '{{ t.id }}')" class="grey hover-black" title="Demote {{ form.first_name.value }}">
+				<span class="glyphicon glyphicon-arrow-down"></span>
+				</a>
+				{% endif %}
+				{% endif %}
+				{{ t }}
+				{% if probationary_qualifications is not None %}
+					{% if probationary_qualifications|get_item:t.id %} - probationary
+					{% else %} - full
+					{% endif %}
+				{% endif %}
+				</span><br/>
+			{% endfor %}
+		</p>
+		{% endif %}
+	{% endwith %}
+
+	</div>
+
+
 	<form class="form-horizontal" method="post" action="{% if form.instance.id %}{% url 'create_or_modify_user' form.instance.id %}{% else %}{% url 'create_or_modify_user' 'new' %}{% endif %}">
 		{% csrf_token %}
 		{% if current_user.is_staff %}
@@ -221,74 +281,6 @@
 			</div>
 			{% endif %}
 		</div>
-<!--
-		<div class="form-group">
-			<label class="control-label col-sm-2" for="add_a_tool_qualification">Tool qualifications</label>
-			<div class="col-sm-4">
-				<input id="add_a_tool_qualification" type="text" autocomplete="off" class="form-control" placeholder="Add a qualification">
-			</div>
-		</div>
-		<div class="form-group">
-			<div id="qualification-list" class="col-sm-offset-2 col-sm-4">
-				This user is not qualified to use any tools.
-			</div>
-		</div>
--->
-		<div id="qualified_tools">
-		<form id="add_qualified_tool_form" class="form-inline" style="margin-bottom:10px">
-			<div class="container">
-				<div class="row" style="width: 570px;">
-					<div class="col-md-6">
-						<div class="form-group">
-						<label class="control-label">Add a fully qualified tool <input type="text" id="add_qualified_tool_search_box" placeholder="Search for a tool" class="form-control"></label>
-						</div>
-					</div>
-					<div class="col-md-6">
-						<div class="form-group">
-						<label class="control-label">Add a probationary tool <input type="text" id="add_probationary_tool_search_box" placeholder="Search for a tool" class="form-control"></label>
-						</div>
-					</div>
-				</div>
-			</div>
-			<input type="hidden" name="action" value="qualify">
-			<input type="hidden" name="chosen_tools_full[]" id="chosen_tools_full" value="">
-			<input type="hidden" name="chosen_tools_prob[]" id="chosen_tools_prob" value="">
-			<input type="hidden" name="qualification_user_id" id="qualification_user_id" value="{{ form.instance.id }}">
-		</form>
-		{% with form.instance.qualifications.all as toolset %}
-			{% if toolset %}
-			<p>
-				Currently qualified tools are listed below.<br/>
-
-				{% for t in toolset %}
-					<span>
-					<a href="javascript:remove_qualified_user('{{ form.instance.id }}', '{{ t.id }}')" class="grey hover-black" title="Disqualify {{ form.first_name.value }}">
-						<span class="glyphicon glyphicon-remove-circle"></span>
-					</a>
-					{% if probationary_qualifications is not None %}
-					{% if probationary_qualifications|get_item:t.id %}
-					<a href="javascript:promote_user('{{ form.instance.id }}', '{{ t.id }}')" class="grey hover-black" title="Promote {{ form.first_name.value }}">
-						<span class="glyphicon glyphicon-arrow-up"></span>
-					</a>
-					{% else %}
-					<a href="javascript:demote_user('{{ form.instance.id }}', '{{ t.id }}')" class="grey hover-black" title="Demote {{ form.first_name.value }}">
-					<span class="glyphicon glyphicon-arrow-down"></span>
-					</a>
-					{% endif %}
-					{% endif %}
-					{{ t }}
-					{% if probationary_qualifications is not None %}
-						{% if probationary_qualifications|get_item:t.id %} - probationary
-						{% else %} - full
-						{% endif %}
-					{% endif %}
-					</span><br/>
-				{% endfor %}
-			</p>
-			{% endif %}
-		{% endwith %}
-
-		</div>
 		{% if physical_access_levels or externally_managed_access_levels %}
 			<div class="form-group">
 				<span class="control-label col-sm-2">Physical access levels</span>
@@ -330,6 +322,7 @@
 			</div>
 		</div>
 	</form>
+
 	{% if identity_service_available and form.instance.id and user_identity_information.can_reset_password_and_unlock_account %}
 		<form class="form-horizontal" method="post" action="{% url 'reset_password' form.instance.id %}">
 			{% csrf_token %}
@@ -386,6 +379,7 @@
 			$("#chosen_tools_prob").val('');
 			var data = serialize("#add_qualified_tool_form");
 			data['chosen_user[]'] = {{ form.instance.id }};
+			$(this).prop("placeholder","Adding tool, please wait...");
 			ajax_post("{% url 'modify_qualifications' %}", data, reload_qualified_tools, failure_dialog)
 		}
 
@@ -397,6 +391,7 @@
 			$("#chosen_tools_prob").val(search_selection.id);
 			var data = serialize("#add_qualified_tool_form");
 			data['chosen_user[]'] = {{ form.instance.id }};
+			$(this).prop("placeholder","Adding tool, please wait...");
 			ajax_post("{% url 'modify_qualifications' %}", data, reload_qualified_tools, failure_dialog)
 		}
 
@@ -411,10 +406,90 @@
 			ajax_post("{% url 'modify_qualifications' %}", data, reload_qualified_tools, failure_dialog);
 		}
 
+		function disqualify_all_tools()
+		{
+			if (confirm("Taking this action will remove all tool qualifications for this user.  This cannot be undone.  Are you sure you wish to proceed?")) {
+				$("#add_qualified_tool_search_box").prop("placeholder","Adding tool, please wait...");
+				$("#add_probationary_tool_search_box").prop("placeholder","Adding tool, please wait...");
+				var data = {};
+				{% with form.instance.qualifications.all as toolset %}
+				{% if toolset %}
+				{% for t in toolset %}
+				data = {
+					'action': 'disqualify',
+					'chosen_tool[]': {{ t.id }},
+					'chosen_user[]': {{ form.instance.id }},
+				}
+				ajax_post("{% url 'modify_qualifications' %}", data, null, null);
+				{% endfor %}
+				{% endif %}
+				{% endwith %}
+				setTimeout(reload_qualified_tools,2000);
+			}
+		}
+
 		function reload_qualified_tools()
 		{
 			var url = "/user/{{ form.instance.id }}/";
 			window.location.href = url;
+		}
+
+		function promote_user(user_id, tool_id)
+		{
+			$("#add_qualified_tool_search_box").prop("placeholder","Promoting tool, please wait...");
+			$("#add_probationary_tool_search_box").prop("placeholder","Promoting tool, please wait...");
+			var url = '/promote_user/' + user_id + '/' + tool_id + '/';
+			var failure_dialog = ajax_failure_callback("Failed to promote user", "There was a problem promoting this user.");
+			var data = {};
+			ajax_get(url, data, reload_qualified_tools, failure_dialog);
+		}
+
+		function promote_all_tools()
+		{
+			if (confirm("Taking this action will promote the user to fully qualified on all qualified tools.  This action cannot be undone.  Are you sure you wish to proceed?")) {
+				$("#add_qualified_tool_search_box").prop("placeholder","Promoting tools, please wait...");
+				$("#add_probationary_tool_search_box").prop("placeholder","Promoting tools, please wait...");
+				var url;
+				var data = {};
+				{% with form.instance.qualifications.all as toolset %}
+				{% if toolset %}
+				{% for t in toolset %}
+				url = '/promote_user/' + {{ form.instance.id }} + '/' + {{ t.id }} + '/';
+				ajax_get(url, data, null, null);
+				{% endfor %}
+				{% endif %}
+				{% endwith %}
+				setTimeout(reload_qualified_tools,2000);
+			}
+		}
+
+		function demote_user(user_id, tool_id)
+		{
+			$("#add_qualified_tool_search_box").prop("placeholder","Demoting tool, please wait...");
+			$("#add_probationary_tool_search_box").prop("placeholder","Demoting tool, please wait...");
+			var url = '/demote_user/' + user_id + '/' + tool_id + '/';
+			var failure_dialog = ajax_failure_callback("Failed to demote user", "There was a problem demoting this user.");
+			var data = {};
+			ajax_get(url, data, reload_qualified_tools, failure_dialog);
+		}
+
+		function demote_all_tools()
+		{
+			if (confirm("Taking this action will demote the user to probationary status  on all qualified tools.  This action cannot be undone.  Are you sure you wish to proceed?")) {
+				$("#add_qualified_tool_search_box").prop("placeholder","Demoting tools, please wait...");
+				$("#add_probationary_tool_search_box").prop("placeholder","Demoting tools, please wait...");
+				var url;
+				var data = {};
+				{% with form.instance.qualifications.all as toolset %}
+				{% if toolset %}
+				{% for t in toolset %}
+				url = '/demote_user/' + {{ form.instance.id }} + '/' + {{ t.id }} + '/';
+				ajax_get(url, data, null, null);
+				{% endfor %}
+				{% endif %}
+				{% endwith %}
+				setTimeout(reload_qualified_tools,2000);
+			}
 		}
 
 		function on_load()

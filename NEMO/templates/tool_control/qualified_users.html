@@ -1,14 +1,14 @@
 {% load custom_tags_and_filters %}
 
 <a onclick="toggle_details(this)" data-toggle="collapse" data-target="#qualified_users" class="pointer">
-	<span class="glyphicon glyphicon-user pull-left notification-icon primary-highlight"></span>
+	<span class="glyphicon glyphicon-user pull-left notification-icon primary-highlight" style="margin: 5px; padding: 5px;"></span>
 	<span class="glyphicon {% if expanded %}glyphicon-chevron-down{% else %}glyphicon-chevron-right{% endif %} pull-left chevron"></span>
 </a>
 <div class="media-body">
 	<h4 class="media-heading">Qualified users</h4>
 
 	<div id="qualified_users" class="collapse {% if expanded %}in{% endif %}">
-		<p>Only qualified users are able to operate the {{ tool.name }}.</p>
+		<p id="btn_target">Only qualified users are able to operate the {{ tool.name }}.</p>
 		{% if tool.grant_physical_access_level_upon_qualification %}<p class="danger-highlight">Qualifying a user for this tool automatically grants them the physical access level &quot;{{ tool.grant_physical_access_level_upon_qualification }}&quot;.</p>{% endif %}
 		<form id="add_qualified_user_form" class="form-inline" style="margin-bottom:10px">
 			<div class="container">

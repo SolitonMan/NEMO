@@ -164,7 +164,7 @@ def create_or_modify_user(request, user_id):
 		user = form.save(commit=False)
 		user.save()
 		record_active_state(request, user, form, 'is_active', user_id == 'new')
-		record_local_many_to_many_changes(request, user, form, 'qualifications')
+		#record_local_many_to_many_changes(request, user, form, 'qualifications')
 		record_local_many_to_many_changes(request, user, form, 'physical_access_levels')
 		record_local_many_to_many_changes(request, user, form, 'projects')
 		form.save_m2m()

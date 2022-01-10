@@ -78,6 +78,13 @@ def create_or_modify_tool(request, tool_id):
 
 	if request.method == 'GET':
 		dictionary['form'] = ToolForm(instance=tool)
+		pqd = {}
+		probationary_qualifications = ProbationaryQualifications.objects.filter(tool=tool)
+		for pq in probationary_qualifications:
+			pqd[pq.user.id] = pq.probationary_user
+		dictionary['probationary_qualifications'] = pqd
+		dictionary['users'] = User.objects.filter(is_active=True, projects__active=True).distinct()
+		dictionary['tool'] = tool
 		return render(request, 'tool_control/create_or_modify_tool.html', dictionary)
 
 	elif request.method == 'POST':
