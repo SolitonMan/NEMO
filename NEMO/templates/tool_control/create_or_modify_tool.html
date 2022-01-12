@@ -36,10 +36,35 @@
 		ajax_post("{% url 'modify_qualifications' %}", data, reload_qualified_users, failure_dialog);
 	}
 
+	function disqualify_all_users()
+	{
+		if (confirm("Taking this action will remove all qualified users (both probationary and full) from this tool.  This cannot be undone.  Are you sure you wish to proceed?")) {
+			$("#add_qualified_user_search_box").prop("placeholder","Disqualifying users, please wait...");
+			$("#add_probationary_user_search_box").prop("placeholder","Disqualifying users, please wait...");
+			var data = {};
+			{% with form.instance.user_set.all as qualified_users %}
+			{% if qualified_users %}
+			{% for u in qualified_users %}
+			data = {
+				'action': 'disqualify',
+				'chosen_tool[]': {{ form.instance.id }},
+				'chosen_user[]': {{ u.id }},
+			}
+			ajax_post("{% url 'modify_qualifications' %}", data, null, null);
+			{% endfor %}
+			{% endif %}
+			{% endwith %}
+			setTimeout(reload_qualified_users,2000);
+		}
+	}
+
 	function reload_qualified_users()
 	{
-		var url = "{% url 'get_qualified_users' %}?tool_id={{ tool.id }}";
-		$("#qualified_users_container").load(url);
+		//var url = "{% url 'get_qualified_users' %}?tool_id={{ tool.id }}";
+		//$("#qualified_users_container").load(url, function () {
+		//	$("#bulk_buttons").clone().prop("id","").show().insertAfter("#qualified_users_container #qualified_users #btn_target");
+		//});
+		window.location.reload();
 	}
 
 	function promote_user(user_id, tool_id)
@@ -50,12 +75,50 @@
 		ajax_get(url, data, reload_qualified_users, failure_dialog);
 	}
 
+	function promote_all_users()
+	{
+		if (confirm("Taking this action will promote all users of the {{ form.name.value }} to fully qualified status.  This action cannot be undone.  Are you sure you wish to proceed?")) {
+			$("#add_qualified_user_search_box").prop("placeholder","Promoting users, please wait...");
+			$("#add_probationary_user_search_box").prop("placeholder","Promoting users, please wait...");
+			var url;
+			var data = {};
+			{% with form.instance.user_set.all as qualified_users %}
+			{% if qualified_users %}
+			{% for u in qualified_users %}
+			url = '/promote_user/' + {{ u.id }} + '/' + {{ form.instance.id }} + '/';
+			ajax_get(url, data, null, null);
+			{% endfor %}
+			{% endif %}
+			{% endwith %}
+			setTimeout(reload_qualified_users,2000);
+		}
+	}
+
 	function demote_user(user_id, tool_id)
 	{
 		var url = '/demote_user/' + user_id + '/' + tool_id + '/';
 		var failure_dialog = ajax_failure_callback("Failed to demote user", "There was a problem demoting this user.");
 		var data = {};
 		ajax_get(url, data, reload_qualified_users, failure_dialog);
+	}
+
+	function demote_all_users()
+	{
+		if (confirm("Taking this action will demote all users of the {{ form.name.value }} to probationary status.  This action cannot be undone.  Are you sure you wish to proceed?")) {
+			$("#add_qualified_user_search_box").prop("placeholder","Demoting users, please wait...");
+			$("#add_probationary_user_search_box").prop("placeholder","Demoting users, please wait...");
+			var url;
+			var data = {};
+			{% with form.instance.user_set.all as qualified_users %}
+			{% if qualified_users %}
+			{% for u in qualified_users %}
+			url = '/demote_user/' + {{ u.id }} + '/' + {{ form.instance.id }} + '/';
+			ajax_get(url, data, null, null);
+			{% endfor %}
+			{% endif %}
+			{% endwith %}
+			setTimeout(reload_qualified_users,2000);
+		}
 	}
 	</script>
 	<h1>Modify Tool: {{ form.instance.name }}</h1>
@@ -70,16 +133,20 @@
 		<input type="submit" value="Submit" class="btn btn-success" />
 	</form>
 	<div id="bulk_buttons">
-		<input type="button" value="Promote all users to full" class="btn btn-success" onclick="alert('Promote clicked');" />
-		<input type="button" value="Demote all users to probationary" class="btn btn-danger" onclick="alert('Demote clicked');" />
-		<input type="button" value="Disqualify all users from tool" class="btn btn-danger" onclick="alert('Disqualify clicked');" />
+		<input type="button" value="Promote all users to full" class="btn btn-success" onclick="promote_all_users();" />
+		<input type="button" value="Demote all users to probationary" class="btn btn-danger" onclick="demote_all_users();" />
+		<input type="button" value="Disqualify all users from tool" class="btn btn-danger" onclick="disqualify_all_users();" />
 	</div>
 
 	<script>
 	function on_load()
 	{
-		$("#bulk_buttons").insertAfter("#qualified_users_container #qualified_users #btn_target");
+		$("#bulk_buttons").clone().prop("id","").insertAfter("#qualified_users_container #qualified_users #btn_target");
+		$("#bulk_buttons").hide();
+		$("#qualified_users_container a.pointer").click();
 	}
 	$(on_load);
 	</script>
 {% endblock %}
+
+$("#bulk_buttons").clone().prop("id","").insertAfter("#qualified_users_container #qualified_users #btn_target");

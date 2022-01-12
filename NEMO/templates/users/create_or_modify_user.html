@@ -409,8 +409,8 @@
 		function disqualify_all_tools()
 		{
 			if (confirm("Taking this action will remove all tool qualifications for this user.  This cannot be undone.  Are you sure you wish to proceed?")) {
-				$("#add_qualified_tool_search_box").prop("placeholder","Adding tool, please wait...");
-				$("#add_probationary_tool_search_box").prop("placeholder","Adding tool, please wait...");
+				$("#add_qualified_tool_search_box").prop("placeholder","Disqualifying all tools, please wait...");
+				$("#add_probationary_tool_search_box").prop("placeholder","Disqualifying all tools, please wait...");
 				var data = {};
 				{% with form.instance.qualifications.all as toolset %}
 				{% if toolset %}

@@ -108,14 +108,14 @@ class ToolAdminForm(forms.ModelForm):
 		model = Tool
 		fields = '__all__'
 
-	qualified_users = forms.ModelMultipleChoiceField(
-		queryset=User.objects.all(),
-		required=False,
-		widget=FilteredSelectMultiple(
-			verbose_name='Users',
-			is_stacked=False
-		)
-	)
+#	qualified_users = forms.ModelMultipleChoiceField(
+#		queryset=User.objects.all(),
+#		required=False,
+#		widget=FilteredSelectMultiple(
+#			verbose_name='Users',
+#			is_stacked=False
+#		)
+#	)
 
 	backup_owners = forms.ModelMultipleChoiceField(
 		queryset=User.objects.all(),
@@ -147,7 +147,7 @@ class ToolAdminForm(forms.ModelForm):
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 		if self.instance.pk:
-			self.fields['qualified_users'].initial = self.instance.user_set.all()
+			#self.fields['qualified_users'].initial = self.instance.user_set.all()
 			self.fields['required_resources'].initial = self.instance.required_resource_set.all()
 			self.fields['nonrequired_resources'].initial = self.instance.nonrequired_resource_set.all()
 
@@ -159,6 +159,7 @@ class ToolAdmin(admin.ModelAdmin):
 	form = ToolAdminForm
 
 	search_fields = ('name', 'category')
+#	readonly_fields = ('qualified_users',)
 
 	def change_view(self, request, object_id, form_url='', extra_context=None):
 		if request.user.is_superuser:
@@ -183,7 +184,8 @@ class ToolAdmin(admin.ModelAdmin):
 		"""
 		Explicitly record any project membership changes.
 		"""
-		record_remote_many_to_many_changes_and_save(request, obj, form, change, 'qualified_users', super().save_model)
+		#record_remote_many_to_many_changes_and_save(request, obj, form, change, 'qualified_users', super().save_model)
+		super().save_model
 		if 'required_resources' in form.changed_data:
 			obj.required_resource_set.set(form.cleaned_data['required_resources'])
 		if 'nonrequired_resources' in form.changed_data:
