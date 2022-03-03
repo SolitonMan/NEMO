@@ -1,11 +1,14 @@
+import io
+import pytz
 from datetime import timedelta, datetime
 from http import HTTPStatus
 from logging import getLogger
 from re import match, search
 
+from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required, permission_required
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMessage
 from django.db.models import Q
 from django.http import HttpResponseBadRequest, HttpResponse, HttpResponseNotFound, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404, redirect
@@ -17,7 +20,7 @@ from django.utils.safestring import mark_safe
 
 from NEMO.decorators import disable_session_expiry_refresh
 from NEMO.models import Tool, Reservation, Configuration, ReservationConfiguration, ReservationProject, ReservationNotification, Consumable, UsageEvent, UsageEventProject, AreaAccessRecord, StaffCharge, StaffChargeProject, User, Project, ScheduledOutage, ScheduledOutageCategory
-from NEMO.utilities import bootstrap_primary_color, extract_times, extract_dates, format_datetime, parse_parameter_string
+from NEMO.utilities import EmailCategory, create_email_log, bootstrap_primary_color, create_email_attachment, extract_times, extract_dates, format_datetime, parse_parameter_string
 from NEMO.views.constants import ADDITIONAL_INFORMATION_MAXIMUM_LENGTH
 from NEMO.views.customization import get_customization, get_media_file_contents
 from NEMO.views.policy import check_policy_to_save_reservation, check_policy_to_cancel_reservation, check_policy_to_create_outage
@@ -452,6 +455,25 @@ def create_reservation(request):
 			return HttpResponseBadRequest('An error occurred while attempting to verify the timing of your reservation')
 
 		new_reservation.save()
+
+		# create an email with the reservation information
+		msg = 'You have created a reservation for the ' + str(tool.name) + ' starting ' + str(new_reservation.start) + '.'
+		attachment = create_ics_for_reservation(new_reservation, False)
+		#send_mail(subject='Reservation Created', content=msg, from_email='LEOHelp@psu.edu', to=[str(new_reservation.user.email)], attachments=[attachment])
+		email = EmailMessage('Reservation Created',msg,'LEOHelp@psu.edu',[str(new_reservation.user.email)],reply_to=['LEOHelp@psu.edu'])
+		email.attach(attachment)
+		create_email_log(email, EmailCategory.GENERAL)
+		email.send()
+
+		#if ReservationProject.objects.filter(reservation=new_reservation).exists():
+		#	rp_objects = ReservationProject.objects.filter(reservation=new_reservation)
+		#	for rp in rp_objects:
+		#		msg = 'A reservation has been created for the  ' + str(tool.name) + ' starting ' + str(new_reservation.start) + '.  The tool will be run by ' + str(new_reservation.user) + '.'
+		#		email = EmailMessage('Reservation Created',msg,'LEOHelp@psu.edu',[str(rp.customer.email)],reply_to=['LEOHelp@psu.edu'])
+		#		email.attach(attachment)
+		#		create_email_log(email, EmailCategory.GENERAL)
+		#		email.send()
+
 		return HttpResponse()
 
 	# If a reservation is requested and the tool requires configuration that has not been submitted...
@@ -488,6 +510,23 @@ def create_reservation(request):
 				rc.reservation = new_reservation
 				rc.updated = timezone.now()
 				rc.save()
+
+		msg = 'You have created a reservation for the ' + str(tool.name) + ' starting ' + str(new_reservation.start) + '.'
+		attachment = create_ics_for_reservation(new_reservation, False)
+		email = EmailMessage('Reservation Created',msg,'LEOHelp@psu.edu',[str(new_reservation.user.email)],reply_to=['LEOHelp@psu.edu'])
+		email.attach(attachment)
+		create_email_log(email, EmailCategory.GENERAL)
+		email.send()
+
+		#if ReservationProject.objects.filter(reservation=new_reservation).exists():
+		#	rp_objects = ReservationProject.objects.filter(reservation=new_reservation)
+		#	for rp in rp_objects:
+		#		msg = 'A reservation has been created for the  ' + str(tool.name) + ' starting ' + str(new_reservation.start) + '.  The tool will be run by ' + str(new_reservation.user) + '.'
+		#		email = EmailMessage('Reservation Created',msg,'LEOHelp@psu.edu',[str(rp.customer.email)],reply_to=['LEOHelp@psu.edu'])
+		#		email.attach(attachment)
+		#		create_email_log(email, EmailCategory.GENERAL)
+		#		email.send()
+
 		return HttpResponse()
 
 	return HttpResponseBadRequest("Reservation creation failed because invalid parameters were sent to the server.")
@@ -630,6 +669,8 @@ def modify_reservation(request, start_delta, end_delta):
 		return response
 	# Record the current time so that the timestamp of the cancelled reservation and the new reservation match exactly.
 	now = timezone.now()
+	# set the tool
+	tool = reservation_to_cancel.tool
 	# Cancel the user's original reservation.
 	reservation_to_cancel.cancelled = True
 	reservation_to_cancel.cancellation_time = now
@@ -688,6 +729,38 @@ def modify_reservation(request, start_delta, end_delta):
 		reservation_to_cancel.descendant = new_reservation
 		reservation_to_cancel.updated = timezone.now()
 		reservation_to_cancel.save()
+
+
+	msg = 'You have cancelled a reservation for the ' + str(tool.name) + ' starting ' + str(reservation_to_cancel.start) + '.'
+	attachment = create_ics_for_reservation(reservation_to_cancel, True)
+	email = EmailMessage('Reservation Cancelled',msg,'LEOHelp@psu.edu',[str(reservation_to_cancel.user.email)],reply_to=['LEOHelp@psu.edu'])
+	email.attach(attachment)
+	create_email_log(email, EmailCategory.GENERAL)
+	email.send()
+
+	#if ReservationProject.objects.filter(reservation=reservation_to_cancel).exists():
+	#	for rp in ReservationProject.objects.filter(reservation=reservation_to_cancel):
+	#		msg = 'A reservation has been cancelled for the ' + str(tool.name) + ' starting ' + str(reservation_to_cancel.start) + '.'
+	#		email = EmailMessage('Reservation Cancelled',msg,'LEOHelp@psu.edu',[str(rp.customer.email)],reply_to=['LEOHelp@psu.edu'])
+	#		email.attach(attachment)
+	#		create_email_log(email, EmailCategory.GENERAL)
+	#		email.send()
+
+	msg = 'You have created a reservation for the ' + str(tool.name) + ' starting ' + str(new_reservation.start) + '.'
+	attachment = create_ics_for_reservation(new_reservation, False)
+	email = EmailMessage('Reservation Created',msg,'LEOHelp@psu.edu',[str(new_reservation.user.email)],reply_to=['LEOHelp@psu.edu'])
+	email.attach(attachment)
+	create_email_log(email, EmailCategory.GENERAL)
+	email.send()
+
+	#if ReservationProject.objects.filter(reservation=new_reservation).exists():
+	#	for rp in ReservationProject.objects.filter(reservation=new_reservation):
+	#		msg = 'A reservation has been created for the ' + str(tool.name) + ' starting ' + str(new_reservation.start) + '.  The tool will be run by ' + str(new_reservation.user)
+	#		email = EmailMessage('Reservation Created',msg,'LEOHelp@psu.edu',[str(rp.customer.email)],reply_to=['LEOHelp@psu.edu'])
+	#		email.attach(attachment)
+	#		create_email_log(email, EmailCategory.GENERAL)
+	#		email.send()
+
 	return response
 
 
@@ -765,6 +838,21 @@ def cancel_reservation(request, reservation_id):
 			if email_contents:
 				cancellation_email = Template(email_contents).render(Context(dictionary))
 				reservation.user.email_user('Your reservation was cancelled', cancellation_email, request.user.email)
+
+	msg = 'You have cancelled a reservation for the ' + str(reservation.tool.name) + ' starting ' + str(reservation.start) + '.'
+	attachment = create_ics_for_reservation(reservation, True)
+	email = EmailMessage('Reservation Cancelled',msg,'LEOHelp@psu.edu',[str(reservation.user.email)],reply_to=['LEOHelp@psu.edu'])
+	email.attach(attachment)
+	create_email_log(email, EmailCategory.GENERAL)
+	email.send()
+
+	#if ReservationProject.objects.filter(reservation=reservation).exists():
+	#	for rp in ReservationProject.objects.filter(reservation=reservation):
+	#		msg = 'A reservation has been cancelled for the ' + str(reservation.tool.name) + ' starting ' + str(reservation.start) + '.'
+	#		email = EmailMessage('Reservation Cancelled',msg,'LEOHelp@psu.edu',[str(rp.customer.email)],reply_to=['LEOHelp@psu.edu'])
+	#		email.attach(attachment)
+	#		create_email_log(email, EmailCategory.GENERAL)
+	#		email.send()
 
 	if request.device == 'desktop':
 		return response
@@ -1044,3 +1132,24 @@ def save_notifications(request):
 
 
 
+def create_ics_for_reservation(reservation, cancelled=False):
+	site_title = 'LEO'
+	reservation_organizer_email = getattr(settings, "RESERVATION_ORGANIZER_EMAIL", "LEOHelp@psu.edu")
+	reservation_organizer = getattr(settings, "RESERVATION_ORGANIZER", site_title)
+	method_name = 'CANCEL' if cancelled else 'REQUEST'
+	method = f'METHOD:{method_name}\n'
+	status = 'STATUS:CANCELLED\n' if cancelled else 'STATUS:CONFIRMED\n'
+	uid = 'UID:'+str(reservation.id)+'\n'
+	sequence = 'SEQUENCE:2\n' if cancelled else 'SEQUENCE:0\n'
+	priority = 'PRIORITY:5\n' if cancelled else 'PRIORITY:0\n'
+	now = datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')
+	start = reservation.start.astimezone(pytz.utc).strftime('%Y%m%dT%H%M%SZ')
+	end = reservation.end.astimezone(pytz.utc).strftime('%Y%m%dT%H%M%SZ')
+	reservation_name = str(reservation.tool.name)
+	lines = ['BEGIN:VCALENDAR\n', 'VERSION:2.0\n', method, 'BEGIN:VEVENT\n', uid, sequence, priority, f'DTSTAMP:{now}\n', f'DTSTART:{start}\n', f'DTEND:{end}\n', f'ATTENDEE;CN="{reservation.user.get_full_name()}";RSVP=TRUE:mailto:{reservation.user.email}\n', f'ORGANIZER;CN="{reservation_organizer}":mailto:{reservation_organizer_email}\n', f'SUMMARY:[{site_title}] {reservation_name} Reservation\n', status, 'END:VEVENT\n', 'END:VCALENDAR\n']
+	ics = io.StringIO('')
+	ics.writelines(lines)
+	ics.seek(0)
+
+	attachment = create_email_attachment(ics, maintype='text', subtype='calendar', method=method_name)
+	return attachment

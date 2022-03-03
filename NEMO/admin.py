@@ -5,7 +5,10 @@ from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.contrib.auth.models import Permission
 
 from NEMO.actions import lock_selected_interlocks, synchronize_with_tool_usage, unlock_selected_interlocks
-from NEMO.models import Account, ActivityHistory, Alert, Area, AreaAccessRecord, AreaAccessRecordProject, BillingType, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableUnit, ConsumableCategory, ConsumableType, ConsumableWithdraw, ContactInformation, ContactInformationCategory, ContestTransaction, ContestTransactionData, ContestTransactionNewData, Core, CreditCostCollector, Customization, Door, GlobalFlag, Interlock, InterlockCard, LandingPageChoice, LockBilling, MembershipHistory, News, Notification, NsfCategory, Organization, OrganizationType, PhysicalAccessLevel, PhysicalAccessLog, Project, Reservation, ReservationConfiguration, ReservationProject, Resource, ResourceCategory, SafetyIssue, ScheduledOutage, ScheduledOutageCategory, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskHistory, TaskStatus, Tool, TrainingSession, UsageEvent, UsageEventProject, User, UserType
+from NEMO.models import Account, ActivityHistory, Alert, Area, AreaAccessRecord, AreaAccessRecordProject, BillingType, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableUnit, ConsumableCategory, ConsumableType, ConsumableWithdraw, ContactInformation, ContactInformationCategory, ContestTransaction, ContestTransactionData, ContestTransactionNewData, Core, CreditCostCollector, Customization, Door, EmailLog, GlobalFlag, Interlock, InterlockCard, LandingPageChoice, LockBilling, MembershipHistory, News, Notification, NsfCategory, Organization, OrganizationType, PhysicalAccessLevel, PhysicalAccessLog, Project, Reservation, ReservationConfiguration, ReservationProject, Resource, ResourceCategory, SafetyIssue, ScheduledOutage, ScheduledOutageCategory, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskHistory, TaskStatus, Tool, TrainingSession, UsageEvent, UsageEventProject, User, UserType
+from NEMO.utilities import send_mail
+from NEMO.views.customization import get_customization, get_media_file_contents
+
 
 admin.site.site_header = "LEO"
 admin.site.site_title = "LEO"
@@ -185,7 +188,7 @@ class ToolAdmin(admin.ModelAdmin):
 		Explicitly record any project membership changes.
 		"""
 		#record_remote_many_to_many_changes_and_save(request, obj, form, change, 'qualified_users', super().save_model)
-		super().save_model
+		super().save_model(request, obj, form, change)
 		if 'required_resources' in form.changed_data:
 			obj.required_resource_set.set(form.cleaned_data['required_resources'])
 		if 'nonrequired_resources' in form.changed_data:
@@ -701,6 +704,10 @@ class UserAdmin(admin.ModelAdmin):
 	def save_model(self, request, obj, form, change):
 		""" Audit project membership and qualifications when a user is saved. """
 		super().save_model(request, obj, form, change)
+		# send an email to the new user
+		if not change:
+			msg = get_media_file_contents("new_user_email.htm")
+			send_mail("Welcome to LEO", msg, "LEOHelp@psu.edu", [str(form.cleaned_data.get('email'))])
 		record_local_many_to_many_changes(request, obj, form, 'projects')
 		#record_local_many_to_many_changes(request, obj, form, 'qualifications')
 		record_local_many_to_many_changes(request, obj, form, 'physical_access_levels')
@@ -908,6 +915,12 @@ class CoreAdmin(admin.ModelAdmin):
 	def has_delete_permission(self, request, obj=None):
 		return False
 
+@register(EmailLog)
+class EmailLog(admin.ModelAdmin):
+	list_display = ('category','when','sender','to')
+
+	def has_delete_permission(self, request, obj=None):
+		return False
 
 @register(Organization)
 class OrganizationAdmin(admin.ModelAdmin):

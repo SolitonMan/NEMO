@@ -56,6 +56,14 @@ def pulse_interlocks():
 			#logger.critical(str(t.name) + " has been detected as being in use")
 			#print(str(t.name) + " has been detected as being in use")
 
+def update_autologout():
+	logger = getLogger(__name__)
+	usage_events = UsageEvent.objects.filter(set_for_autologout=True, end=None, end_time__lt=timezone.now())
+	for u in usage_events:
+		u.end = u.end_time
+		u.updated = timezone.now()
+		u.save()
+
 
 def daily_validate_transactions():
 	print("Daily transaction validation started at " + str(datetime.now()))

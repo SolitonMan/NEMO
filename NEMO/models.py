@@ -20,7 +20,7 @@ from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotFou
 from django.urls import reverse
 from django.utils import timezone
 
-from NEMO.utilities import format_datetime
+from NEMO.utilities import send_mail, EmailCategory, format_datetime
 from NEMO.views.constants import ADDITIONAL_INFORMATION_MAXIMUM_LENGTH
 from NEMO.widgets.configuration_editor import ConfigurationEditor
 
@@ -995,7 +995,10 @@ class UsageEvent(CalendarDisplay):
 				d += "<tr><td>" + e.customer.get_full_name() + "</td><td>" + str(e.project) + "</td></tr>"
 			d += "</tbody></table>"
 		else:
-			d += "<tr><td>" + self.customer.get_full_name() + "</td><td>" + str(self.project) + "</td></tr></tbody></table>"
+			if self.user and self.project:
+				d += "<tr><td>" + self.user.get_full_name() + "</td><td>" + str(self.project) + "</td></tr></tbody></table>"
+			else:
+				d += "<tr><td>Cannot find customer</td><td>Cannot find project</td></tr></tbody></table>"
 		return d
 
 	class Meta:
@@ -1864,3 +1867,17 @@ class FICO_GL_ACCT(models.Model):
 	start_date = models.DateField(null=True, blank=True)
 	end_date = models.DateField(null=True, blank=True)
 
+
+
+class EmailLog(models.Model):
+	category = models.IntegerField(choices=EmailCategory.Choices, default=EmailCategory.GENERAL)
+	when = models.DateTimeField(null=False, auto_now_add=True)
+	sender = models.EmailField(null=False, blank=False)
+	to = models.TextField(null=False, blank=False)
+	subject = models.CharField(null=False, max_length=254)
+	content = models.TextField(null=False)
+	ok = models.BooleanField(null=False, default=True)
+	attachments = models.TextField(null=True)
+
+	class Meta:
+		ordering = ['-when']
