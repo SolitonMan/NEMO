@@ -46,7 +46,7 @@ def landing(request):
 					contested_items = True
 
 
-	if UsageEvent.objects.filter(operator=request.user, validated=False, active_flag=True).exists() or StaffCharge.objects.filter(staff_member=request.user, validated=False, active_flag=True).exists():
+	if UsageEvent.objects.filter(operator=request.user, validated=False, active_flag=True).exists() or StaffCharge.objects.filter(staff_member=request.user, validated=False, active_flag=True).exists() or AreaAccessRecord.objects.filter(user=request.user, validated=False, active_flag=True).exists() or ConsumableWithdraw.objects.filter(validated=False, merchant=request.user, active_flag=True).exists():
 		validation_needed = True
 	else:
 		validation_needed = False

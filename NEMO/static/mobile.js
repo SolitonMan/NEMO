@@ -5,7 +5,7 @@ function mobile_search(query_element, base_url)
 	var query = query_element.val();
 	if(query.length < 2)
 		return;
-	var search_base = query_element.data('search-base');
+	var search_base = eval(query_element.data('search-base'));
 	var result_count = 0;
 	var matching_regular_expression = new RegExp(query, 'i');
 	var results = '<ul class="list-group">';
