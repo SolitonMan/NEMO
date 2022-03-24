@@ -152,7 +152,7 @@ th {
 	</thead>
 	<tbody id="transaction_data">
 {% for key, value in transactions.items %}
-	<tr class="{{ value.class }} {% if value.type == "Tool Use" %}tool-use{% endif %} {% if value.type == "Staff Charge" %}staff-charge{% endif %} {% if value.type == "Area Access" %}area-access{% endif %} {% if value.type == "Withdraw" %}withdraw{% endif %}" id="transaction_row_{{ forloop.counter }}" style="background-color: {% if value.type == "Tool Use" and not value.validated and not value.contested %}rgb(182,216,255);{% endif %}{% if value.type == "Staff Charge" and not value.validated and not value.contested%}rgb(237,237,237);{% endif %}{% if value.type == "Area Access" and not value.validated and not value.contested %}rgb(253,225,227);{% endif %}{% if value.type == "Withdraw" and not value.validated and not value.contested %}rgb(247,247,146);{% endif %}border: 2px solid #c0c0c0;">
+	<tr class="{{ value.class }} {% if value.type == "Tool Use" %}tool-use{% endif %} {% if value.type == "Staff Charge" %}staff-charge{% endif %} {% if value.type == "Area Access" %}area-access{% endif %} {% if value.type == "Withdraw" %}withdraw{% endif %}" id="transaction_row_{{ forloop.counter }}" style="{% if not value.validated and not value.contested %}background-color: {% endif %}{% if value.type == "Tool Use" and not value.validated and not value.contested %}rgb(182,216,255);{% endif %}{% if value.type == "Staff Charge" and not value.validated and not value.contested%}rgb(237,237,237);{% endif %}{% if value.type == "Area Access" and not value.validated and not value.contested %}rgb(253,225,227);{% endif %}{% if value.type == "Withdraw" and not value.validated and not value.contested %}rgb(247,247,146);{% endif %}border: 2px solid #c0c0c0;">
 		<td rowspan="2" style="width:40px; background-color: inherit;" title="ID={{ value.id }}">
 			<b>{% if value.ad_hoc_created %}Ad Hoc {% endif %}{{ value.type }}</b>
 			<br/>
@@ -179,8 +179,8 @@ th {
 			</tr>
 			<tr style="background-color: inherit;">
 			<td style="width:120px; background-color: inherit;">{{ value.operator }}</td>
-			<td style="width:120px; background-color: inherit;">{{ value.start|date:"m-d-Y g:i:s A" }}</td>
-			<td style="width:120px; background-color: inherit;">{{ value.end|date:"m-d-Y g:i:s A" }}</td>
+			<td style="width:120px; background-color: inherit;">{{ value.start|date:"m-d-Y g:i A" }}</td>
+			<td style="width:120px; background-color: inherit;">{{ value.end|date:"m-d-Y g:i A" }}</td>
 			<td style="width:120px; background-color: inherit;">{% if value.duration != '' %}{{ value.duration|smooth_timedelta }}{% else %}{{ value.quantity }}{% endif %}</td>
 			<td style="width:150px; background-color: inherit;">{{ value.tool }}</td>
 			<td style="width:50px; text-align:center; background-color: inherit;">
@@ -242,7 +242,7 @@ th {
 			</table>
 		</td>
 	</tr>
-	<tr class="{{ value.class }} {% if value.type == "Tool Use" %}tool-use{% endif %} {% if value.type == "Staff Charge" %}staff-charge{% endif %} {% if value.type == "Area Access" %}area-access{% endif %} {% if value.type == "Withdraw" %}withdraw{% endif %}" id="transaction_row_{{ forloop.counter }}_customers" style="background-color: {% if value.type == "Tool Use" and not value.validated and not value.contested %}rgb(182,216,255);{% endif %}{% if value.type == "Staff Charge" and not value.validated and not value.contested %}rgb(237,237,237);{% endif %}{% if value.type == "Area Access" and not value.validated and not value.contested %}rgb(253,225,227);{% endif %}{% if value.type == "Withdraw" and not value.validated and not value.contested %}rgb(247,247,146);{% endif %}border: 2px solid #c0c0c0;">
+	<tr class="{{ value.class }} {% if value.type == "Tool Use" %}tool-use{% endif %} {% if value.type == "Staff Charge" %}staff-charge{% endif %} {% if value.type == "Area Access" %}area-access{% endif %} {% if value.type == "Withdraw" %}withdraw{% endif %}" id="transaction_row_{{ forloop.counter }}_customers" style="{% if  not value.validated and not value.contested %}background-color: {% endif %}{% if value.type == "Tool Use" and not value.validated and not value.contested %}rgb(182,216,255);{% endif %}{% if value.type == "Staff Charge" and not value.validated and not value.contested %}rgb(237,237,237);{% endif %}{% if value.type == "Area Access" and not value.validated and not value.contested %}rgb(253,225,227);{% endif %}{% if value.type == "Withdraw" and not value.validated and not value.contested %}rgb(247,247,146);{% endif %}border: 2px solid #c0c0c0;">
 		<td style="padding: 20px; background-color: inherit;">
 			<table style="background-color: inherit;">
 			<tr style="background-color: inherit;">
@@ -283,8 +283,15 @@ th {
 			</tr>
 			{% if value.contest_rejection_reason != '' %}
 			<tr style="background-color: inherit;">
-				<td colspan="4" style="background-color: inherit;">
+				<td {%if value.cost_per_sample_run%}colspan="5"{%else%}colspan="4"{%endif%} style="background-color: inherit;">
 					<span title="ID={{ value.contest_id }} DATE={{ value.contest_resolved_date }}" style="font-weight: bold; background-color: #eeeeff;">Contest rejected: </span>{{ value.contest_rejection_reason }}
+				</td>
+			</tr>
+			{% endif %}
+			{% if value.show_contested %}
+			<tr style="background-color: inherit;">
+				<td {%if value.cost_per_sample_run%}colspan="5"{%else%}colspan="4"{%endif%} style="background-color: #ffeeee;text-align: center;font-weight: bold;">
+				The contests for this transaction have been resolved
 				</td>
 			</tr>
 			{% endif %}
@@ -594,6 +601,11 @@ function edit_comment(id, type, comment)
 			$("#dialog").modal('hide');
 		}
 		return false;
+	});
+	$("#dialog").on("shown.bs.modal", function () {
+		var s = $("#comment_text").val();
+		$("#comment_text").focus();
+		$("#comment_text")[0].setSelectionRange(s.length,s.length);
 	});
 	$("#dialog").modal('show');
 }

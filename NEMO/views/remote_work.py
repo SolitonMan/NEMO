@@ -108,10 +108,14 @@ def remote_work(request):
 				'customers': '',
 				'ad_hoc_created': u.ad_hoc_created,
 				'cost_per_sample_run': u.cost_per_sample_run,
+				'show_contested': False,
 			}
 
 			if u.validated:
 				transactions[transaction_key]['class'] = 'success-highlight'
+				if u.contest_record.all().count() > 0:
+					transactions[transaction_key]['class'] = 'success-highlight-contested'
+					transactions[transaction_key]['show_contested'] = True
 			else:
 				if u.contested:
 					if u.contest_record.filter(contest_resolved=False).count() == 0:
@@ -178,10 +182,14 @@ def remote_work(request):
 				'ad_hoc_created': s.ad_hoc_created,
 				'cost_per_sample_run': s.cost_per_sample_run,
 				'related_usage_event': s.related_usage_event,
+				'show_contested': False,
 			}
 
 			if s.validated:
 				transactions[transaction_key]['class'] = 'success-highlight'
+				if s.contest_record.all().count() > 0:
+					transactions[transaction_key]['class'] = 'success-highlight-contested'
+					transactions[transaction_key]['show_contested']: True
 			else:
 				if s.contested:
 					if s.contest_record.filter(contest_resolved=False).count() == 0:
@@ -246,10 +254,14 @@ def remote_work(request):
 				'ad_hoc_created': a.ad_hoc_created,
 				'cost_per_sample_run': a.cost_per_sample_run,
 				'related_usage_event': a.related_usage_event,
+				'show_contested': False,
 			}
 
 			if a.validated:
 				transactions[transaction_key]['class'] = 'success-highlight'
+				if a.contest_record.all().count() > 0:
+					transactions[transaction_key]['class'] = 'success-highlight-contested'
+					transactions[transaction_key]['show_contested'] = True
 			else:
 				if a.contested:
 					if a.contest_record.filter(contest_resolved=False).count() == 0:
@@ -323,10 +335,14 @@ def remote_work(request):
 				'customers': '',
 				'ad_hoc_created': False,
 				'related_usage_event': c.usage_event,
+				'show_contested': False,
 			}
 
 			if c.validated:
 				transactions[transaction_key]['class'] = 'success-highlight'
+				if c.contest_record.all().count() > 0:
+					transactions[transaction_key]['class'] = 'success-highlight-contested'
+					transactions[transaction_key]['show_contested'] = True
 			else:
 				if c.contested:
 					if c.contest_record.filter(contest_resolved=False).count() == 0:
@@ -851,15 +867,19 @@ def resolve_staff_charge_contest(request):
 	contest_transaction = ContestTransaction.objects.get(content_type__pk=staff_charge_type.id, object_id=staff_charge.id, contest_resolved=False)
 	dictionary['contest_transaction'] = contest_transaction
 	df = DateFormat(staff_charge.start)
-	dictionary['event_start_date'] = df.format('Y-m-d H:i:s')
+	dictionary['event_start_date'] = df.format('Y-m-d h:i A')
 	df = DateFormat(staff_charge.end)
-	dictionary['event_end_date'] = df.format('Y-m-d H:i:s')
+	dictionary['event_end_date'] = df.format('Y-m-d h:i A')
 	if ContestTransactionData.objects.filter(content_type__pk=staff_charge_type.id, object_id=staff_charge.id, contest_transaction=contest_transaction, field_name="start").exists():
-		dictionary['proposed_event_start_date'] = ContestTransactionData.objects.filter(content_type__pk=staff_charge_type.id, object_id=staff_charge.id, contest_transaction=contest_transaction, field_name="start")[0].proposed_value
+		date_obj = datetime.strptime(ContestTransactionData.objects.filter(content_type__pk=staff_charge_type.id, object_id=staff_charge.id, contest_transaction=contest_transaction, field_name="start")[0].proposed_value, '%Y-%m-%d %H:%M:%S')
+		df = DateFormat(date_obj)
+		dictionary['proposed_event_start_date'] = df.format('Y-m-d h:i A')
 	else:
 		dictionary['proposed_event_start_date'] = None
 	if ContestTransactionData.objects.filter(content_type__pk=staff_charge_type.id, object_id=staff_charge.id, contest_transaction=contest_transaction, field_name="end").exists():
-		dictionary['proposed_event_end_date'] = ContestTransactionData.objects.filter(content_type__pk=staff_charge_type.id, object_id=staff_charge.id, contest_transaction=contest_transaction, field_name="end")[0].proposed_value
+		date_obj = datetime.strptime(ContestTransactionData.objects.filter(content_type__pk=staff_charge_type.id, object_id=staff_charge.id, contest_transaction=contest_transaction, field_name="end")[0].proposed_value, '%Y-%m-%d %H:%M:%S')
+		df = DateFormat(date_obj)
+		dictionary['proposed_event_end_date'] = df.format('Y-m-d h:i A')
 	else:
 		dictionary['proposed_event_end_date'] = None
 	if StaffChargeProject.objects.filter(staff_charge=staff_charge, active_flag=True).exists():
@@ -959,15 +979,19 @@ def resolve_usage_event_contest(request):
 	contest_transaction = ContestTransaction.objects.get(content_type__pk=usage_event_type.id, object_id=usage_event.id, contest_resolved=False)
 	dictionary['contest_transaction'] = contest_transaction
 	df = DateFormat(usage_event.start)
-	dictionary['event_start_date'] = df.format('Y-m-d H:i:s')
+	dictionary['event_start_date'] = df.format('Y-m-d h:i A')
 	df = DateFormat(usage_event.end)
-	dictionary['event_end_date'] = df.format('Y-m-d H:i:s')
+	dictionary['event_end_date'] = df.format('Y-m-d h:i A')
 	if ContestTransactionData.objects.filter(content_type__pk=usage_event_type.id, object_id=usage_event.id, contest_transaction=contest_transaction, field_name="start").exists():
-		dictionary['proposed_event_start_date'] = ContestTransactionData.objects.filter(content_type__pk=usage_event_type.id, object_id=usage_event.id, contest_transaction=contest_transaction, field_name="start")[0].proposed_value
+		date_obj = datetime.strptime(ContestTransactionData.objects.filter(content_type__pk=usage_event_type.id, object_id=usage_event.id, contest_transaction=contest_transaction, field_name="start")[0].proposed_value, '%Y-%m-%d %H:%M:%S')
+		df = DateFormat(date_obj)
+		dictionary['proposed_event_start_date'] = df.format('Y-m-d h:i A')
 	else:
 		dictionary['proposed_event_start_date'] = None
 	if ContestTransactionData.objects.filter(content_type__pk=usage_event_type.id, object_id=usage_event.id, contest_transaction=contest_transaction, field_name="end").exists():
-		dictionary['proposed_event_end_date'] = ContestTransactionData.objects.filter(content_type__pk=usage_event_type.id, object_id=usage_event.id, contest_transaction=contest_transaction, field_name="end")[0].proposed_value
+		date_obj = datetime.strptime(ContestTransactionData.objects.filter(content_type__pk=usage_event_type.id, object_id=usage_event.id, contest_transaction=contest_transaction, field_name="end")[0].proposed_value, '%Y-%m-%d %H:%M:%S')
+		df = DateFormat(date_obj)
+		dictionary['proposed_event_end_date'] = df.format('Y-m-d h:i A')
 	else:
 		dictionary['proposed_event_end_date'] = None
 	if UsageEventProject.objects.filter(usage_event=usage_event, active_flag=True).exists():
@@ -1074,17 +1098,21 @@ def resolve_area_access_record_contest(request):
 	contest_transaction = ContestTransaction.objects.get(content_type__pk=aar_type.id, object_id=area_access_record.id, contest_resolved=False)
 	dictionary['contest_transaction'] = contest_transaction
 	df = DateFormat(area_access_record.start)
-	dictionary['event_start_date'] = df.format('Y-m-d H:i:s')
+	dictionary['event_start_date'] = df.format('Y-m-d h:i A')
 	df = DateFormat(area_access_record.end)
-	dictionary['event_end_date'] = df.format('Y-m-d H:i:s')
+	dictionary['event_end_date'] = df.format('Y-m-d h:i A')
 	if ContestTransactionData.objects.filter(content_type__pk=aar_type.id, object_id=area_access_record.id, contest_transaction=contest_transaction, field_name="area").exists():
 		dictionary['proposed_area'] = Area.objects.get(id=int(ContestTransactionData.objects.filter(content_type__pk=aar_type.id, object_id=area_access_record.id, contest_transaction=contest_transaction, field_name="area")[0].proposed_value))
 	if ContestTransactionData.objects.filter(content_type__pk=aar_type.id, object_id=area_access_record.id, contest_transaction=contest_transaction, field_name="start").exists():
-		dictionary['proposed_event_start_date'] = ContestTransactionData.objects.filter(content_type__pk=aar_type.id, object_id=area_access_record.id, contest_transaction=contest_transaction, field_name="start")[0].proposed_value
+		date_obj = datetime.strptime(ContestTransactionData.objects.filter(content_type__pk=aar_type.id, object_id=area_access_record.id, contest_transaction=contest_transaction, field_name="start")[0].proposed_value, '%Y-%m-%d %H:%M:%S')
+		df = DateFormat(date_obj)
+		dictionary['proposed_event_start_date'] = df.format('Y-m-d h:i A')
 	else:
 		dictionary['proposed_event_start_date'] = None
 	if ContestTransactionData.objects.filter(content_type__pk=aar_type.id, object_id=area_access_record.id, contest_transaction=contest_transaction, field_name="end").exists():
-		dictionary['proposed_event_end_date'] = ContestTransactionData.objects.filter(content_type__pk=aar_type.id, object_id=area_access_record.id, contest_transaction=contest_transaction, field_name="end")[0].proposed_value
+		date_obj = datetime.strptime(ContestTransactionData.objects.filter(content_type__pk=aar_type.id, object_id=area_access_record.id, contest_transaction=contest_transaction, field_name="end")[0].proposed_value, '%Y-%m-%d %H:%M:%S')
+		df = DateFormat(date_obj)
+		dictionary['proposed_event_end_date'] = df.format('Y-m-d h:i A')
 	else:
 		dictionary['proposed_event_end_date'] = None
 	if AreaAccessRecordProject.objects.filter(area_access_record=area_access_record, active_flag=True).exists():

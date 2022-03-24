@@ -177,7 +177,8 @@ class User(models.Model):
 
 	def email_user(self, subject, message, from_email=None):
 		""" Sends an email to this user. """
-		send_mail(subject=subject, message='', from_email=from_email, recipient_list=[self.email], html_message=message)
+		#send_mail(subject=subject, message='', from_email=from_email, recipient_list=[self.email], html_message=message)
+		send_mail(subject, message, from_email, [self.email])
 
 	def get_full_name(self):
 		fname = ""

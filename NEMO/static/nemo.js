@@ -377,3 +377,25 @@ function navigate_to_login_on_session_expiration(event, xhr, status, error)
 	if(xhr.status === 403)
 		window.location.href = '/logout/';
 }
+
+function convert_12_to_24(dDate)
+{
+	if (dDate == undefined) return;
+
+	var arrDate = dDate.split(" ");
+	var dayDate = arrDate[0];
+	var arrTime = arrDate[1].split(":");
+	var hr = parseInt(arrTime[0]);
+
+	if (arrDate[2] == "PM") {
+		if (hr < 12) {
+			hr = hr + 12;
+			hr = hr.toString();
+		}
+	} else {
+		if (hr == 12) hr = "00";
+	}
+	arrDate[1] = hr + ":" + arrTime[1];
+	var retDate = dayDate + " " + arrDate[1] + ":00";
+	return retDate;
+}

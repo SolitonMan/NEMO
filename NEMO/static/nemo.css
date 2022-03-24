@@ -121,6 +121,12 @@ label
 	color: #22b14c;
 }
 
+.success-highlight-contested
+{
+	color: #22b14c;
+	background-color: #fefeff;
+}
+
 .warning-highlight
 {
 	color: #f0ad4e;
@@ -302,3 +308,11 @@ table {
 .calendar_ps_events {
 	opacity:0.5;
 }
+/*
+nav {
+	overflow: hidden;
+	position: fixed!important;
+	top: 0;
+	width: 100%;
+}
+*/

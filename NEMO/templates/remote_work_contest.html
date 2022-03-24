@@ -128,8 +128,8 @@
 		</tr>
 	</table>
 	<script type="text/javascript">
-	$("#proposed__start__{{ usage_event.id }}").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss'});
-	$("#proposed__end__{{ usage_event.id }}").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss'});
+	$("#proposed__start__{{ usage_event.id }}").datetimepicker({format: 'YYYY-MM-DD hh:mm A'});
+	$("#proposed__end__{{ usage_event.id }}").datetimepicker({format: 'YYYY-MM-DD hh:mm A'});
 	</script>
 	{% endif %}
 
@@ -208,8 +208,8 @@
 		</tr>
 	</table>
         <script type="text/javascript">
-        $("#proposed__start__{{ staff_charge.id }}").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss'});
-        $("#proposed__end__{{ staff_charge.id }}").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss'});
+        $("#proposed__start__{{ staff_charge.id }}").datetimepicker({format: 'YYYY-MM-DD hh:mm A'});
+        $("#proposed__end__{{ staff_charge.id }}").datetimepicker({format: 'YYYY-MM-DD hh:mm A'});
         </script>
 	{% endif %}
 
@@ -308,8 +308,8 @@
 		</tr>
 	</table>
 	<script type="text/javascript">
-	$("#proposed__start__{{ area_access_record.id }}").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss'});
-	$("#proposed__end__{{ area_access_record.id }}").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss'});
+	$("#proposed__start__{{ area_access_record.id }}").datetimepicker({format: 'YYYY-MM-DD hh:mm A'});
+	$("#proposed__end__{{ area_access_record.id }}").datetimepicker({format: 'YYYY-MM-DD hh:mm A'});
 	</script>
 	{% endif %}
 
@@ -593,6 +593,8 @@
 				bSubmit = false;
 				bContinue = false;
 				bChanged = true;
+			} else {
+				prop_start.val(convert_12_to_24(prop_start.val()));
 			}
 		}
 
@@ -603,6 +605,8 @@
 				bSubmit = false;
 				bContinue = false;
 				bChanged = true;
+			} else {
+				prop_end.val(convert_12_to_24(prop_end.val()));
 			}
 		}
 

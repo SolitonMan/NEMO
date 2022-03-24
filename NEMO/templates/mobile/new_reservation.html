@@ -170,6 +170,22 @@
 	{
 		var choice = $("#staff_charge:checked").val();
 
+		if ($("#start").val() == "") {
+			alert("Please select a start date");
+			$("#start").focus();
+			return;
+		} else {
+			$("#start").val(convert_12_to_24($("#start").val()));
+		}
+
+		if ($("#end").val() == "") {
+			alert("Please select an end date");
+			$("#end").focus();
+			return;
+		} else {
+			$("#end").val(convert_12_to_24($("#end").val()));
+		}
+
 		if (choice == '' || choice == undefined) {
 			alert("Please select an option for placing this reservation for a customer or for yourself.");
 			$("#staff_charge").focus();
@@ -237,8 +253,8 @@
 	function on_load()
 	{
 		add_customer();
-		$('#start').datetimepicker({format: 'YYYY-MM-DD HH:mm:ss'});
-		$('#end').datetimepicker({format: 'YYYY-MM-DD HH:mm:ss'});
+		$('#start').datetimepicker({format: 'YYYY-MM-DD hh:mm A'});
+		$('#end').datetimepicker({format: 'YYYY-MM-DD hh:mm A'});
 	}
 
 	$(on_load);

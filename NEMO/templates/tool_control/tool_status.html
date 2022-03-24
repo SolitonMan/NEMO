@@ -297,6 +297,7 @@
 					<div class="checkbox"><label><input type="checkbox" name="set_for_autologout" id="set_for_autologout" onchange="toggle_autologout();" />Set autologout for this tool use</label></div>
 					<div id="duration_options" class="datetimepicker-container" style="display: none;">
 					Please select the end time for this run: <input class="form-control" type="text" name="autologout_endtime" id="autologout_endtime" />
+					or choose a duration for the run: <input class="form-control duration-picker" type="text" name="autologout_duration" id="autologout_duration" /> 
 					</div>
 				</span>
 				{% endif %}
@@ -544,7 +545,8 @@
 	$('#task_and_comment_end').datetimepicker({format: 'MM/DD/YYYY', 'widgetParent': '#task_and_comment_end_form_group'});
 	$('#delayed_logoff_help').popover();
 	current_time = new Date();
-	$('#autologout_endtime').datetimepicker({format: 'YYYY-MM-DD HH:mm:ss', minDate: current_time });
+	$('#autologout_endtime').datetimepicker({format: 'YYYY-MM-DD hh:mm A', minDate: current_time });
+	$('.duration-picker').durationPicker({showSeconds: false, showDays: false});
 
 	{% if tool.get_current_usage_event is not None %}
 	function save_operator_comment() 

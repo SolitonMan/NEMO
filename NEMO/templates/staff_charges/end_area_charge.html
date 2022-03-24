@@ -377,6 +377,14 @@
 
 		function on_ad_hoc_submit()
 		{
+			if ($("#ad_hoc_start").val() != "") {
+				$("#ad_hoc_start").val(convert_12_to_24($("#ad_hoc_start").val()));
+			}
+
+			if ($("#ad_hoc_end").val() != "") {
+				$("#ad_hoc_end").val(convert_12_to_24($("#ad_hoc_end").val()));
+			}
+
 			if ($("#ad_hoc_entries tr").length < 5) {
 				alert("You must add at least one customer");
 				add_ad_hoc_customer();
@@ -437,9 +445,9 @@
 			hide_user_charges();
 			enable_autocompletion(0);
 			enable_ad_hoc_autocompletion(0);
-			$("#ad_hoc_start").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss', minDate: '{{ start_date }} 00:00:00', maxDate: '{{ end_date }} 23:59:59'});
+			$("#ad_hoc_start").datetimepicker({format: 'YYYY-MM-DD hh:mm A', minDate: '{{ start_date }} 00:00', maxDate: '{{ end_date }} 23:59'});
 			$("#ad_hoc_start").val({% if ad_hoc_start %}"{{ ad_hoc_start }}"{% else %}""{% endif %});
-			$("#ad_hoc_end").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss', minDate: '{{ start_date }} 00:00:00', maxDate: '{{ end_date }} 23:59:59'});
+			$("#ad_hoc_end").datetimepicker({format: 'YYYY-MM-DD hh:mm A', minDate: '{{ start_date }} 00:00', maxDate: '{{ end_date }} 23:59'});
 			$("#ad_hoc_end").val({% if ad_hoc_end %}"{{ ad_hoc_end }}"{% else %}""{% endif %});
 			$(document).scrollTop(0);
 			$("#tabs a").click(switch_tab);

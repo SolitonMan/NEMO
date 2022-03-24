@@ -202,12 +202,16 @@
 			alert("Please select a start time");
 			$("#ad_hoc_start").focus();
 			return false;
+		} else {
+			$("#ad_hoc_start").val(convert_12_to_24($("#ad_hoc_start").val()));
 		}
 
 		if (end == "") {
 			alert("Please select an end time");
 			$("#ad_hoc_end").focus();
 			return false;
+		} else {
+			$("#ad_hoc_end").val(convert_12_to_24($("#ad_hoc_end").val()));
 		}
 
 		{% if request.is_staff or request.is_superuser %}
@@ -289,8 +293,8 @@
 
 	function on_load()
 	{
-		$("#ad_hoc_start").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss', minDate: '{{ start_date }} 00:00:00', maxDate: '{{ end_date }} 23:59:59'});
-		$("#ad_hoc_end").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss', minDate: '{{ start_date }} 00:00:00', maxDate: '{{ end_date }} 23:59:59'});
+		$("#ad_hoc_start").datetimepicker({format: 'YYYY-MM-DD hh:mm A', minDate: '{{ start_date }} 00:00', maxDate: '{{ end_date }} 23:59'});
+		$("#ad_hoc_end").datetimepicker({format: 'YYYY-MM-DD hh:mm A', minDate: '{{ start_date }} 00:00', maxDate: '{{ end_date }} 23:59'});
 		{% if request.user.is_staff or request.user.is_superuser %}
 		$("#area_user").autocomplete('user', on_autocomplete_selection, {{ users|json_search_base }});
 		{% endif %}

@@ -76,15 +76,15 @@
 		<script type="text/javascript">
 			$('#search').autocomplete('search_base', set_selection, {{ search_base|json_search_base }});
 		{% if date_range %}
-			$("#start_select").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss'})
+			$("#start_select").datetimepicker({format: 'YYYY-MM-DD hh:mm A'})
 				.on('dp.change', function() {
-					$("#start").val($(this).val());
+					$("#start").val(convert_12_to_24($(this).val()));
 					check_complete();
 				}
 			);
-			$("#end_select").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss'})
+			$("#end_select").datetimepicker({format: 'YYYY-MM-DD hh:mm A'})
 				.on('dp.change', function() {
-					$("#end").val($(this).val());
+					$("#end").val(convert_12_to_24($(this).val()));
 					check_complete();
 				}
 			);

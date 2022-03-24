@@ -429,12 +429,53 @@ function on_submit()
 		alert("Please select a start time.");
 		$("#ad_hoc_start").focus();
 		return false;
+	} else {
+		/* convert the date to YYYY-MM-DD HH:mm:ss format
+		var dateVal = $("#ad_hoc_start").val();
+		var arrDate = dateVal.split(" ");
+		var dayDate = arrDate[0];
+		var arrTime = arrDate[1].split(":");
+		var hr = parseInt(arrTime[0]);
+
+		if (arrDate[2] == "PM") {
+			// PM vs AM so add 12 hours to the hourly time for military time
+			if (hr < 12) {
+				hr = hr + 12;
+				hr = hr.toString();
+			}
+		} else {
+			if (hr == 12) hr = "00";
+		}
+		arrDate[1] = hr + ":" + arrTime[1];
+		$("#ad_hoc_start").val(dayDate + " " + arrDate[1] + ":00");
+		*/
+		$("#ad_hoc_start").val(convert_12_to_24($("#ad_hoc_start").val()));
 	}
 
 	if ($("#ad_hoc_end").val() == "") {
 		alert("Please select an end time.");
 		$("#ad_hoc_end").focus();
 		return false;
+	} else {
+		/*
+		var dateVal = $("#ad_hoc_end").val();
+		var arrDate = dateVal.split(" ");
+		var dayDate = arrDate[0];
+		var arrTime = arrDate[1].split(":");
+		var hr = parseInt(arrTime[0]);
+
+		if (arrDate[2] == "PM") {
+			if (hr < 12) {
+				hr = hr + 12;
+				hr = hr.toString();
+			}
+		} else {
+			if (hr == 12) hr = "00";
+		}
+		arrDate[1] = hr + ":" + arrTime[1];
+		$("#ad_hoc_end").val(dayDate + " " + arrDate[1] + ":00");
+		*/
+		$("#ad_hoc_end").val(convert_12_to_24($("#ad_hoc_end").val()));
 	}
 
 	if ($("#tool_select").val() == "") {
@@ -499,9 +540,9 @@ function on_submit()
 
 function on_load()
 {
-	$("#ad_hoc_start").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss', minDate: '{{ start_date }} 00:00:00', maxDate: '{{ end_date }} 23:59:59'});
+	$("#ad_hoc_start").datetimepicker({format: 'YYYY-MM-DD hh:mm A', minDate: '{{ start_date }} 00:00', maxDate: '{{ end_date }} 23:59'});
 	$("#ad_hoc_start").val({% if ad_hoc_start %}"{{ ad_hoc_start }}"{% else %}""{% endif %});
-	$("#ad_hoc_end").datetimepicker({format: 'YYYY-MM-DD HH:mm:ss', minDate: '{{ start_date }} 00:00:00', maxDate: '{{ end_date }} 23:59:59'});
+	$("#ad_hoc_end").datetimepicker({format: 'YYYY-MM-DD hh:mm A', minDate: '{{ start_date }} 00:00', maxDate: '{{ end_date }} 23:59'});
 	$("#ad_hoc_end").val({% if ad_hoc_end %}"{{ ad_hoc_end }}"{% else %}""{% endif %});
 	enable_operator();
 }

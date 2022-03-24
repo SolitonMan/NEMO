@@ -5,6 +5,8 @@
 	{% load static %}
 	<script type="text/javascript" src="{% static "datetimepicker/bootstrap-datetimepicker.js" %}"></script>
 	<link rel="stylesheet" type="text/css" href="{% static "datetimepicker/bootstrap-datetimepicker.css" %}"/>
+	<script type="text/javascript" src="{% static "durationpicker/bootstrap-duration-picker.js" %}"></script>
+	<link rel="stylesheet" type="text/css" href="{% static "durationpicker/bootstrap-duration-picker.css" %}"/>
 {% endblock %}
 {% block body %}
 
@@ -147,11 +149,21 @@
 			$("#start").prop("disabled", true);
 
 			if ($("#set_for_autologout").is(":checked")) {
-				if ($("#autologout_endtime").val() == "") {
+				if ($("#autologout_endtime").val() == "" && $("#autologout_duration").val() == "") {
 					$("#start").prop("disabled", false);
-					alert("If you wish to use the autologout feature, you must choose an end time.");
+					alert("If you wish to use the autologout feature, you must choose an end time or enter a duration for the run.");
 					$("#autologout_endtime").focus();
 					return false;
+				} else {
+					if ($("#autologout_endtime").val() == "" && $("#autologout_duration").val() != "") {
+						// calculate end time and populate the autologout_endtime field
+						var d = $("#autologout_duration").val();
+						var n = new Date();
+						var et = moment(n).add(d,'second').format("YYYY-MM-DD hh:mm A");
+
+						$("#autologout_endtime").val(et);						
+					}
+					$("#autologout_endtime").val(convert_12_to_24($("#autologout_endtime").val()));
 				}
 			}
 
@@ -568,6 +580,8 @@
 						alert("If you wish to use the autologout feature, you must choose an end time.");
 						$("#autologout_endtime").focus();
 						return false;
+					} else {
+						$("#autologout_endtime").val(convert_12_to_24($("#autologout_endtime").val()));
 					}
 				}
 

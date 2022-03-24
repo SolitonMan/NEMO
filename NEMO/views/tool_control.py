@@ -777,7 +777,8 @@ def disable_tool(request, tool_id):
 					user_project_info[index]["cost_per_sample"] = value
 
 		for key in user_project_info:
-			cuep = UsageEventProject.objects.get(usage_event=current_usage_event, customer=user_project_info[key]["customer"], project=user_project_info[key]["project"])
+			#cuep = UsageEventProject.objects.get(usage_event=current_usage_event, customer=user_project_info[key]["customer"], project=user_project_info[key]["project"])
+			cuep = UsageEventProject.objects.get(id=key)
 			cuep.sample_num = int(user_project_info[key]["sample_num"])
 			cuep.cost_per_sample = float(user_project_info[key]["cost_per_sample"])
 			cuep.updated = timezone.now()
@@ -844,7 +845,7 @@ def disable_tool_multi(request, tool_id, usage_event, dynamic_form):
 						'project': None,
 						'notes': None,
 						'sample_num': None,
-						'num_samples': None,
+						'cost_per_sample': None,
 					}
 				if attribute == "chosen_user":
 					user_project_info[index]["customer"] = User.objects.get(id=value)
@@ -858,7 +859,8 @@ def disable_tool_multi(request, tool_id, usage_event, dynamic_form):
 					user_project_info[index]["cost_per_sample"] = value
 
 		for key in user_project_info:
-			cuep = UsageEventProject.objects.get(usage_event=current_usage_event,customer=user_project_info[key]["customer"], project=user_project_info[key]["project"])
+			#cuep = UsageEventProject.objects.get(usage_event=current_usage_event,customer=user_project_info[key]["customer"], project=user_project_info[key]["project"])
+			cuep = UsageEventProject.objects.get(id=key)
 			cuep.sample_num = int(user_project_info[key]["sample_num"])
 			cuep.cost_per_sample = float(user_project_info[key]["cost_per_sample"])
 			cuep.updated = timezone.now()
