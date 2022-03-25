@@ -90,7 +90,7 @@
 	</div>
 
 
-	<form class="form-horizontal" method="post" action="{% if form.instance.id %}{% url 'create_or_modify_user' form.instance.id %}{% else %}{% url 'create_or_modify_user' 'new' %}{% endif %}">
+	<form id="user_form" class="form-horizontal" method="post" action="{% if form.instance.id %}{% url 'create_or_modify_user' form.instance.id %}{% else %}{% url 'create_or_modify_user' 'new' %}{% endif %}">
 		{% csrf_token %}
 		{% if current_user.is_staff %}
 		<input type="hidden" name="check_probationary" id="check_probationary" value="0" />
@@ -508,6 +508,12 @@
 					{% endif %}
 				{% endfor %}
 			{% endif %}
+			// position tool assignment interface
+			var w = $("#user_form").css("width");
+			var l = $("#user_form").position().left;
+			var pos = parseInt(w)/2 + parseInt(l);
+			var l_pos = pos + "px";
+			$("#qualified_tools").css("left",l_pos);
 		}
 		$(on_load);
 	</script>

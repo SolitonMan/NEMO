@@ -8,7 +8,7 @@
 {% endblock %}
 {% block content %}
 	<h3>Create a new reservation</h3>
-	<form method="post" action="{% url 'make_reservation' %}" {% if user.is_staff %}onsubmit="return on_submit();"{% endif %}>
+	<form method="post" action="{% url 'make_reservation' %}" {% if user.is_staff %}onsubmit="return on_submit();"{% else %}onsubmit="return on_user_submit();"{% endif %}>
 		{% csrf_token %}
 		<input type="hidden" name="tool_id" value="{{ tool.id }}">
 		{% if not user.is_staff %}
@@ -242,6 +242,25 @@
 
 		return true;
 	
+	}
+
+	function on_user_submit() {
+		if ($("#start").val() == "") {
+			alert("Please select a start date");
+			$("#start").focus();
+			return;
+		} else {
+			$("#start").val(convert_12_to_24($("#start").val()));
+		}
+
+		if ($("#end").val() == "") {
+			alert("Please select an end date");
+			$("#end").focus();
+			return;
+		} else {
+			$("#end").val(convert_12_to_24($("#end").val()));
+		}
+		return true;
 	}
 
 	function set_initial_date()
