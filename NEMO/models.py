@@ -20,7 +20,7 @@ from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotFou
 from django.urls import reverse
 from django.utils import timezone
 
-from NEMO.utilities import send_mail, EmailCategory, format_datetime
+from NEMO.utilities import send_mail, EmailCategory, format_datetime, SettingType
 from NEMO.views.constants import ADDITIONAL_INFORMATION_MAXIMUM_LENGTH
 from NEMO.widgets.configuration_editor import ConfigurationEditor
 
@@ -258,6 +258,25 @@ class User(models.Model):
 
 	def __str__(self):
 		return self.get_full_name()
+
+class UserProfile(models.Model):
+	user = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True)
+	setting = models.ForeignKey('UserProfileSetting', on_delete=models.SET_NULL, null=True, blank=True)
+	value = models.TextField(null=True, blank=True)
+
+class UserProfileSetting(models.Model):
+	name = models.CharField(max_length=255)
+	setting_type = models.CharField(max_length=255, choices=SettingType.Choices)
+	description = models.TextField(null=True, blank=True)
+	title = models.CharField(max_length=255, null=True, blank=True)
+
+	class Meta:
+		constraints = [
+			models.UniqueConstraint(fields=['name'], name='unique name')
+		]
+
+	def __str__(self):
+		return str(self.name)
 
 class ProbationaryQualifications(models.Model):
 	user = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True)

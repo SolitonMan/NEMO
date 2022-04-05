@@ -47,6 +47,9 @@
 			<th>Core</th>
 			<th>Roles</th>
 			<th>Staff?</th>
+			{% if request.user.is_superuser %}
+			<th>Profile</th>
+			{% endif %}
 		</tr>
 		</thead>
 		<tbody id="user_data">
@@ -66,6 +69,9 @@
 			{% endfor %}
 			</td>
 			<td>{{ u.is_staff }}</td>
+			{% if request.user.is_superuser %}
+			<td><a href="{% url 'user_profile' u.id %}">{{ u.username }} profile</a></td>
+			{% endif %}
 		</tr>
 	{% endfor %}
 		</tbody>

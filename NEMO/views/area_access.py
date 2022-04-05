@@ -10,7 +10,7 @@ from django.utils import timezone
 from django.utils.http import urlencode
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
-from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, Door, PhysicalAccessLog, PhysicalAccessType, Project, User
+from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, Door, PhysicalAccessLog, PhysicalAccessType, Project, User, UserProfile, UserProfileSetting
 from NEMO.tasks import postpone
 from NEMO.utilities import parse_start_and_end_date
 from NEMO.views.customization import get_customization
@@ -377,6 +377,16 @@ def new_area_access_record(request, customer=None):
 			dictionary['start_date'] = dates['start']
 			dictionary['end_date'] = dates['end']
 			dictionary['users'] = User.objects.filter(is_active=True, projects__active=True).distinct()
+
+			# set a flag and check the user's profile to determine if the extra confirmation should be used
+			show_confirm = False
+			confirm_setting = UserProfileSetting.objects.get(name="SHOW_CONFIRMATION")
+
+			if UserProfile.objects.filter(user=request.user, setting=confirm_setting).exists():
+				setting = UserProfile.objects.get(user=request.user, setting=confirm_setting)
+				show_confirm = bool(int(setting.value))
+
+			dictionary['show_confirm'] = show_confirm
 
 			return render(request, 'area_access/new_area_access_record_details.html', dictionary)
 		except Exception as inst:

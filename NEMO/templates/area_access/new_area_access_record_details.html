@@ -249,7 +249,11 @@
 		}
 		{% endif %}
 
+		{% if show_confirm %}
+		return confirm("Does everything on the form look ok?  Click OK to submit the form, or Cancel to edit the entries.");
+		{% else %}
 		return true;
+		{% endif %}
 	}
 
 	function on_autocomplete_selection(jquery_event, search_selection, dataset_name)

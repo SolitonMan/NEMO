@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% load custom_tags_and_filters %}
+{% block title %}User Profile for {{ profile_user }}{% endblock %}
+{% block extrahead %}
+	{% load static %}
+{% endblock %}
+{% block content %}
+	<h1>User Profile for {{ profile_user }}</h1>
+
+	{% if msg %}
+	<div class="alert alert-success">
+		{{ msg }}
+	</div>
+	{% endif %}
+
+	<p>
+	Please use the form below to update the profile settings for {{ profile_user }}.  
+	</p>
+
+	<form id="user_form" class="form-horizontal" method="post" action="{% url 'save_user_profile' %}">
+		{% csrf_token %}
+		<input type="hidden" name="user_id" id="user_id" value="{{ profile_user.id }}" />
+		{% for key, value in profile.items %}
+
+		<div class="form-group">
+			<label class="control-label col-sm-2" for="{{ value.field_name }}"><strong>{{ value.field_title }}</strong></label>
+			<div class="col-sm-4">
+				{{ value.input_text }}
+			</div>
+			<div class="col-sm-4">
+				{{ value.field_description }}
+			</div>
+		</div>
+
+		{% endfor %}
+		<div class="form-group">
+			<div class="col-sm-2">
+				<input type="submit" class="btn btn-success pull-right" value="Save changes">
+			</div>
+		</div>
+	</form>
+{% endblock %}

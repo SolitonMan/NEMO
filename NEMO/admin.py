@@ -5,7 +5,7 @@ from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.contrib.auth.models import Permission
 
 from NEMO.actions import lock_selected_interlocks, synchronize_with_tool_usage, unlock_selected_interlocks
-from NEMO.models import Account, ActivityHistory, Alert, Area, AreaAccessRecord, AreaAccessRecordProject, BillingType, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableUnit, ConsumableCategory, ConsumableType, ConsumableWithdraw, ContactInformation, ContactInformationCategory, ContestTransaction, ContestTransactionData, ContestTransactionNewData, Core, CreditCostCollector, Customization, Door, EmailLog, GlobalFlag, Interlock, InterlockCard, LandingPageChoice, LockBilling, MembershipHistory, News, Notification, NsfCategory, Organization, OrganizationType, PhysicalAccessLevel, PhysicalAccessLog, Project, Reservation, ReservationConfiguration, ReservationProject, Resource, ResourceCategory, SafetyIssue, ScheduledOutage, ScheduledOutageCategory, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskHistory, TaskStatus, Tool, TrainingSession, UsageEvent, UsageEventProject, User, UserType
+from NEMO.models import Account, ActivityHistory, Alert, Area, AreaAccessRecord, AreaAccessRecordProject, BillingType, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableUnit, ConsumableCategory, ConsumableType, ConsumableWithdraw, ContactInformation, ContactInformationCategory, ContestTransaction, ContestTransactionData, ContestTransactionNewData, Core, CreditCostCollector, Customization, Door, EmailLog, GlobalFlag, Interlock, InterlockCard, LandingPageChoice, LockBilling, MembershipHistory, News, Notification, NsfCategory, Organization, OrganizationType, PhysicalAccessLevel, PhysicalAccessLog, Project, Reservation, ReservationConfiguration, ReservationProject, Resource, ResourceCategory, SafetyIssue, ScheduledOutage, ScheduledOutageCategory, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskHistory, TaskStatus, Tool, TrainingSession, UsageEvent, UsageEventProject, User, UserType, UserProfile, UserProfileSetting
 from NEMO.utilities import send_mail
 from NEMO.views.customization import get_customization, get_media_file_contents
 
@@ -215,7 +215,7 @@ class TrainingSessionAdmin(admin.ModelAdmin):
 	list_filter = ('qualified', 'date', 'type')
 	date_hierarchy = 'date'
 
-	search_fields = ('trainer__first_name','trainer__last_name','trainer__first_name','trainer__last_name','project__project_number')
+	search_fields = ('trainee__first_name','trainee__last_name','trainer__first_name','trainer__last_name','project__project_number')
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "project":
@@ -243,6 +243,8 @@ class StaffChargeAdmin(admin.ModelAdmin):
 	form = StaffChargeAdminForm
 
 	search_fields = ('staff_member__first_name','staff_member__last_name','projects__project_number')
+
+	exclude = ('related_usage_event',)
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "project":
@@ -284,6 +286,8 @@ class AreaAccessRecordAdmin(admin.ModelAdmin):
 	form = AreaAccessRecordAdminForm
 
 	search_fields = ('area__name', 'customers__first_name','customers__last_name','projects__project_number')
+
+	exclude = ('related_usage_event',)
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "project":
@@ -570,6 +574,8 @@ class ConsumableWithdrawAdmin(admin.ModelAdmin):
 	date_hierarchy = 'date'
 
 	search_fields = ('customer__first_name', 'customer__last_name', 'merchant__first_name', 'merchant__last_name', 'project__project_number','consumable__name')
+
+	exclude = ('usage_event',)
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "project":
@@ -966,4 +972,25 @@ class CreditCostCollectorAdmin(admin.ModelAdmin):
 	def has_delete_permission(self, request, obj=None):
 		return False
 
+@register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+	list_display = ('user', 'setting', 'value')
 
+	search_fields = ('user', 'setting', 'value')
+
+	def formfield_for_foreignkey(self, db_field, request, **kwargs):
+		if db_field.name == "user":
+			kwargs["queryset"] = User.objects.order_by('last_name', 'first_name')
+		return super(UserProfileAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
+	def has_delete_permission(self, request, obj=None):
+		return False
+
+@register(UserProfileSetting)
+class UserProfileSettingAdmin(admin.ModelAdmin):
+	list_display = ('name', 'setting_type')
+
+	search_fields = ('name', 'setting_type')
+
+	def has_delete_permission(self, request, obj=None):
+		return False

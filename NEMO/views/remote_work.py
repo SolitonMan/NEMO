@@ -295,7 +295,7 @@ def remote_work(request):
 							'customer': str(aarp.customer),
 							'project': str(aarp.project),
 							'percent': aarp.project_percent,
-							'comment': '',
+							'comment': aarp.comment,
 						}
 			else:
 				customers[a.id] = {

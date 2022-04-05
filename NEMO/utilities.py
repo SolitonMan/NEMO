@@ -56,6 +56,17 @@ class EmailCategory(object):
 		(TASKS, "Tasks"),
 	)
 
+class SettingType(object):
+	BOOLEAN = "Boolean"
+	INTEGER = "Integer"
+	STRING = "String"
+	FLOAT = "Float"
+	Choices = (
+		(BOOLEAN, "Boolean"),
+		(INTEGER, "Integer"),
+		(STRING, "String"),
+		(FLOAT, "Float"),
+	)
 
 
 def parse_start_and_end_date(start, end):

@@ -6,14 +6,16 @@ from logging import getLogger
 import requests
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseBadRequest, HttpResponseRedirect, JsonResponse, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
+from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from NEMO.admin import record_local_many_to_many_changes, record_active_state
 from NEMO.forms import UserForm
-from NEMO.models import Account, UserRelationship, UserRelationshipType, User, Project, Tool, PhysicalAccessLevel, Reservation, StaffCharge, UsageEvent, AreaAccessRecord, ActivityHistory, ProbationaryQualifications
+from NEMO.models import Account, UserRelationship, UserRelationshipType, User, UserProfile, UserProfileSetting, Project, Tool, PhysicalAccessLevel, Reservation, StaffCharge, UsageEvent, AreaAccessRecord, ActivityHistory, ProbationaryQualifications
 
 
 @staff_member_required(login_url=None)
@@ -349,43 +351,81 @@ def add_delegate(request, pi_id, delegate_id):
 
 	return JsonResponse(data)
 
-"""
-@staff_member_required(login_url=None)
+
+@login_required
+@require_http_methods(['GET', 'POST'])
+def user_profile(request, user_id, msg=None):
+	user = User.objects.get(id=user_id)
+
+	if user != request.user:
+		if not request.user.is_superuser:
+			user = request.user
+			msg = "You may only edit your own profile"
+
+	user_profiles = UserProfile.objects.filter(user=user)
+	profile_settings = UserProfileSetting.objects.all()
+
+	profile = {}
+
+	for p in profile_settings:
+		key = str(user_id) + "_" + str(p.id)
+		profile[key] = {
+			"field_name": str(p.name),
+			"field_title": str(p.title),
+			"field_description": str(p.description), 
+		}
+
+		if user_profiles.filter(setting=p).exists():
+			up = UserProfile.objects.get(user=user, setting=p)
+			profile[key]["field_value"] = str(up.value)
+		else:
+			profile[key]["field_value"] = ""
+
+		if p.setting_type in ("String","Integer","Float"):
+			input_text = "<input type='text' class='form-control' name='" + str(p.name) + "' id='" + str(p.name) + "' value='" + profile[key]["field_value"] + "'>"
+			profile[key]["input_text"] = mark_safe(input_text)
+
+		if p.setting_type in ("Boolean"):
+			val = profile[key]["field_value"]
+			input_text = "<select class='form-control' name='" + str(p.name) + "' id='" + str(p.name) + "'>"
+			input_text += "<option value='1'"
+			if val != "":
+				if int(val) == 1:
+					input_text += " selected"
+			input_text += ">Yes</option>"
+			input_text += "<option value='0'"
+			if val != "":
+				if int(val) == 0:
+					input_text += " selected"
+			input_text += ">No</option>"
+			input_text += "</select>"
+			profile[key]["input_text"] = mark_safe(input_text)
+
+	dictionary = {
+		"profile_user": user,
+		"profile": profile,
+		"msg": msg,
+	}
+
+	return render(request, 'users/user_profile.html', dictionary)
+
+
+@login_required
 @require_POST
-def add_user_relationship_type(request):
-	try:
+def save_user_profile(request):
+	user_id = request.POST.get("user_id")
+	user = User.objects.get(id=user_id)
+	settings = UserProfileSetting.objects.all().values_list("name", flat=True)
 
 
+	for key, value in request.POST.items():
+		if key in settings:
+			setting = UserProfileSetting.objects.get(name=key)
+			if UserProfile.objects.filter(user=user, setting=setting).exists():
+				profile = UserProfile.objects.get(user=user, setting=setting)
+				profile.value = value
+				profile.save()
+			else:
+				profile = UserProfile.objects.create(user=user, setting=setting, value=value)
 
-	except Exception as e:
-
-	return render()
-
-@staff_member_required(login_url=None)
-@require_POST
-def add_user_relationship(request):
-	try:
-
-
-
-	except Exception as e:
-
-	return render()
-
-@staff_member_required(login_url=None)
-@require_POST
-def user_relationships(request, relationship_type=None):
-	try:
-		if relationship_type is None:
-			return render(request, 'user_relationship.html', {'relationship_type':relationship_type, 'types': UserRelationshipType.objects.all(), 'users': None })
-
-		type = UserRelationshipType.objects.get(type=relationship_type)
-		users = UserRelationship.objects.filter(type=type.id)
-
-		return render(request, 'user_relationship.html', {'relationship_type':relationship_type, 'types': type, 'users': users })
-
-	except Exception as e:
-
-	return render()
-
-"""
+	return user_profile(request, user_id, "User profile for " + str(user) + " had been successfully updated.")

@@ -25,7 +25,7 @@ from django.utils.safestring import mark_safe
 from django.urls import reverse
 
 from NEMO.forms import CommentForm, nice_errors, ToolForm
-from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableWithdraw, LockBilling, ProbationaryQualifications, Project, Reservation, ReservationConfiguration, ReservationProject, ScheduledOutage, ScheduledOutageCategory, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskStatus, Tool, UsageEvent, UsageEventProject, User
+from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableWithdraw, LockBilling, ProbationaryQualifications, Project, Reservation, ReservationConfiguration, ReservationProject, ScheduledOutage, ScheduledOutageCategory, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskStatus, Tool, UsageEvent, UsageEventProject, User, UserProfile, UserProfileSetting
 from NEMO.utilities import extract_times, quiet_int
 from NEMO.views.policy import check_policy_to_disable_tool, check_policy_to_enable_tool, check_policy_to_enable_tool_for_multi
 from NEMO.views.staff_charges import month_is_locked, month_is_closed, get_billing_date_range
@@ -1073,12 +1073,21 @@ def create_usage_event(request):
 	if not request.user.is_superuser:
 		operators = operators.filter(Q(is_staff=False) | Q(id=request.user.id))
 
+	# set a flag and check the user's profile to determine if the extra confirmation should be used
+	show_confirm = False
+	confirm_setting = UserProfileSetting.objects.get(name="SHOW_CONFIRMATION")
+
+	if UserProfile.objects.filter(user=request.user, setting=confirm_setting).exists():
+		setting = UserProfile.objects.get(user=request.user, setting=confirm_setting)
+		show_confirm = bool(int(setting.value))
+
 	dictionary = {
 		'tools': tools,
 		'users': users,
 		'operators': operators,
 		'start_date': dates['start'],
 		'end_date': dates['end'],
+		'show_confirm': show_confirm,
 	}
 
 	return render(request, 'tool_control/ad_hoc_usage_event.html', dictionary)

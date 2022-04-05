@@ -387,7 +387,7 @@
 				$("#ad_hoc_end").val(convert_12_to_24($("#ad_hoc_end").val()));
 			}
 
-			if ($("#ad_hoc_entries tr").length < 5) {
+			if ($("input[id*='ad_hoc_user_textbox__']").length == 0) {
 				alert("You must add at least one customer");
 				add_ad_hoc_customer();
 				return false;
@@ -402,7 +402,11 @@
 			{% endif %}
 			//var failure_dialog = ajax_failure_callback("There was a problem with your ad hoc submission");
 			//ajax_post("{% url 'ad_hoc_staff_charge' %}", serialize("#ad_hoc_staff_charge"), ad_hoc_overlap_callback, failure_dialog);
+			{% if show_confirm %}
+			return confirm("Does everything on the form look ok?  Click OK to submit the form, or Cancel to edit the entries.");
+			{% else %}
 			return true;
+			{% endif %}
 		}
 
 		function ad_hoc_overlap_callback(response, status, xml_http_request)

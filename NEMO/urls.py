@@ -93,6 +93,7 @@ urlpatterns = [
 	re_path(r'^create_notification/$', calendar.create_notification, name='create_notification'),
 	re_path(r'^delete_notification/$', calendar.delete_notification, name='delete_notification'),
 	re_path(r'^save_notifications/$', calendar.save_notifications, name='save_notifications'),
+	re_path(r'^create_reservation_calendar_invite/(?P<reservation_id>\d+)/$', calendar.create_reservation_calendar_invite, name='create_reservation_calendar_invite'),
 
 	# Qualifications:
 	re_path(r'^qualifications/$', qualifications.qualifications, name='qualifications'),
@@ -269,6 +270,8 @@ if settings.ALLOW_CONDITIONAL_URLS:
 		re_path(r'^delegates/$', users.delegates, name='delegates'),
 		re_path(r'^delete_delegate/(?P<pi_id>\d+)/(?P<delegate_id>\d+)/$', users.delete_delegate, name='delete_delegate'),
 		re_path(r'^add_delegate/(?P<pi_id>\d+)/(?P<delegate_id>\d+)/$', users.add_delegate, name='add_delegate'),
+		re_path(r'^user_profile/(?P<user_id>\d+)/$', users.user_profile, name='user_profile'),
+		re_path(r'^save_user_profile/$', users.save_user_profile, name='save_user_profile'),
 
 		# Account & project management:
 		re_path(r'^accounts_and_projects/$', accounts_and_projects.accounts_and_projects, name='accounts_and_projects'),

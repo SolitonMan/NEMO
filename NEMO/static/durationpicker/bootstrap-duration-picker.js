@@ -1,3 +1,4 @@
+// from https://github.com/koss-lebedev/bootstrap-duration-picker
 (function iife($) {
 
 	$.DurationPicker = function DurationPicker(mainElement, options) {

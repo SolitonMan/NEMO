@@ -16,7 +16,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_time, parse_date, parse_datetime
 from django.views.decorators.http import require_GET, require_POST
 
-from NEMO.models import User, StaffCharge, AreaAccessRecord, Project, Area, StaffChargeProject, AreaAccessRecordProject, LockBilling
+from NEMO.models import User, StaffCharge, AreaAccessRecord, Project, Area, StaffChargeProject, AreaAccessRecordProject, LockBilling, UserProfile, UserProfileSetting
 
 
 @require_GET
@@ -109,6 +109,18 @@ def staff_charges(request):
 
 	if render_path == '':
 		render_path = 'staff_charges/new_staff_charge.html'
+
+
+	# set a flag and check the user's profile to determine if the extra confirmation should be used
+	show_confirm = False
+	confirm_setting = UserProfileSetting.objects.get(name="SHOW_CONFIRMATION")
+
+	if UserProfile.objects.filter(user=request.user, setting=confirm_setting).exists():
+		setting = UserProfile.objects.get(user=request.user, setting=confirm_setting)
+		show_confirm = bool(int(setting.value))
+
+	params['show_confirm'] = show_confirm
+
 	return render(request, render_path, params)
 
 

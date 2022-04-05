@@ -676,6 +676,12 @@ function clear_specific_user()
 	update_event_sources();
 }
 
+function send_ics(reservation_id)
+{
+	url = "/create_reservation_calendar_invite/" + reservation_id + "/";
+	ajax_post(url, undefined, undefined, ajax_failure_callback("Creation of calendar invite failed."), undefined);
+}
+
 function on_load()
 {
 	create_calendar();

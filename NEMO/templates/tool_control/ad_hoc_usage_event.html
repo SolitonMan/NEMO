@@ -430,25 +430,6 @@ function on_submit()
 		$("#ad_hoc_start").focus();
 		return false;
 	} else {
-		/* convert the date to YYYY-MM-DD HH:mm:ss format
-		var dateVal = $("#ad_hoc_start").val();
-		var arrDate = dateVal.split(" ");
-		var dayDate = arrDate[0];
-		var arrTime = arrDate[1].split(":");
-		var hr = parseInt(arrTime[0]);
-
-		if (arrDate[2] == "PM") {
-			// PM vs AM so add 12 hours to the hourly time for military time
-			if (hr < 12) {
-				hr = hr + 12;
-				hr = hr.toString();
-			}
-		} else {
-			if (hr == 12) hr = "00";
-		}
-		arrDate[1] = hr + ":" + arrTime[1];
-		$("#ad_hoc_start").val(dayDate + " " + arrDate[1] + ":00");
-		*/
 		$("#ad_hoc_start").val(convert_12_to_24($("#ad_hoc_start").val()));
 	}
 
@@ -457,24 +438,6 @@ function on_submit()
 		$("#ad_hoc_end").focus();
 		return false;
 	} else {
-		/*
-		var dateVal = $("#ad_hoc_end").val();
-		var arrDate = dateVal.split(" ");
-		var dayDate = arrDate[0];
-		var arrTime = arrDate[1].split(":");
-		var hr = parseInt(arrTime[0]);
-
-		if (arrDate[2] == "PM") {
-			if (hr < 12) {
-				hr = hr + 12;
-				hr = hr.toString();
-			}
-		} else {
-			if (hr == 12) hr = "00";
-		}
-		arrDate[1] = hr + ":" + arrTime[1];
-		$("#ad_hoc_end").val(dayDate + " " + arrDate[1] + ":00");
-		*/
 		$("#ad_hoc_end").val(convert_12_to_24($("#ad_hoc_end").val()));
 	}
 
@@ -535,7 +498,11 @@ function on_submit()
 	//var failure_dialog = ajax_failure_callback("Could not create ad hoc usage event");
 	//var success_callbacks = [ajax_success_callback]; 
 	//ajax_post("{% url 'save_usage_event' %}", serialize("#ad_hoc_usage"), success_callbacks, failure_dialog);
+	{% if show_confirm %}
+	return confirm("Does everything on the form look ok?  Click OK to submit the form, or Cancel to edit the entries.");
+	{% else %}
 	return true;
+	{% endif %}
 }
 
 function on_load()
