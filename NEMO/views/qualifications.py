@@ -86,7 +86,7 @@ def modify_qualifications(request):
 				pass
 				
 			original_physical_access_levels = set(user.physical_access_levels.all())
-			physical_access_level_automatic_enrollment = list(set([t.grant_physical_access_level_upon_qualification for t in tools.values() if t.grant_physical_access_level_upon_qualification]))
+			physical_access_level_automatic_enrollment = list(set([t.grant_physical_access_level_upon_qualification for t in tools.values() if t.grant_physical_access_level_upon_qualification and t.grant_physical_access_level_upon_qualification not in user.physical_access_levels.all()]))
 			user.physical_access_levels.add(*physical_access_level_automatic_enrollment)
 			current_physical_access_levels = set(user.physical_access_levels.all())
 			added_physical_access_levels = set(current_physical_access_levels) - set(original_physical_access_levels)

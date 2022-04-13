@@ -18,8 +18,33 @@
 		</ul>
 	{% endif %}
 </div>
+{% if device != 'mobile' %}
+	{% if upcoming %}
+<div style="position: absolute; left:50%; width: 50%">	
+	<h3>Upcoming Reservations</h3>
+	<table class="table" style="width:600px">
+	<thead>
+		<tr>
+			<th>User</th>
+			<th>Start</th>
+			<th>End</th>
+		</tr>
+	</thead>
+	<tbody>
+	{% for key, value in upcoming.items %}
+	<tr{% if value.style is not None %} style="{{ value.style }}"{% endif %} >
+		<td>{{ value.user }}</td>
+		<td>{{ value.start|date:"m-d-Y g:i A" }}</td>
+		<td>{{ value.end|date:"m-d-Y g:i A" }}</td>
+	</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+</div>
+	{% endif %}
+{% endif %}
 <br/>
-<div class="tab-content">
+<div class="tab-content" style="width: 50%">
 	<div class="tab-pane active" id="summary">
 		{# Display tool status... #}
 		{% if tool.in_use %}

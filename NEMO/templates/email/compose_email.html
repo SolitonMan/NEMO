@@ -51,7 +51,7 @@
 					<p>This page was loaded {{ current_time }}</p>
 					<h3>Email content</h3>
 					<input type="hidden" name="audience" value="{{ audience }}">
-					<input type="hidden" name="selection" value="{{ selection }}">
+					<input type="hidden" name="selection" value="{% if selection %}{{ selection }}{% else %}0{% endif %}">
 					<div class="form-group">
 						<input type="text" id="subject" name="subject" class="form-control" placeholder="Subject line" autofocus>
 					</div>

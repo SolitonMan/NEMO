@@ -168,12 +168,28 @@ def tool_status(request, tool_id):
 	""" Gets the current status of the tool (that is, whether it is currently in use or not). """
 	tool = get_object_or_404(Tool, id=tool_id, visible=True)
 
+	upcoming = {}
+	ur = Reservation.objects.filter(tool=tool, start__gt=timezone.now()).order_by('start')[:3]
+	if ur:
+		for r in ur:
+			upcoming[r.id] = {
+				'user': r.user,
+				'start': r.start,
+				'end': r.end,
+				'style': None,
+			}
+			td = timedelta(minutes=60)
+			if (r.start - timezone.now()) < td:
+				upcoming[r.id]['style'] = 'background-color: red;'
+			
+
 	dictionary = {
 		'tool': tool,
 		'task_categories': TaskCategory.objects.filter(stage=TaskCategory.Stage.INITIAL_ASSESSMENT),
 		'mobile': request.device == 'mobile',
 		'task_statuses': TaskStatus.objects.all(),
 		'post_usage_questions': DynamicForm(tool.post_usage_questions).render(),
+		'upcoming': upcoming,
 	}
 
 	try:
