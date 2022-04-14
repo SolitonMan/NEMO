@@ -169,7 +169,7 @@ def tool_status(request, tool_id):
 	tool = get_object_or_404(Tool, id=tool_id, visible=True)
 
 	upcoming = {}
-	ur = Reservation.objects.filter(tool=tool, start__gt=timezone.now()).order_by('start')[:3]
+	ur = Reservation.objects.filter(tool=tool, start__gt=timezone.now(), cancelled=False).order_by('start')[:3]
 	if ur:
 		for r in ur:
 			upcoming[r.id] = {
@@ -180,7 +180,7 @@ def tool_status(request, tool_id):
 			}
 			td = timedelta(minutes=60)
 			if (r.start - timezone.now()) < td:
-				upcoming[r.id]['style'] = 'background-color: red;'
+				upcoming[r.id]['style'] = 'background-color: #ff9999; font-weight: bold;'
 			
 
 	dictionary = {
