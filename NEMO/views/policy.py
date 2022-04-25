@@ -440,7 +440,7 @@ def check_policy_to_create_outage(outage, request):
 	# prevent staff from creating outages on tools in different cores
 	active_core_id = request.session.get("active_core_id")
 	if str(active_core_id) != "0" and str(active_core_id) != "None":
-		if str(outage.tool.core_id.id) not in str(active_core_id) and outage.tool not in user.qualifications.all() and not user.is_superuser:
+		if str(outage.tool.core_id.id) not in str(active_core_id) and outage.tool not in request.user.qualifications.all() and not request.user.is_superuser:
 			msg = "Your core is not the same as the core of " + str(outage.tool.core_id.name) + " to which the " + str(outage.tool.name) + " belongs.  You cannot create an outage for this tool."
 			return HttpResponseBadRequest(msg)
 

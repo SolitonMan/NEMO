@@ -1,4 +1,4 @@
-FROM python:3.6
+FROM python:3.10
 
 # Install LDAP support
 ARG DEBIAN_FRONTEND=noninteractive
@@ -35,7 +35,8 @@ RUN pip install django-developer-panel
 
 # Intall NEMO (in the current directory) and Gunicorn
 COPY . /nemo/
-RUN pip install /nemo/ gunicorn==20.0.4
+#RUN pip install /nemo/ gunicorn==20.0.4
+RUN pip install /nemo/ gunicorn
 RUN rm --recursive --force /nemo/
 
 RUN mkdir /nemo
