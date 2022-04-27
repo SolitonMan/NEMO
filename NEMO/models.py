@@ -875,6 +875,9 @@ class Project(models.Model):
 	def check_date_range(self, start_date, end_date):
 		return self.check_date(start_date) and self.check_date(end_date)
 
+	def past_end_date(self):
+		return self.end_date < timezone.now().date()
+
 
 def pre_delete_entity(sender, instance, using, **kwargs):
 	""" Remove activity history and membership history when an account, project, tool, or user is deleted. """

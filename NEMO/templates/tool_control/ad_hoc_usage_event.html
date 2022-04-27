@@ -150,6 +150,12 @@
 				</td>
 			</tr>
 			<tr>
+				<th>Duration</th>
+				<td>
+					<div id="duration"></div>
+				</td>
+			</tr>
+			<tr>
 				<th>Tool</th>
 				<td>
 					<select id="tool_select" name="tool_select" class="form-control">
@@ -507,10 +513,18 @@ function on_submit()
 
 function on_load()
 {
-	$("#ad_hoc_start").datetimepicker({format: 'YYYY-MM-DD hh:mm A', minDate: '{{ start_date }} 00:00', maxDate: '{{ end_date }} 23:59'});
+	$("#ad_hoc_start").datetimepicker({ useCurrent: false, format: 'YYYY-MM-DD hh:mm A', minDate: '{{ start_date }} 00:00', maxDate: '{{ end_date }} 23:59'});
 	$("#ad_hoc_start").val({% if ad_hoc_start %}"{{ ad_hoc_start }}"{% else %}""{% endif %});
-	$("#ad_hoc_end").datetimepicker({format: 'YYYY-MM-DD hh:mm A', minDate: '{{ start_date }} 00:00', maxDate: '{{ end_date }} 23:59'});
+	$("#ad_hoc_end").datetimepicker({ useCurrent: false, format: 'YYYY-MM-DD hh:mm A', minDate: '{{ start_date }} 00:00', maxDate: '{{ end_date }} 23:59'});
 	$("#ad_hoc_end").val({% if ad_hoc_end %}"{{ ad_hoc_end }}"{% else %}""{% endif %});
+	$("#ad_hoc_end").focus(function() {
+		if ($(this).val() == "" && $("#ad_hoc_start").val() != "") {
+			$("#ad_hoc_end").val($("#ad_hoc_start").val());
+			$("#ad_hoc_end").datetimepicker('hide');
+		}
+	});
+	$("#ad_hoc_start").on('dp.change',calculate_duration);
+	$("#ad_hoc_end").on('dp.change',calculate_duration);
 	enable_operator();
 }
 

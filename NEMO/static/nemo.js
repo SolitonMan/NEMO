@@ -399,3 +399,33 @@ function convert_12_to_24(dDate)
 	var retDate = dayDate + " " + arrDate[1] + ":00";
 	return retDate;
 }
+
+function calculate_duration()
+{
+	var start = null;
+	var end = null;
+	if ($("#ad_hoc_start").val() != "") {
+		start = moment($("#ad_hoc_start").val());
+	}
+	if ($("#ad_hoc_end").val() != "") {
+		end = moment($("#ad_hoc_end").val());
+	}
+	if (start != null && end != null) {
+		s_duration = "";
+		duration = end.diff(start, 'hours', true);
+
+		if (duration != parseInt(duration)) {
+			s_duration = parseInt(duration) + " hours ";
+			start = start.add(parseInt(duration), 'hour');
+			duration = end.diff(start, 'minutes');
+			s_duration += duration + " minutes";
+		} else {
+			s_duration = parseInt(duration) + " hours";
+		}
+
+		$("#duration").html(s_duration);
+	}
+}
+
+
+

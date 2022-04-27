@@ -44,7 +44,7 @@
 	{% endif %}
 {% endif %}
 <br/>
-<div class="tab-content" style="width: 50%">
+<div class="tab-content"{% if device != 'mobile' %} style="width: 50%"{% endif %}>
 	<div class="tab-pane active" id="summary">
 		{# Display tool status... #}
 		{% if tool.in_use %}

@@ -143,6 +143,22 @@
 			</td>
 			<th>&nbsp;</th>
 		</tr>
+		<tr>
+			<th>&nbsp;</th>
+			<th>Project</th>
+			<td>
+				<div class="form-group">
+				<select class="form-control" name="ad_hoc_project" id="ad_hoc_project">
+					{% for p in request.user.all_projects.all %}
+					{% if p.active and not p.past_end_date %}
+					<option value="{{ p.id }}">{{ p }}</option>
+					{% endif %}
+					{% endfor %}
+				</select>
+				</div>
+			</td>
+			<th>&nbsp;</th>
+		</tr>
 		{% endif %}
 		<tr>
 			<th>&nbsp;</th>
@@ -165,6 +181,13 @@
 			<th>&nbsp;</th>
 		</tr>
 		<tr>
+			<th>&nbsp;</th>
+			<th>Duration</th>
+			<td>
+				<div id="duration"></div>
+			</td>
+		</tr>
+		<tr>
 			<td colspan="4" align="left" valign="top" style="align: left; vertical-align: top;">
 				<div class="form-group">
 				<label class="control-label col-sm-2" for="area_access_comment"><b>Comment / Purpose of Charge</b></label>
@@ -172,22 +195,6 @@
 				</div>
 			</td>
 		</tr>
-		{% if not request.user.is_staff and not request.user.is_superuser %}
-		<tr>
-			<th>&nbsp;</th>
-			<th>Project</th>
-			<td>
-				<div class="form-group">
-				<select class="form-control" name="ad_hoc_project" id="ad_hoc_project">
-					{% for p in request.user.all_projects.all %}
-					<option value="{{ p.id }}">{{ p }}</option>
-					{% endfor %}
-				</select>
-				</div>
-			</td>
-			<th>&nbsp;</th>
-		</tr>
-		{% endif %}
 	</table>
 	<input type="submit" class="btn btn-default" id="save_ad_hoc_area_access_record" value="Save Ad Hoc Area Access Record" />
 	</form>
@@ -295,10 +302,47 @@
 		$("#area_user").typeahead('val', '').show().focus();
 	}
 
+/*	
+	function calculate_duration()
+	{
+		var start = null;
+		var end = null;
+		if ($("#ad_hoc_start").val() != "") {
+			start = moment($("#ad_hoc_start").val());
+		}
+		if ($("#ad_hoc_end").val() != "") {
+			end = moment($("#ad_hoc_end").val());
+		}
+		if (start != null && end != null) {
+			s_duration = "";
+			duration = end.diff(start, 'hours', true);
+
+			if (duration != parseInt(duration)) {
+				s_duration = parseInt(duration) + " hours ";
+				start = start.add(parseInt(duration), 'hour');
+				duration = end.diff(start, 'minutes');
+				s_duration += duration + " minutes";
+			} else {
+				s_duration = parseInt(duration) + " hours";
+			}
+
+			$("#duration").html(s_duration);
+		}
+	}
+*/
+
 	function on_load()
 	{
-		$("#ad_hoc_start").datetimepicker({format: 'YYYY-MM-DD hh:mm A', minDate: '{{ start_date }} 00:00', maxDate: '{{ end_date }} 23:59'});
-		$("#ad_hoc_end").datetimepicker({format: 'YYYY-MM-DD hh:mm A', minDate: '{{ start_date }} 00:00', maxDate: '{{ end_date }} 23:59'});
+		$("#ad_hoc_start").datetimepicker({ useCurrent: false, format: 'YYYY-MM-DD hh:mm A', minDate: '{{ start_date }} 00:00', maxDate: '{{ end_date }} 23:59'});
+		$("#ad_hoc_end").datetimepicker({ useCurrent: false, format: 'YYYY-MM-DD hh:mm A', minDate: '{{ start_date }} 00:00', maxDate: '{{ end_date }} 23:59'});
+		$("#ad_hoc_end").focus(function() {
+			if ($(this).val() == "" && $("#ad_hoc_start").val() != "") {
+				$(this).val($("#ad_hoc_start").val());
+				$(this).datetimepicker('hide');
+			}
+		});
+		$("#ad_hoc_start").on('dp.change', calculate_duration);
+		$("#ad_hoc_end").on('dp.change', calculate_duration);
 		{% if request.user.is_staff or request.user.is_superuser %}
 		$("#area_user").autocomplete('user', on_autocomplete_selection, {{ users|json_search_base }});
 		{% endif %}

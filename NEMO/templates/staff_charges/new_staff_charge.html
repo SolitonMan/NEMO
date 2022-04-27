@@ -128,6 +128,13 @@
 				<th>&nbsp;</th>
 			</tr>
 			<tr>
+				<th>&nbsp;</th>
+				<th>Duration</th>
+				<td>
+					<div id="duration"></div>
+				</td>
+			</tr>
+			<tr>
 				<td colspan="4" align="left" valign="top" style="align: left; vertical-align: top;">
 					<label class="control-label col-sm-2" for="staff_member_comment" style="font-weight: bold;">Comment / Purpose of Charge</label>
 					<textarea name="staff_member_comment" id="staff_member_comment" rows="6" cols="50" placeholder="Please enter any comments about the reason for or details about the work performed"></textarea>
@@ -451,10 +458,18 @@
 			hide_user_charges();
 			enable_autocompletion(0);
 			enable_ad_hoc_autocompletion(0);
-			$("#ad_hoc_start").datetimepicker({format: 'YYYY-MM-DD hh:mm A', minDate: '{{ start_date }} 00:00', maxDate: '{{ end_date }} 23:59'});
+			$("#ad_hoc_start").datetimepicker({ useCurrent: false, format: 'YYYY-MM-DD hh:mm A', minDate: '{{ start_date }} 00:00', maxDate: '{{ end_date }} 23:59'});
 			$("#ad_hoc_start").val({% if ad_hoc_start %}"{{ ad_hoc_start }}"{% else %}""{% endif %});
-			$("#ad_hoc_end").datetimepicker({format: 'YYYY-MM-DD hh:mm A', minDate: '{{ start_date }} 00:00', maxDate: '{{ end_date }} 23:59'});
+			$("#ad_hoc_end").datetimepicker({ useCurrent: false, format: 'YYYY-MM-DD hh:mm A', minDate: '{{ start_date }} 00:00', maxDate: '{{ end_date }} 23:59'});
 			$("#ad_hoc_end").val({% if ad_hoc_end %}"{{ ad_hoc_end }}"{% else %}""{% endif %});
+			$("#ad_hoc_end").focus(function() {
+				if ($(this).val() == "" && $("#ad_hoc_start").val() != "") {
+					$(this).val($("#ad_hoc_start").val());
+					$(this).datetimepicker('hide');
+				}
+			});
+			$("#ad_hoc_start").on('dp.change',calculate_duration);
+			$("#ad_hoc_end").on('dp.change',calculate_duration);
 			$(document).scrollTop(0);
 			$("#tabs a").click(switch_tab);
 		}
