@@ -369,7 +369,7 @@
 				<p>You may dial the phone that is closest to the {{ tool.name }} at extension <span class="glyphicon glyphicon-phone small-icon"></span>{{ tool.phone_number }}.</p>
 			</div>
 		</div>
-		{% if user.is_staff or tool.primary_owner == user %}
+		{% if user.is_staff or tool.primary_owner == user or user in tool.user_set.all %}
 			<div id="qualified_users_container" class="media">
 				{% include 'tool_control/qualified_users.html' %}
 			</div>

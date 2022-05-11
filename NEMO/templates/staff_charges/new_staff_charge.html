@@ -69,7 +69,7 @@
 			{% if current_user_charges %}
 				{% for s in current_user_charges %}
 					{% if not s.ad_hoc_replaced %}
-					<tr>
+					<tr{% if s.no_charge_flag %} style="background-color: rgb(253,225,227);"{% endif %}>
 						<td>{{ s.start }}</td>
 						<td>{{ s.end }}</td>
 						<td>
@@ -143,14 +143,19 @@
 			{% if request.user.physical_access_levels.all|length > 0 %}
 			<tr>
 				<td colspan="4" align="left" valign="top" style="align: left; vertical-align: top;">
-				<input type="checkbox" value="1" name="include_area_access" id="include_area_access" onclick="toggle_areas()">
+				<input type="checkbox" value="1" name="include_area_access" id="include_area_access" onclick="toggle_areas()"{% if show_no_staff_charge_option %} checked{% endif %}>
 				Include an area access record with this staff charge
 <br/><br/>
-				<select name="area_id" id="area_id" class="form-control" disabled>
+				<select name="area_id" id="area_id" class="form-control"{% if not show_no_staff_charge_option %} disabled{% endif %}>
 					{% for pa in request.user.physical_access_levels.all %}
 					<option value="{{ pa.area.id }}">{{ pa.area.name }}</option>
 					{% endfor %}
 				</select>
+
+				{% if show_no_staff_charge_option %}
+				<br/>
+				<input type="checkbox" value="1" name="do_not_save_staff_charge" id="do_not_save_staff_charge" checked> Do not save staff charge (save area access charge only)
+				{% endif %}
 				</td>
 			</tr>
 			{% endif %}
@@ -430,8 +435,15 @@
 		{
 			if ($("#include_area_access").is(":checked")) {
 				$("#area_id").prop("disabled", false);
+				{% if show_no_staff_charge_option %}
+				$("#do_not_save_staff_charge").prop("disabled", false);
+				{% endif %}
 			} else {
 				$("#area_id").prop("disabled", true);
+				{% if show_no_staff_charge_option %}
+				$("#do_not_save_staff_charge").prop("checked", false);
+				$("#do_not_save_staff_charge").prop("disabled", true);
+				{% endif %}
 			}
 		}
 

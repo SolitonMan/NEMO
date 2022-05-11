@@ -8,6 +8,8 @@
 	<p>The ad hoc charge you entered conflicts with the listed existing charge(s).  Please select which item should take precedence.  Selecting your new charge will overwrite (and appropriately reduce) an existing charge, while selecting the existing charge will reduce the new charge to the appopriate times.</p>
 	<form id="ad_hoc_overlap_resolution" action="{% url 'ad_hoc_overlap_resolution' %}" method="POST">
 	{% csrf_token %}
+	{% if include_area_access is not None %}<input type="hidden" name="include_area_access" value="{{ include_area_access }}" />{% endif %}
+	{% if area_id is not None %}<input type="hidden" name="area_id" value="{{ area_id }}" />{% endif %}
 	<table class="table">
 		<tr>
 			<th>Start Time Selected:</th>

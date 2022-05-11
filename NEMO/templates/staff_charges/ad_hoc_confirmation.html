@@ -60,6 +60,11 @@
 			{% endfor %}
 		{% endif %}
 	</table>
+	{% if no_staff_charge_saved %}
+	<p style="font-weight: bold;">Please note that the listed staff charge was marked as a no charge transaction, and only the area access transaction for the {{ area }} will be billed.</p>
+	{% endif %}
+
+
 	<input type="button" onclick="go_back();" value="Return to Staff Charges" class="btn btn-default" />
 
 	<script type="text/javascript">

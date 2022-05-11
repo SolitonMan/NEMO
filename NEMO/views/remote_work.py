@@ -45,10 +45,10 @@ def remote_work(request):
 			operator = get_object_or_404(User, id=operator)
 	else:
 		operator = request.user
-	usage_events = UsageEvent.objects.filter(end__gte=first_of_the_month, end__lte=last_of_the_month, active_flag=True).exclude(end=None)
-	staff_charges = StaffCharge.objects.filter(end__gte=first_of_the_month, end__lte=last_of_the_month, active_flag=True).exclude(end=None)
-	area_access_records = AreaAccessRecord.objects.filter(end__gte=first_of_the_month, end__lte=last_of_the_month, active_flag=True).exclude(end=None)
-	consumable_withdraws = ConsumableWithdraw.objects.filter(date__gte=first_of_the_month, date__lte=last_of_the_month, active_flag=True)
+	usage_events = UsageEvent.objects.filter(end__gte=first_of_the_month, end__lte=last_of_the_month, active_flag=True, no_charge_flag=False).exclude(end=None)
+	staff_charges = StaffCharge.objects.filter(end__gte=first_of_the_month, end__lte=last_of_the_month, active_flag=True, no_charge_flag=False, ad_hoc_replaced=False).exclude(end=None)
+	area_access_records = AreaAccessRecord.objects.filter(end__gte=first_of_the_month, end__lte=last_of_the_month, active_flag=True, no_charge_flag=False).exclude(end=None)
+	consumable_withdraws = ConsumableWithdraw.objects.filter(date__gte=first_of_the_month, date__lte=last_of_the_month, active_flag=True, no_charge_flag=False)
 
 	if request.user.groups.filter(name="Core Admin").exists():
 		usage_events = usage_events.filter(tool__core_id__in=request.user.core_ids.all())

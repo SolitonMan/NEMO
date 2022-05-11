@@ -10,6 +10,8 @@
 	<div id="qualified_users" class="collapse {% if expanded %}in{% endif %}">
 		<p id="btn_target">Only qualified users are able to operate the {{ tool.name }}.</p>
 		{% if tool.grant_physical_access_level_upon_qualification %}<p class="danger-highlight">Qualifying a user for this tool automatically grants them the physical access level &quot;{{ tool.grant_physical_access_level_upon_qualification }}&quot;.</p>{% endif %}
+
+		{% if user.is_staff or tool.primary_owner == user %}
 		<form id="add_qualified_user_form" class="form-inline" style="margin-bottom:10px">
 			<div class="container">
 				<div class="row" style="width: 570px;">
@@ -30,14 +32,18 @@
 			<input type="hidden" name="chosen_tools_full[]" id="chosen_tools_full" value="">
 			<input type="hidden" name="action" value="qualify">
 		</form>
+		{% endif %}
 		{% with tool.user_set.all as qualified_users %}
 			{% if qualified_users %}
+				{% if user.is_staff or tool.primary_owner == user %}
 				<p>You can email <a href="{% url 'compose_email' %}?audience=tool&selection={{ tool.id }}"><span class="glyphicon glyphicon-send"></span> all qualified users</a>.</p>
+				{% endif %}
 				<p>
 					Current qualified users are listed below. Inactive qualified users are marked in <span class="light-grey">light grey</span>.<br>
 					{% for u in qualified_users %}
 						{% if u.is_active %}
 							<span>
+							{% if user.is_staff or tool.primary_owner == user %}
 							<a href="javascript:remove_qualified_user('{{ u.id }}', '{{ tool.id }}')" class="grey hover-black" title="Disqualify {{ u.first_name }}"><span class="glyphicon glyphicon-remove-circle"></span></a> 
 							{% if probationary_qualifications is not None %}
 							{% if probationary_qualifications|get_item:u.id %}
@@ -46,11 +52,13 @@
 							<a href="javascript:demote_user('{{ u.id }}', '{{ tool.id }}')" class="grey hover-black" title="Demote {{ u.first_name }}"><span class="glyphicon glyphicon-arrow-down"></span></a>
 							{% endif %}
 							{% endif %}
-							{{ u }}
+							{% endif %}
+							<a href="mailto:{{ u.email }}">{{ u }}</a>
 							{% if probationary_qualifications is not None %}{% if probationary_qualifications|get_item:u.id %} - probationary{% else %} - full{% endif %}{% endif %}
 							</span>
 						{% else %}
 							<span class="light-grey">
+							{% if user.is_staff or tool.primary_owner == user %}
 							<a href="javascript:remove_qualified_user('{{ u.id }}', '{{ tool.id }}')" class="light-grey hover-black" title="Disqualify {{ u.first_name }}"><span class="glyphicon glyphicon-remove-circle"></span></a>
 							{% if probationary_qualifications is not None %}
 							{% if probationary_qualifications|get_item:u.id %}
@@ -59,7 +67,8 @@
 							<a href="javascript:demote_user('{{ u.id }}', '{{ tool.id }}')" class="grey hover-black" title="Demote {{ u.first_name }}"><span class="glyphicon glyphicon-arrow-down"></span></a>
 							{% endif %}
 							{% endif %}
-							{{ u }}
+							{% endif %}
+							<a href="mailto:{{ u.email }}">{{ u }}</a>
 							{% if probationary_qualifications is not None %}{% if probationary_qualifications|get_item:u.id %} - probationary{% else %} - full{% endif %}{% endif %}
 							</span>
 						{% endif %}
@@ -71,8 +80,9 @@
 		{% endwith %}
 	</div>
 </div>
-
+{% if user.is_staff or tool.primary_owner == user %}
 <script>
 	$('#add_qualified_user_search_box').autocomplete('users', add_qualified_user, {{ users|json_search_base }}).focus();
 	$('#add_probationary_user_search_box').autocomplete('users', add_probationary_user, {{ users|json_search_base }}).focus();
 </script>
+{% endif %}

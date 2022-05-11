@@ -236,7 +236,7 @@ def tool_status(request, tool_id):
 	tool.update_post_usage_questions()
 
 	# Staff need the user list to be able to qualify users for the tool.
-	if request.user.is_staff:
+	if request.user.is_staff or request.user in tool.user_set.all():
 		pqd = {}
 		probationary_qualifications = ProbationaryQualifications.objects.filter(tool=tool)
 		for pq in probationary_qualifications:

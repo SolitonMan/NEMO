@@ -16,7 +16,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_time, parse_date, parse_datetime
 from django.views.decorators.http import require_GET, require_POST
 
-from NEMO.models import User, StaffCharge, AreaAccessRecord, Project, Area, StaffChargeProject, AreaAccessRecordProject, LockBilling, UserProfile, UserProfileSetting
+from NEMO.models import User, StaffCharge, AreaAccessRecord, Project, Area, StaffChargeProject, AreaAccessRecordProject, LockBilling, UserProfile, UserProfileSetting, UsageEvent, UsageEventProject
 
 
 @require_GET
@@ -92,7 +92,8 @@ def staff_charges(request):
 
 	# get all staff charges for this user so ad hoc charges can be made with an appropriate reference
 	earliest = timezone.now().date() - timedelta(days=30)
-	my_staff_charges = StaffCharge.objects.filter(staff_member=request.user, start__range=(earliest, timezone.now().date()), active_flag=True)
+	latest = timezone.now().date() + timedelta(days=90)
+	my_staff_charges = StaffCharge.objects.filter(staff_member=request.user, start__range=(earliest, latest), active_flag=True)
 	if my_staff_charges:
 		params['current_user_charges'] = my_staff_charges
 
@@ -106,6 +107,14 @@ def staff_charges(request):
 		params['multi_core_user'] = True
 	else:
 		params['multi_core_user'] = False
+
+	if request.user.core_ids.filter(name='Engineering Shop Services').exists():
+		params['show_no_staff_charge_option'] = True
+	else:
+		params['show_no_staff_charge_option'] = False
+
+	# temporarily disabling the show no staff charge option
+	params['show_no_staff_charge_option'] = False
 
 	if render_path == '':
 		render_path = 'staff_charges/new_staff_charge.html'
@@ -295,29 +304,29 @@ def ad_hoc_staff_charge(request):
 			msg = 'The start date and end date are required to save an ad hoc staff charge. The values must be valid datetimes.'
 			raise Exception(msg)
 
-		if StaffCharge.objects.filter(staff_member=request.user, start__range=(ad_hoc_start, ad_hoc_end), end__gt=ad_hoc_end, active_flag=True).exists() or StaffCharge.objects.filter(staff_member=request.user, end__range=(ad_hoc_start, ad_hoc_end), start__lt=ad_hoc_start, active_flag=True).exists() or StaffCharge.objects.filter(staff_member=request.user, start__lt=ad_hoc_start, end__gt=ad_hoc_end, active_flag=True).exists() or StaffCharge.objects.filter(staff_member=request.user, start__gt=ad_hoc_start, end__lt=ad_hoc_end, active_flag=True).exists():
+		if StaffCharge.objects.filter(staff_member=request.user, start__range=(ad_hoc_start, ad_hoc_end), end__gt=ad_hoc_end, active_flag=True, ad_hoc_replaced=False).exists() or StaffCharge.objects.filter(staff_member=request.user, end__range=(ad_hoc_start, ad_hoc_end), start__lt=ad_hoc_start, active_flag=True, ad_hoc_replaced=False).exists() or StaffCharge.objects.filter(staff_member=request.user, start__lt=ad_hoc_start, end__gt=ad_hoc_end, active_flag=True, ad_hoc_replaced=False).exists() or StaffCharge.objects.filter(staff_member=request.user, start__gt=ad_hoc_start, end__lt=ad_hoc_end, active_flag=True, ad_hoc_replaced=False).exists():
 
-			if StaffCharge.objects.filter(staff_member=request.user, start__range=(ad_hoc_start, ad_hoc_end), end__gt=ad_hoc_end, charge_end_override=True, override_confirmed=False, active_flag=True).exists() or StaffCharge.objects.filter(staff_member=request.user, end__range=(ad_hoc_start, ad_hoc_end), start__lt=ad_hoc_start, charge_end_override=True, override_confirmed=False, active_flag=True).exists() or StaffCharge.objects.filter(staff_member=request.user, start__lt=ad_hoc_start, end__gt=ad_hoc_end, charge_end_override=True, override_confirmed=False, active_flag=True).exists() or StaffCharge.objects.filter(staff_member=request.user, start__gt=ad_hoc_start, end__lt=ad_hoc_end, charge_end_override=True, override_confirmed=False, active_flag=True).exists():
+			if StaffCharge.objects.filter(staff_member=request.user, start__range=(ad_hoc_start, ad_hoc_end), end__gt=ad_hoc_end, charge_end_override=True, override_confirmed=False, active_flag=True, ad_hoc_replaced=False).exists() or StaffCharge.objects.filter(staff_member=request.user, end__range=(ad_hoc_start, ad_hoc_end), start__lt=ad_hoc_start, charge_end_override=True, override_confirmed=False, active_flag=True, ad_hoc_replaced=False).exists() or StaffCharge.objects.filter(staff_member=request.user, start__lt=ad_hoc_start, end__gt=ad_hoc_end, charge_end_override=True, override_confirmed=False, active_flag=True, ad_hoc_replaced=False).exists() or StaffCharge.objects.filter(staff_member=request.user, start__gt=ad_hoc_start, end__lt=ad_hoc_end, charge_end_override=True, override_confirmed=False, active_flag=True, ad_hoc_replaced=False).exists():
 				msg = 'You have outstanding staff charges that were overridden and are overlapping with the ad hoc charge you have submitted.  Please resolve any relevant outstanding overridden charges before adding an ad hoc charge during that time period.'
 				raise Exception(msg)
 
-			if StaffCharge.objects.filter(staff_member=request.user, start__range=(ad_hoc_start, ad_hoc_end), end__gt=ad_hoc_end, active_flag=True).exists():
-				staff_charges_start = StaffCharge.objects.filter(staff_member=request.user, start__range=(ad_hoc_start, ad_hoc_end), end__gt=ad_hoc_end, active_flag=True)
+			if StaffCharge.objects.filter(staff_member=request.user, start__range=(ad_hoc_start, ad_hoc_end), end__gt=ad_hoc_end, active_flag=True, ad_hoc_replaced=False).exists():
+				staff_charges_start = StaffCharge.objects.filter(staff_member=request.user, start__range=(ad_hoc_start, ad_hoc_end), end__gt=ad_hoc_end, active_flag=True, ad_hoc_replaced=False)
 			else:
 				staff_charges_start = None
 
-			if StaffCharge.objects.filter(staff_member=request.user, end__range=(ad_hoc_start, ad_hoc_end), start__lt=ad_hoc_start, active_flag=True).exists():
-				staff_charges_end = StaffCharge.objects.filter(staff_member=request.user, end__range=(ad_hoc_start, ad_hoc_end), start__lt=ad_hoc_start, active_flag=True)
+			if StaffCharge.objects.filter(staff_member=request.user, end__range=(ad_hoc_start, ad_hoc_end), start__lt=ad_hoc_start, active_flag=True, ad_hoc_replaced=False).exists():
+				staff_charges_end = StaffCharge.objects.filter(staff_member=request.user, end__range=(ad_hoc_start, ad_hoc_end), start__lt=ad_hoc_start, active_flag=True, ad_hoc_replaced=False)
 			else:
 				staff_charges_end = None
 
-			if StaffCharge.objects.filter(staff_member=request.user, start__lt=ad_hoc_start, end__gt=ad_hoc_end, active_flag=True).exists():
-				staff_charges_middle = StaffCharge.objects.filter(staff_member=request.user, start__lt=ad_hoc_start, end__gt=ad_hoc_end, active_flag=True)
+			if StaffCharge.objects.filter(staff_member=request.user, start__lt=ad_hoc_start, end__gt=ad_hoc_end, active_flag=True, ad_hoc_replaced=False).exists():
+				staff_charges_middle = StaffCharge.objects.filter(staff_member=request.user, start__lt=ad_hoc_start, end__gt=ad_hoc_end, active_flag=True, ad_hoc_replaced=False)
 			else:
 				staff_charges_middle = None
 
-			if StaffCharge.objects.filter(staff_member=request.user, start__gt=ad_hoc_start, end__lt=ad_hoc_end, active_flag=True).exists():
-				staff_charges_over = StaffCharge.objects.filter(staff_member=request.user, start__gt=ad_hoc_start, end__lt=ad_hoc_end, active_flag=True)
+			if StaffCharge.objects.filter(staff_member=request.user, start__gt=ad_hoc_start, end__lt=ad_hoc_end, active_flag=True, ad_hoc_replaced=False).exists():
+				staff_charges_over = StaffCharge.objects.filter(staff_member=request.user, start__gt=ad_hoc_start, end__lt=ad_hoc_end, active_flag=True, ad_hoc_replaced=False)
 			else:
 				staff_charges_over = None
 
@@ -375,10 +384,23 @@ def ad_hoc_staff_charge(request):
 			params['pc'] = pc
 			if len(ad_hoc_entries) > 0:
 				error_params['ad_hoc_entries'] = ad_hoc_entries
+			if request.POST.get("include_area_access") is not None:
+				params['include_area_access'] = request.POST.get("include_area_access")
+			else:
+				params['include_area_access'] = None
+
+			if request.POST.get("area_id") is not None:
+				params['area_id'] = request.POST.get("area_id")
+			else:
+				params['area_id'] = None
 
 			return render(request, 'staff_charges/ad_hoc_overlap.html', params)
 
 		# dates are legitimate and no overlapping conflicts so save ad hoc charge
+		save_charge = True
+		if request.POST.get("do_not_save_staff_charge") is not None:
+			save_charge = False
+
 		charge = StaffCharge()
 		charge.staff_member = request.user
 		charge.start = ad_hoc_start
@@ -390,7 +412,14 @@ def ad_hoc_staff_charge(request):
 		charge.updated = timezone.now()
 		if request.POST.get('core_select', None) != None:
 			charge.core_id_override = int(request.POST.get('core_select'))
-		charge.save()
+
+		if save_charge:	
+			charge.save()
+		else:
+			charge.validated = True
+			charge.validated_date = timezone.now()
+			charge.no_charge_flag = True
+			charge.save()
 
 		prc = 0.0
 
@@ -445,9 +474,12 @@ def ad_hoc_staff_charge(request):
 
 		for p in project_charges.values():
 			p.full_clean()
+			if not save_charge:
+				p.no_charge_flag = True
 			p.save()
 
 		params['staff_charges'] = StaffCharge.objects.filter(id=charge.id, active_flag=True)
+		params['no_staff_charge_saved'] = save_charge == False
 
 		if request.POST.get("include_area_access") is not None:
 			area_id = request.POST.get("area_id")
@@ -462,6 +494,8 @@ def ad_hoc_staff_charge(request):
 			aar.updated = timezone.now()
 			aar.save()
 
+			params['area'] = aar.area
+
 			for pc in project_charges:
 				aarp = AreaAccessRecordProject()
 				aarp.area_access_record = aar
@@ -471,6 +505,7 @@ def ad_hoc_staff_charge(request):
 				aarp.created = timezone.now()
 				aarp.updated = timezone.now()
 				aarp.save()
+
 
 	except Exception as inst:
 		# collect form submission values for display
@@ -616,6 +651,8 @@ def ad_hoc_overlap_resolution(request):
 		ad_hoc_cp = {}
 		overlap_ids = []
 		sc_changed = []
+		include_area_access = request.POST.get("include_area_access")
+		area_id = request.POST.get("area_id")
 	
 		for key, value in request.POST.items():
 			if is_valid_field(key):
@@ -649,6 +686,18 @@ def ad_hoc_overlap_resolution(request):
 		ahc.created = timezone.now()
 		ahc.updated = timezone.now()
 		ahc.save()
+
+		if include_area_access is not None and area_id is not None:
+			ahaar = AreaAccessRecord()
+			ahaar.area = Area.objects.get(id=area_id)
+			ahaar.start = request.POST.get("ad_hoc_start")
+			ahaar.end = request.POST.get("ad_hoc_end")
+			ahaar.ad_hoc_created = True
+			ahaar.user = request.user
+			ahaar.created = timezone.now()
+			ahaar.updated = timezone.now()
+			ahaar.staff_charge = ahc
+			ahaar.save()
 	
 		ad_hoc_id = int(ahc.id)
 		ad_hoc_charge = StaffCharge.objects.get(id=ad_hoc_id)
@@ -667,6 +716,16 @@ def ad_hoc_overlap_resolution(request):
 			scp.created = timezone.now()
 			scp.updated = timezone.now()
 			scp.save()
+
+			if include_area_access:
+				ahaarp = AreaAccessRecordProject()
+				ahaarp.area_access_record = ahaar
+				ahaarp.customer = User.objects.get(id=a0)
+				ahaarp.project = Project.objects.get(id=a1)
+				ahaarp.project_percent = Decimal(a2)
+				ahaarp.created = timezone.now()
+				ahaarp.updated = timezone.now()
+				ahaarp.save()
 
 		# get the StaffCharges that overlap the ad hoc charge
 		overlaps = StaffCharge.objects.filter(id__in=overlap_ids, active_flag=True).order_by("start")
@@ -761,6 +820,11 @@ def ad_hoc_overlap_resolution(request):
 					o.updated = timezone.now()
 					o.save()
 	
+				if AreaAccessRecord.objects.filter(staff_charge=o).exists():
+					o_aar = AreaAccessRecord.objects.filter(staff_charge=o)
+					for a in o_aar:
+						a.active_flag = False
+						a.save()
 	
 		sc_changed.append(ad_hoc_charge.id)
 	
@@ -814,6 +878,32 @@ def sc_clone(request, charge_to_clone, new_charge_start, new_charge_end):
 			new_scp.updated = timezone.now()
 			new_scp.save()
 
+	if AreaAccessRecord.objects.filter(staff_charge=charge_to_clone).exists():
+		aar_to_clone = AreaAccessRecord.objects.filter(staff_charge=charge_to_clone)
+
+		for a in aar_to_clone:
+			new_aar = AreaAccessRecord()
+			new_aar.area = a.area
+			new_aar.start = nc.start
+			new_aar.end = nc.end
+			new_aar.ad_hoc_created = True
+			new_aar.staff_charge = nc
+			new_aar.user = nc.staff_member
+			new_aar.customer = nc.customer
+			new_aar.created = timezone.now()
+			new_aar.updated = timezone.now()
+			new_aar.save()
+
+			for rp in AreaAccessRecordProject.objects.filter(area_access_record=a):
+				new_aarp = AreaAccessRecordProject()
+				new_aarp.area_access_record = new_aar
+				new_aarp.project = rp.project
+				new_aarp.customer = rp.customer
+				new_aarp.project_percent = rp.project_percent
+				new_aarp.created = new_aar.created
+				new_aarp.updated = new_aar.updated
+				new_aarp.save()
+
 	return nc
 
 
@@ -864,20 +954,37 @@ def end_staff_charge(request, modal_flag):
 			return update_related_charges(request, charge, StaffCharge.objects.get(related_override_charge=charge))
 
 		else:
-			# gather records and send to form for editing
-			params = {
-				'charge': charge,
-				'scp': scp,
-				'staff_charge_id': charge.id,
-				'total_minutes': (timezone.now() - charge.start).total_seconds()//60,
-				'staff_member_comment': request.POST.get("staff_member_comment")
-			}
-			if int(modal_flag) == 0:
-				return render(request, 'staff_charges/multiple_projects_finish.html', params)
+
+			use_tool_percents = request.POST.get("use_tool_percents") == 'true'
+
+			if use_tool_percents:
+				uep = UsageEventProject.objects.filter(usage_event=charge.related_usage_event)
+
+				for u in uep:
+					staff_charge_project = StaffChargeProject.objects.get(staff_charge=charge, project=u.project, customer=u.customer)
+					staff_charge_project.project_percent = u.project_percent
+					staff_charge_project.save()
+
+				charge.end = timezone.now()
+				charge.updated = timezone.now()
+				charge.save()
+				
+				return render(request, 'tool_control/disable_confirmation.html', {'tool': charge.related_usage_event.tool})
 			else:
-				tool_id = request.POST.get("tool_id")
-				params["tool_id"] = tool_id
-				return render(request, 'staff_charges/modal_multiple_projects_finish.html', params)
+				# gather records and send to form for editing
+				params = {
+					'charge': charge,
+					'scp': scp,
+					'staff_charge_id': charge.id,
+					'total_minutes': (timezone.now() - charge.start).total_seconds()//60,
+					'staff_member_comment': request.POST.get("staff_member_comment")
+				}
+				if int(modal_flag) == 0:
+					return render(request, 'staff_charges/multiple_projects_finish.html', params)
+				else:
+					tool_id = request.POST.get("tool_id")
+					params["tool_id"] = tool_id
+					return render(request, 'staff_charges/modal_multiple_projects_finish.html', params)
 
 
 	except ObjectDoesNotExist:
