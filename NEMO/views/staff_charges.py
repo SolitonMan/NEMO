@@ -969,7 +969,10 @@ def end_staff_charge(request, modal_flag):
 				charge.updated = timezone.now()
 				charge.save()
 				
-				return render(request, 'tool_control/disable_confirmation.html', {'tool': charge.related_usage_event.tool})
+				if request.user.area_access_record() is None:
+					return render(request, 'tool_control/disable_confirmation.html', {'tool': charge.related_usage_event.tool})
+				else:
+					return render(request, 'area_access/reminder.html', {'tool':charge.related_usage_event.tool, 'area_access_record': request.user.area_access_record()})
 			else:
 				# gather records and send to form for editing
 				params = {

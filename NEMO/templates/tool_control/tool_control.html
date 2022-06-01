@@ -256,6 +256,34 @@
 			$("#start").show();
 		}
 
+		function end_area_access_charge()
+		{
+			var failure_dialog = ajax_failure_callback("Unable to end area access charge", "There was a problem ending your area access charge.");
+			var tool_id = get_selected_item();
+			var data = {
+				'tool_id': tool_id,
+				'use_tool_percents': 'false',
+			}
+
+			success_callbacks = [ajax_success_callback];
+
+			ajax_post("{% url 'end_area_access_charge' %}", data, success_callbacks, failure_dialog);
+		}
+
+		function end_area_access_charge_with_tool_percents()
+		{
+			var failure_dialog = ajax_failure_callback("Unable to end area access charge", "There was a problem ending your area access charge.");
+			var tool_id = get_selected_item();
+			var data = {
+				'tool_id': tool_id,
+				'use_tool_percents': 'true',
+			}
+
+			success_callbacks = [ajax_success_callback];
+
+			ajax_post("{% url 'end_area_access_charge' %}", data, success_callbacks, failure_dialog);
+		}
+
 		{% if user.is_staff %}
 
 			{# Only staff can perform the functions in this if-block. #}

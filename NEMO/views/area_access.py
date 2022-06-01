@@ -10,7 +10,7 @@ from django.utils import timezone
 from django.utils.http import urlencode
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
-from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, Door, PhysicalAccessLog, PhysicalAccessType, Project, User, UserProfile, UserProfileSetting
+from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, Door, PhysicalAccessLog, PhysicalAccessType, Project, StaffCharge, StaffChargeProject, UsageEvent, UsageEventProject, User, UserProfile, UserProfileSetting
 from NEMO.tasks import postpone
 from NEMO.utilities import parse_start_and_end_date
 from NEMO.views.customization import get_customization
@@ -253,6 +253,16 @@ def logout_of_area(request, door_id=None, area_id=None):
 		record.updated = timezone.now()
 		record.comment = request.POST.get("comment")
 		record.save()
+
+		aarp = AreaAccessRecordProject.objects.filter(area_access_record=record)
+		ar_count = aarp.count()
+
+		if aarp is not None:
+			for a in aarp:
+				a.project_percent = round((100/ar_count), 2)
+				a.updated = timezone.now()
+				a.save()
+
 		#return render(request, 'area_access/logout_success.html', {'area': record.area, 'name': user.first_name})
 		return HttpResponseRedirect('/new_area_access_record/' + str(user.id) + '/')
 		#return HttpResponse()
@@ -270,6 +280,37 @@ def force_area_logout(request, user_id):
 	record.end = timezone.now()
 	record.updated = timezone.now()
 	record.save()
+
+	if record.related_usage_event is not None:
+		# match the percentages for the area access record projects to the usage event project records
+		uep = UsageEventProject.objects.filter(usage_event=record.related_usage_event)
+
+		for u in uep:
+			aarp = AreaAccessRecordProject.objects.get(area_access_record=record, project=u.project, customer=u.customer)
+			aarp.project_percent = u.project_percent
+			aarp.updated = timezone.now()
+			aarp.save()
+
+	elif record.staff_charge is not None:
+		# match the percentages for the area access record projects to the staff charge project records
+		scp = StaffChargeProject.objects.filter(staff_charge=record.staff_charge)
+
+		for s in scp:
+			aarp = AreaAccessRecordProject.objects.get(area_access_record=record, project=s.project, customer=s.customer)
+			aarp.project_percent = s.project_percent
+			aarp.updated = timezone.now()
+			aarp.save()
+
+	else:
+		# check on the number of project records, then assign values based on the count
+		aarp = AreaAccessRecordProject.objects.filter(area_access_record=record)
+		num_records = aarp.count()
+		
+		for a in aarp:
+			a.project_percent = round((100/num_records),2)
+			a.updated = timezone.now()
+			a.save()
+
 	return HttpResponse()
 
 
@@ -554,5 +595,34 @@ def ad_hoc_area_access_record(request):
 	aarp.created = timezone.now()
 	aarp.updated = timezone.now()
 	aarp.save()
+
+	return HttpResponseRedirect(reverse('landing'))
+
+
+@login_required
+@require_POST
+def end_area_access_charge(request):
+	try:
+		aar = request.user.area_access_record()
+		aar.end = timezone.now()
+		aar.updated = timezone.now()
+		aar.save()
+
+		use_tool_percents = request.POST.get("use_tool_percents") == 'true'
+
+		if use_tool_percents:
+			uep = UsageEventProject.objects.filter(usage_event=aar.related_usage_event)
+
+			for u in uep:
+				aarp = AreaAccessRecordProject.objects.get(area_access_record=aar, project=u.project, customer=u.customer)
+				aarp.project_percent = u.project_percent
+				aarp.save()
+
+			return render(request, 'tool_control/disable_confirmation.html', {'tool': aar.related_usage_event.tool})
+
+
+	except:
+		
+		return HttpResponseBadRequest('There was an error attempting to end your area access record.')
 
 	return HttpResponseRedirect(reverse('landing'))

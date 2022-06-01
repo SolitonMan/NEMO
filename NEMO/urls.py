@@ -193,6 +193,7 @@ urlpatterns = [
 	re_path(r'^save_area_access_comment/$', area_access.save_area_access_comment, name='save_area_access_comment'),
 	re_path(r'^ad_hoc_area_access_record/$', area_access.ad_hoc_area_access_record, name='ad_hoc_area_access_record'),
 	re_path(r'^save_aa_customer_comment/$', area_access.save_aa_customer_comment, name='save_aa_customer_comment'),
+	re_path(r'^end_area_access_charge/$', area_access.end_area_access_charge, name='end_area_access_charge'),
 
 	# Laboratory usage:
 	re_path(r'^usage/$', usage.usage, name='usage'),

@@ -123,6 +123,9 @@ def email_broadcast(request, audience=''):
 		return render(request, 'email/compose_email.html', dictionary)
 
 	dictionary['audience'] = audience
+	dictionary['user_list'] = User.objects.all().order_by('last_name', 'first_name')
+	dictionary['tool_list'] = Tool.objects.all().order_by('name')
+	dictionary['project_list'] = Project.objects.all().order_by('project_number')
 	return render(request, 'email/email_broadcast.html', dictionary)
 
 
@@ -190,9 +193,15 @@ def compose_email(request):
 			users = User.objects.filter(groups__id=selection).distinct()
 		else:
 			dictionary = {'error': 'You specified an invalid audience'}
+			dictionary['user_list'] = User.objects.all().order_by('last_name', 'first_name')
+			dictionary['tool_list'] = Tool.objects.all().order_by('name')
+			dictionary['project_list'] = Project.objects.all().order_by('project_number')
 			return render(request, 'email/email_broadcast.html', dictionary)
 	except Exception as inst:
 		dictionary = {'error': inst}
+		dictionary['user_list'] = User.objects.all().order_by('last_name', 'first_name')
+		dictionary['tool_list'] = Tool.objects.all().order_by('name')
+		dictionary['project_list'] = Project.objects.all().order_by('project_number')
 		return render(request, 'email/email_broadcast.html', dictionary)
 	generic_email_sample = get_media_file_contents('generic_email.html')
 	dictionary = {

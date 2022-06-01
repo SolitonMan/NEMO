@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from django import forms
+from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
 from django.forms import BaseForm, BooleanField, CharField, ChoiceField, DateField, Form, IntegerField, ModelChoiceField, ModelForm
 from django.forms.utils import ErrorDict
@@ -13,7 +14,7 @@ from NEMO.utilities import bootstrap_primary_color, format_datetime
 class UserForm(ModelForm):
 	class Meta:
 		model = User
-		fields = ['username', 'first_name', 'last_name', 'email', 'badge_number', 'access_expiration', 'type', 'domain', 'is_active', 'training_required', 'physical_access_levels', 'projects']
+		fields = ['username', 'first_name', 'last_name', 'email', 'badge_number', 'access_expiration', 'type', 'domain', 'is_active', 'training_required', 'physical_access_levels', 'projects', 'user_comment']
 
 
 class ToolForm(ModelForm):

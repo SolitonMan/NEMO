@@ -5,6 +5,38 @@
 	{% load static %}
 	<script type="text/javascript" src="{% static "datetimepicker/bootstrap-datetimepicker.js" %}"></script>
 	<link rel="stylesheet" type="text/css" href="{% static "datetimepicker/bootstrap-datetimepicker.css" %}"/>
+
+	<script type="text/javascript">
+	function calculate_contest_duration()
+	{
+		var start = null;
+		var end = null;
+		var start_field = $("input[name^='proposed__start__']");
+		var end_field = $("input[name^='proposed__end__']");
+
+		if ($(start_field).val() != "") {
+			start = moment($(start_field).val());
+		}
+		if ($(end_field).val() != "") {
+			end = moment($(end_field).val());
+		}
+		if (start != null && end != null) {
+			s_duration = "";
+			duration = end.diff(start, 'hours', true);
+
+			if (duration != parseInt(duration)) {
+				s_duration = parseInt(duration) + " hours ";
+				start = start.add(parseInt(duration), 'hour');
+				duration = end.diff(start, 'minutes');
+				s_duration += duration + " minutes";
+			} else {
+				s_duration = parseInt(duration) + " hours";
+			}
+	
+			$("#duration").html(s_duration);
+		}
+	}
+	</script>	
 {% endblock %}
 
 {% block title %}Contest {{ contest_type }}{% endblock %}
@@ -34,21 +66,27 @@
 			</td>
 		</tr>
 		<tr>
+			<th>Duration</th>
+			<td>
+				<div id="duration"></div>
+			</td>
+		</tr>
+		<tr>
 			<th>Start</th>
 			<td>
 				<div class="datetimepicker-container">
-					<input type="text" class="form-control" name="proposed__start__{{ usage_event.id }}" id="proposed__start__{{ usage_event.id }}" value="{{ usage_event.start|date:'Y-m-d H:i:s' }}" />
+					<input type="text" class="form-control" name="proposed__start__{{ usage_event.id }}" id="proposed__start__{{ usage_event.id }}" value="{{ usage_event.start|date:'Y-m-d H:i' }}" />
 				</div>
-				<input type="hidden" id="original__start__{{ usage_event.id }}" name="original__start__{{ usage_event.id }}" value="{{ usage_event.start|date:'Y-m-d H:i:s' }}" />
+				<input type="hidden" id="original__start__{{ usage_event.id }}" name="original__start__{{ usage_event.id }}" value="{{ usage_event.start|date:'Y-m-d H:i' }}" />
 			</td>
 		</tr>
 		<tr>
 			<th>End</th>
 			<td>
 				<div class="datetimepicker-container">
-					<input type="text" class="form-control" name="proposed__end__{{ usage_event.id }}" id="proposed__end__{{ usage_event.id }}" value="{{ usage_event.end|date:'Y-m-d H:i:s' }}" />
+					<input type="text" class="form-control" name="proposed__end__{{ usage_event.id }}" id="proposed__end__{{ usage_event.id }}" value="{{ usage_event.end|date:'Y-m-d H:i' }}" />
 				</div>
-				<input type="hidden" id="original__end__{{ usage_event.id }}" name="original__end__{{ usage_event.id }}" value="{{ usage_event.end|date:'Y-m-d H:i:s' }}" />
+				<input type="hidden" id="original__end__{{ usage_event.id }}" name="original__end__{{ usage_event.id }}" value="{{ usage_event.end|date:'Y-m-d H:i' }}" />
 			</td>
 		</tr>
 		<tr>
@@ -130,6 +168,8 @@
 	<script type="text/javascript">
 	$("#proposed__start__{{ usage_event.id }}").datetimepicker({format: 'YYYY-MM-DD hh:mm A'});
 	$("#proposed__end__{{ usage_event.id }}").datetimepicker({format: 'YYYY-MM-DD hh:mm A'});
+	$("#proposed__start__{{ usage_event.id }}").on('dp.change',calculate_contest_duration);
+	$("#proposed__end__{{ usage_event.id }}").on('dp.change',calculate_contest_duration);
 	</script>
 	{% endif %}
 
@@ -141,21 +181,27 @@
 			<td>{{ staff_charge.staff_member }}</td>
 		</tr>
 		<tr>
+			<th>Duration</th>
+			<td>
+				<div id="duration"></div>
+			</td>
+		</tr>
+		<tr>
 			<th>Start</th>
 			<td>
 				<div class="datetimepicker-container">
-					<input type="text" class="form-control" name="proposed__start__{{ staff_charge.id }}" id="proposed__start__{{ staff_charge.id }}" value="{{ staff_charge.start|date:'Y-m-d H:i:s' }}" />
+					<input type="text" class="form-control" name="proposed__start__{{ staff_charge.id }}" id="proposed__start__{{ staff_charge.id }}" value="{{ staff_charge.start|date:'Y-m-d H:i' }}" />
 				</div>
-				<input type="hidden" id="original__start__{{ staff_charge.id }}" name="original__start__{{ staff_charge.id }}" value="{{ staff_charge.start|date:'Y-m-d H:i:s' }}" />
+				<input type="hidden" id="original__start__{{ staff_charge.id }}" name="original__start__{{ staff_charge.id }}" value="{{ staff_charge.start|date:'Y-m-d H:i' }}" />
 			</td>
 		</tr>
 		<tr>
 			<th>End</th>
 			<td>
 				<div class="datetimepicker-container">
-					<input type="text" class="form-control" name="proposed__end__{{ staff_charge.id }}" id="proposed__end__{{ staff_charge.id }}" value="{{ staff_charge.end|date:'Y-m-d H:i:s' }}" />
+					<input type="text" class="form-control" name="proposed__end__{{ staff_charge.id }}" id="proposed__end__{{ staff_charge.id }}" value="{{ staff_charge.end|date:'Y-m-d H:i' }}" />
 				</div>
-				<input type="hidden" id="original__end__{{ staff_charge.id }}" name="original__end__{{ staff_charge.id }}" value="{{ staff_charge.end|date:'Y-m-d H:i:s' }}" />
+				<input type="hidden" id="original__end__{{ staff_charge.id }}" name="original__end__{{ staff_charge.id }}" value="{{ staff_charge.end|date:'Y-m-d H:i' }}" />
 			</td>
 		</tr>
 		<tr>
@@ -208,9 +254,11 @@
 		</tr>
 	</table>
         <script type="text/javascript">
-        $("#proposed__start__{{ staff_charge.id }}").datetimepicker({format: 'YYYY-MM-DD hh:mm A'});
-        $("#proposed__end__{{ staff_charge.id }}").datetimepicker({format: 'YYYY-MM-DD hh:mm A'});
-        </script>
+	$("#proposed__start__{{ staff_charge.id }}").datetimepicker({format: 'YYYY-MM-DD hh:mm A'});
+	$("#proposed__end__{{ staff_charge.id }}").datetimepicker({format: 'YYYY-MM-DD hh:mm A'});
+	$("#proposed__start__{{ staff_charge.id }}").on('dp.change',calculate_contest_duration);
+	$("#proposed__end__{{ staff_charge.id }}").on('dp.change',calculate_contest_duration);
+	</script>
 	{% endif %}
 
 	{% if area_access_record is not None %}
@@ -285,31 +333,39 @@
 			</td>
 		</tr>
 		<tr>
+			<th>Current Duration</th>
+			<td>
+				<div id="duration"></div>
+			</td>
+		</tr>
+		<tr>
 			<th>Start</th>
 			<td>
 				<div class="datetimepicker-container">
-					<input type="text" class="form-control" name="proposed__start__{{ area_access_record.id }}" id="proposed__start__{{ area_access_record.id }}" value="{{ area_access_record.start|date:'Y-m-d H:i:s' }}" />
+					<input type="text" class="form-control" name="proposed__start__{{ area_access_record.id }}" id="proposed__start__{{ area_access_record.id }}" value="{{ area_access_record.start|date:'Y-m-d H:i' }}" />
 				</div>
-				<input type="hidden" id="original__start__{{ area_access_record.id }}" name="original__start__{{ area_access_record.id }}" value="{{ area_access_record.start|date:'Y-m-d H:i:s' }}" />
+				<input type="hidden" id="original__start__{{ area_access_record.id }}" name="original__start__{{ area_access_record.id }}" value="{{ area_access_record.start|date:'Y-m-d H:i' }}" />
 			</td>
 		</tr>
 		<tr>
 			<th>End</th>
 			<td>
 				<div class="datetimepicker-container">
-					<input type="text" class="form-control" name="proposed__end__{{ area_access_record.id }}" id="proposed__end__{{ area_access_record.id }}" value="{{ area_access_record.end|date:'Y-m-d H:i:s' }}" />
+					<input type="text" class="form-control" name="proposed__end__{{ area_access_record.id }}" id="proposed__end__{{ area_access_record.id }}" value="{{ area_access_record.end|date:'Y-m-d H:i' }}" />
 				</div>
-				<input type="hidden" id="original__end__{{ area_access_record.id }}" name="original__end__{{ area_access_record.id }}" value="{{ area_access_record.end|date:'Y-m-d H:i:s' }}" />
+				<input type="hidden" id="original__end__{{ area_access_record.id }}" name="original__end__{{ area_access_record.id }}" value="{{ area_access_record.end|date:'Y-m-d H:i' }}" />
 			</td>
 		</tr>
 		<tr>
-			<th>Duration</th>
+			<th>Original Duration</th>
 			<td>{{ area_access_record.duration|smooth_timedelta }}</td>
 		</tr>
 	</table>
 	<script type="text/javascript">
 	$("#proposed__start__{{ area_access_record.id }}").datetimepicker({format: 'YYYY-MM-DD hh:mm A'});
 	$("#proposed__end__{{ area_access_record.id }}").datetimepicker({format: 'YYYY-MM-DD hh:mm A'});
+	$("#proposed__start__{{ area_access_record.id }}").on('dp.change',calculate_contest_duration);
+	$("#proposed__end__{{ area_access_record.id }}").on('dp.change',calculate_contest_duration);
 	</script>
 	{% endif %}
 
@@ -595,6 +651,7 @@
 				bChanged = true;
 			} else {
 				prop_start.val(convert_12_to_24(prop_start.val()));
+				orig_start.val(convert_12_to_24(orig_start.val()));
 			}
 		}
 
@@ -607,6 +664,7 @@
 				bChanged = true;
 			} else {
 				prop_end.val(convert_12_to_24(prop_end.val()));
+				orig_end.val(convert_12_to_24(orig_end.val()));
 			}
 		}
 

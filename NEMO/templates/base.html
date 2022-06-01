@@ -165,6 +165,7 @@
 				{% if logout_allowed %}
 					<li class="visible-xs"><a href="{% url 'logout' %}">Logout</a></li>
 				{% endif %}
+				<li><a href="mailto:LEOHelp@psu.edu">Report a problem</a></li>
 			</ul>
 			<ul class="nav navbar-nav navbar-right hidden-xs">
 				{% if user.is_staff and user.charging_staff_time %}

@@ -29,7 +29,7 @@
         function force_user_out_of_the_area(url)
         {
                 var failure_dialog = ajax_failure_callback("Unable to force the user to log out of the area");
-                ajax_post(url, undefined, undefined, failure_dialog, reload_page());
+                ajax_post(url, undefined, undefined, failure_dialog, reload_page());   // replaced reload_page() for testing
         }
 
 	</script>

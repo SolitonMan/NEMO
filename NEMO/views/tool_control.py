@@ -416,7 +416,16 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge, billing_mod
 				areas = AreaAccessRecord.objects.filter(customer=operator,end=None, active_flag=True)
 				for a in areas:
 					a.end = timezone.now()
+					a.updated = timezone.now()
 					a.save()
+
+					tmp_aarp = AreaAccessRecordProject.objects.filter(area_access_record=a)
+					tmp_count = tmp_aarp.count()
+
+					for taarp in tmp_aarp:
+						taarp.project_percent = round((100/tmp_count),2)
+						taarp.updated = timezone.now()
+						taarp.save()
 
 			aar = AreaAccessRecord()
 			aar.area = tool.requires_area_access
@@ -631,7 +640,16 @@ def enable_tool_multi(request):
 				areas = AreaAccessRecord.objects.filter(customer=operator,end=None, active_flag=True)
 				for a in areas:
 					a.end = timezone.now()
+					a.updated = timezone.now()
 					a.save()
+
+					tmp_aarp = AreaAccessRecordProject.objects.filter(area_access_record=a)
+					tmp_count = tmp_aarp.count()
+
+					for taarp in tmp_aarp:
+						taarp.project_percent = round((100/tmp_count),2)
+						taarp.updated = timezone.now()
+						taarp.save()					
 
 			aar = AreaAccessRecord()
 			aar.area = tool.requires_area_access
@@ -819,6 +837,13 @@ def disable_tool(request, tool_id):
 
 		if b_current:
 			return render(request, 'staff_charges/reminder.html', {'tool': tool, 'staff_charge': existing_staff_charge})
+
+	if request.user.in_area():
+		aar = request.user.area_access_record()
+
+		if aar.related_usage_event == current_usage_event:
+
+			return render(request, 'area_access/reminder.html', {'tool': tool, 'area_access_record': aar, 'usage_event': current_usage_event })
 
 	return render(request, 'tool_control/disable_confirmation.html', {'tool': tool})
 

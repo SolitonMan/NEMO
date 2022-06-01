@@ -317,6 +317,12 @@
 			</div>
 		{% endif %}
 		<div class="form-group">
+			<label class="control-label col-sm-2" for="user_comment">Comments</label>
+			<div class="col-sm-4">
+				<textarea rows="5" cols="25" id="user_comment" name="user_comment">{{ form.user_comment.value|default_if_none:"" }}</textarea>
+			</div>
+		</div>
+		<div class="form-group">
 			<div class="col-sm-2">
 				<input type="submit" class="btn btn-success pull-right" value="{% if form.instance.id %}Save changes{% else %}Create user{% endif %}">
 			</div>

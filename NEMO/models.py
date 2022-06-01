@@ -116,6 +116,7 @@ class User(models.Model):
 	core_ids = models.ManyToManyField('Core', related_name="user_core", blank=True)
 	credit_cost_collector = models.ForeignKey('CreditCostCollector', on_delete=models.SET_NULL, null=True, blank=True, related_name='user_credit_account')
 
+	user_comment = models.TextField(null=True, blank=True)
 	## multiple project and user UsageEvents
 	#events = model.ManyToManyField(UsageEvent, through='UsageEventProject')
 

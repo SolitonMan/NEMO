@@ -19,7 +19,7 @@
 		{% csrf_token %}
 		<input type="hidden" name="area_access_record_id" value="{{ customer.area_access_record.id }}" />
 		<label for="comment">Comment:</label>
-		<textarea rows=6 cols=50 class="form-control" id="comment" name="comment" onblur="save_area_access_comment()">{{ customer.area_access_record.comment }}</textarea>
+		<textarea rows=6 cols=50 class="form-control" id="comment" name="comment" onblur="save_area_access_comment()">{% if customer.area_access_record.comment is not None %}{{ customer.area_access_record.comment }}{% endif %}</textarea>
 		<input type="submit" class="btn btn-default" value="Logout of {{ customer.area_access_record.area.name }}" />
 	</form>
 	<script type="text/javascript">
