@@ -5,82 +5,239 @@
 	{% load static %}
 	<script type="text/javascript" src="{% static "datetimepicker/bootstrap-datetimepicker.js" %}"></script>
 	<link rel="stylesheet" type="text/css" href="{% static "datetimepicker/bootstrap-datetimepicker.css" %}"/>
+	<script type="text/javascript">
+	function move_all(sel)
+	{
+		var id_tag = "#" + sel;
+
+		$("option", id_tag).each(function() {
+			if ($(this).css("display") != "none") {
+				$(this).prop("selected", true);
+			}
+		});
+
+		$(id_tag).click();
+	}
+
+	function change_status(bChecked, sSection)
+	{
+		sel1 = "#" + sSection;
+		sel2 = "#" + sSection + "_selected";
+		search = "#search_" + sSection;
+		choose = "#choose_" + sSection;
+		remove = "#remove_" + sSection;
+		header = "#" + sSection + "_header";
+
+		$(sel1).prop("disabled",!bChecked);
+		$(sel2).prop("disabled",!bChecked);
+		$(search).prop("disabled",!bChecked);
+		if (!bChecked) {
+			$(choose).hide();
+			$(remove).hide();
+			$(header).css("color","grey");
+		} else {
+			$(choose).show();
+			$(remove).show();
+			$(header).css("color","black");
+		}
+	}
+	</script>
+
 {% endblock %}
 
 {% block content %}
 	<h1>Email broadcast</h1>
 
 	{% if error %}
+
 		<div class="alert alert-danger">
 			{{ error }}
 		</div>
 	{% endif %}
-
-	<p>
-	Compose an email to all users who...
+	<p>Use the form below to choose the users to email.  Each section is enabled by default but can be disabled by clicking the checkbox next to the title.  Even if enabled, selecting nothing for a given section means nothing will be included in filtering the email recipients list.</p>
+	<p>Cores and Users are straightforward selections which include all the users within the chosen core(s), or else all the individually selected users, respectively.  If selections are made in both sections, then all of the users of the selected core(s) and all of the individually selected users would be included in the recipients list.</p>
+	<p>Areas, Tools and Projects can be influenced by the inclusion of a date range.  They function similarly, although with a bit of variation, depending on whether or not a date range is included in the filter.
 	<ul>
-		<li><a href="{% url 'email_broadcast' 'tool' %}">are qualified for a tool</a> or <a href="{% url 'email_broadcast' 'tool_date' %}">used a tool during a specific date range</a></li>
-		<li><a href="{% url 'email_broadcast' 'project' %}">are working on a project</a> or <a href="{% url 'email_broadcast' 'project_date' %}">charged to a project during a specific date range</a></li>
-		<li><a href="{% url 'email_broadcast' 'group' %}">are members of a group</a></li>
+		<li>If an Area is selected without a date range, then all users with access to the area (active and inactive)  will be included in the recipient list.  If a date range is included then the filter will be based on all users who accessed the chosen area within the selected date range.</li>
+		<li>If a Tool is selected without a date range, then all qualified users (active and inactive) will be included in the recipient list.  If a date range is included then the filter will be based on all users who used the chosen tool within the selected date range.</li>
+		<li>If a Project is selected without a date range, then all users with project permissions (active and inactive) will be included in the recipient list.  If a date range is included then the filter will be based on all users who charged to the selected project within the selected date range.</li>
 	</ul>
 	</p>
-	<p>
-	or 
-	<ul>
-		<li><a href="{% url 'email_broadcast' 'user' %}">email a user</a></li>
-		<li><a href="{% url 'email_broadcast' 'active_users' %}">email all users</a></li>
-		<li><a href="{% url 'email_broadcast' 'active_users_date' %}">email all users who were active during a date range</a></li>
-	</ul>
-	</p>
+	<p>Lastly, using a date range without selecting any other options will filter the recipient list to be all users who created any transactions in the system within the specified period.</p>
 
+
+<form action="{% url 'compose_email' %}" method="POST" onsubmit="return on_submit();">
+	{% csrf_token %}
 	<table class="table">
-	<tr>
-	<td style="width: 50%;">
-	<input type="text" name="search_users" id="search_users" value="" placeholder="Enter the name or username for a user" class="form-control" style="width: 90%; display: inline;"/>
-	<input type="button" class="btn" value="X" style="width: 7%; display: inline;" onclick="$(this).prev().val('').keyup();" />
-	<select multiple name="users" id="users" size="8" class="form-control" style="width: 100%;">
-	{% for u in user_list %}
-		<option value="{{ u.id }}">{{ u.last_name }}, {{ u.first_name }} ({{ u.username }})</option>
-	{% endfor %}
-	</select>
-	</td>
-	<td style="width: 50%;">
-	<select multiple name="users_selected" id="users_selected" size="10" class="form-control" style="width: 100%;">
-	</select>
-	</td>
-	</tr>
-	<tr>
-	<td style="width: 50%;">
-	<input type="text" name="search_tools" id="search_tools" value="" placeholder="Enter the name of a tool" class="form-control" style="width: 90%; display: inline;"/>
-	<input type="button" class="btn" value="X" style="width: 7%; display: inline;" onclick="$(this).prev().val('').keyup();" />
-	<select multiple name="tools" id="tools" size=8" class="form-control" style="width: 100%;">
-	{% for t in tool_list %}
-		<option value="{{ t.id }}">{{ t.name }}</option>
-	{% endfor %}
-	</select>
-	</td>
-	<td style="width: 50%;">
-	<select multiple name="tools_selected" id="tools_selected" size="10" class="form-control" style="width: 100%;">
-	</select>
-	</td>
-	</tr>
-	<tr>
-	<td style="width: 50%;">
-	<input type="text" name="search_projects" id="search_projects" value="" placeholder="Enter a project number or description" class="form-control" style="width: 90%; display: inline;"/>
-	<input type="button" class="btn" value="X" style="width: 7%; display: inline;" onclick="$(this).prev().val('').keyup();" />
-	<select multiple name="projects" id="projects" size="8" class="form-control" style="width: 100%;">
-	{% for p in project_list %}
-		<option value="{{ p.id }}">{{ p }}</option>
-	{% endfor %}
-	</select>
-	</td>
-	<td style="width: 50%;">
-	<select multiple name="projects_selected" id="projects_selected" size="10" class="form-control" style="width: 100%;">
-	</select>
-	</td>
-	</tr>
-	</table>
 
+	<tr>
+		<td colspan="2">
+			<h2>Dates</h2>
+		</td>
+	</tr>
+
+	<tr>
+		<td colspan="2">
+		<div class="row">
+			<label for="start_select">Start
+			<div class="datetimepicker-container">
+				<input type="text" name="start_select" id="start_select" class="form-control" />
+			</div>
+			</label>
+			<label for="end_select">End
+			<div class="datetimepicker-container">
+				<input type="text" name="end_select" id="end_select" class="form-control" />
+			</div>
+			</label>
+		</div>
+		</td>
+
+	</tr>
+
+
+	<tr>
+		<td colspan="2">
+			<label for="use_areas"><h2 id="areas_header">Areas</h2></label>
+			<input type="checkbox" name="use_areas" id="use_areas" onchange="change_status(this.checked, 'areas');" checked />
+		</td>
+	</tr>
+
+	<tr>
+		<td style="width: 50%;">
+			<select multiple name="areas" id="areas" size="5" class="form-control" style="width: 100%;">
+			{% for a in area_list %}
+				<option value="{{ a.id }}">{{ a.name }}</option>
+			{% endfor %}
+			</select>
+			<a href="javascript:move_all('areas');" class="selector-chooseall active" id="choose_areas">Choose all</a>
+		</td>
+
+		<td style="width: 50%;">
+			<select multiple name="areas_selected" id="areas_selected" size="5" class="form-control" style="width: 100%;">
+			</select>
+			<a href="javascript:move_all('areas_selected');" class="selector-remove active" id="remove_areas">Remove all</a>
+		</td>
+
+	</tr>
+
+	<tr>
+		<td colspan="2">
+			<label for="use_cores"><h2 id="cores_header">Cores</h2></label>
+			<input type="checkbox" name="use_cores" id="use_cores" onchange="change_status(this.checked, 'cores');" checked />
+		</td>
+	</tr>
+
+	<tr>
+		<td style="width: 50%;">
+			<select multiple name="cores" id="cores" size="5" class="form-control" style="width: 100%;">
+			{% for c in core_list %}
+				<option value="{{ c.id }}">{{ c.name }}</option>
+			{% endfor %}
+			</select>
+			<a href="javascript:move_all('cores');" class="selector-chooseall active" id="choose_cores">Choose all</a>
+		</td>
+
+		<td style="width: 50%;">
+			<select multiple name="cores_selected" id="cores_selected" size="5" class="form-control" style="width: 100%;">
+			</select>
+			<a href="javascript:move_all('cores_selected');" class="selector-remove active" id="remove_cores">Remove all</a>
+		</td>
+	</tr>
+
+	<tr>
+		<td colspan="2">
+			<label for="use_users"><h2 id="users_header">Users</h2></label>
+			<input type="checkbox" name="use_users" id="use_users" onchange="change_status(this.checked, 'users');" checked />
+		</td>
+	</tr>
+
+	<tr>
+		<td style="width: 50%;">
+			<input type="text" name="search_users" id="search_users" value="" placeholder="Enter the name or username for a user" class="form-control" style="width: 92%; display: inline;"/>
+			<input type="button" class="btn" value="X" style="width: 7%; display: inline;" onclick="$(this).prev().val('').keyup();" />
+			<select multiple name="users" id="users" size="8" class="form-control" style="width: 100%;">
+			{% for u in user_list %}
+				<option value="{{ u.id }}">{{ u.last_name }}, {{ u.first_name }} ({{ u.username }}){% if not u.is_active %} - [INACTIVE]{% endif %}</option>
+			{% endfor %}
+			</select>
+			<a href="javascript:move_all('users');" class="selector-chooseall active" id="choose_users">Choose all</a>
+		</td>
+
+		<td style="width: 50%;">
+			<select multiple name="users_selected" id="users_selected" size="10" class="form-control" style="width: 100%;">
+			</select>
+			<a href="javascript:move_all('users_selected');" class="selector-remove active" id="remove_users">Remove all</a>
+		</td>
+	</tr>
+
+	<tr>
+		<td colspan="2">
+			<label for="use_tools"><h2 id="tools_header">Tools</h2></label>
+			<input type="checkbox" name="use_tools" id="use_tools" onchange="change_status(this.checked, 'tools');" checked />
+		</td>
+	</tr>
+
+	<tr>
+
+		<td style="width: 50%;">
+			<input type="text" name="search_tools" id="search_tools" value="" placeholder="Enter the name of a tool" class="form-control" style="width: 92%; display: inline;"/>
+			<input type="button" class="btn" value="X" style="width: 7%; display: inline;" onclick="$(this).prev().val('').keyup();" />
+			<select multiple name="tools" id="tools" size=8" class="form-control" style="width: 100%;">
+			{% for t in tool_list %}
+				<option value="{{ t.id }}">{{ t.name }}{% if not t.operational and not t.visible %} - [INACTIVE]{% endif %}</option>
+			{% endfor %}
+			</select>
+			<a href="javascript:move_all('tools');" class="selector-chooseall active" id="choose_tools">Choose all</a>
+		</td>
+
+		<td style="width: 50%;">
+			<select multiple name="tools_selected" id="tools_selected" size="10" class="form-control" style="width: 100%;">
+			</select>
+			<a href="javascript:move_all('tools_selected');" class="selector-remove active" id="remove_tools">Remove all</a>
+		</td>
+	</tr>
+
+	<tr>
+		<td colspan="2">
+			<label for="use_projects"><h2 id="projects_header">Projects</h2></label>
+			<input type="checkbox" name="use_projects" id="use_projects" onchange="change_status(this.checked, 'projects');" checked />
+		</td>
+	</tr>
+
+	<tr>
+
+		<td style="width: 50%;">
+			<input type="text" name="search_projects" id="search_projects" value="" placeholder="Enter a project number or description" class="form-control" style="width: 92%; display: inline;"/>
+			<input type="button" class="btn" value="X" style="width: 7%; display: inline;" onclick="$(this).prev().val('').keyup();" />
+			<select multiple name="projects" id="projects" size="8" class="form-control" style="width: 100%;">
+			{% for p in project_list %}
+				<option value="{{ p.id }}">{{ p }}{% if not p.active %} - [INACTIVE]{% endif %}</option>
+			{% endfor %}
+			</select>
+			<a href="javascript:move_all('projects');" class="selector-chooseall active" id="choose_projects">Choose all</a>
+		</td>
+
+		<td style="width: 50%;">
+			<select multiple name="projects_selected" id="projects_selected" size="10" class="form-control" style="width: 100%;">
+			</select>
+			<a href="javascript:move_all('projects_selected');" class="selector-remove active" id="remove_projects">Remove all</a>
+		</td>
+	</tr>
+
+	<tr>
+		<td>
+			<input type="submit" value="Submit" class="btn btn-success" />
+		</td>
+
+		<td>
+			&nbsp;
+		</td>
+	</tr>
+
+	</table>
+	<input type="hidden" name="start" id="start" />
+	<input type="hidden" name="end" id="end" />
+</form>
 	{% if search_base %}
 
 		{% if audience != 'active_users_date' %}
@@ -120,20 +277,16 @@
 			<br/><br/><span id="tools"></span>
 			{% endif %}
 		</form>
-
+	{% endif %}
 		<script type="text/javascript">
-			$('#search').autocomplete('search_base', set_selection, {{ search_base|json_search_base }});
-		{% if date_range %}
 			$("#start_select").datetimepicker({ useCurrent: false, format: 'YYYY-MM-DD hh:mm A'})
 				.on('dp.change', function() {
 					$("#start").val(convert_12_to_24($(this).val()));
-					check_complete();
 				}
 			);
 			$("#end_select").datetimepicker({ useCurrent: false, format: 'YYYY-MM-DD hh:mm A'})
 				.on('dp.change', function() {
 					$("#end").val(convert_12_to_24($(this).val()));
-					check_complete();
 				}
 			);
 			function check_complete()
@@ -144,7 +297,6 @@
 					$("#submit").hide();
 				}
 			}
-		{% endif %}
 			function set_selection(jquery_event, search_selection, dataset_name)
 			{
 				$('#selection').val(search_selection.id);
@@ -177,7 +329,6 @@
 				$(s).remove();
 			}
 		</script>
-	{% endif %}
 		<script type="text/javascript">
 		function pair_selects(s1, s2)
 		{
@@ -227,6 +378,8 @@
 		pair_selects($("#users"),$("#users_selected"));
 		pair_selects($("#tools"),$("#tools_selected"));
 		pair_selects($("#projects"),$("#projects_selected"));
+		pair_selects($("#cores"),$("#cores_selected"));
+		pair_selects($("#areas"),$("#areas_selected"));
 
 		$("#search_users").keyup(function() {
 			var data = this.value.split(" ");
@@ -293,5 +446,28 @@
                                 }
                         }).show();
                 });
+
+		function on_submit()
+		{
+
+			$("#areas_selected option").each(function() {
+				$(this).prop("selected", true);
+			});
+			$("#cores_selected option").each(function() {
+				$(this).prop("selected", true);
+			});
+			$("#users_selected option").each(function() {
+				$(this).prop("selected", true);
+			});
+			$("#tools_selected option").each(function() {
+				$(this).prop("selected", true);
+			});
+			$("#projects_selected option").each(function() {
+				$(this).prop("selected", true);
+			});
+
+			return true;
+
+		}
 		</script>
 {% endblock %}

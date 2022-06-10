@@ -144,7 +144,7 @@ urlpatterns = [
 	re_path(r'^get_email_form_for_user/(?P<user_id>\d+)/$', email.get_email_form_for_user, name='get_email_form_for_user'),
 	re_path(r'^send_email/$', email.send_email, name='send_email'),
 	re_path(r'^email_broadcast/$', email.email_broadcast, name='email_broadcast'),
-	re_path(r'^email_broadcast/(?P<audience>tool|account|project|user|group|tool_date|project_date|active_users|active_users_date)/$', email.email_broadcast, name='email_broadcast'),
+	re_path(r'^email_broadcast/(?P<audience>tool|account|project|user|group|tool_date|project_date|active_users|active_users_date|postback)/$', email.email_broadcast, name='email_broadcast'),
 	re_path(r'^compose_email/$', email.compose_email, name='compose_email'),
 	re_path(r'^send_broadcast_email/$', email.send_broadcast_email, name='send_broadcast_email'),
 

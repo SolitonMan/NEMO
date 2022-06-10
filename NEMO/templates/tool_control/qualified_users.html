@@ -36,7 +36,14 @@
 		{% with tool.user_set.all as qualified_users %}
 			{% if qualified_users %}
 				{% if user.is_staff or tool.primary_owner == user %}
-				<p>You can email <a href="{% url 'compose_email' %}?audience=tool&selection={{ tool.id }}"><span class="glyphicon glyphicon-send"></span> all qualified users</a>.</p>
+				<p> 
+				<form action="{% url 'compose_email' %}" method="POST" style="display: inline;">
+					{% csrf_token %}
+					<input name="tools_selected" type="hidden" value="{{ tool.id }}" />
+					<input name="audience" type="hidden" value="tool" />
+					<input name="selection" type="hidden" value="{{ tool.id }}" />
+					<input type="submit" value="You can email all qualified users" class="btn btn-success" />
+				</form>
 				{% endif %}
 				<p>
 					Current qualified users are listed below. Inactive qualified users are marked in <span class="light-grey">light grey</span>.<br>

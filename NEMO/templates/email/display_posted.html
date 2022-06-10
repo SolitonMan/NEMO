@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% load custom_tags_and_filters %}
+{% block title %}Email options{% endblock %}
+{% block body %}
+<div class="body-container">
+<div class="container">
+{% block content %}
+{% for key, value in posted %}
+<p>{{ key }} : {{ value }}</p>
+{% endfor %}
+
+<p>areas_selected: {{ areas_selected }}</p>
+<p>cores_selected: {{ cores_selected }}</p>
+<p>users_selected: {{ users_selected }}</p>
+<p>tools_selected: {{ tools_selected }}</p>
+<p>projects_selected: {{ projects_selected }}</p>
+
+{% endblock %}
+</div>
+</div>
+
+{% endblock %}
