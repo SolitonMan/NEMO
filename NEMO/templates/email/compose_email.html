@@ -31,7 +31,7 @@
 						{% if audience != "active_users" and audience != "active_users_date" %}
 						<span id="rec_{{ u.id }}">
 						<span class="glyphicon glyphicon-remove-circle grey pointer" onclick="remove_recipient({{ u.id }});"></span>
-						<span {% if not u.is_active %}style="color:lightgrey"{% endif %}>{{ u }} - {{ u.email }}</span>
+						<span {% if not u.is_active %}style="color:lightgrey"{% endif %}>{{ u.last_name }}, {{ u.first_name }} - {{ u.email }}</span>
 						{% endif %}
 						<input type="hidden" name="recipient" value="{{ u.id }}" />
 						{% if audience != "active_users" and audience != "active_users_date" %}</span><br/>{% endif %}

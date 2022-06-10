@@ -17,6 +17,16 @@
 		});
 
 		$(id_tag).click();
+
+		var search_tag = "#search_";
+
+		if (sel.indexOf("_") == -1) {
+			search_tag += sel;
+		} else {
+			search_tag += sel.substring(0,sel.indexOf("_"));
+		}
+
+		$(search_tag).keyup();
 	}
 
 	function change_status(bChecked, sSection)
@@ -97,55 +107,6 @@
 
 	<tr>
 		<td colspan="2">
-			<label for="use_areas"><h2 id="areas_header">Areas</h2></label>
-			<input type="checkbox" name="use_areas" id="use_areas" onchange="change_status(this.checked, 'areas');" checked />
-		</td>
-	</tr>
-
-	<tr>
-		<td style="width: 50%;">
-			<select multiple name="areas" id="areas" size="5" class="form-control" style="width: 100%;">
-			{% for a in area_list %}
-				<option value="{{ a.id }}">{{ a.name }}</option>
-			{% endfor %}
-			</select>
-			<a href="javascript:move_all('areas');" class="selector-chooseall active" id="choose_areas">Choose all</a>
-		</td>
-
-		<td style="width: 50%;">
-			<select multiple name="areas_selected" id="areas_selected" size="5" class="form-control" style="width: 100%;">
-			</select>
-			<a href="javascript:move_all('areas_selected');" class="selector-remove active" id="remove_areas">Remove all</a>
-		</td>
-
-	</tr>
-
-	<tr>
-		<td colspan="2">
-			<label for="use_cores"><h2 id="cores_header">Cores</h2></label>
-			<input type="checkbox" name="use_cores" id="use_cores" onchange="change_status(this.checked, 'cores');" checked />
-		</td>
-	</tr>
-
-	<tr>
-		<td style="width: 50%;">
-			<select multiple name="cores" id="cores" size="5" class="form-control" style="width: 100%;">
-			{% for c in core_list %}
-				<option value="{{ c.id }}">{{ c.name }}</option>
-			{% endfor %}
-			</select>
-			<a href="javascript:move_all('cores');" class="selector-chooseall active" id="choose_cores">Choose all</a>
-		</td>
-
-		<td style="width: 50%;">
-			<select multiple name="cores_selected" id="cores_selected" size="5" class="form-control" style="width: 100%;">
-			</select>
-			<a href="javascript:move_all('cores_selected');" class="selector-remove active" id="remove_cores">Remove all</a>
-		</td>
-	</tr>
-
-	<tr>
-		<td colspan="2">
 			<label for="use_users"><h2 id="users_header">Users</h2></label>
 			<input type="checkbox" name="use_users" id="use_users" onchange="change_status(this.checked, 'users');" checked />
 		</td>
@@ -169,6 +130,35 @@
 			<a href="javascript:move_all('users_selected');" class="selector-remove active" id="remove_users">Remove all</a>
 		</td>
 	</tr>
+
+
+	<tr>
+		<td colspan="2">
+			<label for="use_projects"><h2 id="projects_header">Projects</h2></label>
+			<input type="checkbox" name="use_projects" id="use_projects" onchange="change_status(this.checked, 'projects');" checked />
+		</td>
+	</tr>
+
+	<tr>
+
+		<td style="width: 50%;">
+			<input type="text" name="search_projects" id="search_projects" value="" placeholder="Enter a project number or description" class="form-control" style="width: 92%; display: inline;"/>
+			<input type="button" class="btn" value="X" style="width: 7%; display: inline;" onclick="$(this).prev().val('').keyup();" />
+			<select multiple name="projects" id="projects" size="8" class="form-control" style="width: 100%;">
+			{% for p in project_list %}
+				<option value="{{ p.id }}">{{ p }}{% if not p.active %} - [INACTIVE]{% endif %}</option>
+			{% endfor %}
+			</select>
+			<a href="javascript:move_all('projects');" class="selector-chooseall active" id="choose_projects">Choose all</a>
+		</td>
+
+		<td style="width: 50%;">
+			<select multiple name="projects_selected" id="projects_selected" size="10" class="form-control" style="width: 100%;">
+			</select>
+			<a href="javascript:move_all('projects_selected');" class="selector-remove active" id="remove_projects">Remove all</a>
+		</td>
+	</tr>
+
 
 	<tr>
 		<td colspan="2">
@@ -197,32 +187,57 @@
 		</td>
 	</tr>
 
+
 	<tr>
 		<td colspan="2">
-			<label for="use_projects"><h2 id="projects_header">Projects</h2></label>
-			<input type="checkbox" name="use_projects" id="use_projects" onchange="change_status(this.checked, 'projects');" checked />
+			<label for="use_areas"><h2 id="areas_header">Areas</h2></label>
+			<input type="checkbox" name="use_areas" id="use_areas" onchange="change_status(this.checked, 'areas');" checked />
 		</td>
 	</tr>
 
 	<tr>
-
 		<td style="width: 50%;">
-			<input type="text" name="search_projects" id="search_projects" value="" placeholder="Enter a project number or description" class="form-control" style="width: 92%; display: inline;"/>
-			<input type="button" class="btn" value="X" style="width: 7%; display: inline;" onclick="$(this).prev().val('').keyup();" />
-			<select multiple name="projects" id="projects" size="8" class="form-control" style="width: 100%;">
-			{% for p in project_list %}
-				<option value="{{ p.id }}">{{ p }}{% if not p.active %} - [INACTIVE]{% endif %}</option>
+			<select multiple name="areas" id="areas" size="5" class="form-control" style="width: 100%;">
+			{% for a in area_list %}
+				<option value="{{ a.id }}">{{ a.name }}</option>
 			{% endfor %}
 			</select>
-			<a href="javascript:move_all('projects');" class="selector-chooseall active" id="choose_projects">Choose all</a>
+			<a href="javascript:move_all('areas');" class="selector-chooseall active" id="choose_areas">Choose all</a>
 		</td>
 
 		<td style="width: 50%;">
-			<select multiple name="projects_selected" id="projects_selected" size="10" class="form-control" style="width: 100%;">
+			<select multiple name="areas_selected" id="areas_selected" size="5" class="form-control" style="width: 100%;">
 			</select>
-			<a href="javascript:move_all('projects_selected');" class="selector-remove active" id="remove_projects">Remove all</a>
+			<a href="javascript:move_all('areas_selected');" class="selector-remove active" id="remove_areas">Remove all</a>
+		</td>
+
+	</tr>
+
+
+	<tr>
+		<td colspan="2">
+			<label for="use_cores"><h2 id="cores_header">Cores</h2></label>
+			<input type="checkbox" name="use_cores" id="use_cores" onchange="change_status(this.checked, 'cores');" checked />
 		</td>
 	</tr>
+
+	<tr>
+		<td style="width: 50%;">
+			<select multiple name="cores" id="cores" size="5" class="form-control" style="width: 100%;">
+			{% for c in core_list %}
+				<option value="{{ c.id }}">{{ c.name }}</option>
+			{% endfor %}
+			</select>
+			<a href="javascript:move_all('cores');" class="selector-chooseall active" id="choose_cores">Choose all</a>
+		</td>
+
+		<td style="width: 50%;">
+			<select multiple name="cores_selected" id="cores_selected" size="5" class="form-control" style="width: 100%;">
+			</select>
+			<a href="javascript:move_all('cores_selected');" class="selector-remove active" id="remove_cores">Remove all</a>
+		</td>
+	</tr>
+
 
 	<tr>
 		<td>
