@@ -1,10 +1,13 @@
+import requests
+
 from datetime import timedelta
 
+from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.shortcuts import render
 from django.utils import timezone
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_POST, require_http_methods
 from django.http import HttpResponseRedirect
 
 from NEMO.models import Alert, AreaAccessRecord, ConsumableWithdraw, LandingPageChoice, Reservation, Resource, StaffCharge, UsageEvent, User
@@ -42,7 +45,7 @@ def landing(request):
 				if StaffCharge.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, staff_member__core_ids__in=request.user.core_ids.all(), active_flag=True).exclude(staff_member=request.user).exists() or UsageEvent.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, operator__core_ids__in=request.user.core_ids.all(), active_flag=True).exclude(operator=request.user).exists() or AreaAccessRecord.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, staff_charge__staff_member__core_ids__in=request.user.core_ids.all(), active_flag=True).exclude(staff_charge__staff_member=request.user).exists() or ConsumableWithdraw.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, consumable__core_id__in=request.user.core_ids.all(), active_flag=True).exclude(customer=request.user).exists():
 					contested_items = True
 			else:
-				if UsageEvent.objects.filter(Q(validated=False, contested=True, contest_record__contest_resolved=False, active_flag=True), Q(tool__primary_owner=request.user) | Q(tool__backup_owners__in=[request.user])).exclude(operator=request.user).exists() or ConsumableWithdraw.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, consumable__core_id__in=request.user.core_ids.all(), active_flag=True).exclude(customer=request.user).exists():
+				if UsageEvent.objects.filter(Q(validated=False, contested=True, contest_record__contest_resolved=False, active_flag=True), Q(tool__primary_owner=request.user) | Q(tool__backup_owners__in=[request.user])).exclude(operator=request.user).exists() or ConsumableWithdraw.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, consumable__core_id__in=request.user.core_ids.all(), active_flag=True).exclude(customer=request.user).exists() or AreaAccessRecord.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, area__core_id__in=request.user.core_ids.all()).exists():
 					contested_items = True
 
 
@@ -83,3 +86,20 @@ def landing(request):
 		'user_delegate': user_delegate,
 	}
 	return render(request, 'landing.html', dictionary)
+
+
+@staff_member_required(login_url=None)
+@require_http_methods(['GET','POST'])
+def check_url(request):
+	if request.method == "GET":
+		return render(request, 'requester.html', {})
+	else:
+		url = request.POST.get("URL")
+		resp = requests.get(url, timeout=3.0)
+
+		dictionary = {
+			'src': url,
+			'postback': True,
+			'response_text': resp.text,
+		}
+		return render(request, 'requester.html', dictionary)

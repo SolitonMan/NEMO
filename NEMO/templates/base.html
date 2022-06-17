@@ -102,6 +102,9 @@
 						<ul class="dropdown-menu">
 							{# The navigation_url tag will display the item if the URL name can be reversed. #}
 							{# This allows items to be easily removed from the public facing version of NEMO. #}
+							{% if user.is_superuser %}
+							{% navigation_url 'check_url' 'URL Checker' %}
+							{% endif %}
 							{% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
 							{% navigation_url 'abuse' 'Abuse' %}
 							{% endif %}

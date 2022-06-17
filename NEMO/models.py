@@ -94,7 +94,7 @@ class User(models.Model):
 	is_staff = models.BooleanField('staff status', default=False, help_text='Designates whether the user can log into this admin site.')
 	is_technician = models.BooleanField('technician status', default=False, help_text='Specifies how to bill staff time for this user. When checked, customers are billed at technician rates.')
 	is_superuser = models.BooleanField('superuser status', default=False, help_text='Designates that this user has all permissions without explicitly assigning them.')
-	training_required = models.BooleanField(default=True, help_text='When selected, the user is blocked from all reservation and tool usage capabilities.')
+	training_required = models.BooleanField(default=False, help_text='When selected, the user is blocked from all reservation and tool usage capabilities.')
 	groups = models.ManyToManyField(Group, blank=True, help_text='The groups this user belongs to. A user will get all permissions granted to each of his/her group.')
 	user_permissions = models.ManyToManyField(Permission, blank=True, help_text='Specific permissions for this user.')
 	pi_delegates = models.ManyToManyField('self', blank=True, help_text='Users that a PI gives permission to manage accounts and their users on behalf of that PI', related_name='delegates')

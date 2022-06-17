@@ -35,6 +35,7 @@ urlpatterns = [
 
 	# Root URL defaults to the calendar page on desktop systems, and the mobile homepage for mobile devices:
 	re_path(r'^$', landing.landing, name='landing'),
+	re_path(r'^check_url/$', landing.check_url, name='check_url'),
 
 	# Get a list of projects for a user:
 	re_path(r'^get_projects/$', get_projects.get_projects, name='get_projects'),
