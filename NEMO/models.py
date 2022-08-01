@@ -108,6 +108,8 @@ class User(models.Model):
 	qualifications = models.ManyToManyField('Tool', blank=True, help_text='Select the tools that the user is qualified to use.')
 	projects = models.ManyToManyField('Project', blank=True, help_text='Select the projects that this user is currently working on.')
 
+	transaction_groups = models.ManyToManyField('TransactionGroup', help_text='transaction groups the user may be working on', related_name='user_transaction_groups')
+
 	USERNAME_FIELD = 'username'
 	REQUIRED_FIELDS = ['first_name', 'last_name', 'email']
 	objects = UserManager()
@@ -239,8 +241,8 @@ class User(models.Model):
 	def current_reservation_for_tool(self, tool):
 		current_reservation = None
 		try:
-			if Reservation.objects.filter(start__lte=timezone.now()+timedelta(0,0,0,0,15,0,0), end__gt=timezone.now(), cancelled=False, missed=False, user=self, tool=tool).exists():
-				current_reservation = Reservation.objects.filter(start__lte=timezone.now()+timedelta(0,0,0,0,15,0,0), end__gt=timezone.now(), cancelled=False, missed=False, user=self, tool=tool).order_by('-updated')[0]
+			if Reservation.objects.filter(start__lte=timezone.now()+timedelta(0,0,0,0,15,0,0), end__gt=timezone.now(), cancelled=False, missed=False, shortened=False, user=self, tool=tool).exists():
+				current_reservation = Reservation.objects.filter(start__lte=timezone.now()+timedelta(0,0,0,0,15,0,0), end__gt=timezone.now(), cancelled=False, missed=False, shortened=False, user=self, tool=tool).order_by('-updated')[0]
 				#current_reservation = Reservation.objects.get(start__lte=timezone.now(), end__gt=timezone.now(), cancelled=False, missed=False, user=self, tool=tool)
 		except Reservation.DoesNotExist:
 			pass
@@ -895,6 +897,19 @@ pre_delete.connect(pre_delete_entity, sender=Tool)
 pre_delete.connect(pre_delete_entity, sender=User)
 
 
+class TransactionGroup(models.Model):
+	description = models.CharField(max_length=500)
+	notes = models.TextField(blank=True, null=True)
+	project = models.ForeignKey('Project', null=True, on_delete=models.SET_NULL, related_name='transaction_group_project')
+	customer = models.ForeignKey(User, null=True, on_delete=models.SET_NULL, related_name='transaction_group_customer')
+	cost_per_sample = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+	sample_num = models.IntegerField(null=True, blank=True)
+	creator = models.ForeignKey(User, null=True, on_delete=models.SET_NULL, related_name='transaction_group_creator')
+	process_status = models.IntegerField(null=True, blank=True, default=0)
+	created = models.DateTimeField(null=True, blank=True)
+	updated = models.DateTimeField(null=True, blank=True)
+
+
 class Reservation(CalendarDisplay):
 	user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="reservation_user")
 	creator = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="reservation_creator")
@@ -915,8 +930,11 @@ class Reservation(CalendarDisplay):
 	additional_information = models.TextField(null=True, blank=True)
 	self_configuration = models.BooleanField(default=False, help_text="When checked, indicates that the user will perform their own tool configuration (instead of requesting that the laboratory staff configure it for them).")
 	title = models.TextField(default='', blank=True, max_length=200, help_text="Shows a custom title for this reservation on the calendar. Leave this field blank to display the reservation's user name as the title (which is the default behaviour).")
+	cost_per_sample_run = models.BooleanField(default=False)
 	created = models.DateTimeField(null=True, blank=True)
 	updated = models.DateTimeField(null=True, blank=True)
+
+	transaction_groups = models.ManyToManyField('TransactionGroup', related_name='reservation_transaction_groups')
 
 	def duration(self):
 		return self.end - self.start
@@ -960,6 +978,10 @@ class ReservationProject(models.Model):
 	reservation = models.ForeignKey('Reservation', on_delete=models.CASCADE, null=True, blank=True)
 	project = models.ForeignKey('Project', on_delete=models.CASCADE)
 	customer = models.ForeignKey('User', on_delete=models.CASCADE)
+	sample_num = models.IntegerField(null=True, blank=True)
+	cost_per_sample = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+	notes = models.TextField(null=True, blank=True)
+	transaction_group = models.ForeignKey('TransactionGroup',on_delete=models.SET_NULL, null=True, blank=True)
 	created = models.DateTimeField(null=True, blank=True)
 	updated = models.DateTimeField(null=True, blank=True)
 
@@ -993,7 +1015,7 @@ class UsageEvent(CalendarDisplay):
 	active_flag = models.BooleanField(default=True)
 	end_scheduled_outage = models.BooleanField(default=False)
 	cost_per_sample_run = models.BooleanField(default=False)
-
+	transaction_groups = models.ManyToManyField('TransactionGroup', related_name='usage_event_transaction_groups')
 
 	# a feature to allow for a tool use to be stopped automatically requires some new fields
 	end_time = models.DateTimeField(null=True, blank=True)
@@ -1044,6 +1066,7 @@ class UsageEventProject(models.Model):
 	active_flag = models.BooleanField(default=True)
 	sample_num = models.IntegerField(null=True, blank=True)
 	cost_per_sample = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+	transaction_group = models.ForeignKey('TransactionGroup',on_delete=models.SET_NULL, null=True, blank=True)
 
 
 class Consumable(models.Model):

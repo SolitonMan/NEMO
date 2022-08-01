@@ -34,6 +34,11 @@
 			<tr>
 			<th>Customer</th>
 			<th>Project</th>
+			{% if reservation.cost_per_sample_run %}
+			<th>Cost Per Sample</th>
+			<th># of Samples</th>
+			<th>Notes</th>
+			{% endif %}
 			</tr>
 		</thead>
 		<tbody>
@@ -41,6 +46,11 @@
 			<tr>
 			<td>{{ r.customer }}</td>
 			<td>{{ r.project }}</td>
+			{% if reservation.cost_per_sample_run %}
+			<td>{{ r.cost_per_sample }}</td>
+			<td>{{ r.sample_num }}</td>
+			<td>{{ r.notes }}</td>
+			{% endif %}
 			</tr>	
 		{% endfor %}
 		</tbody>

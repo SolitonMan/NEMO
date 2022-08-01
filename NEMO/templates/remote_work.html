@@ -10,6 +10,12 @@ p {
 }
 </style>
 
+<div id="dictionary_dump" style="display:none;">
+{% for key, value in transactions.items %}
+{{ key }} = {{ value }} \n
+{% endfor %}
+</div>
+
 <h1>Transaction validation</h1>
 	<span style="background-color: #eeeeee;">
 	<p>This page displays transactions conducted by and for users.  If you have the appropriate permissions you can filter by which staff member performed the work, and when, by using the dropdown boxes below.</p>

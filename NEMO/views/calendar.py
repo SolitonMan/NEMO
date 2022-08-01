@@ -1,6 +1,7 @@
 import io
 import pytz
 from datetime import timedelta, datetime
+from decimal import *
 from http import HTTPStatus
 from logging import getLogger
 from re import match, search
@@ -19,7 +20,7 @@ from django.utils.html import escape
 from django.utils.safestring import mark_safe
 
 from NEMO.decorators import disable_session_expiry_refresh
-from NEMO.models import Tool, Reservation, Configuration, ReservationConfiguration, ReservationProject, ReservationNotification, Consumable, UsageEvent, UsageEventProject, AreaAccessRecord, StaffCharge, StaffChargeProject, User, Project, ScheduledOutage, ScheduledOutageCategory, UserProfile, UserProfileSetting
+from NEMO.models import Tool, Reservation, Configuration, ReservationConfiguration, ReservationProject, ReservationNotification, Consumable, UsageEvent, UsageEventProject, AreaAccessRecord, StaffCharge, StaffChargeProject, User, Project, ScheduledOutage, ScheduledOutageCategory, UserProfile, UserProfileSetting, TransactionGroup
 from NEMO.utilities import EmailCategory, create_email_log, bootstrap_primary_color, create_email_attachment, extract_times, extract_dates, format_datetime, parse_parameter_string
 from NEMO.views.constants import ADDITIONAL_INFORMATION_MAXIMUM_LENGTH
 from NEMO.views.customization import get_customization, get_media_file_contents
@@ -387,7 +388,7 @@ def create_reservation(request):
 
 		# Present the staff member with a form to choose if the reservation is for themselves for or one or more customers.
 		if request.POST.get('staff_charge') is None:
-			return render(request, 'calendar/project_choice_staff.html', { 'active_projects': user.active_projects(), 'users': User.objects.filter(is_active=True, projects__active=True).distinct()})
+			return render(request, 'calendar/project_choice_staff.html', { 'active_projects': user.active_projects(), 'users': User.objects.filter(is_active=True, projects__active=True).distinct(), 'staff_users':User.objects.filter(is_active=True, projects__active=True, is_staff=True).distinct() })
 		else:
 			# process submission to determine the reservation details
 			mode = request.POST['staff_charge']
@@ -416,10 +417,16 @@ def create_reservation(request):
 					logger.exception(str(ex))
 					return HttpResponseBadRequest('A problem occurred while checking for conflicting reservations')
 
+				if request.POST.get('fixed_cost_check') is not None:
+					fixed_cost_run = bool(request.POST.get('fixed_cost_check'))
+				else:
+					fixed_cost_run = False
+				new_reservation.cost_per_sample_run = fixed_cost_run
 				new_reservation.save()
 
 				if not ReservationProject.objects.filter(reservation=new_reservation).exists():
 					reservation_projects = {}	
+					transaction_groups = {}
 					for key, value in request.POST.items():
 						if is_valid_field(key):
 							attribute, separator, index = key.partition("__")
@@ -442,9 +449,54 @@ def create_reservation(request):
 									new_reservation.delete()
 									return HttpResponseBadRequest('Please choose a project for charges made during this run.')
 
+							if attribute == "num_samples":
+								if value is not None and value != "":
+									reservation_projects[index].sample_num = int(value)
+
+							if attribute == "cost_per_sample":
+								if value is not None and value != "":
+									reservation_projects[index].cost_per_sample = Decimal(value)
+
+							if attribute == "notes":
+								if value is not None and value != "":
+									reservation_projects[index].notes = value
+
+							if attribute == "transaction_group":
+								# if transaction_group is 1 create a transaction_group and link it to the reservation
+								transaction_groups[index] = value
+
+
 					for r in reservation_projects.values():
 						r.full_clean()
 						r.save()
+
+					for t in transaction_groups.keys():
+						if int(transaction_groups[t]) == 1:
+							fieldname = 'transaction_group_member__' + str(t)
+							ids = request.POST.get(fieldname)
+							id_list = ids.split(',')
+							members = User.objects.in_bulk(id_list)
+
+							tg = TransactionGroup()
+							tg.creator = request.user
+							tg.project = reservation_projects[t].project
+							tg.customer = reservation_projects[t].customer
+							tg.notes = reservation_projects[t].notes
+							tg.cost_per_sample = reservation_projects[t].cost_per_sample
+							tg.sample_num = reservation_projects[t].sample_num
+							tg.created = timezone.now()
+							tg.updated = timezone.now()
+							tg.save()
+							tg.description = "Transaction Group for " + str(reservation_projects[t].customer) + " for project " + str(reservation_projects[t].project) + " created by " + str(request.user) + " with id " + str(tg.id)
+							tg.save()
+
+							# create relationship to reservation project record
+							reservation_projects[t].transaction_group = tg
+							reservation_projects[t].save()
+
+							for m in members.values():
+								m.transaction_groups.add(tg)
+							
 
 
 	configured = (request.POST.get('configured') == "true")
@@ -463,6 +515,20 @@ def create_reservation(request):
 			return HttpResponseBadRequest('An error occurred while attempting to verify the timing of your reservation')
 
 		new_reservation.save()
+
+		if not ReservationProject.objects.filter(reservation=new_reservation).exists():
+			rp = ReservationProject()
+			rp.reservation = new_reservation
+			rp.project = new_reservation.project
+			rp.customer = new_reservation.user
+			rp.created = timezone.now()
+			rp.updated = timezone.now()
+			rp.save()
+
+		res_proj =  ReservationProject.objects.filter(reservation=new_reservation)
+		for rp in res_proj:
+			if rp.transaction_group is not None:
+				new_reservation.transaction_groups.add(rp.transaction_group)
 
 		# create an email with the reservation information
 		if b_send_mail:
@@ -514,6 +580,21 @@ def create_reservation(request):
 			return HttpResponseBadRequest('An error occurred while attempting to verify the timing of your reservation')
 
 		new_reservation.save()
+
+		if not ReservationProject.objects.filter(reservation=new_reservation).exists():
+			rp = ReservationProject()
+			rp.reservation = new_reservation
+			rp.project = new_reservation.project
+			rp.customer = new_reservation.user
+			rp.created = timezone.now()
+			rp.updated = timezone.now()
+			rp.save()
+
+		res_proj =  ReservationProject.objects.filter(reservation=new_reservation)
+		for rp in res_proj:
+			if rp.transaction_group is not None:
+				new_reservation.transaction_groups.add(rp.transaction_group)
+
 		for rc in res_conf:
 			if rc is not None:
 				rc.reservation = new_reservation
@@ -715,6 +796,7 @@ def modify_reservation(request, start_delta, end_delta):
 	new_reservation.tool = reservation_to_cancel.tool
 	new_reservation.project = reservation_to_cancel.project
 	new_reservation.user = reservation_to_cancel.user
+	new_reservation.cost_per_sample_run = reservation_to_cancel.cost_per_sample_run
 	new_reservation.creation_time = now
 	policy_problems, overridable = check_policy_to_save_reservation(request, reservation_to_cancel, new_reservation, request.user, False)
 	if policy_problems:
@@ -740,6 +822,9 @@ def modify_reservation(request, start_delta, end_delta):
 				res_proj.reservation = new_reservation
 				res_proj.project = rp.project
 				res_proj.customer = rp.customer
+				res_proj.cost_per_sample = rp.cost_per_sample
+				res_proj.sample_num = rp.sample_num
+				res_proj.notes = rp.notes
 				res_proj.created = timezone.now()
 				res_proj.updated = timezone.now()
 				res_proj.save()
@@ -1113,7 +1198,7 @@ def send_missed_reservation_notification(reservation):
 			n.user.email_user(str(dateformat.format(reservation.start, "m-d-Y g:i:s A")) + ' time slot for the ' + str(reservation.tool.name) + ' just opened', notification_email, n.user.email)
 
 def is_valid_field(field):
-	return search("^(chosen_user|chosen_project|project_percent)__[0-9]+$", field) is not None
+	return search("^(chosen_user|chosen_project|project_percent|cost_per_sample|num_samples|notes|transaction_group)__[0-9]+$", field) is not None
 
 
 @login_required

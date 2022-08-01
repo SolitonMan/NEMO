@@ -25,7 +25,7 @@ from django.utils.safestring import mark_safe
 from django.urls import reverse
 
 from NEMO.forms import CommentForm, nice_errors, ToolForm
-from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableWithdraw, LockBilling, ProbationaryQualifications, Project, Reservation, ReservationConfiguration, ReservationProject, ScheduledOutage, ScheduledOutageCategory, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskStatus, Tool, UsageEvent, UsageEventProject, User, UserProfile, UserProfileSetting
+from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableWithdraw, LockBilling, ProbationaryQualifications, Project, Reservation, ReservationConfiguration, ReservationProject, ScheduledOutage, ScheduledOutageCategory, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskStatus, Tool, UsageEvent, UsageEventProject, User, UserProfile, UserProfileSetting, TransactionGroup
 from NEMO.utilities import extract_times, quiet_int
 from NEMO.views.policy import check_policy_to_disable_tool, check_policy_to_enable_tool, check_policy_to_enable_tool_for_multi
 from NEMO.views.staff_charges import month_is_locked, month_is_closed, get_billing_date_range
@@ -139,6 +139,14 @@ def tool_control(request, tool_id=None, qualified_only=None, core_only=None):
 		'users': users,
 	}
 
+	if tool_id is not None and int(tool_id) != 0:
+		tool = Tool.objects.get(id=tool_id)
+		current_reservation = request.user.current_reservation_for_tool(tool)
+		if current_reservation is not None:
+			dictionary['fixed_cost_sample_run'] = current_reservation.cost_per_sample_run
+		else:
+			dictionary['fixed_cost_sample_run'] = False
+
 
 	if request.user.charging_staff_time():
 		# retrieve staff charges to provide a current listing of customers
@@ -182,6 +190,7 @@ def tool_status(request, tool_id):
 			if (r.start - timezone.now()) < td:
 				upcoming[r.id]['style'] = 'background-color: #ff9999; font-weight: bold;'
 			
+	fixed_cost_billing_user = request.user.groups.filter(name="Fixed Cost Billing").exists()
 
 	dictionary = {
 		'tool': tool,
@@ -190,6 +199,7 @@ def tool_status(request, tool_id):
 		'task_statuses': TaskStatus.objects.all(),
 		'post_usage_questions': DynamicForm(tool.post_usage_questions).render(),
 		'upcoming': upcoming,
+		'fixed_cost_billing_user': fixed_cost_billing_user,
 	}
 
 	try:
@@ -198,14 +208,30 @@ def tool_status(request, tool_id):
 		if current_reservation is not None:
 			dictionary['time_left'] = current_reservation.end
 			dictionary['my_reservation'] = current_reservation
+			dictionary['fixed_cost_sample_run'] = current_reservation.cost_per_sample_run
+
+			if current_reservation.transaction_groups.count() > 0:
+				dictionary['transaction_groups_included'] = True
+			else:
+				dictionary['transaction_groups_included'] = False
+
 			if ReservationProject.objects.filter(reservation=current_reservation).exists():
 				rp = ReservationProject.objects.filter(reservation=current_reservation)
+
+				if rp.count() > 1:
+					dictionary['staff_client_run'] = True
+				else:
+					if rp.count() == 1:
+						if rp[0].customer == request.user:
+							dictionary['staff_client_run'] = False
+						else:
+							dictionary['staff_client_run'] = True
 				dictionary['my_reservation_projects'] = rp
 				# format a string of values to be used in Javascript to configure users for the reservation
 				rp_out = "["
 
 				for r in rp:
-					rp_out += '{{"project":"{0}", "customer":"{1}", "project_id":"{2}", "user_id":"{3}"}},'.format(escape(str(r.project)), escape(str(r.customer)), escape(str(r.project.id)), escape(str(r.customer.id)))
+					rp_out += '{{"project":"{0}", "customer":"{1}", "project_id":"{2}", "user_id":"{3}", "cost_per_sample":"{4}", "sample_num":"{5}", "notes":"{6}", "transaction_group_id":"{7}" }},'.format(escape(str(r.project)), escape(str(r.customer)), escape(str(r.project.id)), escape(str(r.customer.id)), escape(str(r.cost_per_sample)), escape(str(r.sample_num)), escape(str(r.notes)), escape(str(r.transaction_group.id if r.transaction_group else 0)))
 				rp_out = rp_out.rstrip(",") + "]"
 				rp_out = mark_safe(rp_out)
 				dictionary['reservation_projects'] = rp_out
@@ -333,8 +359,8 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge, billing_mod
 
 	if not settings.ALLOW_CONDITIONAL_URLS:
 		return HttpResponseBadRequest('Tool control is only available on campus. We\'re working to change that! Thanks for your patience.')
-
 	tool = get_object_or_404(Tool, id=tool_id)
+	current_reservation = request.user.current_reservation_for_tool(tool)
 	operator = request.user
 	user = get_object_or_404(User, id=user_id)
 	project = get_object_or_404(Project, id=project_id)
@@ -378,6 +404,9 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge, billing_mod
 			new_usage_event.end_time = autologout_endtime
 		if end_scheduled_outage:
 			new_usage_event.end_scheduled_outage = True
+		if current_reservation:
+			for tg in current_reservation.transaction_groups.all():
+				new_usage_event.transaction_groups.add(tg)
 		new_usage_event.save()
 
 		# create a usage event project record for consistency with other usage event charges
@@ -386,6 +415,13 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge, billing_mod
 		uep.customer = user
 		uep.project = project
 		uep.project_percent = 100.0	# no reason to ask after the fact when only one customer
+		if billing_mode:
+			#if current_reservation is not None:
+			rp = ReservationProject.objects.get(reservation=current_reservation)
+			uep.cost_per_sample = rp.cost_per_sample
+			uep.sample_num = rp.sample_num
+			uep.comment = rp.notes
+			uep.transaction_group = rp.transaction_group
 		uep.created = timezone.now()
 		uep.updated = timezone.now()
 		uep.save()
@@ -467,6 +503,7 @@ def enable_tool_multi(request):
 	except ValueError:
 		return HttpResponseBadRequest('request.POST.get(\'tool_id\') = ' + request.POST.get('tool_id'))
 	tool = get_object_or_404(Tool, id=id)
+	current_reservation = request.user.current_reservation_for_tool(tool)
 	operator = request.user
 	set_for_autologout = request.POST.get("set_for_autologout")
 	if set_for_autologout:
@@ -500,9 +537,15 @@ def enable_tool_multi(request):
 			new_usage_event.end_time = autologout_endtime
 		if end_scheduled_outage:
 			new_usage_event.end_scheduled_outage = True
+		
 		new_usage_event.save()	
+
+		if current_reservation.transaction_groups.count() > 0:
+			for tg in current_reservation.transaction_groups.all():
+				new_usage_event.transaction_groups.add(tg)
 	
 		project_events = {}
+		transaction_groups = {}
 
 		for key, value in request.POST.items():
 			if is_valid_field(key):
@@ -531,6 +574,20 @@ def enable_tool_multi(request):
 					else:
 						new_usage_event.delete()
 						return HttpResponseBadRequest('Please choose a project for charges made during this run.')
+
+				if attribute == "cost_per_sample":
+					if value != "" and value is not None:
+						project_events[index].cost_per_sample = Decimal(value)
+
+				if attribute == "sample_num":
+					if value != "" and value is not None:
+						project_events[index].sample_num = int(value)
+
+				if attribute == "notes":
+					project_events[index].comment = value
+
+				if attribute == "transaction_group":
+					transaction_groups[index] = value
 
 				if hasattr(project_events[index], 'customer') and hasattr(project_events[index], 'project'):
 					response = check_policy_to_enable_tool_for_multi(tool, operator, project_events[index].customer, project_events[index].project, request)
@@ -561,6 +618,11 @@ def enable_tool_multi(request):
 			else:
 				p.full_clean(exclude='project_percent')
 			p.save()
+
+		for t in transaction_groups.keys():
+			if int(transaction_groups[t]) > 0:
+				project_events[t].transaction_group = TransactionGroup.objects.get(id=int(transaction_groups[t]))
+				project_events[t].save()
 
 		# All policy checks passed so enable the tool for the user.
 		if tool.interlock and not tool.interlock.unlock():
@@ -682,7 +744,7 @@ def enable_tool_multi(request):
 
 
 def is_valid_field(field):
-	return search("^(chosen_user|chosen_project|project_percent|event_comment|fixed_cost|num_samples|sample_notes)__[0-9]+$", field) is not None
+	return search("^(chosen_user|chosen_project|project_percent|event_comment|fixed_cost|num_samples|sample_notes|cost_per_sample|sample_num|notes|transaction_group)__[0-9]+$", field) is not None
 
 
 @staff_member_required(login_url=None)
@@ -724,6 +786,25 @@ def disable_tool(request, tool_id):
 		current_reservation.updated = timezone.now()
 		current_reservation.descendant = new_reservation
 		current_reservation.save()
+
+		for tg in current_reservation.transaction_groups.all():
+			new_reservation.transaction_groups.add(tg)
+
+		rp = ReservationProject.objects.filter(reservation=current_reservation)
+
+		for r in rp:
+			new_rp = ReservationProject()
+			new_rp.reservation = new_reservation
+			new_rp.project = r.project
+			new_rp.customer = r.customer
+			new_rp.cost_per_sample = r.cost_per_sample
+			new_rp.sample_num = r.sample_num
+			new_rp.notes = r.notes
+			new_rp.transaction_group = r.transaction_group
+			new_rp.created = timezone.now()
+			new_rp.updated = timezone.now()
+			new_rp.save()
+		
 	except:
 		pass
 
@@ -815,6 +896,7 @@ def disable_tool(request, tool_id):
 			cuep = UsageEventProject.objects.get(id=key)
 			cuep.sample_num = int(user_project_info[key]["sample_num"])
 			cuep.cost_per_sample = float(user_project_info[key]["cost_per_sample"])
+			cuep.comment = user_project_info[key]["notes"]
 			cuep.updated = timezone.now()
 			cuep.save()
 
@@ -904,6 +986,7 @@ def disable_tool_multi(request, tool_id, usage_event, dynamic_form):
 			cuep = UsageEventProject.objects.get(id=key)
 			cuep.sample_num = int(user_project_info[key]["sample_num"])
 			cuep.cost_per_sample = float(user_project_info[key]["cost_per_sample"])
+			cuep.comment = user_project_info[key]["notes"]
 			cuep.updated = timezone.now()
 			cuep.save()
 

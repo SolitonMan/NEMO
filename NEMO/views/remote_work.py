@@ -1342,10 +1342,10 @@ def save_contest_resolution(request):
 					c.content_object.active_flag = False
 
 				if field_name == "start":
-					c.content_object.start = c.proposed_value
+					c.content_object.start = datetime.strptime(c.proposed_value, "%Y-%m-%d %H:%M:%S")
 
 				if field_name == "end":
-					c.content_object.end = c.proposed_value
+					c.content_object.end = datetime.strptime(c.proposed_value, "%Y-%m-%d %H:%M:%S")
 
 				if field_name == "area":
 					c.content_object.area = Area.objects.get(id=int(c.proposed_value))
@@ -1413,10 +1413,10 @@ def save_contest_resolution(request):
 					field_name = fld
 
 					if field_name == "start":
-						content_object.start = value
+						content_object.start = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
 	
 					if field_name == "end":
-						content_object.end = value
+						content_object.end = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
 	
 					if field_name == "area":
 						content_object.area = Area.objects.get(id=int(value))

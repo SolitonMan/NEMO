@@ -21,6 +21,8 @@
 				{% endfor %}
 			{% endif %}
 		{% else %}
+			
+
 			<div class="radio"><label><input type="radio" onchange="show_self_ui()" name="staff_charge" id="staff_charge" value="self">Reserve this tool for my own project</label></div>
 			<div id="self_ui" style="display: none;">
 			<p>Associate your reservation with a project.</p>
@@ -36,6 +38,12 @@
 			<div class="radio"><label><input type="radio" onchange="show_customer_ui()" name="staff_charge" id="staff_charge" value="customer">Reserve this tool on behalf of a customer.</label></div>
 
 			<div id="customer_ui" style="display: none;">
+				{% for g in request.user.groups.all %}
+				{% if g.name == "Fixed Cost Billing" %}
+				<div class="checkbox" id="fixed_cost_toggle" style="display: none;"><label><input type="checkbox" onclick="show_customer_ui_fixed(this)" name="fixed_cost_check" id="fixed_cost_check" value="1" />Fixed per sample rate</label></div>
+				{% endif %}
+				{% endfor %}
+
 				<div id="project_choice_multi">
 					<table id="customer_entries" class="table">
 						<tr>
@@ -49,6 +57,28 @@
 					</table>
 				</div>
 			</div>
+
+			<div id="customer_ui_fixed" style="display: none;">
+				<div id="project_choice_multi_fixed">
+				<table id="customer_entries_fixed" class="table">
+					<tr>
+						<th>&nbsp;</th>
+						<th style="min-width:200px">Customer</th>
+						<th style="min-width:200px">Project</th>
+						<th style="min-width:200px">Cost Per Sample</th>
+						<th style="min-width:200px"># of Samples</th>
+						<th style="min-width:200px">Notes</th>
+						<th style="min-width:100px">Process Status</th>
+						<th style="min-width:200px">Transaction Group Members</th>
+					</tr>
+					<tr>
+						<td colspan="8" style="text-align:center"><a href="javascript:void(0)" onclick="add_customer_fixed()">Add another customer</a></td>
+					</tr>
+				</table>
+				</div>
+
+				<button id="done_fixed" class="btn btn-default" style="display:none">Done adding customers to this reservation</button>
+			</div>
 		{% endif %}
 		{% if configurations %}
 			<h4>Choose tool configuration settings</h4>
@@ -61,10 +91,10 @@
 		{% endif %}
 		<h4>When would you like to reserve the {{ tool }}?</h4>
 		<div class="datetimepicker-container">
-			<input type="text" id="start" name="start" placeholder="Choose a start time" />
+			<input class="form-control" type="text" id="start" name="start" placeholder="Choose a start time" />
 		</div>
 		<div class="datetimepicker-container">
-			<input type="text" id="end" name="end" placeholder="Choose an end time" />
+			<input class="form-control" type="text" id="end" name="end" placeholder="Choose an end time" />
 		</div>
 		<div class="form-group text-center" style="margin-top:40px">
 			<input type="submit" value="Create the reservation" class="btn btn-success">

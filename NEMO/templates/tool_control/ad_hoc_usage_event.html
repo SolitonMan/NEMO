@@ -137,7 +137,7 @@
 				<th>Start</th>
 				<td>
 					<div class="datetimepicker-container">
-						<input type="text" name="ad_hoc_start" id="ad_hoc_start" />
+						<input class="form-control" type="text" name="ad_hoc_start" id="ad_hoc_start" />
 					</div>
 				</td>
 			</tr>
@@ -145,7 +145,7 @@
 				<th>End</th>
 				<td>
 					<div class="datetimepicker-container">
-						<input type="text" name="ad_hoc_end" id="ad_hoc_end" />
+						<input class="form-control" type="text" name="ad_hoc_end" id="ad_hoc_end" />
 					</div>
 				</td>
 			</tr>
@@ -169,7 +169,7 @@
 			<tr>
 				<td colspan="2">
 					<label for="operator_comment">Comment / Description of Work</label>
-					<textarea name="operator_comment" id="operator_comment" rows="10" cols="80"></textarea>
+					<textarea class="form-control" name="operator_comment" id="operator_comment" rows="10" cols="80"></textarea>
 				</td>
 			</tr>
 			{% if request.user.is_superuser or request.user.is_staff %}
@@ -185,7 +185,7 @@
 				<th>Operator</th>
 				<td>
 					{{ request.user.first_name }} {{ request.user.last_name }}
-					<input type="hidden" name="operator" id="operator" value="{{ request.user.id }}" />
+					<input class="form-control" type="hidden" name="operator" id="operator" value="{{ request.user.id }}" />
 				</td>
 			</tr>
 			{% endif %}
@@ -193,7 +193,7 @@
 			<tr>
 				<td colspan="2">
 				<div class="form-group">
-					<input type="checkbox" name="area_access_record" id="area_access_record" onclick="toggle_area()" />
+					<input class="form-control" type="checkbox" name="area_access_record" id="area_access_record" onclick="toggle_area()" />
 					<label for="area_access_record">Include an area access record
 				</div>
 				</td>
@@ -202,7 +202,7 @@
 				<td>Area</td>
 				<td>
 				<div class="form-group">
-					<select name="ad_hoc_area" id="ad_hoc_area" disabled>
+					<select class="form-control" name="ad_hoc_area" id="ad_hoc_area" disabled>
 					{% for a in request.user.physical_access_levels.all %}
 					<option value="{{ a.area.id }}">{{ a.area.name }}</option>
 					{% endfor %}

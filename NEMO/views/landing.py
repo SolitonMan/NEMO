@@ -91,6 +91,10 @@ def landing(request):
 @staff_member_required(login_url=None)
 @require_http_methods(['GET','POST'])
 def check_url(request):
+	if request.user.username in ('dms117','sst12','jpb175'):
+		pass
+	else:
+		HttpResponseRedirect(reverse('landing'))
 	if request.method == "GET":
 		return render(request, 'requester.html', {})
 	else:

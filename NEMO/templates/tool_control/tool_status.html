@@ -76,7 +76,7 @@
 									<tr>
 										<td>{{ uep.customer }}</td>
 										<td>{{ uep.project }}</td>
-										<td><textarea rows="3" cols="60" name="cc__{{ uep.id }}" id="cc__{{ uep.id }}" value="{{ uep.comment }}" onblur="save_comment(this);">{% if uep.comment is not None %}{{ uep.comment }}{% endif %}</textarea></td>
+										<td><textarea class="form-control" rows="3" cols="60" name="cc__{{ uep.id }}" id="cc__{{ uep.id }}" value="{{ uep.comment }}" onblur="save_comment(this);">{% if uep.comment is not None %}{{ uep.comment }}{% endif %}</textarea></td>
 									</tr>
 								{% endfor %}
 									</tbody>
@@ -277,9 +277,9 @@
 									<tr>
 										<td>{{ uep.customer }}<input type="hidden" value="{{ uep.customer.id }}" name="chosen_user__{{ uep.id }}" /></td>
 										<td>{{ uep.project }}<input type="hidden" value="{{ uep.project.id }}" name="chosen_project__{{ uep.id }}" /></td>
-										<td><input type="text" name="fixed_cost__{{uep.id}}" id="fixed_cost__{{uep.id}}" value="" /></td>
-										<td><input type="text" name="num_samples__{{uep.id}}" id="num_samples__{{uep.id}}" value="" /></td>
-										<td><input type="text" name="sample_notes__{{uep.id}}" id="sample_notes__{{uep.id}}" /></td>
+										<td><input type="text" class="form-control" name="fixed_cost__{{uep.id}}" id="fixed_cost__{{uep.id}}" value="{{ uep.cost_per_sample }}" /></td>
+										<td><input type="text" class="form-control" name="num_samples__{{uep.id}}" id="num_samples__{{uep.id}}" value="{{ uep.sample_num }}" /></td>
+										<td><input type="text" class="form-control" name="sample_notes__{{uep.id}}" id="sample_notes__{{uep.id}}" value="{{ uep.comment }}" /></td>
 									</tr>
 								{% endfor %}
 									</tbody>
@@ -290,7 +290,7 @@
 
 					<div class="form-group" style="align: left; vertical-algin: top;">
 						<label class="control-label col-sm-2" for="operator_comment">Comment / Description of Run</label>
-						<textarea name="operator_comment" id="operator_comment" onblur="save_operator_comment()" rows="6" cols="50" placeholder="Please enter a brief description of the work performed, or make any notes you'd find useful for reference">{% if current_usage_event.operator_comment is not None %}{{ current_usage_event.operator_comment }}{% endif %}</textarea>
+						<textarea class="form-control" name="operator_comment" id="operator_comment" onblur="save_operator_comment()" rows="6" cols="50" placeholder="Please enter a brief description of the work performed, or make any notes you'd find useful for reference">{% if current_usage_event.operator_comment is not None %}{{ current_usage_event.operator_comment }}{% endif %}</textarea>
 					</div>
 					{% endwith %}
 					<div id="stop_wrapper" style="display:inline-block" data-toggle="tooltip" data-placement="bottom" title="Please answer the required questions (above) to proceed">
@@ -301,16 +301,14 @@
 			{% else %}
 				{% if user.is_staff %}
 
-					{% for g in user.groups.all %}
-						{% if g.name == "Fixed Cost Billing" %}
+					{% if fixed_cost_billing_user %}
 					<h4>How would you like to use this tool?</h4>
-					<div class="radio"><label><input type="radio" name="billing_mode" value="false" id="billing_mode" onclick="show_autologout(1);" checked>Standard billing (time & materials)</label></div>
-					<div class="radio"><label><input type="radio" name="billing_mode" value="true" id="billing_mode" onclick="show_autologout(0);">Fixed per sample rate (totals to be entered manually)</label></div>
-						{% endif %}
-					{% endfor %}
+					<div class="radio"><label><input type="radio" name="billing_mode" value="false" id="billing_mode" onclick="show_autologout(1);" {% if not fixed_cost_sample_run %}checked{% endif %}>Standard billing (time & materials)</label></div>
+					<div class="radio"><label><input type="radio" name="billing_mode" value="true" id="billing_mode" onclick="show_autologout(0);" {% if fixed_cost_sample_run %}checked{% endif %}>Fixed per sample rate</label></div>
+					{% endif %}
 					<h4>What would you like to do?</h4>
-					<div class="radio"><label><input type="radio" onchange="use_tool_for_self({{ tool.id }}){% if my_reservation %};set_start_button(0);{% endif %}" name="staff_charge" value="false" {% if my_reservation %}{% if my_reservation_projects is None %} checked{% endif %}{% endif %}>Use this tool for my own project</label></div>
-					<div class="radio"><label><input type="radio" onchange="use_tool_for_other({{ tool.id }}){% if my_reservation %};set_start_button(1);{% endif %}" name="staff_charge" value="false" {% if my_reservation %}{% if my_reservation_projects %} checked{% endif %}{% endif %}>Use this tool on behalf of another user</label></div>
+					<div class="radio"><label><input type="radio" onchange="use_tool_for_self({{ tool.id }}){% if my_reservation %};set_start_button(0);{% endif %}" name="staff_charge" value="false"{% if not staff_client_run %} checked{% endif %}>Use this tool for my own project</label></div>
+					<div class="radio"><label><input type="radio" onchange="use_tool_for_other({{ tool.id }}){% if my_reservation %};set_start_button(1);{% endif %}" name="staff_charge" value="false"{% if staff_client_run %} checked{% endif %}>Use this tool on behalf of another user</label></div>
 					<div id="project_choice"></div>
 					<div id="project_choice_multi"></div>
 				{% elif tool.operational and not tool.required_resource_is_unavailable and not tool.delayed_logoff_in_progress and not tool.scheduled_outage_in_progress %}
@@ -555,10 +553,18 @@
 			<th>&nbsp;</th>
 			<th style="min-width:200px">Customer</th>
 			<th style="min-width:200px">Project</th>
+			{% if fixed_cost_sample_run %}
+			<th style="min-width:200px">Cost per Sample</th>
+			<th style="min-width:200px"># of Samples</th>
+			<th style="min-width:200px">Notes</th>
+			{% if transaction_groups_included %}
+			<th style="min-width:100px">Transaction Group</th>
+			{% endif %}
+			{% endif %}
 		</tr>
 		{# Rows are inserted here on load and when "Add another customer" is clicked. #}
 		<tr>
-			<td colspan="3" style="text-align:center"><a href="javascript:void(0)" onclick="add_customer()">Add another customer</a></td>
+			<td colspan={% if fixed_cost_sample_run %}{% if transaction_groups_included %}"7"{% else %}"6"{% endif %}{% else %}"3"{% endif %} style="text-align:center"><a href="javascript:void(0)" onclick="add_customer()">Add another customer</a></td>
 		</tr>
 	</table>
 	<br>
@@ -615,10 +621,14 @@
 	update_stop_button();
 	$('#tool_control input[required]').on('change keyup', update_stop_button);
 
+	{% if not staff_client_run %}
+	use_tool_for_self({{ tool.id }});
+	{% endif %}
+
 	function reservation_update()
 	{
 		$("#tool_control").append("<input type=\"hidden\" name=\"override_staff_charge\" id=\"override_staff_charge\" value=\"false\" />");
-		{% if my_reservation_projects %}
+		{% if staff_client_run %}
 		staff_reserved_for_customer = true;
 		var rp = {{ reservation_projects }};
 
@@ -629,7 +639,15 @@
 		var table_row;
 
 		for (r in rp) {
+			{% if fixed_cost_sample_run %}
+			table_row = "<tr id=\"row_" + current_entry_number + "\"><td style=\"vertical-align: middle\"><span class=\"glyphicon glyphicon-remove-circle grey pointer\" onclick=\"remove_row(" + current_entry_number + ");\"></span></td><td>" + rp[r]["customer"] + "<input type=\"hidden\" value=\"" + rp[r]["user_id"] + "\" id=\"user_textbox__" + current_entry_number + "\" name=\"chosen_user__" + current_entry_number + "\" data-row=\"" + current_entry_number + "\"></td><td id=\"project__" + current_entry_number + "\" style=\"vertical-align: middle\">" + rp[r]["project"] + "<input type=\"hidden\" value=\"" + rp[r]["project_id"] + "\" name=\"chosen_project__" + current_entry_number + "\" id=\"chosen_project__" + current_entry_number + "\"></td><td><input type=\"text\" class=\"form-control\" value=\"" + rp[r]["cost_per_sample"] + "\" name=\"cost_per_sample__" + current_entry_number + "\"></td><td><input type=\"text\" class=\"form-control\" value=\"" + rp[r]["sample_num"] + "\" name=\"sample_num__" + current_entry_number + "\"></td><td><textarea style=\"display:inline-block;overflow:hidden;resize:none;\" class=\"form-control\" rows=\"1\" col\"15\" name=\"notes__" + current_entry_number + "\" onkeyup=\"this.style.height='auto';this.style.height=this.scrollHeight + 'px';\">" + rp[r]["notes"] + "</textarea></td>"
+			{% if transaction_groups_included %}
+			table_row += "<td><input type=\"hidden\" name=\"transaction_group__" + current_entry_number + "\" value=\"" + rp[r]["transaction_group_id"] + "\"><a href=\"javascript:showTG('" + rp[r]["transaction_group_id"] + "')\">" + rp[r]["transaction_group_id"] + "</a></td>";
+			{% endif %}
+			table_row += "</tr>";
+			{% else %}
 			table_row = "<tr id=\"row_" + current_entry_number + "\"><td style=\"vertical-align: middle\"><span class=\"glyphicon glyphicon-remove-circle grey pointer\" onclick=\"remove_row(" + current_entry_number + ");\"></span></td><td>" + rp[r]["customer"] + "<input type=\"hidden\" value=\"" + rp[r]["user_id"] + "\" id=\"user_textbox__" + current_entry_number + "\" name=\"chosen_user__" + current_entry_number + "\" data-row=\"" + current_entry_number + "\"></td><td id=\"project__" + current_entry_number + "\" style=\"vertical-align: middle\">" + rp[r]["project"] + "<input type=\"hidden\" value=\"" + rp[r]["project_id"] + "\" name=\"chosen_project__" + current_entry_number + "\" id=\"chosen_project__" + current_entry_number + "\"></td></tr>";
+			{% endif %}
 			$("#usage_event_entries tr:last").before(table_row);
 			current_entry_number++;
 		}
@@ -641,6 +659,15 @@
 		{% else %}
 		staff_reserved_for_customer = false;
 		{% endif %}
+	}
+
+	function showTG(id)
+	{
+		if (id == "0") {
+			return false;
+		} else {
+			alert("Transaction Group Detected");
+		}
 	}
 
 	function toggle_autologout()
@@ -676,8 +703,5 @@
 		}
 	}
 
-	{% if my_reservation and my_reservation_projects is None %}
-	use_tool_for_self({{ tool.id }});
-	{% endif %}
 //# sourceURL=tool_control/tool_status.html
 </script>

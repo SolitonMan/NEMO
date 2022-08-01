@@ -248,6 +248,12 @@ def staff_charge_entry(request):
 	return render(request, 'staff_charges/staff_charge_entry.html', {'entry_number': entry_number})
 
 
+@staff_member_required(login_url=None)
+@require_GET
+def staff_charge_entry_fixed(request):
+	entry_number = int(request.GET['entry_number'])
+	return render(request, 'staff_charges/staff_charge_entry_fixed.html', {'entry_number': entry_number})
+
 
 @staff_member_required(login_url=None)
 @require_GET

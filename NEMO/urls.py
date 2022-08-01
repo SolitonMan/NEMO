@@ -1,6 +1,6 @@
-from django.urls import path, re_path
+from django.urls import include, path, re_path
 from django.conf import settings
-from django.conf.urls import url, include
+#from django.conf.urls import include
 from django.contrib import admin
 from django.contrib.auth.decorators import login_required
 from django.views.static import serve
@@ -109,6 +109,7 @@ urlpatterns = [
 	re_path(r'^ad_hoc_staff_charge/$', staff_charges.ad_hoc_staff_charge, name='ad_hoc_staff_charge'),
 	re_path(r'^ad_hoc_overlap_resolution/$', staff_charges.ad_hoc_overlap_resolution, name='ad_hoc_overlap_resolution'),
 	re_path(r'^staff_charge_entry/$', staff_charges.staff_charge_entry, name='staff_charge_entry'),
+	re_path(r'^staff_charge_entry_fixed/$', staff_charges.staff_charge_entry_fixed, name='staff_charge_entry_fixed'),
 	re_path(r'^ad_hoc_staff_charge_entry/$', staff_charges.ad_hoc_staff_charge_entry, name='ad_hoc_staff_charge_entry'),
 	re_path(r'^begin_staff_charge/$', staff_charges.begin_staff_charge, name='begin_staff_charge'),
 	re_path(r'^end_staff_charge/(?P<modal_flag>\d+)/$', staff_charges.end_staff_charge, name='end_staff_charge'),

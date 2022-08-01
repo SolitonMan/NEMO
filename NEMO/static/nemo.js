@@ -405,10 +405,10 @@ function calculate_duration()
 	var start = null;
 	var end = null;
 	if ($("#ad_hoc_start").val() != "") {
-		start = moment($("#ad_hoc_start").val());
+		start = moment($("#ad_hoc_start").val(),"YYYY-MM-DD hh:mm A");
 	}
 	if ($("#ad_hoc_end").val() != "") {
-		end = moment($("#ad_hoc_end").val());
+		end = moment($("#ad_hoc_end").val(),"YYYY-MM-DD hh:mm A");
 	}
 	if (start != null && end != null) {
 		s_duration = "";

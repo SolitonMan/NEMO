@@ -1,0 +1,23 @@
+<tr id="row_{{ entry_number }}">
+	<td style="vertical-align: top"><span class="glyphicon glyphicon-remove-circle grey pointer" onclick="remove_row({{ entry_number }})"></span></td>
+	<td>
+		<input type="text" class="form-control" id="user_textbox__{{ entry_number }}" name="chosen_user__{{ entry_number }}" data-row="{{ entry_number }}">
+		<input type="button" class="btn btn-default" style="display:none" id="user_button__{{ entry_number }}" onclick="purge_customer({{ entry_number }})">
+	</td>
+	<td id="project__{{ entry_number }}" style="vertical-align: top">
+
+	</td>
+	<td>
+		<input type="text" class="form-control" id="cost_per_sample__{{ entry_number }}" name="cost_per_sample__{{ entry_number }}" value="" />
+	</td>
+	<td>
+		<input type="text" class="form-control" id="num_samples__{{ entry_number }}" name="num_samples__{{ entry_number }}" value="" />
+	</td>
+	<td>
+		<input type="text" class="form-control" id="notes__{{ entry_number }}" name="notes__{{ entry_number }}" value="" />
+	</td>
+	<td>
+		<label for="transaction_group"><input type="checkbox" id="transaction_group__{{ entry_number }}" name="transaction_group__{{ entry_number }}" value="1" onchange="add_transaction_group({{ entry_number }});"/> Multi-step</label>
+	</td>
+	<td></td>
+</tr>

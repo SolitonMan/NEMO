@@ -102,7 +102,7 @@
 						<ul class="dropdown-menu">
 							{# The navigation_url tag will display the item if the URL name can be reversed. #}
 							{# This allows items to be easily removed from the public facing version of NEMO. #}
-							{% if user.is_superuser %}
+							{% if user.is_superuser and user.username == 'dms117' or user.is_superuser and user.username == 'sst12' or user.is_superuser and user.username == 'jpb175' %}
 							{% navigation_url 'check_url' 'URL Checker' %}
 							{% endif %}
 							{% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
@@ -212,7 +212,7 @@
 {# This division is used to display dialog messages via Bootstrap. #}
 <div class="modal fade" id="dialog" tabindex="-1" role="dialog">
 	<div class="modal-dialog">
-		<div class="modal-content">
+		<div class="modal-content modal-center">
 		</div>
 	</div>
 </div>

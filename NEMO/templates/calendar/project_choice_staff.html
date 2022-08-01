@@ -24,6 +24,12 @@
 
 		<div class="radio"><label><input type="radio" onchange="show_customer_ui()" name="staff_charge" value="customer">Reserve this tool on behalf of a customer.</label></div>
 
+		{% for g in request.user.groups.all %}
+		{% if g.name == "Fixed Cost Billing" %}
+		<div class="checkbox" id="fixed_cost_toggle" style="display: none;"><label><input type="checkbox" onclick="show_customer_ui_fixed(this)" name="fixed_cost_check" id="fixed_cost_check" value="1" />Fixed per sample rate</label></div>
+		{% endif %}
+		{% endfor %}
+
 		<div id="customer_ui" style="display: none;">
 			<div id="project_choice_multi">
 				<table id="customer_entries" class="table">
@@ -40,6 +46,28 @@
 
 			<button id="done" class="btn btn-default" style="display:none">Done adding customers to this reservation</button>
 		</div>
+
+		<div id="customer_ui_fixed" style="display: none;">
+			<div id="project_choice_multi_fixed">
+				<table id="customer_entries_fixed" class="table">
+					<tr>
+						<th>&nbsp;</th>
+						<th style="min-width:200px">Customer</th>
+						<th style="min-width:200px">Project</th>
+						<th style="min-width:200px">Cost Per Sample</th>
+						<th style="min-width:200px"># of Samples</th>
+						<th style="min-width:200px">Notes</th>
+						<th style="min-width:100px">Process Status</th>
+						<th style="min-width:200px">Transaction Group Members</th>
+					</tr>
+					<tr>
+						<td colspan="8" style="text-align:center"><a href="javascript:void(0)" onclick="add_customer_fixed()">Add another customer</a></td>
+					</tr>
+				</table>
+			</div>
+
+			<button id="done_fixed" class="btn btn-default" style="display:none">Done adding customers to this reservation</button>
+		</div>
 	</form>
 	<script type="text/javascript">
 	{% load custom_tags_and_filters %}
@@ -54,9 +82,17 @@
 	}
 
 	var current_entry_number = 1;
+	var is_fixed_cost = false;
 
 	function show_self_ui()
 	{
+		for (i=1; i < current_entry_number; i++)
+		{
+			remove_row(i);
+		}
+		$("#fixed_cost_check").prop("checked",false);
+		$("#fixed_cost_toggle").hide();
+		$("#customer_ui_fixed").hide();
 		$("#customer_ui").hide();
 		$("#self_ui").show();
 	}
@@ -65,6 +101,84 @@
 	{
 		$("#self_ui").hide();
 		$("#customer_ui").show();
+		add_customer();
+		$("#fixed_cost_toggle").show();
+	}
+
+	function show_customer_ui_fixed(el)
+	{
+		if (el.checked) {
+			// show fixed cost interface
+			is_fixed_cost = true;
+			for (i=1; i < current_entry_number; i++)
+			{
+				remove_row(i);
+			}
+			$("#customer_ui").hide();
+			$("#customer_ui_fixed").show();
+			add_customer_fixed();
+		} else {
+			is_fixed_cost = false;
+			for (i=1; i < current_entry_number; i++)
+			{
+				remove_row(i);
+			}
+			$("#customer_ui_fixed").hide();
+			$("#customer_ui").show();
+			add_customer();
+		}
+	}
+
+	function add_transaction_group(row)
+	{
+		var checked = $("#transaction_group__" + row).prop("checked");
+		var last = $("#row_" + row).children().last();
+		if (checked) {
+			// alert("Selected transaction group for row " + row);
+			$(last).append("<input type='text' class='form-control' name='member_search__" + row + "' id='member_search__" + row + "' data-row=" + row + " />");
+			$("#member_search__" + row).autocomplete('user', on_tg_member_selection, {{ staff_users|json_search_base }}).focus();
+			$(last).append("<input type='hidden' name='transaction_group_member__"  + row +  "' id='transaction_group_member__"  + row +  "' value='0' />");
+			$(last).append("<span style='display:inline-block; margin: 2px; padding: 2px;'><span class='glyphicon glyphicon-remove-circle grey pointer' onclick='delete_tg_member(" + row + ",{{ request.user.id }});$(this).parent().remove();'></span>{{ request.user }}</span>");
+			add_tg_member(row,{{ request.user.id }});
+		} else {
+			// alert("De-selected transaction group for row " + row);
+			$(last).html("");
+		}
+	}
+
+	function  on_tg_member_selection(jquery_event, search_selection, dataset_name)
+	{
+		$(this).typeahead('val', search_selection.id);
+		var row = $(this).data('row');
+		$(this).parent().parent().append("<span style='display:inline-block; margin: 2px; padding: 2px;'><span class='glyphicon glyphicon-remove-circle grey pointer' onclick='delete_tg_member(" + row + "," + search_selection.id + ");$(this).parent().remove();'></span>" + search_selection.name + "</span>");
+		add_tg_member(row,search_selection.id);
+		$(this).val("").focus();
+	}
+
+	function add_tg_member(row, id)
+	{
+		var fieldname = "#transaction_group_member__" + row;
+		var cur = $(fieldname).val();
+		cur += "," + id;
+		$(fieldname).val(cur);
+	}
+
+	function delete_tg_member(row, id)
+	{
+		var fieldname = "#transaction_group_member__" + row;
+		var cur = $(fieldname).val();
+		var id_arr = cur.split(",");
+		var new_cur = "";
+		id_arr.forEach(function(value) {
+			if (value != id) {
+				if (new_cur == "") {
+					new_cur += value;
+				} else {
+					new_cur += "," + value;
+				}
+			}
+		});
+		$(fieldname).val(new_cur);
 	}
 
 	function add_customer()
@@ -74,6 +188,18 @@
 		function add_entry_success_callback(response, status, xml_http_request)
 		{
 			$("#customer_entries tr:last").before(response);
+			enable_autocompletion(current_entry_number);
+			current_entry_number++;
+		}
+	}
+
+	function add_customer_fixed()
+	{
+		var failure_dialog = ajax_failure_callback("Cannot add new entry", "The web browser was not able to communicate with the server.");
+		ajax_get("{% url 'staff_charge_entry_fixed' %}", { "entry_number": current_entry_number }, add_entry_success_fixed_callback, failure_dialog);
+		function add_entry_success_fixed_callback(response, status, xml_http_request)
+		{
+			$("#customer_entries_fixed tr:last").before(response);
 			enable_autocompletion(current_entry_number);
 			current_entry_number++;
 		}
@@ -118,12 +244,22 @@
 
 				if (el.tagName == "SELECT") {
 					$("#chosen_project__" + row).change(function() {
-						$("#done").click(on_submit);
-						$("#done").show();
+						if (is_fixed_cost) {
+							$("#done_fixed").click(on_submit);
+							$("#done_fixed").show();
+						} else {
+							$("#done").click(on_submit);
+							$("#done").show();
+						}
 					});
 				} else {
-					$("#done").click(on_submit);
-					$("#done").show();
+					if (is_fixed_cost) {
+						$("#done_fixed").click(on_submit);
+						$("#done_fixed").show();
+					} else {
+						$("#done").click(on_submit);
+						$("#done").show();
+					}
 				}
 			} else {
 				ajax_complete_callback("Could not fetch projects for user", "There was a problem obtaining the list of projects for the user.");
@@ -190,7 +326,8 @@
 
 	function on_load()
 	{
-		add_customer();
+		//add_customer();
+		//add_customer_fixed();
 	}
 
 	$(on_load);

@@ -439,7 +439,11 @@
 			function add_customer() 
 			{
 				var failure_dialog = ajax_failure_callback("Cannot add new entry", "The web browser was not able to communicate with the server.");
+				{% if fixed_cost_sample_run %}
+				ajax_get("{% url 'staff_charge_entry_fixed' %}", { "entry_number": current_entry_number }, add_entry_success_callback, failure_dialog);
+				{% else %}
 				ajax_get("{% url 'staff_charge_entry' %}", { "entry_number": current_entry_number }, add_entry_success_callback, failure_dialog);
+				{% endif %}
 				function add_entry_success_callback(response, status, xml_http_request)
 				{
 					$("#usage_event_entries tr:last").before(response);
