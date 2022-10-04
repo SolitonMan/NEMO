@@ -64,8 +64,8 @@
 			{{ error }}
 		</div>
 	{% endif %}
-	<p>Use the form below to choose the users to email.  Each section is enabled by default but can be disabled by clicking the checkbox next to the title.  Even if enabled, selecting nothing for a given section means nothing will be included in filtering the email recipients list.</p>
-	<p>Cores and Users are straightforward selections which include all the users within the chosen core(s), or else all the individually selected users, respectively.  If selections are made in both sections, then all of the users of the selected core(s) and all of the individually selected users would be included in the recipients list.</p>
+	<p>Use the form below to choose the users to email.  Selecting nothing for a given section means nothing will be included in filtering the email recipients list.</p>
+	<p>Users are straightforward selections which include all the selected users.</p>
 	<p>Areas, Tools and Projects can be influenced by the inclusion of a date range.  They function similarly, although with a bit of variation, depending on whether or not a date range is included in the filter.
 	<ul>
 		<li>If an Area is selected without a date range, then all users with access to the area (active and inactive)  will be included in the recipient list.  If a date range is included then the filter will be based on all users who accessed the chosen area within the selected date range.</li>
@@ -73,6 +73,9 @@
 		<li>If a Project is selected without a date range, then all users with project permissions (active and inactive) will be included in the recipient list.  If a date range is included then the filter will be based on all users who charged to the selected project within the selected date range.</li>
 	</ul>
 	</p>
+	<p>Core Members will select the technical staff who are associated with the chosen core(s)</p>
+	<p>Core Users will select all the individuals who have conducted transactions within a core (tool use, staff charges, area access or consumable withdraws), and can be limited by a date range</p>
+	<p>Core PIs will select the principle investigators who own the projects against which charges have been made within the core(s), and can be limited by a date range</p>
 	<p>Lastly, using a date range without selecting any other options will filter the recipient list to be all users who created any transactions in the system within the specified period.</p>
 
 
@@ -104,11 +107,34 @@
 
 	</tr>
 
+	<tr>
+		<td colspan="2">
+			<label for="use_groups"><h2 id="groups_header">Groups</h2></label>
+		</td>
+	</tr>
+
+	<tr>
+		<td style="width: 50%;">
+			<select multiple name="groups" id="groups" size="5" class="form-control" style="width: 100%;">
+			{% for g in group_list %}
+				<option value="{{ g.id }}">{{ g.name }}</option>
+			{% endfor %}
+			</select>
+			<a href="javascript:move_all('groups');" class="selector-chooseall active" id="choose_groups">Choose all</a>
+		</td>
+
+		<td style="width: 50%;">
+			<select multiple name="groups_selected" id="groups_selected" size="5" class="form-control" style="width: 100%;">
+			</select>
+			<a href="javascript:move_all('groups_selected');" class="selector-remove active" id="remove_groups">Remove all</a>
+		</td>
+
+	</tr>
+
 
 	<tr>
 		<td colspan="2">
 			<label for="use_users"><h2 id="users_header">Users</h2></label>
-			<input type="checkbox" name="use_users" id="use_users" onchange="change_status(this.checked, 'users');" checked />
 		</td>
 	</tr>
 
@@ -135,7 +161,6 @@
 	<tr>
 		<td colspan="2">
 			<label for="use_projects"><h2 id="projects_header">Projects</h2></label>
-			<input type="checkbox" name="use_projects" id="use_projects" onchange="change_status(this.checked, 'projects');" checked />
 		</td>
 	</tr>
 
@@ -163,7 +188,6 @@
 	<tr>
 		<td colspan="2">
 			<label for="use_tools"><h2 id="tools_header">Tools</h2></label>
-			<input type="checkbox" name="use_tools" id="use_tools" onchange="change_status(this.checked, 'tools');" checked />
 		</td>
 	</tr>
 
@@ -191,7 +215,6 @@
 	<tr>
 		<td colspan="2">
 			<label for="use_areas"><h2 id="areas_header">Areas</h2></label>
-			<input type="checkbox" name="use_areas" id="use_areas" onchange="change_status(this.checked, 'areas');" checked />
 		</td>
 	</tr>
 
@@ -216,8 +239,7 @@
 
 	<tr>
 		<td colspan="2">
-			<label for="use_cores"><h2 id="cores_header">Cores</h2></label>
-			<input type="checkbox" name="use_cores" id="use_cores" onchange="change_status(this.checked, 'cores');" checked />
+			<label for="use_cores"><h2 id="cores_header">Core Members</h2></label>
 		</td>
 	</tr>
 
@@ -237,6 +259,8 @@
 			<a href="javascript:move_all('cores_selected');" class="selector-remove active" id="remove_cores">Remove all</a>
 		</td>
 	</tr>
+
+	
 
 
 	<tr>
@@ -395,6 +419,7 @@
 		pair_selects($("#projects"),$("#projects_selected"));
 		pair_selects($("#cores"),$("#cores_selected"));
 		pair_selects($("#areas"),$("#areas_selected"));
+		pair_selects($("#groups"),$("#groups_selected"));
 
 		$("#search_users").keyup(function() {
 			var data = this.value.split(" ");
@@ -469,6 +494,9 @@
 				$(this).prop("selected", true);
 			});
 			$("#cores_selected option").each(function() {
+				$(this).prop("selected", true);
+			});
+			$("#groups_selected option").each(function() {
 				$(this).prop("selected", true);
 			});
 			$("#users_selected option").each(function() {

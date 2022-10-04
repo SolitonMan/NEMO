@@ -183,7 +183,7 @@ label
 .split-screen-left-panel
 {
 	position: absolute;
-	top: 120px;
+	top: 200px;
 	bottom: 0;
 	width: 50%;
 	overflow-y: scroll;
@@ -192,7 +192,7 @@ label
 .split-screen-right-panel
 {
 	position: absolute;
-	top: 120px;
+	top: 200px;
 	bottom: 0;
 	width: 50%;
 	overflow-y: scroll;

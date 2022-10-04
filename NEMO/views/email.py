@@ -90,6 +90,7 @@ def email_broadcast(request, audience=''):
 		dictionary['tools_selected'] = request.POST.getlist('tools_selected')
 		dictionary['projects_selected'] = request.POST.getlist('projects_selected')
 		dictionary['areas_selected'] = request.POST.getlist('areas_selected')
+		dictionary['groups_selected'] = request.POST.getlist('groups_selected')
 		return render(request, 'email/display_posted.html', dictionary)
 
 	if audience == 'tool':
@@ -138,6 +139,7 @@ def email_broadcast(request, audience=''):
 	dictionary['project_list'] = Project.objects.all().order_by('project_number')
 	dictionary['core_list'] = Core.objects.all().order_by('name')
 	dictionary['area_list'] = Area.objects.all().order_by('name')
+	dictionary['group_list'] = Group.objects.all().order_by('name')
 	return render(request, 'email/email_broadcast.html', dictionary)
 
 
@@ -155,6 +157,7 @@ def compose_email(request):
 	users = request.POST.getlist('users_selected')
 	tools = request.POST.getlist('tools_selected')
 	projects = request.POST.getlist('projects_selected')
+	groups = request.POST.getlist('groups_selected')
 	start = request.POST.get('start')
 	end = request.POST.get('end')
 	date_range = False
@@ -164,6 +167,7 @@ def compose_email(request):
 	individual_users = User.objects.filter(id=0)
 	tool_users = User.objects.filter(id=0)
 	project_users = User.objects.filter(id=0)
+	group_users = User.objects.filter(id=0)
 	active_users = User.objects.filter(id=0)
 
 	if start is not None and start != '' and end is not None and end != '':
@@ -231,6 +235,9 @@ def compose_email(request):
 		if cores is not None and cores != []:
 			core_users = User.objects.filter(core_ids__id__in=cores)
 
+		if groups is not None and groups != []:
+			group_users = User.objects.filter(groups__id__in=groups)
+
 		#elif audience == 'account':
 		#	users = User.objects.filter(projects__account__id=selection).distinct()
 		#elif audience == 'user':
@@ -252,11 +259,12 @@ def compose_email(request):
 		dictionary['project_list'] = Project.objects.all().order_by('project_number')
 		dictionary['core_list'] = Core.objects.all().order_by('name')
 		dictionary['area_list'] = Area.objects.all().order_by('name')
+		dictionary['group_list'] = Group.objects.all().order_by('name')
 		return render(request, 'email/email_broadcast.html', dictionary)
 	generic_email_sample = get_media_file_contents('generic_email.html')
 
 	# consolidate selections into single list of users
-	users = individual_users.union(area_users, tool_users, project_users, core_users, active_users).order_by('last_name', 'first_name')
+	users = individual_users.union(area_users, tool_users, project_users, core_users, group_users, active_users).order_by('last_name', 'first_name')
 
 	dictionary = {
 		'audience': audience,
