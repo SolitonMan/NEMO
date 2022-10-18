@@ -157,18 +157,29 @@ def compose_email(request):
 	users = request.POST.getlist('users_selected')
 	tools = request.POST.getlist('tools_selected')
 	projects = request.POST.getlist('projects_selected')
-	groups = request.POST.getlist('groups_selected')
+	group_list = request.POST.getlist('groups_selected')
+	core_user_list = request.POST.getlist('core_users_selected')
+	core_pi_list = request.POST.getlist('core_pis_selected')
 	start = request.POST.get('start')
 	end = request.POST.get('end')
 	date_range = False
 
 	area_users = User.objects.filter(id=0)
 	core_users = User.objects.filter(id=0)
+	core_user_list_users = User.objects.filter(id=0)
+	core_pi_list_users = User.objects.filter(id=0)
 	individual_users = User.objects.filter(id=0)
 	tool_users = User.objects.filter(id=0)
 	project_users = User.objects.filter(id=0)
 	group_users = User.objects.filter(id=0)
 	active_users = User.objects.filter(id=0)
+	individual_projects = Project.objects.filter(id=0)
+
+	if start == '' or start is None:
+		start = '2020-07-01 00:00:00'
+
+	if end == '' or end is None:
+		end = timezone.now()
 
 	if start is not None and start != '' and end is not None and end != '':
 		date_range = True
@@ -178,7 +189,7 @@ def compose_email(request):
 			area_users = User.objects.filter(physical_access_levels__area__id__in=areas)
 			if date_range:
 				area_access_records = AreaAccessRecord.objects.filter(area__id__in=areas, end__range=[start, end])
-				area_users = User.objects.filter(id__in=area_access_records.values_list('user', flat=True))
+				area_users = User.objects.filter(id__in=area_access_records.values_list('user__id', flat=True))
 
 		#if audience == 'tool' or audience == 'tool_date':
 		if tools is not None and tools != []:
@@ -194,7 +205,7 @@ def compose_email(request):
 				# find users based on their operation of the tool
 				usage_events = UsageEvent.objects.filter(tool__id__in=tools)
 				usage_events = usage_events.filter(Q(start__range=[start, end]) | Q(end__range=[start, end]))
-				tool_users = User.objects.filter(Q(id__in=usage_events.values_list('operator', flat=True)) | Q(id__in=usage_events.values_list('customers', flat=True)))
+				tool_users = User.objects.filter(Q(id__in=usage_events.values_list('operator__id', flat=True)) | Q(id__in=usage_events.values_list('customers__id', flat=True)))
 
 		#elif audience == 'project' or audience == 'project_date':
 		if projects is not None and projects != []:
@@ -209,12 +220,12 @@ def compose_email(request):
 				staff_charges = StaffCharge.objects.filter(projects__id__in=projects, end__range=[start, end])				
 				area_access_records = AreaAccessRecord.objects.filter(projects__id__in=projects, end__range=[start, end])
 				area_staff_charges = StaffCharge.objects.filter(id__in=area_access_records.values_list('staff_charge', flat=True))
-				consumable_withdraws = ConsumableWithdraw.objects.filter(project__id_in=projects, date__range=[start, end])
+				consumable_withdraws = ConsumableWithdraw.objects.filter(project__id__in=projects, date__range=[start, end])
 
-				project_users = User.objects.filter(Q(id__in=usage_events.values_list('customers', flat=True)) | Q(id__in=usage_events.values_list('operator', flat=True)) | Q(id__in=staff_charges.values_list('customers', flat=True)) | Q(id__in=staff_charges.values_list('staff_member', flat=True)) | Q(id__in=area_staff_charges.values_list('staff_member', flat=True)) | Q(id__in=area_staff_charges.values_list('customers', flat=True)) | Q(id__in=consumable_withdraws.values_list('merchant', flat=True))| Q(id__in=consumable_withdraws.values_list('customer', flat=True)))
+				project_users = User.objects.filter(Q(id__in=usage_events.values_list('customers__id', flat=True)) | Q(id__in=usage_events.values_list('operator__id', flat=True)) | Q(id__in=staff_charges.values_list('customers__id', flat=True)) | Q(id__in=staff_charges.values_list('staff_member__id', flat=True)) | Q(id__in=area_staff_charges.values_list('staff_member__id', flat=True)) | Q(id__in=area_staff_charges.values_list('customers__id', flat=True)) | Q(id__in=consumable_withdraws.values_list('merchant__id', flat=True))| Q(id__in=consumable_withdraws.values_list('customer__id', flat=True)))
 
 		#elif audience == 'active_users_date':
-		if date_range and areas == [] and cores == [] and users == [] and tools == [] and projects == []:
+		if date_range and areas == [] and cores == [] and users == [] and tools == [] and projects == [] and group_list == [] and core_user_list == [] and core_pi_list == []:
 			active_users = User.objects.filter(is_active=True).order_by('last_name','first_name')
 			#start = request.GET.get('start')
 			#end = request.GET.get('end')
@@ -223,10 +234,10 @@ def compose_email(request):
 			usage_events = UsageEvent.objects.filter(Q(start__range=[start, end]) | Q(end__range=[start, end]))
 			staff_charges = StaffCharge.objects.filter(Q(start__range=[start, end]) | Q(end__range=[start, end]))
 			area_access_records = AreaAccessRecord.objects.filter(Q(start__range=[start, end]) | Q(end__range=[start, end]))
-			area_staff_charges = StaffCharge.objects.filter(id__in=area_access_records.values_list('staff_charge', flat=True))
+			area_staff_charges = StaffCharge.objects.filter(id__in=area_access_records.values_list('staff_charge__id', flat=True))
 			consumable_withdraws = ConsumableWithdraw.objects.filter(Q(date__range=[start, end]))
 
-			active_users = active_users.filter(Q(id__in=usage_events.values_list('customers', flat=True)) | Q(id__in=usage_events.values_list('operator', flat=True)) | Q(id__in=staff_charges.values_list('customers', flat=True)) | Q(id__in=staff_charges.values_list('staff_member', flat=True)) | Q(id__in=area_staff_charges.values_list('staff_member', flat=True)) | Q(id__in=area_staff_charges.values_list('customers', flat=True)) | Q(id__in=consumable_withdraws.values_list('merchant', flat=True))| Q(id__in=consumable_withdraws.values_list('customer', flat=True)))
+			active_users = active_users.filter(Q(id__in=usage_events.values_list('customers__id', flat=True)) | Q(id__in=usage_events.values_list('operator__id', flat=True)) | Q(id__in=staff_charges.values_list('customers__id', flat=True)) | Q(id__in=staff_charges.values_list('staff_member__id', flat=True)) | Q(id__in=area_staff_charges.values_list('staff_member__id', flat=True)) | Q(id__in=area_staff_charges.values_list('customers__id', flat=True)) | Q(id__in=consumable_withdraws.values_list('merchant__id', flat=True))| Q(id__in=consumable_withdraws.values_list('customer__id', flat=True)))
 
 
 		if users is not None and users != []:
@@ -235,25 +246,42 @@ def compose_email(request):
 		if cores is not None and cores != []:
 			core_users = User.objects.filter(core_ids__id__in=cores)
 
-		if groups is not None and groups != []:
-			group_users = User.objects.filter(groups__id__in=groups)
+		if core_user_list is not None and core_user_list != []:
+			tools=Tool.objects.filter(core_id__in=core_user_list)
+			usage_events = UsageEvent.objects.filter(tool__in=tools, start__gte=start, end__lte=end)
+			usageeventprojects = UsageEventProject.objects.filter(usage_event__in=usage_events)
+			core_user_list_users = User.objects.filter(id__in=usageeventprojects.values_list('customer__id', flat=True))
 
-		#elif audience == 'account':
-		#	users = User.objects.filter(projects__account__id=selection).distinct()
-		#elif audience == 'user':
-		#	users = User.objects.filter(id=selection).distinct()
-		#elif audience == 'group':
-		#	users = User.objects.filter(groups__id=selection).distinct()
-		#else:
-		#	dictionary = {'error': 'You specified an invalid audience'}
-		#	dictionary['user_list'] = User.objects.all().order_by('last_name', 'first_name')
-		#	dictionary['tool_list'] = Tool.objects.all().order_by('name')
-		#	dictionary['project_list'] = Project.objects.all().order_by('project_number')
-		#	dictionary['core_list'] = Core.objects.all().order_by('name')
-		#	dictionary['area_list'] = Area.objects.all().order_by('name')
-		#	return render(request, 'email/email_broadcast.html', dictionary)
+		if core_pi_list is not None and core_pi_list != []:
+			tools=Tool.objects.filter(core_id__in=core_pi_list)
+			usage_events = UsageEvent.objects.filter(tool__in=tools, start__gte=start, end__lte=end)
+			usageeventprojects = UsageEventProject.objects.filter(usage_event__in=usage_events)
+			u_projects = Project.objects.filter(id__in=usageeventprojects.values_list('project__id', flat=True))
+
+			staff_members = User.objects.filter(core_ids__in=core_pi_list)
+			staff_charges = StaffCharge.objects.filter(staff_member__in=staff_members, start__gte=start, end__lte=end)
+			staffchargeprojects = StaffChargeProject.objects.filter(staff_charge__in=staff_charges)
+			s_projects = Project.objects.filter(id__in=staffchargeprojects.values_list('project__id', flat=True))
+
+			areas = Area.objects.filter(core_id__in=core_pi_list)
+			areaaccessrecords = AreaAccessRecord.objects.filter(area__in=areas, start__gte=start, end__lte=end)
+			aarps = AreaAccessRecordProject.objects.filter(area_access_record__in=areaaccessrecords)
+			a_projects = Project.objects.filter(id__in=aarps.values_list('project__id', flat=True))
+
+			consumables = Consumable.objects.filter(core_id__in=cores)
+			consumablewithdraws = ConsumableWithdraw.objects.filter(consumable__in=consumables, date__gte=start, date__lte=end)
+			c_projects = Project.objects.filter(id__in=consumablewithdraws.values_list('project__id', flat=True))
+
+			individual_projects = individual_projects.union(u_projects,s_projects,a_projects,c_projects)
+
+			core_pi_list_users =  User.objects.filter(projects__in=list(individual_projects))
+
+		if group_list is not None and group_list != []:
+			groups = Group.objects.filter(id__in=group_list)
+			group_users = User.objects.filter(groups__in=groups)
+
 	except Exception as inst:
-		dictionary = {'error': inst}
+		dictionary = {'error': str(inst) + str(core_user_list) + str(core_pi_list)}
 		dictionary['user_list'] = User.objects.all().order_by('last_name', 'first_name')
 		dictionary['tool_list'] = Tool.objects.all().order_by('name')
 		dictionary['project_list'] = Project.objects.all().order_by('project_number')
@@ -264,7 +292,7 @@ def compose_email(request):
 	generic_email_sample = get_media_file_contents('generic_email.html')
 
 	# consolidate selections into single list of users
-	users = individual_users.union(area_users, tool_users, project_users, core_users, group_users, active_users).order_by('last_name', 'first_name')
+	users = individual_users.union(area_users, tool_users, project_users, core_users, group_users, active_users, core_user_list_users, core_pi_list_users).order_by('last_name', 'first_name')
 
 	dictionary = {
 		'audience': audience,
