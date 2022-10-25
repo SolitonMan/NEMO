@@ -4,9 +4,11 @@ from schedule import Scheduler
 import threading
 import time
 
+from django.core import mail
 from django.utils import timezone
+from django.utils.html import strip_tags
 
-from NEMO.models import Interlock, Tool, UsageEvent, StaffCharge, AreaAccessRecord, ConsumableWithdraw, GlobalFlag, ProbationaryQualifications
+from NEMO.models import Interlock, Tool, UsageEvent, StaffCharge, AreaAccessRecord, ConsumableWithdraw, GlobalFlag, ProbationaryQualifications, ToolUseNotificationLog
 
 #end_run = None
 def update_probationary_users():
@@ -29,32 +31,13 @@ def update_probationary_users():
 
 def pulse_interlocks():
 	logger = getLogger(__name__)
-	#logger.critical("pulse_interlocks() called at " + str(datetime.now()))
-	#print("pulse_interlocks() called at " + str(datetime.now()))
-
-	#d = datetime.now()
-	#d1 = d - timedelta(minutes=1)
-	#i = 8
-
-	#while i < 21:
-
-	#	t = datetime(d.year, d.month, d.day, i, 0, 0)
-	#	if d1 < t < d:
-	#		print("pulse_interlocks() called at " + str(d))
-
-	#	i += 1
 
 	tools = Tool.objects.all()
 	for t in tools:
 		if not t.in_use():
 			if t.interlock is not None:
 				t.interlock.pulse()
-			#else:
-				#logger.critical(str(t.name) + " has no interlock assigned")
-				#print(str(t.name) + " has no interlock assigned")
-		#else:
-			#logger.critical(str(t.name) + " has been detected as being in use")
-			#print(str(t.name) + " has been detected as being in use")
+
 
 def update_autologout():
 	logger = getLogger(__name__)
@@ -105,6 +88,63 @@ def daily_validate_transactions():
 	print("Daily transaction validation completed at " + str(datetime.now()))
 
 
+def area_access_logout_reminder():
+	records = AreaAccessRecord.objects.filter(end=None)
+	for r in records:
+		if (timezone.now() - r.start) > timedelta(hours=24):
+			# send the user a message that they're logged in
+			recipient = r.user
+			area = r.area
+			start = r.start
+
+			subject = "Access to " + str(area) + " since " + str(start)
+
+			message = "<p>Hello " + str(recipient.first_name) + " " + str(recipient.last_name) + ",</p>"
+			message += "<p>LEO has detected that you have been logged in to the " + str(area) + " since " + str(start) + ".  If this is intended please ignore this message.  If you didn't intend to be logged in this long, please log out and submit a contest for the resulting Area Access record to correct the error.  If you have any questions please contact LEOHelp@psu.edu.</p>"
+			message += "<p>Thank you,<br>The LEO Team</p>"
+
+			mail.send_mail(subject, strip_tags(message), recipient.email, [recipient.email], html_message=message)
+
+
+def excessive_tool_use_reminder():
+	tools = Tool.objects.all()
+
+	for t in tools:
+		if t.in_use():
+			# see if a related reservation exists for this tool
+			usage_event = t.get_current_usage_event()
+			use_block_limit = 360
+			if t.maximum_usage_block_time is not None:
+				use_block_limit = t.maximum_usage_block_time
+
+			if (timezone.now() - usage_event.start) > timedelta(minutes=use_block_limit):
+				b_send_message = False
+				# send a notice if none has been sent recently
+				if ToolUseNotificationLog.objects.filter(usage_event=usage_event).exists():
+					tunl = ToolUseNotificationLog.objects.filter(usage_event=usage_event).order_by('-sent')
+					last_sent = tunl[0].sent
+					if timezone.now() - last_sent > timedelta(minutes=120):
+						b_send_message = True
+				else:
+					b_send_message = True
+
+				if b_send_message:
+					recipient = usage_event.operator
+					subject = "Use of the " + t.name + " since " + str(usage_event.start)
+
+					message = "<p>Hello " + str(recipient.first_name) + " " + str(recipient.last_name) + ",</p>"
+					message += "<p>LEO has detected that you have been logged in to the " + str(t.name) + " since " + str(usage_event.start) + ".  If this is intended please ignore this message.  If you didn't intend to be logged in this long, please log out and submit a contest for the resulting Usage Event record as well as any related Staff Charge, Area Access or Consumable Withdraw records as necessary to correct the error(s).  If you have any questions please contact LEOHelp@psu.edu.</p>"
+					message += "<p>Thank you,<br>The LEO Team</p>"
+
+					mail.send_mail(subject, strip_tags(message), recipient.email, [recipient.email], html_message=message)
+
+					tl = ToolUseNotificationLog.objects.create(tool=t, usage_event=usage_event, message=message, sent=timezone.now())
+					
+
+# Items below here are deprecated
+# They're not being removed just yet
+# They may serve as examples for similar needs
+
 def print_status():
 	print("schedule is running at " + str(datetime.now()))
 
@@ -152,42 +192,5 @@ def start_scheduler():
 	else:
 		print("No global flag named SchedulerStarted has been found")
 
-"""
-def stop_scheduler():
-	now = datetime.now()
-	dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
-
-	if end_run is not None:
-		end_run.set()
-
-	print("stop_scheduler called at " + dt_string)
-
-def force_scheduler():
-	stop_scheduler()
-
-	print("force_scheduler called at " + dt_string)
-	scheduler = Scheduler()
-	if scheduler is not None:
-		scheduler.every(1).minutes.do(pulse_interlocks)
-		scheduler.every().day.at("22:00").do(daily_validate_transactions)
-		scheduler.every(15).minutes.do(print_status)
-		end_run = scheduler.run_continuously()
-
-		flag = GlobalFlag.objects.get(name="SchedulerStarted")
-		if flag is not None:
-			flag.active = True
-			flag.save()
 
 
-
-
-def start_schedule():
-	print("Starting schedule at " + str(datetime.now()))
-	schedule.every(1).minutes.do(pulse_interlocks)
-	schedule.every().day.at("22:00").do(daily_validate_transactions)
-	schedule.every(15).minutes.do(print_status)
-
-	while True:
-		schedule.run_pending()
-		time.sleep(1)
-"""

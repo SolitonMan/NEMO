@@ -175,11 +175,11 @@ def compose_email(request):
 	active_users = User.objects.filter(id=0)
 	individual_projects = Project.objects.filter(id=0)
 
-	if start == '' or start is None:
-		start = '2020-07-01 00:00:00'
+#	if start == '' or start is None:
+#		start = '2020-07-01 00:00:00'
 
-	if end == '' or end is None:
-		end = timezone.now()
+#	if end == '' or end is None:
+#		end = timezone.now()
 
 	if start is not None and start != '' and end is not None and end != '':
 		date_range = True
@@ -247,12 +247,24 @@ def compose_email(request):
 			core_users = User.objects.filter(core_ids__id__in=cores)
 
 		if core_user_list is not None and core_user_list != []:
+			if not date_range:
+				if start == '' or start is None:
+					start = '2020-07-01 00:00:00'
+				if end == '' or end is None:
+					end = timezone.now()
+
 			tools=Tool.objects.filter(core_id__in=core_user_list)
 			usage_events = UsageEvent.objects.filter(tool__in=tools, start__gte=start, end__lte=end)
 			usageeventprojects = UsageEventProject.objects.filter(usage_event__in=usage_events)
 			core_user_list_users = User.objects.filter(id__in=usageeventprojects.values_list('customer__id', flat=True))
 
 		if core_pi_list is not None and core_pi_list != []:
+			if not date_range:
+				if start == '' or start is None:
+					start = '2020-07-01 00:00:00'
+				if end == '' or end is None:
+					end = timezone.now()
+
 			tools=Tool.objects.filter(core_id__in=core_pi_list)
 			usage_events = UsageEvent.objects.filter(tool__in=tools, start__gte=start, end__lte=end)
 			usageeventprojects = UsageEventProject.objects.filter(usage_event__in=usage_events)

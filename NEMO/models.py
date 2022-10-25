@@ -493,6 +493,13 @@ class Tool(models.Model):
 		return
 
 
+class ToolUseNotificationLog(models.Model):
+	tool = models.ForeignKey(Tool, on_delete=models.SET_NULL, null=True, help_text="The tool that this configuration option applies to.")
+	usage_event = models.ForeignKey('UsageEvent', on_delete=models.SET_NULL, null=True, help_text="The usage event which is running long")
+	message = models.TextField(blank=True, null=True, help_text="The HTML message sent to the user")
+	sent = models.DateTimeField(null=True, blank=True)
+
+
 class Configuration(models.Model):
 	tool = models.ForeignKey(Tool, on_delete=models.SET_NULL, null=True, help_text="The tool that this configuration option applies to.")
 	name = models.CharField(max_length=200, help_text="The name of this overall configuration. This text is displayed as a label on the tool control page.")
