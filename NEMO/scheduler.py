@@ -4,6 +4,7 @@ from schedule import Scheduler
 import threading
 import time
 
+from django.conf import settings
 from django.core import mail
 from django.utils import timezone
 from django.utils.html import strip_tags
@@ -109,21 +110,30 @@ def area_access_logout_reminder():
 def excessive_tool_use_reminder():
 	tools = Tool.objects.all()
 
+	if settings.NOTIFICATION_TOOL_USE_EXCESSIVE_INTERVAL is not None:
+		last_sent_interval = int(settings.NOTIFICATION_TOOL_USE_EXCESSIVE_INTERVAL)
+	else:
+		last_sent_interval = 119
+
 	for t in tools:
 		if t.in_use():
+			if settings.NOTIFICATION_TOOL_USE_EXCESSIVE_DEFAULT_BLOCK is not None:
+				use_block_limit = int(settings.NOTIFICATION_TOOL_USE_EXCESSIVE_DEFAULT_BLOCK)
+			else:
+				use_block_limit = 360
+
 			# see if a related reservation exists for this tool
 			usage_event = t.get_current_usage_event()
-			use_block_limit = 360
 			if t.maximum_usage_block_time is not None:
 				use_block_limit = t.maximum_usage_block_time
 
-			if (timezone.now() - usage_event.start) > timedelta(minutes=use_block_limit):
+			if (timezone.now() - usage_event.start) >= timedelta(minutes=use_block_limit):
 				b_send_message = False
 				# send a notice if none has been sent recently
 				if ToolUseNotificationLog.objects.filter(usage_event=usage_event).exists():
 					tunl = ToolUseNotificationLog.objects.filter(usage_event=usage_event).order_by('-sent')
 					last_sent = tunl[0].sent
-					if timezone.now() - last_sent > timedelta(minutes=120):
+					if timezone.now() - last_sent >= timedelta(minutes=last_sent_interval):
 						b_send_message = True
 				else:
 					b_send_message = True
