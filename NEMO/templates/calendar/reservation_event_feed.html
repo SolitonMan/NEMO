@@ -1,10 +1,18 @@
 [
 	{% for x in events %}
 	{
-		{% if personal_schedule %}
-			"title": "{{ x.title|default:''|escapejs }}\n {{ x.tool.name|escapejs }}",
+		{% if x.additional_information != "" and x.additional_information is not None %}
+			{% if personal_schedule %}
+				"title": "{{ noteshtml|escapejs }}{{ x.title|default:''|escapejs }}\n {{ x.tool.name|escapejs }}",
+			{% else %}
+				"title": "{{ noteshtml|escapejs }}{{ x.title|default:''|escapejs }} \n {{ x.user }}",
+			{% endif %}
 		{% else %}
-			"title": "{{ x.title|default:''|escapejs }} \n {{ x.user }}",
+			{% if personal_schedule %}
+				"title": "{{ x.title|default:''|escapejs }}\n {{ x.tool.name|escapejs }}",
+			{% else %}
+				"title": "{{ x.title|default:''|escapejs }} \n {{ x.user }}",
+			{% endif %}
 		{% endif %}
 		"id": "Reservation {{ x.id }}",
 		{# The reservation creator or staff may edit the event: #}
@@ -13,7 +21,7 @@
 		"end": "{{ x.get_visual_end|date:"c" }}",
 		"details_url": "{% url 'reservation_details' x.id %}",
 		{% if user.is_staff or user.id == x.user.id %}
-		"description": "{{ x.description|escapejs }}"
+		"description": "{{ x.long_description|escapejs }}{{ x.description|escapejs }}"
 		{% else %}
 		"description": ""
 		{% endif %}

@@ -931,6 +931,7 @@ class Reservation(CalendarDisplay):
 	def has_not_ended(self):
 		return False if self.end < timezone.now().replace(tzinfo=None) else True
 
+	@property
 	def description(self):
 		ep = ReservationProject.objects.filter(reservation=self)
 		d = "<table class=\"table\"><thead><tr><th>Customer</th><th>Project</th></tr></thead><tbody>"

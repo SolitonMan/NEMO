@@ -9,7 +9,8 @@ from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required, permission_required
 from django.core.mail import send_mail, EmailMessage
-from django.db.models import Q
+from django.db.models import Q, CharField, Value
+from django.db.models.functions import Concat
 from django.http import HttpResponseBadRequest, HttpResponse, HttpResponseNotFound, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404, redirect
 from django.template import Template, Context
@@ -207,6 +208,8 @@ def reservation_event_feed(request, start, end):
 	else:
 		event_projects = None
 
+	events = events.annotate(long_description=Concat(Value('<p>TEST - '), 'user_id', Value('</p>'), output_field=CharField()))
+
 	dictionary = {
 		'events': events,
 		'event_projects': event_projects,
@@ -215,6 +218,7 @@ def reservation_event_feed(request, start, end):
 		'current': current,
 		'current_time': timezone.now(),
 		'ps_events': ps_events,
+		'noteshtml': "<span class='glyphicon glyphicon-list-alt'></span>",
 	}
 	return render(request, 'calendar/reservation_event_feed.html', dictionary)
 
