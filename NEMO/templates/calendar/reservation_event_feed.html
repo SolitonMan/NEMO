@@ -21,7 +21,7 @@
 		"end": "{{ x.get_visual_end|date:"c" }}",
 		"details_url": "{% url 'reservation_details' x.id %}",
 		{% if user.is_staff or user.id == x.user.id %}
-		"description": "{{ x.long_description|escapejs }}{{ x.description|escapejs }}"
+		"description": "{{ x.description|escapejs }}"
 		{% else %}
 		"description": ""
 		{% endif %}

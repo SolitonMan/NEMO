@@ -208,7 +208,7 @@ def reservation_event_feed(request, start, end):
 	else:
 		event_projects = None
 
-	events = events.annotate(long_description=Concat(Value('<p>TEST - '), 'user_id', Value('</p>'), output_field=CharField()))
+	#events = events.annotate(long_description=Concat(Value('<p>TEST - '), 'user_id', Value('</p>'), output_field=CharField()))
 
 	dictionary = {
 		'events': events,
