@@ -461,6 +461,9 @@ function create_calendar()
 		"eventResize": resize,
 		"eventDrop": move,
 		"eventClick": details,
+		"eventAfterAllRender": function(view, element) {
+			setTimeout(update_event_html, 1000);
+		},
 		"height": $("#calendar").height(),
 		"handleWindowResize": true,
 		"windowResize": on_browser_resize,
