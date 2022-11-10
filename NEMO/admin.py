@@ -723,17 +723,6 @@ class UserAdmin(admin.ModelAdmin):
 	def save_model(self, request, obj, form, change):
 		""" Audit project membership and qualifications when a user is saved. """
 		super().save_model(request, obj, form, change)
-		# send an email to the new user
-		if not change:
-			# send an email to the new user
-			msg = get_media_file_contents("new_user_email.htm")
-			send_mail("Welcome to LEO", msg, "LEOHelp@psu.edu", [str(form.cleaned_data.get('email'))])
-			# notify LEOHelp of the account creation
-			subject = "New user account " + str(form.cleaned_data.get('first_name')) + " " + str(form.cleaned_data.get('last_name')) + " created"
-			message = "A new user account was created for " + str(form.cleaned_data.get('first_name')) + " " + str(form.cleaned_data.get('last_name')) + ".  Please confirm that the account is correctly configured."
-			msg_from = "LEOHelp@psu.edu"
-			msg_to = ["LEOHelp@psu.edu"]
-			send_mail(subject, message, msg_from, msg_to)
 
 		record_local_many_to_many_changes(request, obj, form, 'projects')
 		#record_local_many_to_many_changes(request, obj, form, 'qualifications')

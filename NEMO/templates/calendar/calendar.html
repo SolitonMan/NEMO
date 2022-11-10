@@ -181,7 +181,7 @@ function update_event_sources()
 	$("#calendar").fullCalendar("addEventSource", tool_event_source);
 	//$("#calendar").fullCalendar("refetchEvents");
 
-	setTimeout(update_event_html,1000);
+	//setTimeout(update_event_html,1000);
 
 	refresh_sidebar_icons();
 
@@ -211,7 +211,7 @@ function event_creation_success_callback(response, status, xml_http_request, aja
 	{# If the response is empty then the reservation was successfully created. #}
 	if(response === "") {
 		refresh_calendar_and_sidebar();
-		setTimeout(update_event_html, 1000);
+		//setTimeout(update_event_html, 1000);
 	}
 	else {# the response was non-empty so the tool requires configuration details before the reservation is created. #}
 	{
@@ -229,7 +229,7 @@ function unselect_and_refresh()
 {
 	$("#calendar").fullCalendar("unselect");
 	refresh_calendar_and_sidebar();
-	setTimeout(update_event_html, 1000);
+	//setTimeout(update_event_html, 1000);
 }
 
 function submit_event_with_more_information(ajax_post)
@@ -348,9 +348,9 @@ function resize(event, delta, revertFunc, jsEvent, ui, view)
 		"delta": delta.asMinutes()
 	};
 	if(type === "Reservation")
-		ajax_post("{% url 'resize_reservation' %}", event_changes, undefined, [revertFunc, ajax_failure_callback("Reservation resize failed")], [refresh_calendar_and_sidebar,setTimeout(update_event_html, 1000)]);
+		ajax_post("{% url 'resize_reservation' %}", event_changes, undefined, [revertFunc, ajax_failure_callback("Reservation resize failed")], [refresh_calendar_and_sidebar]);  // setTimeout(update_event_html, 1000)
 	else if(type === "Outage")
-		ajax_post("{% url 'resize_outage' %}", event_changes, undefined, [revertFunc, ajax_failure_callback("Outage resize failed")], [refresh_calendar_and_sidebar,setTimeout(update_event_html, 1000)]);
+		ajax_post("{% url 'resize_outage' %}", event_changes, undefined, [revertFunc, ajax_failure_callback("Outage resize failed")], [refresh_calendar_and_sidebar]);
 }
 
 {# This function is called when the user clicks and drags an event in order to move their reservation. #}
@@ -365,9 +365,9 @@ function move(event, delta, revertFunc, jsEvent, ui, view)
 		"delta": delta.asMinutes()
 	};
 	if(type === "Reservation")
-		ajax_post("{% url 'move_reservation' %}", event_changes, undefined, [revertFunc, ajax_failure_callback("Reservation move failed")], [refresh_calendar_and_sidebar,setTimeout(update_event_html, 1000)]);
+		ajax_post("{% url 'move_reservation' %}", event_changes, undefined, [revertFunc, ajax_failure_callback("Reservation move failed")], [refresh_calendar_and_sidebar]);
 	else if(type === "Outage")
-		ajax_post("{% url 'move_outage' %}", event_changes, undefined, [revertFunc, ajax_failure_callback("Outage move failed")], [refresh_calendar_and_sidebar,setTimeout(update_event_html, 1000)]);
+		ajax_post("{% url 'move_outage' %}", event_changes, undefined, [revertFunc, ajax_failure_callback("Outage move failed")], [refresh_calendar_and_sidebar]);
 }
 
 function details(event, jsEvent, view)
@@ -378,7 +378,7 @@ function details(event, jsEvent, view)
 		return false;
 	} else {
 		var failure_dialog = ajax_failure_callback("Unable to display details");
-		ajax_get(event.details_url, undefined, ajax_success_callback, [failure_dialog, refresh_calendar_and_sidebar, setTimeout(update_event_html, 1000)]);
+		ajax_get(event.details_url, undefined, ajax_success_callback, [failure_dialog, refresh_calendar_and_sidebar]);
 	}
 }
 
@@ -392,7 +392,7 @@ function cancel_reservation(url, reservation_id, reason)
 	var contents = undefined;
 	if(reason)
 		contents = {'reason': reason};
-	ajax_post(url, contents, reservation_cancel_success_callback, [failure_dialog, refresh_calendar_and_sidebar, setTimeout(update_event_html, 1000)]);
+	ajax_post(url, contents, reservation_cancel_success_callback, [failure_dialog, refresh_calendar_and_sidebar]);
 }
 
 function cancel_outage(url, outage_id)
@@ -403,13 +403,18 @@ function cancel_outage(url, outage_id)
 		$("#calendar").fullCalendar("removeEvents", outage_id);
 		refresh_sidebar_icons();
 	}
-	ajax_post(url, undefined, outage_cancel_success_callback, [failure_dialog, refresh_calendar_and_sidebar, setTimeout(update_event_html, 1000)]);
+	ajax_post(url, undefined, outage_cancel_success_callback, [failure_dialog, refresh_calendar_and_sidebar]);
 }
 
 function set_reservation_title(url, reservation_id, title)
 {
+	if (title.indexOf("<") != -1 || title.indexOf(">") != -1) {
+		alert("Please do not use the less than (<) or greater than (>) symbols in reservation titles");
+		//$('#dialog').modal('hide');
+		return false;
+	}
 	var failure_dialog = ajax_failure_callback("Unable to set reservation title");
-	ajax_post(url, {'title': title}, [refresh_calendar_and_sidebar,setTimeout(update_event_html, 1000)], [failure_dialog, refresh_calendar_and_sidebar,setTimeout(update_event_html, 1000)]);
+	ajax_post(url, {'title': title}, [refresh_calendar_and_sidebar], [failure_dialog, refresh_calendar_and_sidebar]);
 }
 
 function on_browser_resize()
@@ -462,7 +467,8 @@ function create_calendar()
 		"eventDrop": move,
 		"eventClick": details,
 		"eventAfterAllRender": function(view, element) {
-			setTimeout(update_event_html, 1000);
+			//setTimeout(update_event_html, 100);
+			update_event_html();
 		},
 		"height": $("#calendar").height(),
 		"handleWindowResize": true,

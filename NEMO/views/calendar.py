@@ -218,7 +218,7 @@ def reservation_event_feed(request, start, end):
 		'current': current,
 		'current_time': timezone.now(),
 		'ps_events': ps_events,
-		'noteshtml': "<span class='glyphicon glyphicon-list-alt'></span>",
+		'noteshtml': "<span class='glyphicon glyphicon-list-alt'></span><br/>",
 	}
 	return render(request, 'calendar/reservation_event_feed.html', dictionary)
 
