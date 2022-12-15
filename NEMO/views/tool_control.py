@@ -200,6 +200,13 @@ def tool_status(request, tool_id):
 			dictionary['my_reservation'] = current_reservation
 			if ReservationProject.objects.filter(reservation=current_reservation).exists():
 				rp = ReservationProject.objects.filter(reservation=current_reservation)
+
+				if rp.filter(~Q(customer=request.user)).exists():
+					# reservation is for at least one person who isn't the current user, so user must be staff
+					dictionary['staff_member_for_customer'] = True
+				else:
+					dictionary['staff_member_for_customer'] = False
+
 				dictionary['my_reservation_projects'] = rp
 				# format a string of values to be used in Javascript to configure users for the reservation
 				rp_out = "["

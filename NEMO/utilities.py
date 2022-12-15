@@ -255,6 +255,8 @@ def send_mail(subject, content, from_email, to=None, bcc=None, cc=None, attachme
 			msg_sent = mail.send_mail(subject, content, from_email, to, html_message=content)
 			if msg_sent > 0:
 				email_record = create_email_log(mail_msg, email_category)
+			else:
+				raise Exception("Message failed to send")
 		except:
 			mail_msg.subject = "MESSAGE FAILED TO SEND  -  " + mail_msg.subject
 			email_record = create_email_log(mail_msg, email_category)

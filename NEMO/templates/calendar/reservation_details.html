@@ -78,6 +78,9 @@
 					autofocus("#reason");
 				</script>
 			{% endif %}
+			{% if user.is_staff %}
+			<button type="button" class="btn btn-success" onclick="send_customer_ics({{ reservation.id }});">Send Customer Calendar Invites</button>
+			{% endif %}
 		</div>
 	{% endif %}
 {% endif %}

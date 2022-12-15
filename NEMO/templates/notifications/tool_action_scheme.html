@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% load custom_tags_and_filters %}
+{% block title %}Tool action notification schemes{% endblock %}
+
+{% block content %}
+
+<h1>Tool Action Notifications</h1>
+
+{% if msg is not None %}
+	<div class="alert alert-info">
+	{{ msg }}
+	</div>
+{% endif %}
+
+<p>Use the form below to add a tool notification.  Available tools include all tools for which you are the primary or a backup owner, as well as all tools in an associated core if you are a staff member.  The parameters to set and their available values are:</p>
+<p>
+<ul>
+<li>Tool - the tool for which the notification will be sent</li>
+<li>Recipient - primary (primary owner only), backup (backup owners only), all (primary and backup owners)</li>
+<li>Event - start (creation of usage event record for the tool), end (usage event record has end date set from nothing to a value), all (start and end events)</li>
+<li>Frequency - business (send notification only during business hours of 8 am to 6 pm M-F), non-business (send notification only outside of business hours), all (send notification no matter the time)</li>
+</ul>
+</p>
+<p>
+<form action="{% url 'save_notification_scheme' %}" method="POST">
+	{% csrf_token %}
+	<table class="table">
+	<tr>
+		<th>Tool</th>
+		<td>
+			<select class="form-control" id="tool_select" name="tool_select">
+				{% for t in tool_list %}
+					<option value="{{ t.id }}">{{ t.name }}</option>
+				{% endfor %}
+			</select>
+		</td>
+	</tr>
+	<tr>
+		<th>Recipient</th>
+		<td>
+			<select class="form-control" id="recipient_select" name="recipient_select">
+				<option value="primary">Primary owner</option>
+				<option value="backup">Backup owners</option>
+				<option value="all">Both primary and backup owners</option>
+			</select>
+		</td>
+	</tr>
+	<tr>
+		<th>Event</th>
+		<td>
+			<select class="form-control" id="event_select" name="event_select">
+				<option value="start">Start</option>
+				<option value="end">End</option>
+				<option value="all">All (start and end events)</option>
+			</select>
+		</td>
+	</tr>
+	<tr>
+		<th>Frequency</th>
+		<td>
+			<select class="form-control" id="frequency_select" name="frequency_select">
+				<option value="business">Business hours</option>
+				<option value="non-business">Non-business hours</option>
+				<option value="all">All times</option>
+			</select>
+		</td>
+	</tr>
+	<tr>
+		<td colspan="2" style="text-align: center">
+			<input type="submit" value="Submit" class="btn btn-success" />
+		</td>
+	</tr>
+</table>
+</form>
+</p>
+
+{% if schemes is not None %}
+<br/>
+<p>
+<h1>Existing Schemes</h1>
+	<table class="table">
+		<thead>
+		<tr>
+			<th>Tool</th>
+			<th>Recipient</th>
+			<th>Event</th>
+			<th>Frequency</th>
+			<th>&nbsp;</th>
+		</tr>
+		</thead>
+		<tbody>
+	{% for s in schemes %}
+		<tr>
+			<td>{{ s.tool.name }}</td>
+			<td>{{ s.recipient }}</td>
+			<td>{{ s.event }}</td>
+			<td>{{ s.frequency }}</td>
+			<td>
+				<form method="POST" action="{% url 'delete_notification_scheme' %}">
+					{% csrf_token %}
+					<input name="scheme_id" type="hidden" value="{{ s.id }}" />
+					<input type="submit" value="Delete" class="btn btn-danger" />
+				</form>
+			</td>
+		</tr>
+	{% endfor %}
+		</tbody>
+	</table>
+</p>
+{% endif %}
+
+{% endblock %}

@@ -708,6 +708,12 @@ function send_ics(reservation_id)
 	ajax_post(url, undefined, undefined, ajax_failure_callback("Creation of calendar invite failed."), undefined);
 }
 
+function send_customer_ics(reservation_id)
+{
+	url = "/create_reservation_customer_calendar_invite/" + reservation_id + "/";
+	ajax_post(url, undefined, undefined, ajax_failure_callback("Creation of customer calendar invite failed."), undefined);
+}
+
 function NotesIconFunction()
 {
 	//$("#calendar").html($("#calendar").html().replaceAll("XXX","<span class='glyphicon glyphicon-list-alt'></span>"));	

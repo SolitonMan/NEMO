@@ -1913,3 +1913,16 @@ class EmailLog(models.Model):
 
 	class Meta:
 		ordering = ['-when']
+
+
+class NotificationSchemeToolAction(models.Model):
+	tool = models.ForeignKey('Tool', on_delete=models.SET_NULL, null=True, blank=True)
+	recipient = models.CharField(null=False, blank=False, max_length=255)
+	event = models.CharField(null=False, blank=False, max_length=50)
+	frequency = models.CharField(null=False, blank=False, max_length=255)
+	created = models.DateTimeField(null=True, blank=True)
+	updated = models.DateTimeField(null=True, blank=True)
+	created_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, related_name='nsta_created_by')
+	updated_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, related_name='nsta_updated_by')
+
+

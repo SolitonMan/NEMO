@@ -132,6 +132,7 @@
 							{% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
 							{% navigation_url 'maintenance' 'Maintenance' %}
 							{% endif %}
+							{% navigation_url 'create_notification_scheme' 'Notification Schemes' %}
 							{% if user.is_superuser %}
 							{% navigation_url 'delegates' 'PI Delegates' %}
 							{% endif %}

@@ -8,7 +8,7 @@ from rest_framework import routers
 
 from NEMO.models import GlobalFlag
 from NEMO.scheduler import start_scheduler
-from NEMO.views import abuse, accounts_and_projects, alerts, api, area_access, authentication, calendar, configuration_agenda, consumables, contact_staff, customization, email, feedback, get_projects, history, interlock, jumbotron, kiosk, landing, maintenance, mobile, usage, news, qualifications, remote_work, resources, safety, sidebar, staff_charges, status_dashboard, tasks, tool_control, training, tutorials, users
+from NEMO.views import abuse, accounts_and_projects, alerts, api, area_access, authentication, calendar, configuration_agenda, consumables, contact_staff, customization, email, feedback, get_projects, history, interlock, jumbotron, kiosk, landing, maintenance, mobile, notifications, usage, news, qualifications, remote_work, resources, safety, sidebar, staff_charges, status_dashboard, tasks, tool_control, training, tutorials, users
 
 # Use our custom login page instead of Django's built-in one.
 #admin.site.login = login_required(admin.site.login)
@@ -32,6 +32,11 @@ urlpatterns = [
 	re_path(r'^login/$', authentication.login_user, name='login'),
 	re_path(r'^logout/$', authentication.logout_user, name='logout'),
 	re_path(r'^choose_core/$', authentication.choose_core, name='choose_core'),
+
+	# create a notification scheme
+	re_path(r'^create_notification_scheme/$', notifications.notification_scheme_tool_action, name='create_notification_scheme'),
+	re_path(r'^save_notification_scheme/$', notifications.save_notification_scheme_tool_action, name='save_notification_scheme'),
+	re_path(r'^delete_notification_scheme/$', notifications.delete_notification_scheme, name='delete_notification_scheme'),
 
 	# Root URL defaults to the calendar page on desktop systems, and the mobile homepage for mobile devices:
 	re_path(r'^$', landing.landing, name='landing'),
@@ -95,6 +100,7 @@ urlpatterns = [
 	re_path(r'^delete_notification/$', calendar.delete_notification, name='delete_notification'),
 	re_path(r'^save_notifications/$', calendar.save_notifications, name='save_notifications'),
 	re_path(r'^create_reservation_calendar_invite/(?P<reservation_id>\d+)/$', calendar.create_reservation_calendar_invite, name='create_reservation_calendar_invite'),
+	re_path(r'^create_reservation_customer_calendar_invite/(?P<reservation_id>\d+)/$', calendar.create_reservation_customer_calendar_invite, name='create_reservation_customer_calendar_invite'),
 
 	# Qualifications:
 	re_path(r'^qualifications/$', qualifications.qualifications, name='qualifications'),

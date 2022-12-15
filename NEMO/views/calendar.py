@@ -468,10 +468,29 @@ def create_reservation(request):
 
 		new_reservation.save()
 
+		if new_reservation.project is not None and new_reservation.user is not None:
+			if not ReservationProject.objects.filter(reservation=new_reservation).exists():
+				res_proj = ReservationProject()
+				res_proj.reservation = new_reservation
+				res_proj.customer = new_reservation.user
+				res_proj.project = new_reservation.project
+				res_proj.created = timezone.now()
+				res_proj.updated = timezone.now()
+				res_proj.save()
+
 		# create an email with the reservation information
 		if b_send_mail:
+
+			subject = str(tool.name) + ' reservation created'
+
+			if ReservationProject.objects.filter(reservation=new_reservation).exists():
+				rp = ReservationProject.objects.filter(reservation=new_reservation)
+				if rp[0].customer != request.user:
+					subject += ' for ' + str(rp[0].customer)
+					if rp.count() > 1:
+						subject += ' and others'
 			msg = 'You have created a reservation for the ' + str(tool.name) + ' starting ' + str(new_reservation.start) + '.'
-			attachment = create_ics_for_reservation(new_reservation, False)
+			attachment = create_ics_for_reservation(request, new_reservation, False)
 			#send_mail(subject='Reservation Created', content=msg, from_email='LEOHelp@psu.edu', to=[str(new_reservation.user.email)], attachments=[attachment])
 			email = EmailMessage('Reservation Created',msg,'LEOHelp@psu.edu',[str(new_reservation.user.email)],reply_to=['LEOHelp@psu.edu'])
 			email.attach(attachment)
@@ -524,10 +543,29 @@ def create_reservation(request):
 				rc.updated = timezone.now()
 				rc.save()
 
+		if new_reservation.project is not None and new_reservation.user is not None:
+			if not ReservationProject.objects.filter(reservation=new_reservation).exists():
+				res_proj = ReservationProject()
+				res_proj.reservation = new_reservation
+				res_proj.customer = new_reservation.user
+				res_proj.project = new_reservation.project
+				res_proj.created = timezone.now()
+				res_proj.updated = timezone.now()
+				res_proj.save()
+
 		if b_send_mail:
+			subject = str(tool.name) + ' reservation created'
+
+			if ReservationProject.objects.filter(reservation=new_reservation).exists():
+				rp = ReservationProject.objects.filter(reservation=new_reservation)
+				if rp[0].customer != request.user:
+					subject += ' for ' + str(rp[0].customer)
+					if rp.count() > 1:
+						subject += ' and others'
+				
 			msg = 'You have created a reservation for the ' + str(tool.name) + ' starting ' + str(new_reservation.start) + '.'
-			attachment = create_ics_for_reservation(new_reservation, False)
-			email = EmailMessage('Reservation Created',msg,'LEOHelp@psu.edu',[str(new_reservation.user.email)],reply_to=['LEOHelp@psu.edu'])
+			attachment = create_ics_for_reservation(request, new_reservation, False)
+			email = EmailMessage(subject,msg,'LEOHelp@psu.edu',[str(new_reservation.user.email)],reply_to=['LEOHelp@psu.edu'])
 			email.attach(attachment)
 			create_email_log(email, EmailCategory.GENERAL)
 			email.send()
@@ -754,7 +792,7 @@ def modify_reservation(request, start_delta, end_delta):
 
 	if b_send_mail:
 		msg = 'You have cancelled a reservation for the ' + str(tool.name) + ' starting ' + str(reservation_to_cancel.start) + '.'
-		attachment = create_ics_for_reservation(reservation_to_cancel, True)
+		attachment = create_ics_for_reservation(request, reservation_to_cancel, True)
 		email = EmailMessage('Reservation Cancelled',msg,'LEOHelp@psu.edu',[str(reservation_to_cancel.user.email)],reply_to=['LEOHelp@psu.edu'])
 		email.attach(attachment)
 		create_email_log(email, EmailCategory.GENERAL)
@@ -770,7 +808,7 @@ def modify_reservation(request, start_delta, end_delta):
 
 	if b_send_mail:
 		msg = 'You have created a reservation for the ' + str(tool.name) + ' starting ' + str(new_reservation.start) + '.'
-		attachment = create_ics_for_reservation(new_reservation, False)
+		attachment = create_ics_for_reservation(request, new_reservation, False)
 		email = EmailMessage('Reservation Created',msg,'LEOHelp@psu.edu',[str(new_reservation.user.email)],reply_to=['LEOHelp@psu.edu'])
 		email.attach(attachment)
 		create_email_log(email, EmailCategory.GENERAL)
@@ -871,7 +909,7 @@ def cancel_reservation(request, reservation_id):
 
 	if b_send_mail:
 		msg = 'You have cancelled a reservation for the ' + str(reservation.tool.name) + ' starting ' + str(reservation.start) + '.'
-		attachment = create_ics_for_reservation(reservation, True)
+		attachment = create_ics_for_reservation(request, reservation, True)
 		email = EmailMessage('Reservation Cancelled',msg,'LEOHelp@psu.edu',[str(reservation.user.email)],reply_to=['LEOHelp@psu.edu'])
 		email.attach(attachment)
 		create_email_log(email, EmailCategory.GENERAL)
@@ -1164,19 +1202,44 @@ def save_notifications(request):
 
 @login_required
 @require_POST
+def create_reservation_customer_calendar_invite(request, reservation_id):
+	reservation = Reservation.objects.get(id=reservation_id)
+	tool = reservation.tool
+	if ReservationProject.objects.filter(reservation=reservation).exists():
+		reservation_projects = ReservationProject.objects.filter(reservation=reservation)
+		for rp in reservation_projects:
+			subject = str(tool.name) + ' reservation (' + str(rp.project) + ')'
+			msg = 'A reservation for the ' + str(tool.name) + ' has been scheduled to perform work on the project ' + str(rp.project)
+			attachment = create_ics_for_reservation(request, reservation, False)
+			email = EmailMessage(subject,msg,'LEOHelp@psu.edu',[str(rp.customer.email)],reply_to=['LEOHelp@psu.edu'])
+			email.attach(attachment)
+			create_email_log(email, EmailCategory.GENERAL)
+			email.send()
+
+	return HttpResponse()
+
+@login_required
+@require_POST
 def create_reservation_calendar_invite(request, reservation_id):
 	reservation = Reservation.objects.get(id=reservation_id)
 	tool = reservation.tool
+	subject = str(tool.name) + ' reservation created'
+	if ReservationProject.objects.filter(reservation=reservation).exists():
+		rp = ReservationProject.objects.filter(reservation=reservation)
+		if rp[0].customer != request.user:
+			subject += ' for ' + str(rp[0].customer)
+			if rp.count() > 1:
+				subject += ' and others'
 	msg = 'You have a reservation scheduled for the ' + str(tool.name) + ' starting at ' + str(reservation.start) + '.'
-	attachment = create_ics_for_reservation(reservation, False)
-	email = EmailMessage('Reservation Created',msg,'LEOHelp@psu.edu',[str(reservation.user.email)],reply_to=['LEOHelp@psu.edu'])
+	attachment = create_ics_for_reservation(request, reservation, False)
+	email = EmailMessage(subject,msg,'LEOHelp@psu.edu',[str(reservation.user.email)],reply_to=['LEOHelp@psu.edu'])
 	email.attach(attachment)
 	create_email_log(email, EmailCategory.GENERAL)
 	email.send()
 
 	return HttpResponse()
 
-def create_ics_for_reservation(reservation, cancelled=False):
+def create_ics_for_reservation(request, reservation, cancelled=False):
 	site_title = 'LEO'
 	reservation_organizer_email = getattr(settings, "RESERVATION_ORGANIZER_EMAIL", "LEOHelp@psu.edu")
 	reservation_organizer = getattr(settings, "RESERVATION_ORGANIZER", site_title)
@@ -1189,8 +1252,20 @@ def create_ics_for_reservation(reservation, cancelled=False):
 	now = datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')
 	start = reservation.start.astimezone(pytz.utc).strftime('%Y%m%dT%H%M%SZ')
 	end = reservation.end.astimezone(pytz.utc).strftime('%Y%m%dT%H%M%SZ')
-	reservation_name = str(reservation.tool.name)
-	lines = ['BEGIN:VCALENDAR\n', 'VERSION:2.0\n', method, 'BEGIN:VEVENT\n', uid, sequence, priority, f'DTSTAMP:{now}\n', f'DTSTART:{start}\n', f'DTEND:{end}\n', f'ATTENDEE;CN="{reservation.user.get_full_name()}";RSVP=TRUE:mailto:{reservation.user.email}\n', f'ORGANIZER;CN="{reservation_organizer}":mailto:{reservation_organizer_email}\n', f'SUMMARY:[{site_title}] {reservation_name} Reservation\n', status, 'END:VEVENT\n', 'END:VCALENDAR\n']
+
+	if reservation.title is not None and reservation.title != '':
+		reservation_name = reservation.title
+	else:
+		reservation_name = str(reservation.tool.name)
+
+		if ReservationProject.objects.filter(reservation=reservation).exists():
+			rp = ReservationProject.objects.filter(reservation=reservation)
+			if rp[0].customer != request.user:
+				reservation_name += ' for ' + str(rp[0].customer) + ' [' + str(rp[0].project.project_number) + ']'
+				if rp.count() > 1:
+					reservation_name += ' and others'
+
+	lines = ['BEGIN:VCALENDAR\n', 'VERSION:2.0\n', method, 'BEGIN:VEVENT\n', uid, sequence, priority, f'DTSTAMP:{now}\n', f'DTSTART:{start}\n', f'DTEND:{end}\n', f'ATTENDEE;CN="{reservation.user.get_full_name()}";RSVP=TRUE:mailto:{reservation.user.email}\n', f'ORGANIZER;CN="{reservation_organizer}":mailto:{reservation_organizer_email}\n', f'SUMMARY:[{site_title}] {reservation_name}\n', status, 'END:VEVENT\n', 'END:VCALENDAR\n']
 	ics = io.StringIO('')
 	ics.writelines(lines)
 	ics.seek(0)
