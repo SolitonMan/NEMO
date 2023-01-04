@@ -139,7 +139,7 @@ def multiple_tool_feed(request, start, end):
 				'id': e.id,
 				'start': e.start,
 				'end': e.end,
-				'description': e.description(),
+				'description': e.description,
 				'user': e.user,
 				'tool': e.tool,
 				'creator': e.creator,
@@ -962,6 +962,10 @@ def set_reservation_title(request, reservation_id):
 @permission_required('NEMO.trigger_timed_services', raise_exception=True)
 @require_GET
 def email_reservation_reminders(request):
+	return do_email_reservation_reminders()
+
+
+def do_email_reservation_reminders():
 	# Exit early if the reservation reminder email template has not been customized for the organization yet.
 	reservation_reminder_message = get_media_file_contents('reservation_reminder_email.html')
 	reservation_warning_message = get_media_file_contents('reservation_warning_email.html')
@@ -987,7 +991,15 @@ def email_reservation_reminders(request):
 			subject = reservation.tool.name + " reservation warning"
 			rendered_message = Template(reservation_warning_message).render(Context({'reservation': reservation, 'template_color': bootstrap_primary_color('warning'), 'fatal_error': False}))
 		user_office_email = get_customization('user_office_email_address')
-		reservation.user.email_user(subject, rendered_message, user_office_email)
+
+		b_send_mail = False
+		mail_setting = UserProfileSetting.objects.get(name="RESERVATION_REMINDER")
+		if UserProfile.objects.filter(user=reservation.user, setting=mail_setting).exists():
+			setting = UserProfile.objects.get(user=reservation.user, setting=mail_setting)
+			b_send_mail = bool(int(setting.value))
+		if b_send_mail:
+			reservation.user.email_user(subject, rendered_message, user_office_email)
+
 	return HttpResponse()
 
 
