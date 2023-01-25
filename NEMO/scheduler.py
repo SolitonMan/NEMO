@@ -146,7 +146,7 @@ def excessive_tool_use_reminder():
 					message += "<p>LEO has detected that you have been logged in to the " + str(t.name) + " since " + str(usage_event.start) + ".  If this is intended please ignore this message.  If you didn't intend to be logged in this long, please log out and submit a contest for the resulting Usage Event record as well as any related Staff Charge, Area Access or Consumable Withdraw records as necessary to correct the error(s).  If you have any questions please contact LEOHelp@psu.edu.</p>"
 					message += "<p>Thank you,<br>The LEO Team</p>"
 
-					mail.send_mail(subject, strip_tags(message), recipient.email, [recipient.email], html_message=message)
+					mail.send_mail(subject, strip_tags(message), 'LEOHelp@psu.edu', [recipient.email], html_message=message)
 
 					tl = ToolUseNotificationLog.objects.create(tool=t, usage_event=usage_event, message=message, sent=timezone.now())
 					

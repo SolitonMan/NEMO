@@ -332,10 +332,10 @@ class ConfigurationAdmin(admin.ModelAdmin):
 
 	search_fields = ('tool__name', 'name', 'consumable__name')
 
-	def change_view(self, request, object_id, form_url='', extra_context=None):
-		if not request.user.is_superuser:
-			self.exclude = ('current_settings',)
-		return super().change_view(request, object_id, form_url, extra_context)
+	#def change_view(self, request, object_id, form_url='', extra_context=None):
+	#	if not request.user.is_superuser:
+	#		self.exclude = ('current_settings',)
+	#	return super().change_view(request, object_id, form_url, extra_context)
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "tool":

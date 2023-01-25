@@ -691,6 +691,13 @@ class StaffChargeProject(models.Model):
 	no_charge_flag = models.BooleanField(default=False)
 	active_flag = models.BooleanField(default=True)
 
+
+class StaffChargeNotificationLog(models.Model):
+	staff_charge = models.ForeignKey(StaffCharge, on_delete=models.SET_NULL, null=True)
+	message = models.TextField(blank=True, null=True, help_text="The HTML message sent to the user")
+	sent = models.DateTimeField(null=True, blank=True)
+
+
 class Area(models.Model):
 	name = models.CharField(max_length=200, help_text='What is the name of this area? The name will be displayed on the tablet login and logout pages.')
 	welcome_message = models.TextField(help_text='The welcome message will be displayed on the tablet login page. You can use HTML and JavaScript.')

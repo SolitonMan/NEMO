@@ -5,7 +5,9 @@ import string
 from datetime import timedelta, datetime
 from decimal import Decimal
 
+from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
+from django.core import mail
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
 from django.db.models import Q, Max
@@ -14,9 +16,10 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.dateparse import parse_time, parse_date, parse_datetime
+from django.utils.html import strip_tags
 from django.views.decorators.http import require_GET, require_POST
 
-from NEMO.models import User, StaffCharge, AreaAccessRecord, Project, Area, StaffChargeProject, AreaAccessRecordProject, LockBilling, UserProfile, UserProfileSetting, UsageEvent, UsageEventProject
+from NEMO.models import User, StaffCharge, AreaAccessRecord, Project, Area, StaffChargeProject, AreaAccessRecordProject, LockBilling, UserProfile, UserProfileSetting, UsageEvent, UsageEventProject, StaffChargeNotificationLog
 
 
 @require_GET
@@ -1235,3 +1238,59 @@ def end_staff_area_charge(request):
 	area_access.updated = timezone.now()
 	area_access.save()
 	return redirect(reverse('staff_charges'))
+
+def email_staff_charge_reminders():
+	charges = StaffCharge.objects.filter(active_flag=True, end=None)
+
+	#mail.send_mail("Staff Charge Check Starting", "The staff charge count is " + str(charges.count()), 'dms117@psu.edu', ['dms117@psu.edu'], html_message="The staff charge count is " + str(charges.count()))
+
+	if settings.NOTIFICATION_STAFF_CHARGE_EXCESSIVE_INTERVAL is not None:
+		last_sent_interval = int(settings.NOTIFICATION_STAFF_CHARGE_EXCESSIVE_INTERVAL)
+	else:
+		last_sent_interval = 119
+
+	if settings.NOTIFICATION_STAFF_CHARGE_EXCESSIVE_DEFAULT_BLOCK is not None:
+		use_block_limit = int(settings.NOTIFICATION_STAFF_CHARGE_EXCESSIVE_DEFAULT_BLOCK)
+	else:
+		use_block_limit = 120
+
+	for c in charges:
+		b_send_message = False
+
+		#mail.send_mail("Staff Charge Found", strip_tags(str(c)), 'dms117@psu.edu', ['dms117@psu.edu'], html_message=str(c))
+
+		if (timezone.now() - c.start) >= timedelta(minutes=use_block_limit):
+
+			#mail.send_mail("Long Running Staff Charge Found", strip_tags(str(c)), 'dms117@psu.edu', ['dms117@psu.edu'], html_message=str(c))
+
+			if StaffChargeNotificationLog.objects.filter(staff_charge=c).exists():
+				scnl = StaffChargeNotificationLog.objects.filter(staff_charge=c).order_by('-sent')
+				last_sent = scnl[0].sent
+				if (timezone.now() - last_sent) >= timedelta(minutes=last_sent_interval):
+					b_send_message = True
+			else:
+				b_send_message = True
+
+			if b_send_message:
+				recipient = c.staff_member
+				scp = StaffChargeProject.objects.filter(staff_charge=c)
+
+				if scp.count() > 0:
+					customer = scp[0].customer
+				else:
+					if c.customer is not None:
+						customer = c.customer
+					else:
+						customer = ""
+
+				subject = "Staff charge active since " + str(c.start) 
+				if customer is not None and customer != "":
+					subject += " for " + str(customer)
+	
+				message = "<p>Hello " + str(recipient.first_name) + " " + str(recipient.last_name) + ",</p>"
+				message += "<p>LEO has detected that you have been charging staff time since " + str(c.start) + ".  If this is intended please ignore this message.  Otherwise, please end the charge at your convenience.   If you have any questions please contact LEOHelp@psu.edu.</p>"
+				message += "<p>Thank you,<br>The LEO Team</p>"
+	
+				mail.send_mail(subject, strip_tags(message), 'LEOHelp@psu.edu', [recipient.email], html_message=message)
+	
+				s1 = StaffChargeNotificationLog.objects.create(staff_charge=c, message=message, sent=timezone.now())
