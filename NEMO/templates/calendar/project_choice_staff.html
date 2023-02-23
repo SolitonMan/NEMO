@@ -14,12 +14,18 @@
 		<div id="self_ui" style="display: none;">
 		<p>Associate your reservation with a project.</p>
 		<input type="hidden" id="project_id" name="project_id">
+		<input type='hidden' name='selected_sample' id='selected_sample' value='' />
 		<select class="form-control" onchange="return set_project(this.options[this.selectedIndex].value);">
 			<option value="">Please select a project</option>
 		{% for project in active_projects %}
 			<option value="{{ project.id }}">{{ project }}</option>
 		{% endfor %}
 		</select>
+		<br/>
+		<div id="sample">
+		</div>
+		</br/>
+		<input id="complete_button" type="button" value="Complete" class="btn btn-success" disabled />
 		</div>
 
 		<div class="radio"><label><input type="radio" onchange="show_customer_ui()" name="staff_charge" value="customer">Reserve this tool on behalf of a customer.</label></div>
@@ -31,9 +37,10 @@
 						<th>&nbsp;</th>
 						<th style="min-width:200px">Customer</th>
 						<th style="min-width:200px">Project</th>
+						<th style="min-width:200px">Sample</th>
 					</tr>
 					<tr>
-						<td colspan="3" style="text-align:center"><a href="javascript:void(0)" onclick="add_customer()">Add another customer</a></td>
+						<td colspan="4" style="text-align:center"><a href="javascript:void(0)" onclick="add_customer()">Add another customer</a></td>
 					</tr>
 				</table>
 			</div>
@@ -48,8 +55,29 @@
 	{
 		if (id == "") return false;
 		$('#project_id').val(id);
-		$('#dialog_cancelled').val(false);
-		$('#dialog').modal('hide');
+
+		var parameters =
+		{
+			"project_id": id,
+			"entry_number": 0
+		};
+
+		var target_element = "#sample";
+
+		var url = "{% url 'get_samples' %}?" + jQuery.param(parameters);
+		var report_error = ajax_complete_callback("Could not fetch samples for user", "There was a problem obtaining the list of samples for the user.");
+
+		$(target_element).load(url, undefined, function(responseTxt, statusTxt, xhr) {
+			if (statusTxt == "success") {
+				$("#complete_button").click(function() {
+					$("#selected_sample").val($("#sample_id").val());
+					$('#dialog_cancelled').val(false);
+					$('#dialog').modal('hide');
+				}).prop("disabled",false);
+			} else {
+				ajax_complete_callback("Could not fetch samples for the project", "There was a problem obtaining the list of samples for the project.");
+			}
+		});
 		return true;
 	}
 
@@ -59,6 +87,9 @@
 	{
 		$("#customer_ui").hide();
 		$("#self_ui").show();
+		{% if active_projects.count == 1 %}
+		set_project({{ active_projects.0.id }});
+		{% endif %}
 	}
 
 	function show_customer_ui()
@@ -103,6 +134,7 @@
 
 	function fetch_projects(row, user_id)
 	{
+		// a function to retrieve a list of projects for a user and load it into the interface
 		var parameters =
 		{
 			"source_template": "staff_charges",
@@ -124,9 +156,41 @@
 				} else {
 					$("#done").click(on_submit);
 					$("#done").show();
+					if ($("#chosen_project__" + row).prop("type") == "hidden") {
+						fetch_samples(row);
+					}
 				}
 			} else {
 				ajax_complete_callback("Could not fetch projects for user", "There was a problem obtaining the list of projects for the user.");
+			}
+		});
+	}
+
+	function fetch_samples(row) 
+	{
+		// A function to retrieve a list of samples for a project and load it into the interface
+		var target_element = "#sample__" + row;
+		$(target_element).html("");
+	
+		var project_id = $("#chosen_project__" + row).val();
+
+		var parameters =
+		{
+			"project_id": project_id,
+			"entry_number": row
+		};
+		var url = "{% url 'get_samples' %}?" + jQuery.param(parameters);
+		var report_error = ajax_complete_callback("Could not fetch samples for user", "There was a problem obtaining the list of samples for the user.");
+
+		$(target_element).load(url, undefined, function(responseTxt, statusTxt, xhr) {
+			if (statusTxt == "success") {
+
+				// add select lists with samples for the project
+				var s1 = $("#chosen_sample__" + row);
+				s1.focus();
+
+			} else {
+				ajax_complete_callback("Could not fetch samples for the project", "There was a problem obtaining the list of samples for the project.");
 			}
 		});
 	}
@@ -135,6 +199,7 @@
 	{
 		$("#user_button__" + row).hide();
 		$("#project__" + row).html("");
+		$("#sample__" + row).html("");
 		$("#user_textbox__" + row).typeahead('val', '').show().focus();
 	}
 
@@ -179,9 +244,18 @@
 			return false;
 		}
 
-		//var failure_dialog = ajax_failure_callback("Could not begin charging staff time");
-		//var success_callbacks = [reload_page];
-		//ajax_post("{% url 'create_reservation' %}", serialize("#additional_event_parameters"), success_callbacks, failure_dialog);
+
+		// create hidden fields for samples since multiple select lists are not submitting from modal
+		for (var i=0; i<=current_entry_number; i++) {
+			fn = "#chosen_sample__" + i;
+
+			if ($(fn).val() != "") {
+				var input = "<input type='hidden' name='selected_sample__" + i + "' value='" + $(fn).val() + "' />";
+				$("#additional_event_parameters").append(input);
+			}
+		}
+
+
 		$('#dialog_cancelled').val(false);
 		$('#dialog').modal('hide');
 		return true;

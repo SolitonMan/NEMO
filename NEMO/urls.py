@@ -8,7 +8,7 @@ from rest_framework import routers
 
 from NEMO.models import GlobalFlag
 from NEMO.scheduler import start_scheduler
-from NEMO.views import abuse, accounts_and_projects, alerts, api, area_access, authentication, calendar, configuration_agenda, consumables, contact_staff, customization, email, feedback, get_projects, history, interlock, jumbotron, kiosk, landing, maintenance, mobile, notifications, usage, news, qualifications, remote_work, resources, safety, sidebar, staff_charges, status_dashboard, tasks, tool_control, training, tutorials, users
+from NEMO.views import abuse, accounts_and_projects, alerts, api, area_access, authentication, calendar, configuration_agenda, consumables, contact_staff, customization, email, feedback, get_projects, history, interlock, jumbotron, kiosk, landing, maintenance, mobile, notifications, usage, news, qualifications, remote_work, resources, safety, samples, sidebar, staff_charges, status_dashboard, tasks, tool_control, training, tutorials, users
 
 # Use our custom login page instead of Django's built-in one.
 #admin.site.login = login_required(admin.site.login)
@@ -316,6 +316,11 @@ if settings.ALLOW_CONDITIONAL_URLS:
 		# Site customization:
 		re_path(r'^customization/$', customization.customization, name='customization'),
 		re_path(r'^customize/(?P<element>.+)/$', customization.customize, name='customize'),
+
+		# Samples
+		re_path(r'^samples/$', samples.samples, name='samples'),
+		re_path(r'^create_or_modify_sample/(?P<sample_id>\d+)/$', samples.create_or_modify_sample, name='create_or_modify_sample'),
+		re_path(r'^get_samples/$', samples.get_samples, name='get_samples'),
 	]
 
 if settings.DEBUG:

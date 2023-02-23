@@ -308,6 +308,14 @@ table {
 .calendar_ps_events {
 	opacity:0.5;
 }
+
+.modal-center {
+	width: fit-content;
+	left: 50%;
+	transform:translate(-50%, 0%);
+	min-width: 800px;
+}
+
 /*
 nav {
 	overflow: hidden;

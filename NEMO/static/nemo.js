@@ -428,4 +428,47 @@ function calculate_duration()
 }
 
 
+function pair_selects(s1, s2)
+{
+	// a function to link two multiselect list to transfer their options back and forth
+	s1_id = $(s1).prop("id");
+	s2_id = $(s2).prop("id");
 
+	s1_options_tag = "#" + s1_id + " > option";
+	s2_options_tag = "#" + s2_id + " > option";
+
+	s1_options = $(s1_options_tag);
+	s2_options = $(s2_options_tag);
+
+	s1_selected = "#" + s1_id + " > option:selected";
+	s2_selected = "#" + s2_id + " > option:selected";
+
+	s1.on("click", function () {
+		$("option:selected", this).each(function () {
+			$(s2).append($("<option></option>").attr("value",$(this).prop("value")).text($(this).text()));
+			$(this).remove();
+		});
+		sort_options(this);
+		sort_options(s2);
+	});
+
+	s2.on("click", function () {
+		$("option:selected", this).each(function () {
+			$(s1).append($("<option></option>").attr("value",$(this).prop("value")).text($(this).text()));
+			$(this).remove();
+		});
+		sort_options(this);
+		sort_options(s1);
+	});
+}
+
+function sort_options(sel)
+{
+	var options = $("option", sel);
+	var arr = options.map(function(_, o) { return { t: $(o).text(), v: o.value }; }).get();
+	arr.sort(function(o1, o2) { return o1.t.toLowerCase() > o2.t.toLowerCase() ? 1 : o1.t.toLowerCase() < o2.t.toLowerCase() ? -1 : 0; });
+	options.each(function(i, o) {
+		o.value = arr[i].v;
+		$(o).text(arr[i].t);
+	});
+}

@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% load custom_tags_and_filters %}
+{% block title %}Manage Samples{% endblock %}
+{% block content %}
+
+<h1>Samples</h1>
+
+<div class="row">
+	<div class="col-md-4">
+		<input id="search" type="text" placeholder="Search for a sample" class="form-control" autofocus>
+	</div>
+
+	<div style="position:relative; display: inline; float: right;">
+		<input type="button" value="Add Sample" onclick="window.location.href='{% url 'create_or_modify_sample' 0 %}'" class="btn btn-success"></input>
+	</div>
+</div>
+
+<script>
+$("#search").keyup(function () {
+	var data = this.value.split(" ");
+	var tr = $("#sample_data").find("tr");
+	if (this.value == "") {
+		tr.show();
+		return;
+	}
+	tr.hide();
+	tr.filter(function(i, v) {
+		var $t = $(this);
+		for (var d = 0; d < data.length; ++d) {
+			var s = data[d].toUpperCase();
+			if ($t.text().toUpperCase().indexOf(s) > -1) {
+				return true;
+			}
+		}
+	})
+	.show();
+});
+</script>
+
+<br/>
+<br/>
+<table class="table">
+	<thead>
+	<tr>
+		<th>Identifier</th>
+		<th>Nickname</th>
+		<th>Project</th>
+		<th>Creator</th>
+		<th>Parent Sample</th>
+		<th>Description</th>
+	</tr>
+	</thead>
+	<tbody id="sample_data">
+	{% for s in samples %}
+	<tr>
+		<td><a href="{% url 'create_or_modify_sample' s.id %}">{{ s.identifier }}</a></td>
+		<td>{{ s.nickname }}</td>
+		<td>
+			{% for p in s.project.all %}
+			{{ p.project_number}}<br/>
+			{% endfor %}
+		</td>
+		<td>{{ s.created_by }}</td>
+		<td>{{ s.parent_sample.identifier }}</td>
+		<td>{{ s.description }}</td>
+	</tr>
+	{% endfor %}
+	</tbody>
+</table>
+{% endblock %}

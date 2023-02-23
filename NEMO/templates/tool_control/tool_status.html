@@ -555,10 +555,11 @@
 			<th>&nbsp;</th>
 			<th style="min-width:200px">Customer</th>
 			<th style="min-width:200px">Project</th>
+			<th style="min-width:300px">Samples</th>
 		</tr>
 		{# Rows are inserted here on load and when "Add another customer" is clicked. #}
 		<tr>
-			<td colspan="3" style="text-align:center"><a href="javascript:void(0)" onclick="add_customer()">Add another customer</a></td>
+			<td colspan="4" style="text-align:center"><a href="javascript:void(0)" onclick="add_customer()">Add another customer</a></td>
 		</tr>
 	</table>
 	<br>
@@ -629,7 +630,14 @@
 		var table_row;
 
 		for (r in rp) {
-			table_row = "<tr id=\"row_" + current_entry_number + "\"><td style=\"vertical-align: middle\"><span class=\"glyphicon glyphicon-remove-circle grey pointer\" onclick=\"remove_row(" + current_entry_number + ");\"></span></td><td>" + rp[r]["customer"] + "<input type=\"hidden\" value=\"" + rp[r]["user_id"] + "\" id=\"user_textbox__" + current_entry_number + "\" name=\"chosen_user__" + current_entry_number + "\" data-row=\"" + current_entry_number + "\"></td><td id=\"project__" + current_entry_number + "\" style=\"vertical-align: middle\">" + rp[r]["project"] + "<input type=\"hidden\" value=\"" + rp[r]["project_id"] + "\" name=\"chosen_project__" + current_entry_number + "\" id=\"chosen_project__" + current_entry_number + "\"></td></tr>";
+			table_row = "<tr id=\"row_" + current_entry_number + "\"><td style=\"vertical-align: top\"><span class=\"glyphicon glyphicon-remove-circle grey pointer\" onclick=\"remove_row(" + current_entry_number + ");\"></span></td><td>" + rp[r]["customer"] + "<input type=\"hidden\" value=\"" + rp[r]["user_id"] + "\" id=\"user_textbox__" + current_entry_number + "\" name=\"chosen_user__" + current_entry_number + "\" data-row=\"" + current_entry_number + "\"></td><td id=\"project__" + current_entry_number + "\" style=\"vertical-align: top\">" + rp[r]["project"] + "<input type=\"hidden\" value=\"" + rp[r]["project_id"] + "\" name=\"chosen_project__" + current_entry_number + "\" id=\"chosen_project__" + current_entry_number + "\"></td><td>";
+
+			for (s in rp[r]["samples"]) {
+				table_row += rp[r]["samples"][s]["sample"] + "<input type=\"hidden\" value=\"" + rp[r]["samples"][s]["sample_id"] + "\" id=\"chosen_sample__" + current_entry_number + "\" name=\"chosen_sample__" + current_entry_number + "\"><br/>";
+			}
+
+			table_row += "</td></tr>";
+
 			$("#usage_event_entries tr:last").before(table_row);
 			current_entry_number++;
 		}

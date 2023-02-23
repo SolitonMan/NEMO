@@ -3,12 +3,13 @@ from django.contrib import admin
 from django.contrib.admin import register, widgets
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.contrib.auth.models import Permission
+from django.utils import timezone
 
 from microsoft_auth.models import MicrosoftAccount
 from microsoft_auth.admin import MicrosoftAccountAdmin
 
 from NEMO.actions import lock_selected_interlocks, synchronize_with_tool_usage, unlock_selected_interlocks
-from NEMO.models import Account, ActivityHistory, Alert, Area, AreaAccessRecord, AreaAccessRecordProject, BillingType, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableUnit, ConsumableCategory, ConsumableType, ConsumableWithdraw, ContactInformation, ContactInformationCategory, ContestTransaction, ContestTransactionData, ContestTransactionNewData, Core, CreditCostCollector, Customization, Door, EmailLog, GlobalFlag, Interlock, InterlockCard, LandingPageChoice, LockBilling, MembershipHistory, News, Notification, NsfCategory, Organization, OrganizationType, PhysicalAccessLevel, PhysicalAccessLog, Project, Reservation, ReservationConfiguration, ReservationProject, Resource, ResourceCategory, SafetyIssue, ScheduledOutage, ScheduledOutageCategory, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskHistory, TaskStatus, Tool, TrainingSession, UsageEvent, UsageEventProject, User, UserType, UserProfile, UserProfileSetting
+from NEMO.models import Account, ActivityHistory, Alert, Area, AreaAccessRecord, AreaAccessRecordProject, BillingType, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableUnit, ConsumableCategory, ConsumableType, ConsumableWithdraw, ContactInformation, ContactInformationCategory, ContestTransaction, ContestTransactionData, ContestTransactionNewData, Core, CreditCostCollector, Customization, Door, EmailLog, GlobalFlag, Interlock, InterlockCard, LandingPageChoice, LockBilling, MembershipHistory, News, Notification, NsfCategory, Organization, OrganizationType, PhysicalAccessLevel, PhysicalAccessLog, Project, Reservation, ReservationConfiguration, ReservationProject, Resource, ResourceCategory, SafetyIssue, Sample, ScheduledOutage, ScheduledOutageCategory, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskHistory, TaskStatus, Tool, TrainingSession, UsageEvent, UsageEventProject, User, UserType, UserProfile, UserProfileSetting
 from NEMO.utilities import send_mail
 from NEMO.views.customization import get_customization, get_media_file_contents
 
@@ -232,7 +233,7 @@ class TrainingSessionAdmin(admin.ModelAdmin):
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "project":
-			kwargs["queryset"] = Project.objects.order_by('project_number')
+			kwargs["queryset"] = Project.objects.filter(active=True,end_date__gte=timezone.now().date()).order_by('project_number')
 		return super(TrainingSessionAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 	def has_delete_permission(self, request, obj=None):
@@ -261,7 +262,7 @@ class StaffChargeAdmin(admin.ModelAdmin):
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "project":
-			kwargs["queryset"] = Project.objects.order_by('project_number')
+			kwargs["queryset"] = Project.objects.filter(active=True,end_date__gte=timezone.now().date()).order_by('project_number')
 		return super(StaffChargeAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 	def has_delete_permission(self, request, obj=None):
@@ -276,7 +277,7 @@ class StaffChargeProjectAdmin(admin.ModelAdmin):
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "project":
-			kwargs["queryset"] = Project.objects.order_by('project_number')
+			kwargs["queryset"] = Project.objects.filter(active=True,end_date__gte=timezone.now().date()).order_by('project_number')
 		return super(StaffChargeProjectAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 	def has_delete_permission(self, request, obj=None):
@@ -304,7 +305,7 @@ class AreaAccessRecordAdmin(admin.ModelAdmin):
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "project":
-			kwargs["queryset"] = Project.objects.order_by('project_number')
+			kwargs["queryset"] = Project.objects.filter(active=True,end_date__gte=timezone.now().date()).order_by('project_number')
 		return super(AreaAccessRecordAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 	def has_delete_permission(self, request, obj=None):
@@ -318,7 +319,7 @@ class AreaAccessRecordProjectAdmin(admin.ModelAdmin):
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "project":
-			kwargs["queryset"] = Project.objects.order_by('project_number')
+			kwargs["queryset"] = Project.objects.filter(active=True,end_date__gte=timezone.now().date()).order_by('project_number')
 		return super(AreaAccessRecordProjectAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 	def has_delete_permission(self, request, obj=None):
@@ -461,7 +462,7 @@ class ReservationAdmin(admin.ModelAdmin):
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "project":
-			kwargs["queryset"] = Project.objects.order_by('project_number')
+			kwargs["queryset"] = Project.objects.filter(active=True,end_date__gte=timezone.now().date()).order_by('project_number')
 		return super(ReservationAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 	def has_delete_permission(self, request, obj=None):
@@ -485,7 +486,7 @@ class ReservationProjectAdmin(admin.ModelAdmin):
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "project":
-			kwargs["queryset"] = Project.objects.order_by('project_number')
+			kwargs["queryset"] = Project.objects.filter(active=True,end_date__gte=timezone.now().date()).order_by('project_number')
 		return super(ReservationProjectAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 	def has_delete_permission(self, request, obj=None):
@@ -511,7 +512,7 @@ class UsageEventAdmin(admin.ModelAdmin):
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "project":
-			kwargs["queryset"] = Project.objects.order_by('project_number')
+			kwargs["queryset"] = Project.objects.filter(active=True,end_date__gte=timezone.now().date()).order_by('project_number')
 		return super(UsageEventAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 	def has_delete_permission(self, request, obj=None):
@@ -532,7 +533,7 @@ class UsageEventProjectAdmin(admin.ModelAdmin):
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "project":
-			kwargs["queryset"] = Project.objects.order_by('project_number')
+			kwargs["queryset"] = Project.objects.filter(active=True,end_date__gte=timezone.now().date()).order_by('project_number')
 		return super(UsageEventProjectAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 	def has_delete_permission(self, request, obj=None):
@@ -592,7 +593,7 @@ class ConsumableWithdrawAdmin(admin.ModelAdmin):
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "project":
-			kwargs["queryset"] = Project.objects.order_by('project_number')
+			kwargs["queryset"] = Project.objects.filter(active=True,end_date__gte=timezone.now().date()).order_by('project_number')
 		return super(ConsumableWithdrawAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 	def has_delete_permission(self, request, obj=None):
@@ -734,6 +735,11 @@ class UserAdmin(admin.ModelAdmin):
 		if db_field.name == 'credit_cost_collector':
 			kwargs["queryset"] = CreditCostCollector.objects.order_by('project__project_number')
 		return super(UserAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
+	def formfield_for_manytomany(self, db_field, request, **kwargs):
+		if db_field.name == 'projects':
+			kwargs["queryset"] = Project.objects.filter(active=True,end_date__gte=timezone.now().date()).order_by('project_number')
+		return super(UserAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
 
 	def has_delete_permission(self, request, obj=None):
 		return False
@@ -976,7 +982,7 @@ class CreditCostCollectorAdmin(admin.ModelAdmin):
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "project":
-			kwargs["queryset"] = Project.objects.order_by('project_number')
+			kwargs["queryset"] = Project.objects.filter(active=True,end_date__gte=timezone.now().date()).order_by('project_number')
 		return super(CreditCostCollectorAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 	def has_delete_permission(self, request, obj=None):
@@ -1001,6 +1007,23 @@ class UserProfileSettingAdmin(admin.ModelAdmin):
 	list_display = ('name', 'setting_type')
 
 	search_fields = ('name', 'setting_type')
+
+	def has_delete_permission(self, request, obj=None):
+		return False
+
+@register(Sample)
+class SampleAdmin(admin.ModelAdmin):
+	filter_horizontal = ('project',)
+	list_display = ('identifier','nickname','description','get_projects','created_by','created')
+	search_fields = ('identifier','nickname','description','project__project_number','created_by__last_name','created_by__first_name','created_by__username')
+
+	def get_projects(self, obj):
+		return "\n".join([p.project_number for p in obj.project.all()])
+
+	def formfield_for_manytomany(self, db_field, request, **kwargs):
+		if db_field.name == "project":
+			kwargs["queryset"] = Project.objects.filter(active=True,end_date__gte=timezone.now().date()).order_by('project_number')
+		return super(SampleAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
 
 	def has_delete_permission(self, request, obj=None):
 		return False

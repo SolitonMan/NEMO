@@ -34,6 +34,7 @@
 			<tr>
 			<th>Customer</th>
 			<th>Project</th>
+			<th>Samples</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -41,6 +42,11 @@
 			<tr>
 			<td>{{ r.customer }}</td>
 			<td>{{ r.project }}</td>
+			<td>
+			{% for s in r.sample.all %}
+			{{ s }}<br/>
+			{% endfor %}
+			</td>
 			</tr>	
 		{% endfor %}
 		</tbody>

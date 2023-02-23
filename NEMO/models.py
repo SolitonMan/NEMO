@@ -690,6 +690,7 @@ class StaffChargeProject(models.Model):
 	contest_data = GenericRelation('ContestTransactionData')
 	no_charge_flag = models.BooleanField(default=False)
 	active_flag = models.BooleanField(default=True)
+	sample = models.ManyToManyField('Sample', blank=True, related_name='scp_sample')
 
 
 class StaffChargeNotificationLog(models.Model):
@@ -777,6 +778,7 @@ class AreaAccessRecordProject(models.Model):
 	no_charge_flag = models.BooleanField(default=False)
 	active_flag = models.BooleanField(default=True)
 	comment = models.TextField(null=True, blank=True)
+	sample = models.ManyToManyField('Sample', blank=True, related_name='aarp_sample')
 
 
 class ConfigurationHistory(models.Model):
@@ -853,6 +855,7 @@ class Project(models.Model):
 	start_date = models.DateField(null=True, blank=True, help_text="The date on which the project, internal order or wbs element becomes active")
 	end_date = models.DateField(null=True, blank=True, help_text="The date on which the project, internal order or wbs element becomes inactive")
 	detailed_invoice = models.BooleanField(default=False, help_text="A flag to indicate if the customer assigned this project should receive a detailed invoice.  The default is False, indicating that a summarized invoice should be sent.")
+	group_by_user = models.BooleanField(default=False, help_text="A flag to indicate if the invoice should be grouped by user instead of core.")
 	po_number = models.TextField(null=True, blank=True)
 	comment = models.TextField(null=True, blank=True)
 
@@ -975,6 +978,7 @@ class ReservationProject(models.Model):
 	reservation = models.ForeignKey('Reservation', on_delete=models.CASCADE, null=True, blank=True)
 	project = models.ForeignKey('Project', on_delete=models.CASCADE)
 	customer = models.ForeignKey('User', on_delete=models.CASCADE)
+	sample = models.ManyToManyField('Sample', null=True, blank=True)
 	created = models.DateTimeField(null=True, blank=True)
 	updated = models.DateTimeField(null=True, blank=True)
 
@@ -1059,6 +1063,7 @@ class UsageEventProject(models.Model):
 	active_flag = models.BooleanField(default=True)
 	sample_num = models.IntegerField(null=True, blank=True)
 	cost_per_sample = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+	sample = models.ManyToManyField('Sample', blank=True, related_name='uep_sample')
 
 
 class Consumable(models.Model):
@@ -1931,5 +1936,21 @@ class NotificationSchemeToolAction(models.Model):
 	updated = models.DateTimeField(null=True, blank=True)
 	created_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, related_name='nsta_created_by')
 	updated_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, related_name='nsta_updated_by')
+
+
+class Sample(models.Model):
+	identifier = models.CharField(null=True,blank=True,max_length=255)
+	nickname = models.CharField(null=True,blank=True,max_length=500)
+	description = models.TextField(null=True,blank=True)
+	project = models.ManyToManyField("Project", blank=True, related_name="sample_project")
+	parent_sample = models.ForeignKey('self',null=True,blank=True,on_delete=models.SET_NULL,related_name='precursor')
+	active_flag = models.BooleanField(null=False, blank=False, default=True)
+	created = models.DateTimeField(null=True, blank=True, default=timezone.now())
+	created_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, related_name='sample_created_by')
+	updated = models.DateTimeField(null=True, blank=True, default=timezone.now())
+	updated_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, related_name='sample_updated_by')
+
+	def __str__(self):
+		return self.identifier + " (" + str(self.created_by) + ") - " + self.nickname
 
 

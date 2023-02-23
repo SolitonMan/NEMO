@@ -58,17 +58,21 @@
 			$("#tool_status_table").load("{% url 'status_dashboard' %}?interest=tools");
 	}
 
-	function force_user_out_of_the_area(url)
+	function force_user_out_of_the_area(url, area, user)
 	{
 		var failure_dialog = ajax_failure_callback("Unable to force the user to log out of the area");
-		ajax_post(url, undefined, undefined, failure_dialog, refresh_status_dashboard);
+		if (confirm("Are you sure you wish to end access to " + area + " for " + user + "?")) {
+			ajax_post(url, undefined, undefined, failure_dialog, refresh_status_dashboard);
+		}
 	}
 
-	function force_user_off_of_tool(url)
+	function force_user_off_of_tool(url, tool, user)
 	{
 		var failure_dialog = ajax_failure_callback("Unable to force user off the tool");
 		var contents = { "state": "disable" };
-		ajax_post(url, contents, undefined, failure_dialog, refresh_status_dashboard);
+		if (confirm("Are you sure you wish to end the use of the " + tool + " by " + user + "?")) { 
+			ajax_post(url, contents, undefined, failure_dialog, refresh_status_dashboard);
+		}
 	}
 
 	{# This function modifies the contents of a style sheet after the page has been loaded. #}

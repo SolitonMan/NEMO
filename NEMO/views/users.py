@@ -15,7 +15,7 @@ from django.views.decorators.http import require_GET, require_http_methods, requ
 
 from NEMO.admin import record_local_many_to_many_changes, record_active_state
 from NEMO.forms import UserForm
-from NEMO.models import Account, UserRelationship, UserRelationshipType, User, UserProfile, UserProfileSetting, Project, Tool, PhysicalAccessLevel, Reservation, StaffCharge, UsageEvent, AreaAccessRecord, ActivityHistory, ProbationaryQualifications
+from NEMO.models import Account, UserRelationship, UserRelationshipType, User, UserProfile, UserProfileSetting, Project, Tool, PhysicalAccessLevel, Reservation, StaffCharge, UsageEvent, AreaAccessRecord, ActivityHistory, ProbationaryQualifications, Sample
 
 
 @staff_member_required(login_url=None)
@@ -429,3 +429,23 @@ def save_user_profile(request):
 				profile = UserProfile.objects.create(user=user, setting=setting, value=value)
 
 	return user_profile(request, user_id, "User profile for " + str(user) + " had been successfully updated.")
+
+
+
+@login_required
+@require_POST
+def get_samples(request):
+	user_id = request.POST.get("user_id")
+	user = User.objects.get(id=user_id)
+	projects = user.all_projects()
+	samples = user.sample_set.all()
+
+	dictionary = {
+		"user": user,
+		"projects": projects,
+		"samples": samples,
+	}
+
+	return render(request, 'users/add_sample.html', dictionary)
+
+

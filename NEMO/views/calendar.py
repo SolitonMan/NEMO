@@ -20,7 +20,7 @@ from django.utils.html import escape
 from django.utils.safestring import mark_safe
 
 from NEMO.decorators import disable_session_expiry_refresh
-from NEMO.models import Tool, Reservation, Configuration, ReservationConfiguration, ReservationProject, ReservationNotification, Consumable, UsageEvent, UsageEventProject, AreaAccessRecord, StaffCharge, StaffChargeProject, User, Project, ScheduledOutage, ScheduledOutageCategory, UserProfile, UserProfileSetting
+from NEMO.models import Tool, Reservation, Configuration, ReservationConfiguration, ReservationProject, ReservationNotification, Consumable, UsageEvent, UsageEventProject, AreaAccessRecord, StaffCharge, StaffChargeProject, User, Project, ScheduledOutage, ScheduledOutageCategory, UserProfile, UserProfileSetting, Sample
 from NEMO.utilities import EmailCategory, create_email_log, bootstrap_primary_color, create_email_attachment, extract_times, extract_dates, format_datetime, parse_parameter_string
 from NEMO.views.constants import ADDITIONAL_INFORMATION_MAXIMUM_LENGTH
 from NEMO.views.customization import get_customization, get_media_file_contents
@@ -322,6 +322,10 @@ def create_reservation(request):
 		return HttpResponseBadRequest(str(e))
 	tool = get_object_or_404(Tool, name=request.POST.get('tool_name'))
 	explicit_policy_override = False
+
+	reservation_projects = None
+	sample_selections = None
+
 	if request.user.is_staff:
 		try:
 			user = User.objects.get(id=request.POST['impersonate'])
@@ -376,12 +380,13 @@ def create_reservation(request):
 		active_projects = user.active_projects()
 		if len(active_projects) == 1:
 			new_reservation.project = active_projects[0]
+			
 		else:
 			try:
 				new_reservation.project = Project.objects.get(id=request.POST['project_id'])
 			except:
 				return render(request, 'calendar/project_choice.html', {'active_projects': active_projects})
-
+	
 		# Make sure the user is actually enrolled on the project. We wouldn't want someone
 		# forging a request to reserve against a project they don't belong to.
 		if new_reservation.project not in new_reservation.user.active_projects():
@@ -423,7 +428,8 @@ def create_reservation(request):
 				new_reservation.save()
 
 				if not ReservationProject.objects.filter(reservation=new_reservation).exists():
-					reservation_projects = {}	
+					reservation_projects = {}
+					sample_selections = {}	
 					for key, value in request.POST.items():
 						if is_valid_field(key):
 							attribute, separator, index = key.partition("__")
@@ -446,10 +452,16 @@ def create_reservation(request):
 									new_reservation.delete()
 									return HttpResponseBadRequest('Please choose a project for charges made during this run.')
 
+							if attribute == "chosen_sample":
+								sample_field = "selected_sample__" + str(index)
+								samples = request.POST.get(sample_field)
+								sample_selections[index] = samples.split(",")
+
+
 					for r in reservation_projects.values():
 						r.full_clean()
 						r.save()
-
+					
 
 	configured = (request.POST.get('configured') == "true")
 	# If a reservation is requested and the tool does not require configuration...
@@ -478,6 +490,26 @@ def create_reservation(request):
 				res_proj.updated = timezone.now()
 				res_proj.save()
 
+		# save any samples
+		# check for a group of samples
+		if reservation_projects is not None and reservation_projects != {}:
+			if sample_selections is not None:
+				for k in reservation_projects.keys():
+					if k in sample_selections:
+						for s in sample_selections[k]:
+							reservation_projects[k].sample.add(Sample.objects.get(id=int(s)))
+
+		else:
+			samples = request.POST['selected_sample']
+			sample_list = samples.split(",")
+
+			if sample_list != []:
+				rp = ReservationProject.objects.filter(reservation=new_reservation)
+				for r in rp:
+					for s in sample_list:
+						if s in r.project.sample_project.all():
+							r.sample.add(s)
+
 		# create an email with the reservation information
 		if b_send_mail:
 
@@ -497,14 +529,6 @@ def create_reservation(request):
 			create_email_log(email, EmailCategory.GENERAL)
 			email.send()
 
-		#if ReservationProject.objects.filter(reservation=new_reservation).exists():
-		#	rp_objects = ReservationProject.objects.filter(reservation=new_reservation)
-		#	for rp in rp_objects:
-		#		msg = 'A reservation has been created for the  ' + str(tool.name) + ' starting ' + str(new_reservation.start) + '.  The tool will be run by ' + str(new_reservation.user) + '.'
-		#		email = EmailMessage('Reservation Created',msg,'LEOHelp@psu.edu',[str(rp.customer.email)],reply_to=['LEOHelp@psu.edu'])
-		#		email.attach(attachment)
-		#		create_email_log(email, EmailCategory.GENERAL)
-		#		email.send()
 
 		return HttpResponse()
 
@@ -553,6 +577,48 @@ def create_reservation(request):
 				res_proj.updated = timezone.now()
 				res_proj.save()
 
+		# check for any samples to save
+		if request.POST.get('staff_charge') == "customer":
+			# check for customer info 
+			# reservation_projects and sample_selections will be empty even if called previously since this path of code results from the submission of configuration information, on this passthrough the code to generate these variables will be skipped
+			reservation_projects = {}
+			sample_selections = {}
+
+			for key, value in request.POST.items():
+				if is_valid_field(key):
+					attribute, separator, index = key.partition("__")
+					index = int(index)
+
+					if index not in reservation_projects:
+						if attribute == "chosen_project":
+							res_proj = ReservationProject.objects.filter(project=Project.objects.get(id=int(value)), reservation=new_reservation)
+							reservation_projects[index] = res_proj[0]
+
+					if attribute == "chosen_sample":
+						sample_field = "selected_sample__" + str(index)
+						samples = request.POST.get(sample_field)
+						sample_selections[index] = samples.split(",")
+
+		# after repopulating the variables we can do our checks as if we were on the path of a non-configurable tool
+		if reservation_projects is not None and reservation_projects != {}:
+			if sample_selections is not None and sample_selections != {}:
+				for k in reservation_projects.keys():
+					if k in sample_selections:
+						for s in sample_selections[k]:
+							reservation_projects[k].sample.add(Sample.objects.get(id=int(s)))
+
+		else:
+			samples = request.POST['selected_sample']
+			sample_list = samples.split(",")
+
+			if sample_list != []:
+				rp = ReservationProject.objects.filter(reservation=new_reservation)
+				for r in rp:
+					for s in sample_list:
+						if s in r.project.sample_project.all():
+							r.sample.add(s)
+
+
 		if b_send_mail:
 			subject = str(tool.name) + ' reservation created'
 
@@ -570,14 +636,6 @@ def create_reservation(request):
 			create_email_log(email, EmailCategory.GENERAL)
 			email.send()
 
-		#if ReservationProject.objects.filter(reservation=new_reservation).exists():
-		#	rp_objects = ReservationProject.objects.filter(reservation=new_reservation)
-		#	for rp in rp_objects:
-		#		msg = 'A reservation has been created for the  ' + str(tool.name) + ' starting ' + str(new_reservation.start) + '.  The tool will be run by ' + str(new_reservation.user) + '.'
-		#		email = EmailMessage('Reservation Created',msg,'LEOHelp@psu.edu',[str(rp.customer.email)],reply_to=['LEOHelp@psu.edu'])
-		#		email.attach(attachment)
-		#		create_email_log(email, EmailCategory.GENERAL)
-		#		email.send()
 
 		return HttpResponse()
 
@@ -785,6 +843,10 @@ def modify_reservation(request, start_delta, end_delta):
 				res_proj.created = timezone.now()
 				res_proj.updated = timezone.now()
 				res_proj.save()
+
+				# update sample relationships
+				for s in rp.sample.all():
+					res_proj.sample.add(s)
 
 		reservation_to_cancel.descendant = new_reservation
 		reservation_to_cancel.updated = timezone.now()
@@ -1167,7 +1229,7 @@ def send_missed_reservation_notification(reservation):
 			n.user.email_user(str(dateformat.format(reservation.start, "m-d-Y g:i:s A")) + ' time slot for the ' + str(reservation.tool.name) + ' just opened', notification_email, n.user.email)
 
 def is_valid_field(field):
-	return search("^(chosen_user|chosen_project|project_percent)__[0-9]+$", field) is not None
+	return search("^(chosen_user|chosen_project|project_percent|chosen_sample)__[0-9]+$", field) is not None
 
 
 @login_required

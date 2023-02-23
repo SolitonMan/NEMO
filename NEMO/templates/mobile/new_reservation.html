@@ -16,9 +16,14 @@
 				<input type="hidden" name="project_id" value="{{ user.active_projects.0.id }}">
 			{% elif user.active_project_count > 1 %}
 				<h4>Which project is this for?</h4>
+				<input type="hidden" id="project_id" name="project_id">
+				<select class="form-control" onchange="return set_project(this.options[this.selectedIndex].value);">
+					<option value="">Please select a project</option>
 				{% for project in user.active_projects %}
-					<div class="radio"><label><input type="radio" name="project_id" value="{{ project.id }}">{{ project }}</label></div>
+					<option value="{{ project.id }}">{{ project }}</option>
 				{% endfor %}
+				</select>
+				
 			{% endif %}
 		{% else %}
 			<div class="radio"><label><input type="radio" onchange="show_self_ui()" name="staff_charge" id="staff_charge" value="self">Reserve this tool for my own project</label></div>
@@ -272,8 +277,8 @@
 	function on_load()
 	{
 		add_customer();
-		$('#start').datetimepicker({format: 'YYYY-MM-DD hh:mm A'});
-		$('#end').datetimepicker({format: 'YYYY-MM-DD hh:mm A'});
+		$('#start').datetimepicker({format: 'YYYY-MM-DD hh:mm A', defaultDate: '{{ date }} 00:00'});
+		$('#end').datetimepicker({format: 'YYYY-MM-DD hh:mm A', defaultDate: '{{ date }} 00:00'});
 	}
 
 	$(on_load);

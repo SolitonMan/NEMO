@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% load custom_tags_and_filters %}
+{% block title %}Manage Sample{% endblock %}
+{% block content %}
+
+<h1>Modify Sample: {{ form.instance.identifier }}</h1>
+
+<form action="{% url 'create_or_modify_sample' sample_id %}" method="post">
+	{% csrf_token %}
+	<table class="table">
+	{{ form.as_table }}
+	</table>
+	<input type="submit" value="Submit" class="btn btn-success" />
+</form>
+{% endblock %}
+
+

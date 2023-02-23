@@ -148,6 +148,7 @@
 							{% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
 							{% navigation_url 'resources' 'Resources' %}
 							{% endif %}
+							{% navigation_url 'samples' 'Samples' %}
 							{% if request.session.core_admin or request.session.technical_staff or user.is_superuser %}
 							{% navigation_url 'staff_charges' 'Staff charges' %}
 							{% endif %}
@@ -213,7 +214,7 @@
 {# This division is used to display dialog messages via Bootstrap. #}
 <div class="modal fade" id="dialog" tabindex="-1" role="dialog">
 	<div class="modal-dialog">
-		<div class="modal-content">
+		<div class="modal-content modal-center">
 		</div>
 	</div>
 </div>
