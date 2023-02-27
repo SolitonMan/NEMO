@@ -615,8 +615,9 @@ def create_reservation(request):
 				rp = ReservationProject.objects.filter(reservation=new_reservation)
 				for r in rp:
 					for s in sample_list:
-						if s in r.project.sample_project.all():
-							r.sample.add(s)
+						smp = Sample.objects.get(id=int(s))
+						if smp in r.project.sample_project.all():
+							r.sample.add(smp)
 
 
 		if b_send_mail:

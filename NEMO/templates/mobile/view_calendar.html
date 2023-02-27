@@ -13,7 +13,7 @@
 	</div>
 	{% for event in events %}
 		{% if event|class_name == "Reservation" %}
-			{% include 'mobile/individual_reservation.html' with reservation=event %}
+			{% include 'mobile/individual_reservation.html' with reservation=event user=user %}
 		{% elif event|class_name == "ScheduledOutage" %}
 			{% include 'mobile/individual_outage.html' with outage=event %}
 		{% endif %}

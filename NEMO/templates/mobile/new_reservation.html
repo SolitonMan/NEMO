@@ -8,7 +8,7 @@
 {% endblock %}
 {% block content %}
 	<h3>Create a new reservation</h3>
-	<form method="post" action="{% url 'make_reservation' %}" {% if user.is_staff %}onsubmit="return on_submit();"{% else %}onsubmit="return on_user_submit();"{% endif %}>
+	<form id="mobile_reservation" method="post" action="{% url 'make_reservation' %}" {% if user.is_staff %}onsubmit="return on_submit();"{% else %}onsubmit="return on_user_submit();"{% endif %}>
 		{% csrf_token %}
 		<input type="hidden" name="tool_id" value="{{ tool.id }}">
 		{% if not user.is_staff %}
@@ -17,25 +17,33 @@
 			{% elif user.active_project_count > 1 %}
 				<h4>Which project is this for?</h4>
 				<input type="hidden" id="project_id" name="project_id">
+				<input type='hidden' name='selected_sample' id='selected_sample' value='' />
 				<select class="form-control" onchange="return set_project(this.options[this.selectedIndex].value);">
 					<option value="">Please select a project</option>
 				{% for project in user.active_projects %}
 					<option value="{{ project.id }}">{{ project }}</option>
 				{% endfor %}
 				</select>
-				
+				<br/>
+				<div id="sample">
+				</div>
+				</br/>
 			{% endif %}
 		{% else %}
 			<div class="radio"><label><input type="radio" onchange="show_self_ui()" name="staff_charge" id="staff_charge" value="self">Reserve this tool for my own project</label></div>
 			<div id="self_ui" style="display: none;">
 			<p>Associate your reservation with a project.</p>
 			<input type="hidden" id="project_id" name="project_id">
+			<input type='hidden' name='selected_sample' id='selected_sample' value='' />
 			<select class="form-control" onchange="return set_project(this.options[this.selectedIndex].value);">
 				<option value="">Please select a project</option>
 			{% for project in user.active_projects %}
 				<option value="{{ project.id }}">{{ project }}</option>
 			{% endfor %}
 			</select>
+			<br/>
+			<div id="sample"></div>
+			</br/>
 			</div>
 
 			<div class="radio"><label><input type="radio" onchange="show_customer_ui()" name="staff_charge" id="staff_charge" value="customer">Reserve this tool on behalf of a customer.</label></div>
@@ -47,9 +55,10 @@
 							<th>&nbsp;</th>
 							<th style="min-width:200px">Customer</th>
 							<th style="min-width:200px">Project</th>
+							<th style="min-width:300px">Samples</th>
 						</tr>
 						<tr>
-							<td colspan="3" style="text-align:center"><a href="javascript:void(0)" onclick="add_customer()">Add another customer</a></td>
+							<td colspan="4" style="text-align:center"><a href="javascript:void(0)" onclick="add_customer()">Add another customer</a></td>
 						</tr>
 					</table>
 				</div>
@@ -66,10 +75,10 @@
 		{% endif %}
 		<h4>When would you like to reserve the {{ tool }}?</h4>
 		<div class="datetimepicker-container">
-			<input type="text" id="start" name="start" placeholder="Choose a start time" />
+			<input class="form-control" type="text" id="start" name="start" placeholder="Choose a start time" />
 		</div>
 		<div class="datetimepicker-container">
-			<input type="text" id="end" name="end" placeholder="Choose an end time" />
+			<input class="form-control" type="text" id="end" name="end" placeholder="Choose an end time" />
 		</div>
 		<div class="form-group text-center" style="margin-top:40px">
 			<input type="submit" value="Create the reservation" class="btn btn-success">
@@ -81,8 +90,29 @@
 	{
 		if (id == "") return false;
 		$('#project_id').val(id);
-		$('#dialog_cancelled').val(false);
-		$('#dialog').modal('hide');
+
+		var parameters =
+		{
+			"project_id": id,
+			"entry_number": 0
+		};
+
+		var target_element = "#sample";
+
+		var url = "{% url 'get_samples' %}?" + jQuery.param(parameters);
+		var report_error = ajax_complete_callback("Could not fetch samples for user", "There was a problem obtaining the list of samples for the user.");
+
+		$(target_element).load(url, undefined, function(responseTxt, statusTxt, xhr) {
+			if (statusTxt == "success") {
+				$("#sample_id").focus();
+				$("#sample_id").change(function() {
+					$("#selected_sample").val($("#sample_id").val());
+				});
+			} else {
+				ajax_complete_callback("Could not fetch samples for the project", "There was a problem obtaining the list of samples for the project.");
+			}
+		});
+
 		return true;
 	}
 
@@ -149,17 +179,44 @@
 			if (statusTxt == "success") {
 				var el =  $("#chosen_project__" + row);
 
-				/*if (el.tagName == "SELECT") {
-					$("#chosen_project__" + row).change(function() {
-						$("#done").click(on_submit);
-						$("#done").show();
-					});
+				if (el.tagName == "SELECT") {
+					$("#chosen_project__" + row).focus()
 				} else {
-					$("#done").click(on_submit);
-					$("#done").show();
-				}*/
+					if ($("#chosen_project__" + row).prop("type") == "hidden") {
+						fetch_samples(row);
+					}
+				}
 			} else {
 				ajax_complete_callback("Could not fetch projects for user", "There was a problem obtaining the list of projects for the user.");
+			}
+		});
+	}
+
+	function fetch_samples(row) 
+	{
+		// A function to retrieve a list of samples for a project and load it into the interface
+		var target_element = "#sample__" + row;
+		$(target_element).html("");
+	
+		var project_id = $("#chosen_project__" + row).val();
+
+		var parameters =
+		{
+			"project_id": project_id,
+			"entry_number": row
+		};
+		var url = "{% url 'get_samples' %}?" + jQuery.param(parameters);
+		var report_error = ajax_complete_callback("Could not fetch samples for user", "There was a problem obtaining the list of samples for the user.");
+
+		$(target_element).load(url, undefined, function(responseTxt, statusTxt, xhr) {
+			if (statusTxt == "success") {
+
+				// add select lists with samples for the project
+				var s1 = $("#chosen_sample__" + row);
+				s1.focus();
+
+			} else {
+				ajax_complete_callback("Could not fetch samples for the project", "There was a problem obtaining the list of samples for the project.");
 			}
 		});
 	}
@@ -241,6 +298,16 @@
 			if (total_entry_count == 0) {
 				alert("You must add at least one customer in order to use this tool for other.");
 				return false;
+			}
+
+			// create hidden fields for samples since multiple select lists are not submitting from modal
+			for (var i=0; i<=current_entry_number; i++) {
+				fn = "#chosen_sample__" + i;
+
+				if ($(fn).val() != "") {
+					var input = "<input type='hidden' name='selected_sample__" + i + "' value='" + $(fn).val() + "' />";
+					$("#mobile_reservation").append(input);
+				}
 			}
 	
 		}

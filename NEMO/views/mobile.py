@@ -13,7 +13,7 @@ from django.views.decorators.http import require_GET, require_POST
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 
-from NEMO.models import Reservation, ReservationProject, Tool, User, Project, ScheduledOutage
+from NEMO.models import Reservation, ReservationProject, Sample, Tool, User, Project, ScheduledOutage
 from NEMO.utilities import extract_date, localize, beginning_of_the_day, end_of_the_day
 from NEMO.views.calendar import extract_configuration, determine_insufficient_notice
 from NEMO.views.policy import check_policy_to_save_reservation
@@ -84,6 +84,8 @@ def make_reservation(request):
 			raise Exception()
 	except:
 		return render(request, 'mobile/error.html', {'message': 'Please enter a valid start time and end time for the reservation.'})
+
+	mode = ""
 	start_value = parse_datetime(start)
 	end_value = parse_datetime(end)
 	tool = get_object_or_404(Tool, id=request.POST.get('tool_id'))
@@ -123,6 +125,7 @@ def make_reservation(request):
 			# add ReservationProject entries for the customers submitted by the staff member
 			reservation_projects = {}
 			reservation.save()
+			sample_selections = {}
 
 			for key, value in request.POST.items():
 				if is_valid_field(key):
@@ -146,9 +149,20 @@ def make_reservation(request):
 							reservation.delete()
 							return HttpResponseBadRequest('Please choose a project for charges made during this run.')
 
+					if attribute == "chosen_sample":
+						sample_field = "selected_sample__" + str(index)
+						samples = request.POST.get(sample_field)
+						sample_selections[index] = samples.split(",")
+
+
 			for r in reservation_projects.values():
 				r.full_clean()
 				r.save()
+
+			for k in reservation_projects.keys():
+				if k in sample_selections:
+					for s in sample_selections[k]:
+						reservation_projects[k].sample.add(Sample.objects.get(id=int(s)))
 
 	else:
 		try:
@@ -162,10 +176,36 @@ def make_reservation(request):
 	if reservation.self_configuration:
 		reservation.short_notice = False
 	policy_problems, overridable = check_policy_to_save_reservation(request, None, reservation, request.user, False)
+
+	reservation.created = timezone.now()
+	reservation.updated = timezone.now()
 	reservation.save()
+
 	for rc in res_conf:
 		rc.reservation = reservation
 		rc.save()
+
+	if not ReservationProject.objects.filter(reservation=reservation).exists():
+		res_proj = ReservationProject()
+		res_proj.reservation = reservation
+		res_proj.customer = reservation.user
+		res_proj.project = reservation.project
+		res_proj.created = timezone.now()
+		res_proj.updated = timezone.now()
+		res_proj.save()
+
+	if (not request.user.is_staff) or (request.user.is_staff and mode == "self"):
+		samples = request.POST['selected_sample']
+		sample_list = samples.split(",")
+
+		if sample_list != []:
+			rp = ReservationProject.objects.filter(reservation=reservation)
+			for r in rp:
+				for s in sample_list:
+					smp = Sample.objects.get(id=int(s))
+					if smp in r.project.sample_project.all():
+						r.sample.add(smp)
+
 	return render(request, 'mobile/reservation_success.html', {'new_reservation': reservation})
 
 
@@ -206,9 +246,10 @@ def view_calendar(request, tool_id, date=None):
 		'current_day_string': date.strftime('%Y-%m-%d'),
 		'next_day': start + timedelta(days=1),
 		'events': events,
+		'user': request.user,
 	}
 
 	return render(request, 'mobile/view_calendar.html', dictionary)
 
 def is_valid_field(field):
-	return search("^(chosen_user|chosen_project|project_percent)__[0-9]+$", field) is not None
+	return search("^(chosen_user|chosen_project|project_percent|chosen_sample)__[0-9]+$", field) is not None

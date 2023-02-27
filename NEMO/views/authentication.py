@@ -264,7 +264,7 @@ def set_ma_session(request, context):
 	email = request.user.email
 	username = request.user.username
 
-	if username.endswith("@psu.edu"):
+	if username.endswith("@psu.edu") and 1 == 0:
 		dictionary = {}
 		namecheck = username.split("@")[0]
 		users = User.objects.filter(username__icontains=namecheck, is_active=True)

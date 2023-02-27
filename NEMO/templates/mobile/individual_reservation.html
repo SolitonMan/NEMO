@@ -9,6 +9,32 @@
 			For project {{ reservation.project }}<br>
 		{% endif %}
 		Created by {{ reservation.creator }} {% if reservation.user != reservation.creator %} on behalf of {{ reservation.user }}{% endif %} on {{ reservation.creation_time }}<br>
+		{% if user == reservation.user or user.is_staff %}
+			{% if reservation.reservationproject_set.all is not None %}
+				<table class="table">
+					<thead>
+						<tr>
+						<th>Customer</th>
+						<th>Project</th>
+						<th>Samples</th>
+						</tr>
+					</thead>
+					<tbody>
+				{% for r in reservation.reservationproject_set.all %}
+					<tr>
+					<td>{{ r.customer }}</td>
+					<td>{{ r.project }}</td>
+					<td>
+					{% for s in r.sample.all %}
+					{{ s }}<br/>
+					{% endfor %}
+					</td>
+					</tr>
+				{% endfor %}
+					</tbody>
+				</table>
+			{% endif %}
+		{% endif %}
 		{% if reservation.self_configuration %}
 			<strong>You have elected to configure this tool yourself.</strong><br>
 		{% else %}
