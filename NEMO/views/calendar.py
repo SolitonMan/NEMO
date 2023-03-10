@@ -69,7 +69,7 @@ def calendar(request, tool_id=None, qualified_only=None, core_only=None):
 	}
 
 	if request.user.is_staff:
-		dictionary['users'] = User.objects.all()
+		dictionary['users'] = User.objects.filter(is_active=True, projects__active=True).exclude(id=request.user.id).distinct().order_by('last_name')
 
 	return render(request, 'calendar/calendar.html', dictionary)
 
@@ -396,7 +396,7 @@ def create_reservation(request):
 
 		# Present the staff member with a form to choose if the reservation is for themselves for or one or more customers.
 		if request.POST.get('staff_charge') is None:
-			return render(request, 'calendar/project_choice_staff.html', { 'active_projects': user.active_projects(), 'users': User.objects.filter(is_active=True, projects__active=True).distinct()})
+			return render(request, 'calendar/project_choice_staff.html', { 'active_projects': user.active_projects(), 'users': User.objects.filter(is_active=True, projects__active=True).exclude(id=request.user.id).distinct().order_by('last_name')})
 		else:
 			# process submission to determine the reservation details
 			mode = request.POST['staff_charge']

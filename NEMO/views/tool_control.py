@@ -148,7 +148,15 @@ def tool_control(request, tool_id=None, qualified_only=None, core_only=None):
 		scp_out = "["
 
 		for s in staff_charge_projects:
-			scp_out += '{{"project":"{0}", "customer":"{1}", "project_id":"{2}", "user_id":"{3}"}},'.format(escape(str(s.project)), escape(str(s.customer)), escape(str(s.project.id)), escape(str(s.customer.id)))
+			s_samples = ""
+			if s.sample.all().count() > 0:
+				s_samples = '['
+				for smp in s.sample.all():
+					s_samples += '{"sample":"' + str(smp) + '","sample_id":"' + str(smp.id) + '"},'
+				s_samples = s_samples.rstrip(",") + ']'
+			if s_samples == "":
+				s_samples = "[]"
+			scp_out += '{{"project":"{0}", "customer":"{1}", "project_id":"{2}", "user_id":"{3}", "samples":{4}}},'.format(escape(str(s.project)), escape(str(s.customer)), escape(str(s.project.id)), escape(str(s.customer.id)), s_samples)
 		scp_out = scp_out.rstrip(",") + "]"
 		scp_out = mark_safe(scp_out)
 
@@ -218,6 +226,8 @@ def tool_status(request, tool_id):
 						for s in r.sample.all():
 							r_samples += '{"sample":"' + str(s) + '","sample_id":"' + str(s.id) + '"},' 
 						r_samples = r_samples.rstrip(",") + ']'
+					if r_samples == "":
+						r_samples = "[]"
 					rp_out += '{{"project":"{0}", "customer":"{1}", "project_id":"{2}", "user_id":"{3}", "samples":{4}}},'.format(escape(str(r.project)), escape(str(r.customer)), escape(str(r.project.id)), escape(str(r.customer.id)), r_samples)
 				rp_out = rp_out.rstrip(",") + "]"
 				rp_out = mark_safe(rp_out)
@@ -466,6 +476,17 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge, billing_mod
 			aarp.updated = timezone.now()
 			aarp.save()
 
+		# check for samples and save if any
+		samples = request.POST['selected_sample']
+		if samples is not None and samples != '':
+			sample_list = samples.split(",")
+
+			if sample_list != [] and sample_list != ['']:
+				for s in sample_list:
+					smp = Sample.objects.get(id=int(s))
+					if smp in uep.project.sample_project.all():
+						uep.sample.add(smp)
+
 	return response
 
 @staff_member_required(login_url=None)
@@ -475,6 +496,7 @@ def enable_tool_multi(request):
 
 	""" Enable a tool for a single operator to charge to multiple customers.  """
 	id = 0
+	sample_selections = None
 	try:
 		id = int(request.POST.get('tool_id'))
 	except ValueError:
@@ -516,6 +538,7 @@ def enable_tool_multi(request):
 		new_usage_event.save()	
 	
 		project_events = {}
+		sample_selections = {}
 
 		for key, value in request.POST.items():
 			if is_valid_field(key):
@@ -544,6 +567,12 @@ def enable_tool_multi(request):
 					else:
 						new_usage_event.delete()
 						return HttpResponseBadRequest('Please choose a project for charges made during this run.')
+
+				if attribute == "chosen_sample":
+					sample_field = "selected_sample__" + str(index)
+					samples = request.POST.get(sample_field)
+					sample_selections[index] = samples.split(",")
+
 
 				if hasattr(project_events[index], 'customer') and hasattr(project_events[index], 'project'):
 					response = check_policy_to_enable_tool_for_multi(tool, operator, project_events[index].customer, project_events[index].project, request)
@@ -574,6 +603,14 @@ def enable_tool_multi(request):
 			else:
 				p.full_clean(exclude='project_percent')
 			p.save()
+
+
+		# when everything else is saved for the tool run, save the sample data
+		if sample_selections is not None and sample_selections != {}:
+			for k in project_events.keys():
+				if k in sample_selections:
+					for s in sample_selections[k]:
+						project_events[k].sample.add(Sample.objects.get(id=int(s)))
 
 		# All policy checks passed so enable the tool for the user.
 		if tool.interlock and not tool.interlock.unlock():
@@ -647,6 +684,12 @@ def enable_tool_multi(request):
 			if not StaffChargeProject.objects.filter(staff_charge=p.staff_charge, customer=p.customer, project=p.project, active_flag=True).exists():
 				p.full_clean(exclude='project_percent')
 				p.save()
+
+				# copy samples from usage event project relationship to staff charge project relationship
+				if UsageEventProject.objects.filter(usage_event=new_usage_event, project=p.project, customer=p.customer, active_flag=True).exists():
+					for uep in UsageEventProject.objects.filter(usage_event=new_usage_event, project=p.project, customer=p.customer, active_flag=True):
+						for s in uep.sample.all():
+							p.sample.add(s)
 		 
 		if tool.requires_area_access and AreaAccessRecord.objects.filter(area=tool.requires_area_access,user=operator,end=None, active_flag=True).count() == 0:
 			if AreaAccessRecord.objects.filter(user=operator,end=None, active_flag=True).count() > 0:
@@ -691,11 +734,15 @@ def enable_tool_multi(request):
 					aarp.updated = timezone.now()
 					aarp.save()
 
+					# copy samples from staff charge project record
+					for smp in s.sample.all():
+						aarp.sample.add(smp)
+
 	return response
 
 
 def is_valid_field(field):
-	return search("^(chosen_user|chosen_project|project_percent|event_comment|fixed_cost|num_samples|sample_notes)__[0-9]+$", field) is not None
+	return search("^(chosen_user|chosen_project|project_percent|event_comment|fixed_cost|num_samples|sample_notes|chosen_sample)__[0-9]+$", field) is not None
 
 
 @staff_member_required(login_url=None)

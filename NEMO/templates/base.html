@@ -185,7 +185,11 @@
 						</script>
 					</li>
 				{% endif %}
+				{% if user.active_projects.count == 0 %}
+				<li class="hidden-sm"><p class="navbar-text">Welcome, {{ user.first_name }}</p></li>
+				{% else %}
 				<li class="hidden-sm"><p class="navbar-text"><a title="Click here to edit your profile" href="{% url 'user_profile' user.id %}">Welcome, {{ user.first_name }}</a></p></li>
+				{% endif %}
 				{% if logout_allowed %}
 					<li><a href="{% url 'logout' %}">Logout</a></li>
 				{% endif %}

@@ -37,7 +37,7 @@
 	{% endif %}
 
 	<script>
-	var current_entry_number = 1;
+	var current_entry_number = 0;
 	var staff_reserved_for_customer = false;
 
 	function update_tool_filter(btn)
@@ -127,6 +127,29 @@
 			$(element).addClass('active');
 			$("#project_id").val(project_id);
 			$("#start").show();
+
+			// update sample selection
+			var parameters =
+			{
+				"project_id": project_id,
+				"entry_number": 0
+			};
+
+			var target_element = "#sample";
+
+			var url = "{% url 'get_samples' %}?" + jQuery.param(parameters);
+			var report_error = ajax_complete_callback("Could not fetch samples for user", "There was a problem obtaining the list of samples for the user.");
+
+			$(target_element).load(url, undefined, function(responseTxt, statusTxt, xhr) {
+				if (statusTxt == "success") {
+					$("#sample_id").change(function() {
+						$("#selected_sample").val($(this).val());
+					});
+				} else {
+					ajax_complete_callback("Could not fetch samples for the project", "There was a problem obtaining the list of samples for the project.");
+				}
+			});
+
 		}
 
 		function load_projects(jquery_event, search_selection, dataset_name)
@@ -304,7 +327,7 @@
 
 						var scp = {{ staff_charge_projects }};
 
-						if ($("#project_choice_multi").html() == "") {
+						if ($.trim($("#project_choice_multi").html()) == "") {
 							$("#project_choice_multi").html($("#project_choice_multi_source").html());
 						}
 
@@ -312,7 +335,14 @@
 
 						for (s in scp) {
 							// for each record add a row to the table
-							table_row = "<tr id=\"row_" + current_entry_number + "\"><td style=\"vertical-align: middle\"><span class=\"glyphicon glyphicon-remove-circle grey pointer\" onclick=\"remove_row(" + current_entry_number + ");{% if staff_charge_projects %}update_override(true);{% endif %}\"></span></td><td>" + scp[s]["customer"] + "<input type=\"hidden\" value=\"" + scp[s]["user_id"] + "\" id=\"user_textbox__" + current_entry_number + "\" name=\"chosen_user__" + current_entry_number + "\" data-row=\"" + current_entry_number + "\"></td><td id=\"project__" + current_entry_number + "\" style=\"vertical-align: middle\">" + scp[s]["project"] + "<input type=\"hidden\" value=\"" + scp[s]["project_id"] + "\" name=\"chosen_project__" + current_entry_number + "\" id=\"chosen_project__" + current_entry_number + "\"></td></tr>";
+							table_row = "<tr id=\"row_" + current_entry_number + "\"><td style=\"vertical-align: middle\"><span class=\"glyphicon glyphicon-remove-circle grey pointer\" onclick=\"remove_row(" + current_entry_number + ");{% if staff_charge_projects %}update_override(true);{% endif %}\"></span></td><td>" + scp[s]["customer"] + "<input type=\"hidden\" value=\"" + scp[s]["user_id"] + "\" id=\"user_textbox__" + current_entry_number + "\" name=\"chosen_user__" + current_entry_number + "\" data-row=\"" + current_entry_number + "\"></td><td id=\"project__" + current_entry_number + "\" style=\"vertical-align: middle\">" + scp[s]["project"] + "<input type=\"hidden\" value=\"" + scp[s]["project_id"] + "\" name=\"chosen_project__" + current_entry_number + "\" id=\"chosen_project__" + current_entry_number + "\"></td><td>";
+							
+							for (smp in scp[s]["samples"]) {
+								table_row += scp[s]["samples"][smp]["sample"] + "<input type=\"hidden\" value=\"" + scp[s]["samples"][smp]["sample_id"] + "\" id=\"chosen_sample__" + current_entry_number + "\" name=\"chosen_sample__" + current_entry_number + "\"><br/>";
+							}
+
+							table_row += "</td></tr>";
+
 							$("#usage_event_entries tr:last").before(table_row);
 							current_entry_number++;
 						}
@@ -329,12 +359,11 @@
 
 					$("#override_staff_charge").remove();
 
-					if ($("#project_choice_multi").html() == "") {				
+					if ($.trim($("#project_choice_multi").html()) == "") {				
 						$("#project_choice_multi").html($("#project_choice_multi_source").html());
 						add_customer();
-				
-						$("#project_choice_multi").show();
 					}
+					$("#project_choice_multi").show();
 
 				{% endif %}
 			}
@@ -505,12 +534,45 @@
 								$("#start").click(on_submit);
 							}
 							$("#start").show();
+							if ($("#chosen_project__" + row).prop("type") == "hidden") {
+								fetch_samples(row);
+							}
 						}
 					} else {
 						ajax_complete_callback("Could not fetch projects for user", "There was a problem obtaining the list of projects for the user.");
 					}
 				});
 			}
+
+			function fetch_samples(row) 
+			{
+				// A function to retrieve a list of samples for a project and load it into the interface
+				var target_element = "#sample__" + row;
+				$(target_element).html("");
+	
+				var project_id = $("#chosen_project__" + row).val();
+
+				var parameters =
+				{
+					"project_id": project_id,
+					"entry_number": row
+				};
+				var url = "{% url 'get_samples' %}?" + jQuery.param(parameters);
+				var report_error = ajax_complete_callback("Could not fetch samples for user", "There was a problem obtaining the list of samples for the user.");
+
+				$(target_element).load(url, undefined, function(responseTxt, statusTxt, xhr) {
+					if (statusTxt == "success") {
+
+						// add select lists with samples for the project
+						var s1 = $("#chosen_sample__" + row);
+						s1.focus();
+
+					} else {
+						ajax_complete_callback("Could not fetch samples for the project", "There was a problem obtaining the list of samples for the project.");
+					}
+				});
+			}
+
 			function purge_customer(row)
 			{
 				$("#user_button__" + row).hide();
@@ -627,6 +689,28 @@
 						$("#autologout_endtime").val(convert_12_to_24($("#autologout_endtime").val()));
 					}
 				}
+
+				// create hidden fields for samples since multiple select lists are not submitting from modal
+				for (var i=0; i<current_entry_number; i++) {
+					fn = "chosen_sample__" + i;
+
+					el = "*[name='" + fn + "']";
+
+					if ($(el).val() != "" && $(el).length != 0) {
+						if ($(el).length == 1) {
+							var input = "<input type='hidden' name='selected_sample__" + i + "' value='" + $(el).val() + "' />";
+						} else {
+							var v = "";
+							$(el).each(function() {
+								v += $(this).val() + ","
+							});
+							v = v.substr(0, v.length-1);
+							var input = "<input type='hidden' name='selected_sample__" + i + "' value='" + v + "' />";
+						}
+						$("#tool_control").append(input);
+					}
+				}
+
 
 				var failure_dialog = ajax_failure_callback("Could not begin charging staff time");
 				var success_callbacks = [reload_page]; 

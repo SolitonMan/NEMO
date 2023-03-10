@@ -68,6 +68,7 @@
 									<tr>
 										<th>Customer</th>
 										<th>Project</th>
+										<th>Samples</th>
 										<th>Comment</th>
 									</tr>
 									</thead>
@@ -76,6 +77,11 @@
 									<tr>
 										<td>{{ uep.customer }}</td>
 										<td>{{ uep.project }}</td>
+										<td>
+										{% for s in uep.sample.all %}
+										{{ s }}<br/>
+										{% endfor %}
+										</td>
 										<td><textarea rows="3" cols="60" name="cc__{{ uep.id }}" id="cc__{{ uep.id }}" value="{{ uep.comment }}" onblur="save_comment(this);">{% if uep.comment is not None %}{{ uep.comment }}{% endif %}</textarea></td>
 									</tr>
 								{% endfor %}
@@ -86,6 +92,17 @@
 							{% endif %}
 						{% else %}
 							for the project named {{ current_usage_event.projects.all.0 }}
+
+							{% if current_usage_event.usageeventproject_set.all.0.sample.all.count > 0 %}
+							<div>
+								<h5>Samples</h5>
+								<ul>
+								{% for s in current_usage_event.usageeventproject_set.all.0.sample.all %}
+								<li>{{ s }}</li>
+								{% endfor %}
+								</ul>
+							</div>
+							{% endif %}
 						{% endif %}
 						since {{ current_usage_event.start|date:"l @ g:i A" }}.
 						{% if current_usage_event.set_for_autologout %}
@@ -312,7 +329,45 @@
 					<div class="radio"><label><input type="radio" onchange="use_tool_for_self({{ tool.id }}){% if my_reservation %};set_start_button(0);{% endif %}" name="staff_charge" value="false" {% if my_reservation %}{% if my_reservation_projects is None %} checked{% endif %}{% endif %}>Use this tool for my own project</label></div>
 					<div class="radio"><label><input type="radio" onchange="use_tool_for_other({{ tool.id }}){% if my_reservation %};set_start_button(1);{% endif %}" name="staff_charge" value="false" {% if my_reservation %}{% if my_reservation_projects %} checked{% endif %}{% endif %}>Use this tool on behalf of another user</label></div>
 					<div id="project_choice"></div>
-					<div id="project_choice_multi"></div>
+					<div id="project_choice_multi">
+					{% if my_reservation_projects is not None %}
+					<table id="usage_event_entries" class="table">
+					<tr>
+						<th>&nbsp;</th>
+						<th style="min-width:200px">Customer</th>
+						<th style="min-width:200px">Project</th>
+						<th style="min-width:300px">Samples</th>
+					</tr>
+
+
+					{% for r in my_reservation_projects %}
+					<tr id="row_{{ forloop.counter }}">
+						<td style="vertical-align: top">
+							<span class="glyphicon glyphicon-remove-circle grey pointer" onclick="remove_row({{ forloop.counter }});"</span>
+						</td>
+						<td>
+							{{ r.customer }}
+							<input type="hidden" value="{{ r.customer.id }}" id="user_textbox__{{ forloop.counter }}" name="chosen_user__{{ forloop.counter }}" data-row="{{ forloop.counter }}">
+						</td>
+						<td id="project__{{ forloop.counter }}" style="vertical-align: top">
+							{{ r.project }}
+							<input type="hidden" value="{{ r.project.id }}" name="chosen_project__{{ forloop.counter }}" id="chosen_project__{{ forloop.counter }}">
+						</td>
+						<td>
+						<select name="chosen_sample__{{ forloop.counter }}" class="form-control" id="chosen_sample__{{ forloop.counter }}" multiple size="4" style="width:fit-content">
+						{% for s in r.project.sample_project.all %}
+						<option value="{{ s.id }}"{% if s in r.sample.all %} selected{% endif %}>{{ s }}</option> 
+						{% endfor %}
+						</select>
+						</td>
+					</tr>
+					{% endfor %}
+					<tr>
+						<td colspan="4" style="text-align:center"><a href="javascript:void(0)" onclick="add_customer()">Add another customer</a></td>
+					</tr>
+					</table>
+					{% endif %}
+					</div>
 				{% elif tool.operational and not tool.required_resource_is_unavailable and not tool.delayed_logoff_in_progress and not tool.scheduled_outage_in_progress %}
 					{% include 'tool_control/get_projects.html' with active_projects=user.active_projects user_id=user.id my_reservation=my_reservation%}
 				{% endif %}
@@ -621,6 +676,8 @@
 		$("#tool_control").append("<input type=\"hidden\" name=\"override_staff_charge\" id=\"override_staff_charge\" value=\"false\" />");
 		{% if staff_member_for_customer %}
 		staff_reserved_for_customer = true;
+
+		/*
 		var rp = {{ reservation_projects }};
 
 		if ($("#project_choice_multi").html() == "") {
@@ -632,15 +689,20 @@
 		for (r in rp) {
 			table_row = "<tr id=\"row_" + current_entry_number + "\"><td style=\"vertical-align: top\"><span class=\"glyphicon glyphicon-remove-circle grey pointer\" onclick=\"remove_row(" + current_entry_number + ");\"></span></td><td>" + rp[r]["customer"] + "<input type=\"hidden\" value=\"" + rp[r]["user_id"] + "\" id=\"user_textbox__" + current_entry_number + "\" name=\"chosen_user__" + current_entry_number + "\" data-row=\"" + current_entry_number + "\"></td><td id=\"project__" + current_entry_number + "\" style=\"vertical-align: top\">" + rp[r]["project"] + "<input type=\"hidden\" value=\"" + rp[r]["project_id"] + "\" name=\"chosen_project__" + current_entry_number + "\" id=\"chosen_project__" + current_entry_number + "\"></td><td>";
 
+			selected_samples = ""
 			for (s in rp[r]["samples"]) {
-				table_row += rp[r]["samples"][s]["sample"] + "<input type=\"hidden\" value=\"" + rp[r]["samples"][s]["sample_id"] + "\" id=\"chosen_sample__" + current_entry_number + "\" name=\"chosen_sample__" + current_entry_number + "\"><br/>";
+				//table_row += rp[r]["samples"][s]["sample"] + "<input type=\"hidden\" value=\"" + rp[r]["samples"][s]["sample_id"] + "\" id=\"chosen_sample__" + current_entry_number + "\" name=\"chosen_sample__" + current_entry_number + "\"><br/>";
+				selected_samples += rp[r]["samples"][s]["sample_id"] + ",";
+				table_row += rp[r]["samples"][s]["sample"] + "<br/>";
 			}
+			selected_samples = selected_samples.substr(0, selected_samples.length-1);
 
-			table_row += "</td></tr>";
+			table_row += "<input type=\"hidden\" value=\"" + selected_samples + "\" name=\"selected_sample__" + current_entry_number + "\" id=\"selected_sample__" + current_entry_number + "\"></td></tr>";
 
 			$("#usage_event_entries tr:last").before(table_row);
 			current_entry_number++;
 		}
+		*/
 
 		$("#project_choice_multi").show();
 		$("#start").unbind("click");
@@ -686,6 +748,9 @@
 
 	{% if my_reservation and my_reservation_projects is None %}
 	use_tool_for_self({{ tool.id }});
+	{% endif %}
+	{% if my_reservation_projects is not None %}
+	current_entry_number = parseInt({{ my_reservation_projects.count }}) + 1;
 	{% endif %}
 //# sourceURL=tool_control/tool_status.html
 </script>

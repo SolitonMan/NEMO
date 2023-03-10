@@ -4,6 +4,7 @@
 {% elif active_projects|length == 1 %}
 	<h4>Tool usage will be billed to the project &quot;{{ active_projects.0 }}&quot;.</h4>
 	<input type="hidden" id="project_id" value="{{ active_projects.0.id }}">
+	{% include 'sample/get_samples.html' with samples=active_projects.0.sample_project.all entry_number=0 %}
 	<script>
 		$("#start").show();
 	</script>
@@ -19,5 +20,7 @@
 	</div>
 	<input type="hidden" id="project_id">
 {% endif %}
-
+<div id="sample">
+</div>
+<input type="hidden" id="selected_sample" name="selected_sample" />
 <input type="hidden" id="user_id" value="{{ user_id }}">
