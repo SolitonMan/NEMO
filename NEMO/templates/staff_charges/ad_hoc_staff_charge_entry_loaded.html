@@ -1,14 +1,17 @@
 <tr id="ad_hoc_row_{{ entry_number }}">
-	<td style="vertical-align: middle"><span class="glyphicon glyphicon-remove-circle grey pointer" onclick="remove_ad_hoc_row({{ entry_number }})"></span></td>
+	<td style="vertical-align: top"><span class="glyphicon glyphicon-remove-circle grey pointer" onclick="remove_ad_hoc_row({{ entry_number }})"></span></td>
 	<td>
 		<input type="text" class="form-control" id="ad_hoc_user_textbox__{{ entry_number }}" name="chosen_user__{{ entry_number }}" data-row="{{ entry_number }}" value="{{ chosen_user.id }}" style="display:none;">
 		<input type="button" class="btn btn-default" id="ad_hoc_user_button__{{ entry_number }}" onclick="purge_ad_hoc_customer({{ entry_number }})" value="{{ chosen_user.first_name }} {{ chosen_user.last_name }} ({{ chosen_user.username }})">
 	</td>
-	<td id="ad_hoc_project__{{ entry_number }}" style="vertical-align: middle">
+	<td id="ad_hoc_project__{{ entry_number }}" style="vertical-align: top">
 		{% if chosen_project is not None %}
 		{{ chosen_project.name }}
 		<input type="hidden" name="chosen_project__{{ entry_number }}" id="chosen_project__{{ entry_number }}" value="{{ chosen_project.id }}" />
 		{% endif %}
+	</td>
+	<td id="ad_hoc_sample__{{ entry_number }}" style="vertical-align: top">
+	
 	</td>
 	<td>
 		<input type="text" class="form-control" id="ad_hoc_project_percent__{{ entry_number }}" name="project_percent__{{ entry_number }}" value="{{ project_percent }}">

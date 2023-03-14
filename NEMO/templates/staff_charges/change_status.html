@@ -34,10 +34,17 @@
 		<tr>
 			<td>{{ s.customer }}</td>
 			<td>{{ s.project }}</td>
+			<td>
+			{% if s.sample.all.count > 0 %}
+				{% for smp in s.sample.all %}
+					{{ smp }}<br/>
+				{% endfor %}
+			{% endif %}
+			</td>
 		</tr>
 		{% endfor %}
 		<tr>
-			<td colspan="2" align="left" valign="top">
+			<td colspan="3" align="left" valign="top">
 				<label for="staff_member_comment">Comment / Purpose of Charge</label>
 				<textarea name="staff_member_comment" id="staff_member_comment" onblur="save_staff_comment()" rows="6" cols="50" placeholder="Please enter a description of the work done or reason the charge is being made">{% if staff_charge.staff_member_comment is not None %}{{ staff_charge.staff_member_comment }}{% endif %}</textarea>
 			</td>

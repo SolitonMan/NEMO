@@ -41,11 +41,12 @@
 				<th>&nbsp;</th>
 				<th style="min-width:200px">Customer</th>
 				<th style="min-width:200px">Project</th>
+				<th style="min-width:300px">Samples</th>
 			</tr>
 			{# Rows are inserted here on load and when "Add another customer" is clicked. #}
-			{% include 'staff_charges/staff_charge_entry.html' with entry_number=0 %}
+			{% include 'staff_charges/staff_charge_entry.html' with entry_number=1 %}
 			<tr>
-				<td colspan="3" style="text-align:center"><a href="javascript:void(0)" onclick="add_customer()">Add another customer</a></td>
+				<td colspan="4" style="text-align:center"><a href="javascript:void(0)" onclick="add_customer()">Add another customer</a></td>
 			</tr>
 		</table>
 		<input type="submit" class="btn btn-default" id="begin_staff_time_charges" value="Begin charging staff time">
@@ -112,7 +113,7 @@
 				<th>Start</th>
 				<td>
 					<div class="datetimepicker-container">
-						<input type="text" name="ad_hoc_start" id="ad_hoc_start" />
+						<input type="text" name="ad_hoc_start" id="ad_hoc_start" class="form-control" />
 					</div>
 				</td>
 				<th>&nbsp;</th>
@@ -122,7 +123,7 @@
 				<th>End</th>
 				<td>
 					<div class="datetimepicker-container">
-						<input type="text" name="ad_hoc_end" id="ad_hoc_end" />
+						<input type="text" name="ad_hoc_end" id="ad_hoc_end" class="form-control" />
 					</div>
 				</td>
 				<th>&nbsp;</th>
@@ -137,13 +138,13 @@
 			<tr>
 				<td colspan="4" align="left" valign="top" style="align: left; vertical-align: top;">
 					<label class="control-label col-sm-2" for="staff_member_comment" style="font-weight: bold;">Comment / Purpose of Charge</label>
-					<textarea name="staff_member_comment" id="staff_member_comment" rows="6" cols="50" placeholder="Please enter any comments about the reason for or details about the work performed"></textarea>
+					<textarea name="staff_member_comment" id="staff_member_comment" class="form-control" rows="6" cols="50" placeholder="Please enter any comments about the reason for or details about the work performed"></textarea>
 				</td>
 			</tr>
 			{% if request.user.physical_access_levels.all|length > 0 %}
 			<tr>
 				<td colspan="4" align="left" valign="top" style="align: left; vertical-align: top;">
-				<input type="checkbox" value="1" name="include_area_access" id="include_area_access" onclick="toggle_areas()"{% if show_no_staff_charge_option %} checked{% endif %}>
+				<input type="checkbox" value="1" name="include_area_access" id="include_area_access" class="form-control" onclick="toggle_areas()"{% if show_no_staff_charge_option %} checked{% endif %}>
 				Include an area access record with this staff charge
 <br/><br/>
 				<select name="area_id" id="area_id" class="form-control"{% if not show_no_staff_charge_option %} disabled{% endif %}>
@@ -154,7 +155,7 @@
 
 				{% if show_no_staff_charge_option %}
 				<br/>
-				<input type="checkbox" value="1" name="do_not_save_staff_charge" id="do_not_save_staff_charge" checked> Do not save staff charge (save area access charge only)
+				<input type="checkbox" value="1" name="do_not_save_staff_charge" id="do_not_save_staff_charge" class="form-control" checked> Do not save staff charge (save area access charge only)
 				{% endif %}
 				</td>
 			</tr>
@@ -163,6 +164,7 @@
                                 <th>&nbsp;</th>
 				<th style="min-width:200px">Customer</th>
                                 <th style="min-width:200px">Project</th>
+				<th style="min-width:300px">Samples</th>
 				<th style="min-width:100px">Percent</th>
                         </tr>
 			{% if ad_hoc_entries|length > 0 %}
@@ -174,10 +176,10 @@
 					{% endif %}
 				{% endfor %}
 			{% else %}
-				{% include 'staff_charges/ad_hoc_staff_charge_entry.html' with entry_number=0 %}
+				{% include 'staff_charges/ad_hoc_staff_charge_entry.html' with entry_number=1 %}
 			{% endif %}
 			<tr>
-				<td colspan="4" style="text-align:center"><a href="javascript:void(0)" onclick="add_ad_hoc_customer()">Add another customer</a></td>
+				<td colspan="5" style="text-align:center"><a href="javascript:void(0)" onclick="add_ad_hoc_customer()">Add another customer</a></td>
 			</tr>
 		</table>
 		<input type="submit" class="btn btn-default" id="save_ad_hoc_staff_time_charge" value="Save ad hoc staff time charge">
@@ -216,14 +218,14 @@
 				<td>{{ s.customer }}</td>
 				<td>{{ s.project }}</td>
 				<td>
-					<input type="text" name="project_percent__{{ s.id }}" id="project_percent__{{ s.id }}" /></td>
+					<input type="text" name="project_percent__{{ s.id }}" id="project_percent__{{ s.id }}" class="form-control" /></td>
 			<tr>
 			{% endif %}
 		{% endfor %}
 			<tr>
 				<td colspan="3" align="left" valign="top" style="align: left; vertical-align: top;">
 					<label class="control-label col-sm-2" for="staff_member_comment_{{ o.id }}">Comment / Purpose of Charge</label>
-					<textarea name="staff_member_comment" id="staff_member_comment_{{ o.id }}" rows="6" cols="50" placeholder="Please enter any comments about the reason for or details about the work performed"></textarea>
+					<textarea name="staff_member_comment" id="staff_member_comment_{{ o.id }}" class="form-control" rows="6" cols="50" placeholder="Please enter any comments about the reason for or details about the work performed"></textarea>
 				</td>
 			</tr>
 			<tr>
@@ -244,13 +246,13 @@
 	<div style="display:none;" id="fragment-collector"></div>
 
 	<script>
-		var current_entry_number = 1;
-		var ad_hoc_entry_number = 1;
+		var current_entry_number = 2;
+		var ad_hoc_entry_number = 2;
 
 		{% if ad_hoc_entries %}
 			{% for a in ad_hoc_entries %}
+		enable_ad_hoc_autocompletion(ad_hoc_entry_number);
 		ad_hoc_entry_number++;
-		enable_ad_hoc_autocompletion({{ forloop.counter }});
 			{% endfor %}
 		{% endif %}
 
@@ -352,7 +354,79 @@
 			}
 			var url = "{% url 'get_projects' %}?" + jQuery.param(parameters);
 			var report_error = ajax_complete_callback("Could not fetch projects for user", "There was a problem obtaining the list of projects for the user.");
-			$(target_element).load(url, undefined, report_error);
+			$(target_element).load(url, undefined, function(responseTxt, statusTxt, xhr) {
+				if(statusTxt == "success") {
+					var el;
+					if (ad_hoc) {
+						el =  $("#ad_hoc_project__" + row + " > #chosen_project__" + row);
+					} else {
+						el =  $("#project__" + row + " > #chosen_project__" + row);
+					}
+
+					if (el.tagName == "SELECT") {
+						$(el).change(function() {
+							if ($("#usage_event_entries tr").length == 3) {
+								$("#start").unbind("click");
+								$("#start").click(enable_tool);
+							}
+							if ($("#usage_event_entries tr").length > 3) {
+								$("#start").unbind("click");
+								$("#start").click(on_submit);
+							}
+							$("#start").show();
+						});
+					} else {
+						if ($("#usage_event_entries tr").length == 2) {
+							$("#start").unbind("click");
+							$("#start").click(enable_tool);
+						}
+						if ($("#usage_event_entries tr").length >= 3) {
+							$("#start").unbind("click");
+							$("#start").click(on_submit);
+						}
+						$("#start").show();
+						if ($(el).prop("type") == "hidden") {
+							fetch_samples(row, ad_hoc);
+						}
+					}
+				} else {
+					ajax_complete_callback("Could not fetch projects for user", "There was a problem obtaining the list of projects for the user.");
+				}
+			});
+		}
+
+		function fetch_samples(row, ad_hoc) 
+		{
+			// A function to retrieve a list of samples for a project and load it into the interface
+			var target_element;
+			if (ad_hoc) {
+				target_element = "#ad_hoc_sample__" + row;
+			} else {
+				target_element = "#sample__" + row;
+			}
+			$(target_element).html("");
+	
+			var project_id = $("#chosen_project__" + row).val();
+
+			var parameters =
+			{
+				"project_id": project_id,
+				"entry_number": row
+			};
+			var url = "{% url 'get_samples' %}?" + jQuery.param(parameters);
+			var report_error = ajax_complete_callback("Could not fetch samples for user", "There was a problem obtaining the list of samples for the user.");
+
+			$(target_element).load(url, undefined, function(responseTxt, statusTxt, xhr) {
+				if (statusTxt == "success") {
+
+					// add select lists with samples for the project
+					var s1 = $("#chosen_sample__" + row);
+					s1.focus();
+
+				} else {
+					ajax_complete_callback("Could not fetch samples for the project", "There was a problem obtaining the list of samples for the project.");
+				}
+			});
 		}
 
 		function purge_customer(row)
@@ -385,6 +459,28 @@
 			{% endif %}
 			
 			var failure_dialog = ajax_failure_callback("Could not begin charging staff time");
+
+			// create hidden fields for samples since multiple select lists are not submitting from modal
+			for (var i=0; i<current_entry_number; i++) {
+				fn = "chosen_sample__" + i;
+
+				el = "*[name='" + fn + "']";
+
+				if ($(el).val() != "" && $(el).length != 0) {
+					if ($(el).length == 1) {
+						var input = "<input type='hidden' name='selected_sample__" + i + "' value='" + $(el).val() + "' />";
+					} else {
+						var v = "";
+						$(el).each(function() {
+							v += $(this).val() + ",";
+						});
+						v = v.substr(0, v.length-1);
+						var input = "<input type='hidden' name='selected_sample__" + i + "' value='" + v + "' />";
+					}
+					$("#new_staff_charge").append(input);
+				}
+			}
+
 			ajax_post("{% url 'begin_staff_charge' %}", serialize("#new_staff_charge"), reload_staff_charges, failure_dialog);
 			return false;
 		}
@@ -414,6 +510,26 @@
 			{% endif %}
 			//var failure_dialog = ajax_failure_callback("There was a problem with your ad hoc submission");
 			//ajax_post("{% url 'ad_hoc_staff_charge' %}", serialize("#ad_hoc_staff_charge"), ad_hoc_overlap_callback, failure_dialog);
+			/*  save sample selections */
+			for (var i=0; i<ad_hoc_entry_number; i++) {
+				fn = "chosen_sample__" + i;
+				el = "#ad_hoc_sample__" + i + " > *[name='" + fn + "']";
+
+				if ($(el).val() != "" && $(el).length != 0) {
+					if ($(el).length == 1) {
+						var input = "<input type='hidden' name='selected_sample__" + i + "' value='" + $(el).val() + "' />";
+					} else {
+						var v = "";
+						$(el).each(function() {
+							v += $(this).val() + ",";
+						});
+						v = v.substr(0, v.length-1);
+						var input = "<input type='hidden' name='selected_sample__" + i + "' value='" + v + "' />";
+					}
+					$("#ad_hoc_staff_charge").append(input);
+				}
+			}
+
 			{% if show_confirm %}
 			return confirm("Does everything on the form look ok?  Click OK to submit the form, or Cancel to edit the entries.");
 			{% else %}
@@ -468,8 +584,8 @@
 		function on_load()
 		{
 			hide_user_charges();
-			enable_autocompletion(0);
-			enable_ad_hoc_autocompletion(0);
+			enable_autocompletion(1);
+			enable_ad_hoc_autocompletion(1);
 			$("#ad_hoc_start").datetimepicker({ useCurrent: false, format: 'YYYY-MM-DD hh:mm A', minDate: '{{ start_date }} 00:00', maxDate: '{{ end_date }} 23:59'});
 			$("#ad_hoc_start").val({% if ad_hoc_start %}"{{ ad_hoc_start }}"{% else %}""{% endif %});
 			$("#ad_hoc_end").datetimepicker({ useCurrent: false, format: 'YYYY-MM-DD hh:mm A', minDate: '{{ start_date }} 00:00', maxDate: '{{ end_date }} 23:59'});

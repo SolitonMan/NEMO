@@ -32,6 +32,13 @@
                 <tr>
                         <td>{{ s.customer }}</td>
                         <td>{{ s.project }}</td>
+			<td>
+			{% if s.sample.all.count > 0 %}
+				{% for smp in s.sample.all %}
+					{{ smp }}<br/>
+				{% endif %}
+			{% endif %}
+			</td>
                 </tr>
                 {% endfor %}
                 </table>
@@ -60,6 +67,7 @@
 				<th>End</th>
 				<th>Customers</th>
 				<th>Projects</th>
+				<th>Samples</th>
 			</tr>
 			{% if current_user_charges %}
 				{% for s in current_user_charges %}
@@ -82,7 +90,7 @@
 				{% endfor %}
 			{% else %}
 			<tr>
-				<td colspan="4">No staff charges found</td>
+				<td colspan="5">No staff charges found</td>
 			</tr>
 			{% endif %}
 		</table>
@@ -107,7 +115,7 @@
 				<th>Start</th>
 				<td>
 					<div class="datetimepicker-container">
-						<input type="text" name="ad_hoc_start" id="ad_hoc_start" />
+						<input type="text" name="ad_hoc_start" id="ad_hoc_start" class="form-control" />
 					</div>
 				</td>
 				<th>&nbsp;</th>
@@ -117,7 +125,7 @@
 				<th>End</th>
 				<td>
 					<div class="datetimepicker-container">
-						<input type="text" name="ad_hoc_end" id="ad_hoc_end" />
+						<input type="text" name="ad_hoc_end" id="ad_hoc_end" class="form-control" />
 					</div>
 				</td>
 				<th>&nbsp;</th>
@@ -125,12 +133,12 @@
 			<tr>
 				<td colspan="4" align="left" valign="top" style="align: left; vertical-align: top;">
 					<label class="control-label col-sm-2" for="staff_member_comment" style="font-weight: bold;">Comment / Purpose of Charge</label>
-					<textarea name="staff_member_comment" id="staff_member_comment" rows="6" cols="50" placeholder="Please enter any comments about the reason for or details about the work performed"></textarea>
+					<textarea name="staff_member_comment" id="staff_member_comment" class="form-control" rows="6" cols="50" placeholder="Please enter any comments about the reason for or details about the work performed"></textarea>
 				</td>
 			</tr>
 			{% if request.user.physical_access_levels.all|length > 0 %}
 			<tr>
-				<td colspan="4" align="left" valign="top" style="align: left; vertical-align: top;">
+				<td colspan="5" align="left" valign="top" style="align: left; vertical-align: top;">
 				<input type="checkbox" value="1" name="include_area_access" id="include_area_access" onclick="toggle_areas()">
 				Include an area access record with this staff charge
 <br/><br/>
@@ -146,6 +154,7 @@
                                 <th>&nbsp;</th>
 				<th style="min-width:200px">Customer</th>
                                 <th style="min-width:200px">Project</th>
+				<th style="min-width:300px">Samples</th>
 				<th style="min-width:100px">Percent</th>
                         </tr>
 			{% if ad_hoc_entries|length > 0 %}
@@ -157,10 +166,10 @@
 					{% endif %}
 				{% endfor %}
 			{% else %}
-				{% include 'staff_charges/ad_hoc_staff_charge_entry.html' with entry_number=0 %}
+				{% include 'staff_charges/ad_hoc_staff_charge_entry.html' with entry_number=1 %}
 			{% endif %}
 			<tr>
-				<td colspan="4" style="text-align:center"><a href="javascript:void(0)" onclick="add_ad_hoc_customer()">Add another customer</a></td>
+				<td colspan="5" style="text-align:center"><a href="javascript:void(0)" onclick="add_ad_hoc_customer()">Add another customer</a></td>
 			</tr>
 		</table>
 		<input type="submit" class="btn btn-default" id="save_ad_hoc_staff_time_charge" value="Save ad hoc staff time charge">
@@ -194,6 +203,7 @@
 			<tr>
 				<th>Customer</th>
 				<th>Project</th>
+				<th>Samples</th>
 				<th>Percent</th>
 			</tr>
 		{% for s in oscp %}
@@ -202,18 +212,24 @@
 				<td>{{ s.customer }}</td>
 				<td>{{ s.project }}</td>
 				<td>
-					<input type="text" name="project_percent__{{ s.id }}" id="project_percent__{{ s.id }}" /></td>
-			<tr>
+				{% for smp in s.sample.all %}
+					{{ smp }}<br/>
+				{% endfor %}
+				</td>
+				<td>
+					<input type="text" name="project_percent__{{ s.id }}" id="project_percent__{{ s.id }}" />
+				</td>
+			</tr>
 			{% endif %}
 		{% endfor %}
 			<tr>
-				<td colspan="3" align="left" valign="top" style="align: left; vertical-align: top;">
+				<td colspan="4" align="left" valign="top" style="align: left; vertical-align: top;">
 					<label class="control-label col-sm-2" for="staff_member_comment_{{ o.id }}">Comment / Purpose of Charge</label>
 					<textarea name="staff_member_comment" id="staff_member_comment_{{ o.id }}" rows="6" cols="50" placeholder="Please enter any comments about the reason for or details about the work performed"></textarea>
 				</td>
 			</tr>
 			<tr>
-				<td colspan="3">
+				<td colspan="4">
 					<input type="submit" value="End the current charges" class="btn btn-default" />
 					<input disabled title="You cannot continue a current charge while one is being made.  Please end your current staff charge before continuing an override." type="button" class="btn btn-default" value="Continue the current charges" onclick="continue_staff_charges({{ o.id }}, '{% url 'continue_staff_charge' o.id %}');" />
 				</td>
@@ -230,8 +246,8 @@
 	<div style="display:none;" id="fragment-collector"></div>
 
 	<script>
-		var current_entry_number = 1;
-		var ad_hoc_entry_number = 1;
+		var current_entry_number = 2;
+		var ad_hoc_entry_number = 2;
 
 		{% if ad_hoc_entries %}
 			{% for a in ad_hoc_entries %}

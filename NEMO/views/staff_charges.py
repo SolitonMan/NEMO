@@ -19,7 +19,7 @@ from django.utils.dateparse import parse_time, parse_date, parse_datetime
 from django.utils.html import strip_tags
 from django.views.decorators.http import require_GET, require_POST
 
-from NEMO.models import User, StaffCharge, AreaAccessRecord, Project, Area, StaffChargeProject, AreaAccessRecordProject, LockBilling, UserProfile, UserProfileSetting, UsageEvent, UsageEventProject, StaffChargeNotificationLog
+from NEMO.models import User, StaffCharge, Sample, AreaAccessRecord, Project, Area, StaffChargeProject, AreaAccessRecordProject, LockBilling, UserProfile, UserProfileSetting, UsageEvent, UsageEventProject, StaffChargeNotificationLog
 
 
 @require_GET
@@ -153,6 +153,7 @@ def begin_staff_charge(request):
 		charge.save()
 
 		project_charges = {}
+		sample_selections = {}
 
 		for key, value in request.POST.items():
 			if is_valid_field(key):
@@ -183,9 +184,21 @@ def begin_staff_charge(request):
 						charge.delete()
 						return HttpResponseBadRequest('Please choose a project to which to bill your staff charges')
 
+				if attribute == "chosen_sample":
+					sample_field = "selected_sample__" + str(index)
+					samples = request.POST.get(sample_field)
+					sample_selections[index] = samples.split(",")
+
 		for p in project_charges.values():
 			p.full_clean(exclude='project_percent')
 			p.save()
+
+		# when everything else is saved for the staff charge, save the sample data
+		if sample_selections is not None and sample_selections != {}:
+			for k in project_charges.keys():
+				if k in sample_selections:
+					for s in sample_selections[k]:
+						project_charges[k].sample.add(Sample.objects.get(id=int(s)))
 
 
 	except Exception:
@@ -197,7 +210,7 @@ def begin_staff_charge(request):
 
 
 def is_valid_field(field):
-	return search("^(chosen_user|chosen_project|project_percent|overlap_choice|event_comment)__[0-9]+$", field) is not None
+	return search("^(chosen_user|chosen_project|project_percent|overlap_choice|event_comment|chosen_sample)__[0-9]+$", field) is not None
 
 def month_is_locked(check_date):
 	day = int(check_date.day)
@@ -347,6 +360,7 @@ def ad_hoc_staff_charge(request):
 			project_ids = []
 			customer_ids = []
 			ad_hoc_entries = []
+			sample_ids = []
 
 			for key, value in request.POST.items():
 				if is_valid_field(key):
@@ -380,10 +394,17 @@ def ad_hoc_staff_charge(request):
 					if attribute == "chosen_project":
 						project_ids.append(value)
 
+					if attribute == "chosen_sample":
+						sample_field = "selected_sample__" + str(index)
+						samples = request.POST.get(sample_field)
+						proj_tag = "chosen_project__"  + str(index)
+						sample_ids.append([request.POST.get(proj_tag), samples.split(",")])
+
 			projects = Project.objects.filter(id__in=project_ids)
 			customers = User.objects.filter(id__in=customer_ids)
 			params['ad_hoc_projects'] = projects
 			params['ad_hoc_customers'] = customers
+			params['ad_hoc_samples'] = sample_ids
 			params['pc'] = pc
 			if len(ad_hoc_entries) > 0:
 				error_params['ad_hoc_entries'] = ad_hoc_entries
@@ -428,6 +449,7 @@ def ad_hoc_staff_charge(request):
 
 		project_charges = {}
 		ad_hoc_entries = []
+		sample_selections = {}
 
 		for key, value in request.POST.items():
 			if is_valid_field(key):
@@ -460,6 +482,11 @@ def ad_hoc_staff_charge(request):
 						msg = 'Please choose a project to which to bill your staff charges for this ad hoc charge.'
 						raise Exception()
 
+				if attribute == "chosen_sample":
+					sample_field = "selected_sample__" + str(index)
+					samples = request.POST.get(sample_field)
+					sample_selections[index] = samples.split(",")
+
 				if attribute == "project_percent":
 					if value == '':
 						msg = 'You must enter a numerical value for the percent to charge to a project for an ad hoc charge.'
@@ -480,6 +507,12 @@ def ad_hoc_staff_charge(request):
 			if not save_charge:
 				p.no_charge_flag = True
 			p.save()
+
+		if sample_selections is not None and sample_selections != {}:
+			for k in project_charges.keys():
+				if k in sample_selections:
+					for s in sample_selections[k]:
+						project_charges[k].sample.add(Sample.objects.get(id=int(s)))
 
 		params['staff_charges'] = StaffCharge.objects.filter(id=charge.id, active_flag=True)
 		params['no_staff_charge_saved'] = save_charge == False
