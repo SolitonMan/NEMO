@@ -45,16 +45,26 @@ def save_sc_customer_comment(request):
 @require_GET
 def staff_charges(request):
 	staff_charge = request.user.get_staff_charge()
-	params = {}
+	params = {
+		"area": None,
+		"staff_charge": None,
+		"scp": None,
+		"areas": None,
+	}
 	render_path = ''
 
+	charging_staff_time = False
+	charging_area_time = False
+
 	if staff_charge:
+		charging_staff_time = True
 		try:
 			area_access_record = AreaAccessRecord.objects.get(staff_charge=staff_charge.id, end=None, active_flag=True)
 			params['area'] = area_access_record.area
 			params['staff_charge'] = staff_charge
 			params['scp'] = StaffChargeProject.objects.filter(staff_charge=staff_charge, active_flag=True)
-			render_path = 'staff_charges/end_area_charge.html'
+			charging_area_time = True
+			#render_path = 'staff_charges/end_area_charge.html'
 
 			#return render(request, 'staff_charges/end_area_charge.html', {'area': area_access_record.area, 'staff_charge': staff_charge, 'scp': StaffChargeProject.objects.filter(staff_charge=staff_charge, active_flag=True)})
 		#except AreaAccessRecord.DoesNotExist:
@@ -65,7 +75,7 @@ def staff_charges(request):
 			params['scp'] = scp
 			params['areas'] = Area.objects.all()
 			params['staff_charge'] = staff_charge
-			render_path = 'staff_charges/change_status.html'
+			#render_path = 'staff_charges/change_status.html'
 			#return render(request, 'staff_charges/change_status.html', {'areas': Area.objects.all(), 'scp': scp, 'staff_charge': staff_charge})
 	error = None
 	customer = None
@@ -132,6 +142,8 @@ def staff_charges(request):
 		show_confirm = bool(int(setting.value))
 
 	params['show_confirm'] = show_confirm
+	params['charging_staff_time'] = charging_staff_time
+	params['charging_area_time'] = charging_area_time
 
 	return render(request, render_path, params)
 

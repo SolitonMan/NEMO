@@ -22,6 +22,8 @@
 	</div>
 
 	<div id="content" class="tab-content" style="padding-top:10px">
+
+{% if not charging_staff_time and not charging_area_time %}
 	<div class="tab-pane active" id="staff_charges">
 	<h2>Current Staff Charges</h2>
 	<form id="new_staff_charge" onsubmit="return on_submit()">
@@ -52,6 +54,93 @@
 		<input type="submit" class="btn btn-default" id="begin_staff_time_charges" value="Begin charging staff time">
 	</form>
 	</div>
+
+{% elif charging_staff_time and not charging_area_time %}
+
+	<div class="tab-pane active" id="staff_charges">
+	<h2>Current Staff Charges</h2>
+	<form action="{% url 'end_staff_charge' 0 %}" class="form-horizontal" method="post">
+		{% csrf_token %}
+		<p>You are currently charging staff time to the following customer(s):</p>
+		<table class="table">
+		{% for s in scp %}
+		<tr>
+			<td>{{ s.customer }}</td>
+			<td>{{ s.project }}</td>
+			<td>
+			{% if s.sample.all.count > 0 %}
+				{% for smp in s.sample.all %}
+					{{ smp }}<br/>
+				{% endfor %}
+			{% endif %}
+			</td>
+		</tr>
+		{% endfor %}
+		<tr>
+			<td colspan="3" align="left" valign="top">
+				<label for="staff_member_comment">Comment / Purpose of Charge</label>
+				<textarea name="staff_member_comment" id="staff_member_comment" onblur="save_staff_comment()" rows="6" cols="50" placeholder="Please enter a description of the work done or reason the charge is being made">{% if staff_charge.staff_member_comment is not None %}{{ staff_charge.staff_member_comment }}{% endif %}</textarea>
+			</td>
+		</tr>
+		</table>
+		<br/>
+		
+		<input type="submit" class="btn btn-primary" value="I have finished working on this project">
+	</form>
+	{% if areas %}
+		<div style="height:50px"></div>
+		<form action="{% url 'begin_staff_area_charge' %}" class="form-horizontal" method="post">
+			{% csrf_token %}
+			<p>I have entered a billable area on behalf of this user:</p>
+			{% for a in areas %}
+				<div class="radio">
+					<label><input type="radio" name="area" value="{{ a.id }}" required> {{ a }}</label>
+				</div>
+			{% endfor %}
+			<br>
+			<input type="submit" class="btn btn-primary" value="Begin billing for area access">
+		</form>
+	{% endif %}
+
+
+	</div>
+
+{% elif charging_staff_time and charging_area_time %}
+
+	<div class="tab-pane active" id="staff_charges">
+	<h2>Current Staff Charges</h2>
+
+	<div class="col-sm-12">
+		<p>You are currently charging staff time to the following customer(s):</p>
+                <table class="table">
+                {% for s in scp %}
+                <tr>
+                        <td>{{ s.customer }}</td>
+                        <td>{{ s.project }}</td>
+			<td>
+			{% if s.sample.all.count > 0 %}
+				{% for smp in s.sample.all %}
+					{{ smp }}<br/>
+				{% endfor %}
+			{% endif %}
+			</td>
+                </tr>
+                {% endfor %}
+                </table>
+                <br/>
+
+		<form action="{% url 'end_staff_area_charge' %}" class="form-horizontal" method="post">
+			{% csrf_token %}
+			<div class="form-group">
+				<input type="submit" class="btn btn-primary" style="white-space:normal" value="I am no longer in the {{ area|lower }} on behalf of this user">
+			</div>
+		</form>
+	</div>
+
+	</div>
+
+{% endif %}
+
 
 	<div class="tab-pane" id="ad_hoc">
 	<h2>Ad Hoc Staff Charges</h2>
@@ -148,7 +237,7 @@
 			{% if request.user.physical_access_levels.all|length > 0 %}
 			<tr>
 				<td colspan="5" align="left" valign="top" style="align: left; vertical-align: top;">
-				<input type="checkbox" value="1" name="include_area_access" id="include_area_access" class="form-control" onclick="toggle_areas()"{% if show_no_staff_charge_option %} checked{% endif %}>
+				<input type="checkbox" value="1" name="include_area_access" id="include_area_access" onclick="toggle_areas()"{% if show_no_staff_charge_option %} checked{% endif %}>
 				Include an area access record with this staff charge
 <br/><br/>
 				<select name="area_id" id="area_id" class="form-control"{% if not show_no_staff_charge_option %} disabled{% endif %}>
@@ -214,6 +303,7 @@
 			<tr>
 				<th>Customer</th>
 				<th>Project</th>
+				<th>Samples</th>
 				<th>Percent</th>
 			</tr>
 		{% for s in oscp %}
@@ -222,18 +312,24 @@
 				<td>{{ s.customer }}</td>
 				<td>{{ s.project }}</td>
 				<td>
-					<input type="text" name="project_percent__{{ s.id }}" id="project_percent__{{ s.id }}" class="form-control" /></td>
+				{% for smp in s.sample.all %}
+					{{ smp }}<br/>
+				{% endfor %}
+				</td>
+				<td>
+					<input type="text" name="project_percent__{{ s.id }}" id="project_percent__{{ s.id }}" class="form-control" />
+				</td>
 			<tr>
 			{% endif %}
 		{% endfor %}
 			<tr>
-				<td colspan="3" align="left" valign="top" style="align: left; vertical-align: top;">
+				<td colspan="4" align="left" valign="top" style="align: left; vertical-align: top;">
 					<label class="control-label col-sm-2" for="staff_member_comment_{{ o.id }}">Comment / Purpose of Charge</label>
 					<textarea name="staff_member_comment" id="staff_member_comment_{{ o.id }}" class="form-control" rows="6" cols="50" placeholder="Please enter any comments about the reason for or details about the work performed"></textarea>
 				</td>
 			</tr>
 			<tr>
-				<td colspan="3">
+				<td colspan="4">
 					<input type="submit" value="End the current charges" class="btn btn-default" />
 					<input type="button" class="btn btn-default" value="Continue the current charges" onclick="continue_staff_charges({{ o.id }}, '{% url 'continue_staff_charge' o.id %}');" />
 				</td>
