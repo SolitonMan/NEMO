@@ -119,6 +119,7 @@
 					</div>
 				</td>
 				<th>&nbsp;</th>
+				<th>&nbsp;</th>
 			</tr>
 			<tr>
                                 <th>&nbsp;</th>
@@ -129,9 +130,19 @@
 					</div>
 				</td>
 				<th>&nbsp;</th>
+				<th>&nbsp;</th>
 			</tr>
 			<tr>
-				<td colspan="4" align="left" valign="top" style="align: left; vertical-align: top;">
+				<th>&nbsp;</th>
+				<th>Duration</th>
+				<td>
+					<div id="duration"></div>
+				</td>
+				<th>&nbsp;</th>
+				<th>&nbsp;</th>
+			</tr>
+			<tr>
+				<td colspan="5" align="left" valign="top" style="align: left; vertical-align: top;">
 					<label class="control-label col-sm-2" for="staff_member_comment" style="font-weight: bold;">Comment / Purpose of Charge</label>
 					<textarea name="staff_member_comment" id="staff_member_comment" class="form-control" rows="6" cols="50" placeholder="Please enter any comments about the reason for or details about the work performed"></textarea>
 				</td>
@@ -354,7 +365,55 @@
 			}
 			var url = "{% url 'get_projects' %}?" + jQuery.param(parameters);
 			var report_error = ajax_complete_callback("Could not fetch projects for user", "There was a problem obtaining the list of projects for the user.");
-			$(target_element).load(url, undefined, report_error);
+			$(target_element).load(url, undefined, function(responseTxt, statusTxt, xhr) {
+				if(statusTxt == "success") {
+					var el;
+					if (ad_hoc) {
+						el =  $("#ad_hoc_project__" + row + " > #chosen_project__" + row);
+					} else {
+						el =  $("#project__" + row + " > #chosen_project__" + row);
+					}
+					if ($(el).prop("type") == "hidden") {
+						fetch_samples(row, ad_hoc);
+					}
+				} else {
+					ajax_complete_callback("Could not fetch projects for user", "There was a problem obtaining the list of projects for the user.");
+				}
+			});
+		}
+
+		function fetch_samples(row, ad_hoc) 
+		{
+			// A function to retrieve a list of samples for a project and load it into the interface
+			var target_element;
+			if (ad_hoc) {
+				target_element = "#ad_hoc_sample__" + row;
+			} else {
+				target_element = "#sample__" + row;
+			}
+			$(target_element).html("");
+	
+			var project_id = $("#chosen_project__" + row).val();
+
+			var parameters =
+			{
+				"project_id": project_id,
+				"entry_number": row
+			};
+			var url = "{% url 'get_samples' %}?" + jQuery.param(parameters);
+			var report_error = ajax_complete_callback("Could not fetch samples for user", "There was a problem obtaining the list of samples for the user.");
+
+			$(target_element).load(url, undefined, function(responseTxt, statusTxt, xhr) {
+				if (statusTxt == "success") {
+
+					// add select lists with samples for the project
+					var s1 = $("#chosen_sample__" + row);
+					s1.focus();
+
+				} else {
+					ajax_complete_callback("Could not fetch samples for the project", "There was a problem obtaining the list of samples for the project.");
+				}
+			});
 		}
 
 		function purge_customer(row)
@@ -387,6 +446,28 @@
 			{% endif %}
 			
 			var failure_dialog = ajax_failure_callback("Could not begin charging staff time");
+
+			// create hidden fields for samples since multiple select lists are not submitting from modal
+			for (var i=0; i<current_entry_number; i++) {
+				fn = "chosen_sample__" + i;
+
+				el = "*[name='" + fn + "']";
+
+				if ($(el).val() != "" && $(el).length != 0) {
+					if ($(el).length == 1) {
+						var input = "<input type='hidden' name='selected_sample__" + i + "' value='" + $(el).val() + "' />";
+					} else {
+						var v = "";
+						$(el).each(function() {
+							v += $(this).val() + ",";
+						});
+						v = v.substr(0, v.length-1);
+						var input = "<input type='hidden' name='selected_sample__" + i + "' value='" + v + "' />";
+					}
+					$("#new_staff_charge").append(input);
+				}
+			}
+
 			ajax_post("{% url 'begin_staff_charge' %}", serialize("#new_staff_charge"), reload_staff_charges, failure_dialog);
 			return false;
 		}
@@ -414,8 +495,27 @@
 				return false;
 			}
 			{% endif %}
-			//var failure_dialog = ajax_failure_callback("There was a problem with your ad hoc submission");
-			//ajax_post("{% url 'ad_hoc_staff_charge' %}", serialize("#ad_hoc_staff_charge"), ad_hoc_overlap_callback, failure_dialog);
+
+			/*  save sample selections */
+			for (var i=0; i<ad_hoc_entry_number; i++) {
+				fn = "chosen_sample__" + i;
+				el = "#ad_hoc_sample__" + i + " > *[name='" + fn + "']";
+
+				if ($(el).val() != "" && $(el).length != 0) {
+					if ($(el).length == 1) {
+						var input = "<input type='hidden' name='selected_sample__" + i + "' value='" + $(el).val() + "' />";
+					} else {
+						var v = "";
+						$(el).each(function() {
+							v += $(this).val() + ",";
+						});
+						v = v.substr(0, v.length-1);
+						var input = "<input type='hidden' name='selected_sample__" + i + "' value='" + v + "' />";
+					}
+					$("#ad_hoc_staff_charge").append(input);
+				}
+			}
+
 			return true;
 		}
 
@@ -465,6 +565,8 @@
 			$("#ad_hoc_start").val({% if ad_hoc_start %}"{{ ad_hoc_start }}"{% else %}""{% endif %});
 			$("#ad_hoc_end").datetimepicker({format: 'YYYY-MM-DD hh:mm A', minDate: '{{ start_date }} 00:00', maxDate: '{{ end_date }} 23:59'});
 			$("#ad_hoc_end").val({% if ad_hoc_end %}"{{ ad_hoc_end }}"{% else %}""{% endif %});
+			$("#ad_hoc_start").on('dp.change',calculate_duration);
+			$("#ad_hoc_end").on('dp.change',calculate_duration);
 			$(document).scrollTop(0);
 			$("#tabs a").click(switch_tab);
 		}

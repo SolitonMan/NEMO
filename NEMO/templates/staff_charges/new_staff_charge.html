@@ -117,6 +117,7 @@
 					</div>
 				</td>
 				<th>&nbsp;</th>
+				<th>&nbsp;</th>
 			</tr>
 			<tr>
                                 <th>&nbsp;</th>
@@ -127,6 +128,7 @@
 					</div>
 				</td>
 				<th>&nbsp;</th>
+				<th>&nbsp;</th>
 			</tr>
 			<tr>
 				<th>&nbsp;</th>
@@ -134,16 +136,18 @@
 				<td>
 					<div id="duration"></div>
 				</td>
+				<th>&nbsp;</th>
+				<th>&nbsp;</th>
 			</tr>
 			<tr>
-				<td colspan="4" align="left" valign="top" style="align: left; vertical-align: top;">
+				<td colspan="5" align="left" valign="top" style="align: left; vertical-align: top;">
 					<label class="control-label col-sm-2" for="staff_member_comment" style="font-weight: bold;">Comment / Purpose of Charge</label>
 					<textarea name="staff_member_comment" id="staff_member_comment" class="form-control" rows="6" cols="50" placeholder="Please enter any comments about the reason for or details about the work performed"></textarea>
 				</td>
 			</tr>
 			{% if request.user.physical_access_levels.all|length > 0 %}
 			<tr>
-				<td colspan="4" align="left" valign="top" style="align: left; vertical-align: top;">
+				<td colspan="5" align="left" valign="top" style="align: left; vertical-align: top;">
 				<input type="checkbox" value="1" name="include_area_access" id="include_area_access" class="form-control" onclick="toggle_areas()"{% if show_no_staff_charge_option %} checked{% endif %}>
 				Include an area access record with this staff charge
 <br/><br/>
@@ -363,31 +367,8 @@
 						el =  $("#project__" + row + " > #chosen_project__" + row);
 					}
 
-					if (el.tagName == "SELECT") {
-						$(el).change(function() {
-							if ($("#usage_event_entries tr").length == 3) {
-								$("#start").unbind("click");
-								$("#start").click(enable_tool);
-							}
-							if ($("#usage_event_entries tr").length > 3) {
-								$("#start").unbind("click");
-								$("#start").click(on_submit);
-							}
-							$("#start").show();
-						});
-					} else {
-						if ($("#usage_event_entries tr").length == 2) {
-							$("#start").unbind("click");
-							$("#start").click(enable_tool);
-						}
-						if ($("#usage_event_entries tr").length >= 3) {
-							$("#start").unbind("click");
-							$("#start").click(on_submit);
-						}
-						$("#start").show();
-						if ($(el).prop("type") == "hidden") {
-							fetch_samples(row, ad_hoc);
-						}
+					if ($(el).prop("type") == "hidden") {
+						fetch_samples(row, ad_hoc);
 					}
 				} else {
 					ajax_complete_callback("Could not fetch projects for user", "There was a problem obtaining the list of projects for the user.");

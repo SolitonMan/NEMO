@@ -14,21 +14,23 @@ from NEMO.models import Interlock, Tool, UsageEvent, StaffCharge, AreaAccessReco
 #end_run = None
 def update_probationary_users():
 	date_now = timezone.now()
-	d1 = datetime.strptime(date_now,"%Y-%m-%d")
+	#d1 = datetime.strptime(date_now,"%Y-%m-%d")
 	probationary_qualifications = ProbationaryQualifications.objects.all()
 
 	for pq in probationary_qualifications:
 		if pq.tool_last_used is not None:
-			d2 = datetime.strptime(pq.tool_last_used,"%Y-%m-%d")
-			if abs((d1-d2).days) > 182:
+			#d2 = datetime.strptime(pq.tool_last_used,"%Y-%m-%d")
+			d2 = pq.tool_last_used
+			if abs((date_now-d2).days) > 182:
 				pq.probationary_user = True
 				pq.save()
 		elif pq.qualification_date is not None:
-			d2 = datetime.strptime(pq.qualification_date,"%Y-%m-%d")
-			if abs((d1-d2).days) > 182:
+			#d2 = datetime.strptime(pq.qualification_date,"%Y-%m-%d")
+			d2 = pq.qualification_date
+			if abs((date_now-d2).days) > 182:
 				pq.probationary_user = True
 				pq.save()
-
+			
 
 def pulse_interlocks():
 	logger = getLogger(__name__)
