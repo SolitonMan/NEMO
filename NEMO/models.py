@@ -1951,6 +1951,6 @@ class Sample(models.Model):
 	updated_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, related_name='sample_updated_by')
 
 	def __str__(self):
-		return self.identifier + " (" + str(self.created_by) + ") - " + self.nickname
+		return str(self.identifier) + " (" + str(self.created_by) + ") - " + str(self.nickname)
 
 

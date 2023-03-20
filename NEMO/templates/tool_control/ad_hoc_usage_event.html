@@ -137,7 +137,7 @@
 				<th>Start</th>
 				<td>
 					<div class="datetimepicker-container">
-						<input type="text" name="ad_hoc_start" id="ad_hoc_start" />
+						<input type="text" name="ad_hoc_start" id="ad_hoc_start" class="form-control" />
 					</div>
 				</td>
 			</tr>
@@ -145,7 +145,7 @@
 				<th>End</th>
 				<td>
 					<div class="datetimepicker-container">
-						<input type="text" name="ad_hoc_end" id="ad_hoc_end" />
+						<input type="text" name="ad_hoc_end" id="ad_hoc_end" class="form-control" />
 					</div>
 				</td>
 			</tr>
@@ -169,7 +169,7 @@
 			<tr>
 				<td colspan="2">
 					<label for="operator_comment">Comment / Description of Work</label>
-					<textarea name="operator_comment" id="operator_comment" rows="10" cols="80"></textarea>
+					<textarea name="operator_comment" id="operator_comment" class="form-control" rows="10" cols="80"></textarea>
 				</td>
 			</tr>
 			{% if request.user.is_superuser or request.user.is_staff %}
@@ -202,7 +202,7 @@
 				<td>Area</td>
 				<td>
 				<div class="form-group">
-					<select name="ad_hoc_area" id="ad_hoc_area" disabled>
+					<select name="ad_hoc_area" id="ad_hoc_area" class="form-control" disabled>
 					{% for a in request.user.physical_access_levels.all %}
 					<option value="{{ a.area.id }}">{{ a.area.name }}</option>
 					{% endfor %}
@@ -263,11 +263,12 @@
 					<th>&nbsp;</th>
 					<th style="min-width:200px">Customer</th>
 					<th style="min-width:200px">Project</th>
+					<th style="min-width:300px">Samples</th>
 					<th>Percent</th>
 				</tr>
 
 				<tr>
-					<td colspan="4" style="text-align:center"><a href="javascript:void(0)" onclick="add_customer()">Add another customer</a></td>
+					<td colspan="5" style="text-align:center"><a href="javascript:void(0)" onclick="add_customer()">Add another customer</a></td>
 				</tr>
 			</table>
 		</td>
@@ -275,7 +276,7 @@
 </table>
 
 <script type="text/javascript">
-var current_entry_number = 0;
+var current_entry_number = 2;
 var selected_operator = "";
 
 function toggle_area()
@@ -393,24 +394,59 @@ function on_autocomplete_selection(jquery_event, search_selection, dataset_name)
 	var button_id = "#ad_hoc_" + dataset_name + "_button__" + row;
 	$(button_id).val(search_selection.name).show();
 	if(dataset_name == "user")
-		fetch_projects(row, search_selection.id);
+		fetch_projects(row, search_selection.id, true);
 }
 
-function fetch_projects(row, user_id)
+function fetch_projects(row, user_id, ad_hoc)
 {
 	var parameters =
 	{
 		"source_template": "staff_charges",
 		"user_id": user_id,
 		"entry_number": row,
-		"ad_hoc": true,
+		"ad_hoc": ad_hoc,
 	};
 	var target_element = "#ad_hoc_project__" + row;
 	var url = "{% url 'get_projects' %}?" + jQuery.param(parameters);
 	var report_error = ajax_complete_callback("Could not fetch projects for user", "There was a problem obtaining the list of projects for the user.");
 	$(target_element).load(url, undefined, function(responseTxt, statusTxt, xhr) {
-		if(statusTxt != "success") {
+		if(statusTxt == "success") {
+			var el =  $("#chosen_project__" + row);
+
+			if ($(el).prop("type") == "hidden") {
+				fetch_samples(row, ad_hoc);
+			}
+		} else {
 			ajax_complete_callback("Could not fetch projects for user", "There was a problem obtaining the list of projects for the user.");
+		}
+	});
+}
+
+function fetch_samples(row, ad_hoc) 
+{
+	// A function to retrieve a list of samples for a project and load it into the interface
+	var target_element = "#ad_hoc_sample__" + row;
+	$(target_element).html("");
+	
+	var project_id = $("#chosen_project__" + row).val();
+
+	var parameters =
+	{
+		"project_id": project_id,
+		"entry_number": row
+	};
+	var url = "{% url 'get_samples' %}?" + jQuery.param(parameters);
+	var report_error = ajax_complete_callback("Could not fetch samples for user", "There was a problem obtaining the list of samples for the user.");
+
+	$(target_element).load(url, undefined, function(responseTxt, statusTxt, xhr) {
+		if (statusTxt == "success") {
+
+			// add select lists with samples for the project
+			var s1 = $("#chosen_sample__" + row);
+			s1.focus();
+
+		} else {
+			ajax_complete_callback("Could not fetch samples for the project", "There was a problem obtaining the list of samples for the project.");
 		}
 	});
 }
@@ -501,9 +537,26 @@ function on_submit()
 		alert("You must add at least one customer in order to use this tool for a customer.");
 		return false;
 	}
-	//var failure_dialog = ajax_failure_callback("Could not create ad hoc usage event");
-	//var success_callbacks = [ajax_success_callback]; 
-	//ajax_post("{% url 'save_usage_event' %}", serialize("#ad_hoc_usage"), success_callbacks, failure_dialog);
+
+	for (var i=0; i<current_entry_number; i++) {
+		fn = "chosen_sample__" + i;
+		el = "#ad_hoc_sample__" + i + " > *[name='" + fn + "']";
+
+		if ($(el).val() != "" && $(el).length != 0) {
+			if ($(el).length == 1) {
+				var input = "<input type='hidden' name='selected_sample__" + i + "' value='" + $(el).val() + "' />";
+			} else {
+				var v = "";
+				$(el).each(function() {
+					v += $(this).val() + ",";
+				});
+				v = v.substr(0, v.length-1);
+				var input = "<input type='hidden' name='selected_sample__" + i + "' value='" + v + "' />";
+			}
+			$("#ad_hoc_usage").append(input);
+		}
+	}
+
 	{% if show_confirm %}
 	return confirm("Does everything on the form look ok?  Click OK to submit the form, or Cancel to edit the entries.");
 	{% else %}

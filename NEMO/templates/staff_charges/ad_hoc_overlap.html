@@ -6,7 +6,7 @@
 {% block content %}
         <h1>Ad Hoc Staff Charges Overlap</h1>
 	<p>The ad hoc charge you entered conflicts with the listed existing charge(s).  Please select which item should take precedence.  Selecting your new charge will overwrite (and appropriately reduce) an existing charge, while selecting the existing charge will reduce the new charge to the appopriate times.</p>
-	<form id="ad_hoc_overlap_resolution" action="{% url 'ad_hoc_overlap_resolution' %}" method="POST">
+	<form id="ad_hoc_overlap_resolution" action="{% url 'ad_hoc_overlap_resolution' %}" method="POST" onsubmit="return before_submit();">
 	{% csrf_token %}
 	{% if include_area_access is not None %}<input type="hidden" name="include_area_access" value="{{ include_area_access }}" />{% endif %}
 	{% if area_id is not None %}<input type="hidden" name="area_id" value="{{ area_id }}" />{% endif %}
@@ -43,6 +43,15 @@
 			{% endif %}
 			{% if forloop.counter == 2 %}
 			<input type="hidden" name="chosen_project__{{ forloop.parentloop.counter }}" value="{{ v }}" />
+
+			{% for pset in ad_hoc_samples %}
+				{% if pset.0 == v %}
+				{% for smp in pset.1 %}
+				<input type="hidden" name="chosen_sample__{{ forloop.parentloop.counter }}" value="{{ smp }}" />
+				{% endfor %}
+				{% endif %}
+			{% endfor %}
+
 			{% endif %}
 			{% if forloop.counter == 3 %}
 			<input type="hidden" name="project_percent__{{ forloop.parentloop.counter }}" value="{{ v }}" />
@@ -158,6 +167,33 @@
 	function go_back() 
 	{ 
 		window.location='{% url 'staff_charges' %}'  
+	}
+
+	function before_submit()
+	{
+		var item_count = {{ pc.items|length }};
+
+		for (var i=0; i<=item_count; i++) {
+			fn = "chosen_sample__" + i;
+
+			el = "input[name='" + fn + "']";
+
+			if ($(el).val() != "" && $(el).length != 0) {
+				if ($(el).length == 1) {
+					var input = "<input type='hidden' name='selected_sample__" + i + "' value='" + $(el).val() + "' />";
+				} else {
+					var v = "";
+					$(el).each(function() {
+						v += $(this).val() + ",";
+					});
+					v = v.substr(0, v.length-1);
+					var input = "<input type='hidden' name='selected_sample__" + i + "' value='" + v + "' />";
+				}
+				$("#ad_hoc_overlap_resolution").append(input);
+			}
+		}
+
+		return true;
 	}
 	</script>
 {% endblock %}

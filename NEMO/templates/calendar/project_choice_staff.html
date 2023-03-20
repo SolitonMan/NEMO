@@ -139,7 +139,8 @@
 		{
 			"source_template": "staff_charges",
 			"user_id": user_id,
-			"entry_number": row
+			"entry_number": row,
+			"ad_hoc": false,
 		};
 		var target_element = "#project__" + row;
 		var url = "{% url 'get_projects' %}?" + jQuery.param(parameters);
@@ -157,7 +158,7 @@
 					$("#done").click(on_submit);
 					$("#done").show();
 					if ($("#chosen_project__" + row).prop("type") == "hidden") {
-						fetch_samples(row);
+						fetch_samples(row,false);
 					}
 				}
 			} else {
@@ -166,7 +167,7 @@
 		});
 	}
 
-	function fetch_samples(row) 
+	function fetch_samples(row, ad_hoc) 
 	{
 		// A function to retrieve a list of samples for a project and load it into the interface
 		var target_element = "#sample__" + row;
@@ -177,7 +178,8 @@
 		var parameters =
 		{
 			"project_id": project_id,
-			"entry_number": row
+			"entry_number": row,
+			"ad_hoc": ad_hoc,
 		};
 		var url = "{% url 'get_samples' %}?" + jQuery.param(parameters);
 		var report_error = ajax_complete_callback("Could not fetch samples for user", "There was a problem obtaining the list of samples for the user.");

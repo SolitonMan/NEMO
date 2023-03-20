@@ -554,6 +554,9 @@ def ad_hoc_staff_charge(request):
 				aarp.updated = timezone.now()
 				aarp.save()
 
+				for s in project_charges[pc].sample.all():
+					aarp.sample.add(s)
+
 
 	except Exception as inst:
 		# collect form submission values for display
@@ -712,17 +715,25 @@ def ad_hoc_overlap_resolution(request):
 					overlap_ids.append(index)
 
 				if attribute == "chosen_user" and index not in ad_hoc_cp:
-					ad_hoc_cp[index] = [value,0,0]
+					ad_hoc_cp[index] = [value, 0, 0, 0]
 				if attribute == "chosen_user" and index in ad_hoc_cp:
 					ad_hoc_cp[index][0] = value
 				if attribute == "chosen_project" and index not in ad_hoc_cp:
-					ad_hoc_cp[index] = [0, value, 0]
+					ad_hoc_cp[index] = [0, value, 0, 0]
 				if attribute == "chosen_project" and index in ad_hoc_cp:
 					ad_hoc_cp[index][1] = value
 				if attribute == "project_percent" and index not in ad_hoc_cp:
-					ad_hoc_cp[index] = [0, 0, value]
+					ad_hoc_cp[index] = [0, 0, value, 0]
 				if attribute == "project_percent" and index in ad_hoc_cp:
 					ad_hoc_cp[index][2] = value
+				if attribute == "chosen_sample" and index not in ad_hoc_cp:
+					s_str = "selected_sample__" + str(index)
+					samples = request.POST.get(s_str)
+					ad_hoc_cp[index] = [0, 0, 0, samples.split(",")]
+				if attribute == "chosen_sample" and index in ad_hoc_cp:
+					s_str = "selected_sample__" + str(index)
+					samples = request.POST.get(s_str)
+					ad_hoc_cp[index][3] = samples.split(",")
 
 
 		# create initial ad hoc staff charge
@@ -765,6 +776,10 @@ def ad_hoc_overlap_resolution(request):
 			scp.updated = timezone.now()
 			scp.save()
 
+			if a[3] != 0:
+				for s in a[3]:
+					scp.sample.add(Sample.objects.get(id=int(s)))
+
 			if include_area_access:
 				ahaarp = AreaAccessRecordProject()
 				ahaarp.area_access_record = ahaar
@@ -774,6 +789,10 @@ def ad_hoc_overlap_resolution(request):
 				ahaarp.created = timezone.now()
 				ahaarp.updated = timezone.now()
 				ahaarp.save()
+
+				if a[3] != 0:
+					for s in a[3]:
+						ahaarp.sample.add(Sample.objects.get(id=int(s)))
 
 		# get the StaffCharges that overlap the ad hoc charge
 		overlaps = StaffCharge.objects.filter(id__in=overlap_ids, active_flag=True).order_by("start")

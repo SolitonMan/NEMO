@@ -110,10 +110,18 @@
 			<th>Project</th>
 			<td id="user_projects">
 				<div class="form-group">
-				<select class="form-control" name="ad_hoc_project" id="ad_hoc_project">
+				<select class="form-control" name="ad_hoc_project" id="ad_hoc_project" onchange="fetch_samples(this.options[this.selectedIndex].value, true);">
 
 				</select>
 				</div>
+			</td>
+			<th>&nbsp;</th>
+		</tr>
+		<tr>
+			<th>&nbsp;</th>
+			<th>Samples</th>
+			<td id="sample">
+
 			</td>
 			<th>&nbsp;</th>
 		</tr>
@@ -148,7 +156,7 @@
 			<th>Project</th>
 			<td>
 				<div class="form-group">
-				<select class="form-control" name="ad_hoc_project" id="ad_hoc_project">
+				<select class="form-control" name="ad_hoc_project" id="ad_hoc_project" onchange="fetch_samples(this.options[this.selectedIndex].value, true);">
 					{% for p in request.user.all_projects.all %}
 					{% if p.active and not p.past_end_date %}
 					<option value="{{ p.id }}">{{ p }}</option>
@@ -159,13 +167,21 @@
 			</td>
 			<th>&nbsp;</th>
 		</tr>
+		<tr>
+			<th>&nbsp;</th>
+			<th>Samples</th>
+			<td id="sample">
+
+			</td>
+			<th>&nbsp;</th>
+		</tr>
 		{% endif %}
 		<tr>
 			<th>&nbsp;</th>
 			<th>Start</th>
 			<td>
 				<div class="datetimepicker-container">
-					<input type="text" name="ad_hoc_start" id="ad_hoc_start" />
+					<input type="text" name="ad_hoc_start" id="ad_hoc_start" class="form-control" />
 				</div>
 			</td>
 			<th>&nbsp;</th>
@@ -175,7 +191,7 @@
 			<th>End</th>
 			<td>
 				<div class="datetimepicker-container">
-					<input type="text" name="ad_hoc_end" id="ad_hoc_end" />
+					<input type="text" name="ad_hoc_end" id="ad_hoc_end" class="form-control" />
 				</div>
 			</td>
 			<th>&nbsp;</th>
@@ -200,6 +216,28 @@
 	</form>
 
 	<script type="text/javascript">
+	function fetch_samples(project_id, ad_hoc)
+	{
+		var target_element = "#sample";
+
+		$(target_element).html("");
+
+		var parameters =
+		{
+			"project_id": project_id,
+			"entry_number": 0
+		};
+
+		var url = "{% url 'get_samples' %}?" + jQuery.param(parameters);
+		var report_error = ajax_complete_callback("Could not fetch samples for user", "There was a problem obtaining the list of samples for the user.");
+
+		$(target_element).load(url, undefined, function(responseTxt, statusTxt, xhr) {
+			if (statusTxt != "success") {
+				ajax_complete_callback("Could not fetch samples for the project", "There was a problem obtaining the list of samples for the project.");
+			}
+		});
+	}
+
 	function check_ad_hoc_submit()
 	{
 		var start = $("#ad_hoc_start").val();
@@ -228,6 +266,7 @@
 			$("#area_user").focus();
 			return false;
 		}
+		{% endif %}
 
 		// check for project
 		if ($("#ad_hoc_project").html() == "") {
@@ -254,7 +293,12 @@
 				return false;
 			}
 		}
-		{% endif %}
+
+		// check for samples
+		if ($("#sample_id").val() != "") {
+			var input = "<input type='hidden' name='selected_sample' value='" + $("#sample_id").val() + "' />";
+			$("#ad_hoc_form").append(input);
+		}
 
 		{% if show_confirm %}
 		return confirm("Does everything on the form look ok?  Click OK to submit the form, or Cancel to edit the entries.");
@@ -302,34 +346,6 @@
 		$("#area_user").typeahead('val', '').show().focus();
 	}
 
-/*	
-	function calculate_duration()
-	{
-		var start = null;
-		var end = null;
-		if ($("#ad_hoc_start").val() != "") {
-			start = moment($("#ad_hoc_start").val());
-		}
-		if ($("#ad_hoc_end").val() != "") {
-			end = moment($("#ad_hoc_end").val());
-		}
-		if (start != null && end != null) {
-			s_duration = "";
-			duration = end.diff(start, 'hours', true);
-
-			if (duration != parseInt(duration)) {
-				s_duration = parseInt(duration) + " hours ";
-				start = start.add(parseInt(duration), 'hour');
-				duration = end.diff(start, 'minutes');
-				s_duration += duration + " minutes";
-			} else {
-				s_duration = parseInt(duration) + " hours";
-			}
-
-			$("#duration").html(s_duration);
-		}
-	}
-*/
 
 	function on_load()
 	{

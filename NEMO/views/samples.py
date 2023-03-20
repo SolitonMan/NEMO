@@ -25,12 +25,12 @@ from django.utils.safestring import mark_safe
 from django.urls import reverse
 
 from NEMO.forms import SampleForm, nice_errors
-from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, Sample, StaffCharge, StaffChargeProject, UsageEvent, UsageEventProject, Reservation, ReservationProject, Project
+from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, Sample, StaffCharge, StaffChargeProject, UsageEvent, UsageEventProject, Reservation, ReservationProject, Project, User
 
 @login_required
 @require_GET
 def samples(request):
-	if request.user.is_superuser:
+	if request.user.is_superuser or request.user.is_staff:
 		sample_list = Sample.objects.all().order_by('identifier')
 	else:
 		sample_list = Sample.objects.filter(Q(project__in=request.user.projects.all()) | Q(created_by=request.user)).order_by('identifier')
@@ -67,6 +67,7 @@ def create_or_modify_sample(request, sample_id):
 
 
 	if request.method == "GET":
+		dictionary['users'] = User.objects.filter(is_active=True, projects__active=True).distinct().order_by('last_name')
 		dictionary['form'] = SampleForm(instance=sample)
 		return render(request, 'sample/create_or_modify_sample.html', dictionary)
 

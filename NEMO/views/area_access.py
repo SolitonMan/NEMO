@@ -10,7 +10,7 @@ from django.utils import timezone
 from django.utils.http import urlencode
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
-from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, Door, PhysicalAccessLog, PhysicalAccessType, Project, StaffCharge, StaffChargeProject, UsageEvent, UsageEventProject, User, UserProfile, UserProfileSetting
+from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, Door, PhysicalAccessLog, PhysicalAccessType, Project, Sample, StaffCharge, StaffChargeProject, UsageEvent, UsageEventProject, User, UserProfile, UserProfileSetting
 from NEMO.tasks import postpone
 from NEMO.utilities import parse_start_and_end_date
 from NEMO.views.customization import get_customization
@@ -595,6 +595,15 @@ def ad_hoc_area_access_record(request):
 	aarp.created = timezone.now()
 	aarp.updated = timezone.now()
 	aarp.save()
+
+	samples = request.POST.get("selected_sample")
+
+	if samples != "" and samples is not None:
+		samples = samples.split(",")
+		for s in samples:
+			aarp.sample.add(Sample.objects.get(id=int(s)))
+
+
 
 	return HttpResponseRedirect(reverse('landing'))
 

@@ -4,7 +4,9 @@
 {% block content %}
 
 <h1>Modify Sample: {{ form.instance.identifier }}</h1>
-
+<br/>
+<input type="text" class="form-control" name="search" id="search" placeholder="filter projects by user" style="width:25%; display: inline" />
+</br/>
 <form action="{% url 'create_or_modify_sample' sample_id %}" method="post">
 	{% csrf_token %}
 	<table class="table">
@@ -12,6 +14,90 @@
 	</table>
 	<input type="submit" value="Submit" class="btn btn-success" />
 </form>
+<select id="search_holder" style="display: none;" name="search_holder">
+
+</select>
+<script type="text/javascript">
+function clear_user()
+{
+	var project_options = $("#id_project option");
+
+	$(project_options).each(function() {
+		$(this).show();
+	});
+
+	$("#search").val("");
+}
+function select_user(jquery_event, search_selection, dataset_name)
+{
+	var project_options = $("#id_project option");
+
+	$(project_options).each(function() {
+		$(this).hide();
+	});
+
+	var user_id = search_selection.id;
+
+	var parameters = 
+	{
+		"source_template": "ad_hoc_area",
+		"user_id": user_id,
+		"entry_number": 0,
+		"ad_hoc": false,
+	};
+
+	var target_element = "#search_holder";
+	var target_results = target_element + " option";
+	var url = "{% url 'get_projects' %}?" + jQuery.param(parameters);
+
+	$(target_element).load(url, undefined, function(responseTxt, statusTxt, xhr) {
+		if(statusTxt == "success") {
+			$(project_options).each(function() {
+				var inc = false;
+				var el = $(this);
+
+				$(target_results).each(function() {
+					inc = $(el).val() == $(this).val();
+					if (inc) return false;
+				});
+
+				if (inc) $(el).show();
+			});
+		}
+	});
+}
+
+function on_load()
+{
+	var clear_btn = "<input type=\"button\" value=\"Clear Search\" class=\"btn btn-danger\" onclick=\"clear_user();\" style=\"display:inline;\" />";
+
+	$("input").each(function() {
+		if ($(this).prop("type") == "text") {
+			if ($(this).prop("class") == "") {
+				$(this).prop("class","form-control");
+			}
+		}
+	});
+
+	$("select").each(function() {
+		if ($(this).prop("class") == "") {
+			$(this).prop("class","form-control");
+		}
+	});
+
+	$("textarea").each(function() {
+		if ($(this).prop("class") == "") {
+			$(this).prop("class","form-control");
+		}
+	});
+
+	$('#search').autocomplete('users', select_user, {{ users|json_search_base }}).focus();
+
+	$("#search").after(clear_btn);
+}
+$(on_load);
+</script>
+
 {% endblock %}
 
 
