@@ -37,7 +37,7 @@
 	{% endif %}
 
 	<script>
-	var current_entry_number = 0;
+	var current_entry_number = 2;
 	var staff_reserved_for_customer = false;
 
 	function update_tool_filter(btn)
@@ -110,7 +110,7 @@
 			$("#project_choice").html("Fetching project list...").show().load("/get_projects_for_self/" + tool_id, undefined, load_projects_completion_callback);
 			$("#project_choice_multi").hide();
 			$("#project_choice_multi").html("");
-			current_entry_number = 0;
+			current_entry_number = 2;
 		}
 
 		function select_project(element, project_id)
@@ -468,12 +468,12 @@
 			function add_customer() 
 			{
 				var failure_dialog = ajax_failure_callback("Cannot add new entry", "The web browser was not able to communicate with the server.");
-				ajax_get("{% url 'staff_charge_entry' %}", { "entry_number": current_entry_number }, add_entry_success_callback, failure_dialog);
+				ajax_get("{% url 'staff_charge_entry' %}", { "entry_number": window.current_entry_number }, add_entry_success_callback, failure_dialog);
 				function add_entry_success_callback(response, status, xml_http_request)
 				{
 					$("#usage_event_entries tr:last").before(response);
-					enable_autocompletion(current_entry_number);
-					current_entry_number++;
+					enable_autocompletion(window.current_entry_number);
+					window.current_entry_number++;
 					{% if staff_charge_projects %}
 					update_override(true);
 					{% endif %}
@@ -579,6 +579,7 @@
 			{
 				$("#user_button__" + row).hide();
 				$("#project__" + row).html("");
+				$("#sample__" + row).html("");
 				$("#user_textbox__" + row).typeahead('val', '').show().focus();
 			}
 			function on_submit(e)

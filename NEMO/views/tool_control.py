@@ -209,7 +209,7 @@ def tool_status(request, tool_id):
 			if ReservationProject.objects.filter(reservation=current_reservation).exists():
 				rp = ReservationProject.objects.filter(reservation=current_reservation)
 
-				if rp.filter(~Q(customer=request.user)).exists():
+				if rp.exclude(customer=request.user).exists():
 					# reservation is for at least one person who isn't the current user, so user must be staff
 					dictionary['staff_member_for_customer'] = True
 				else:
@@ -1298,6 +1298,7 @@ def save_usage_event(request):
 		new_usage_event.save()
 
 		project_events = {}
+		sample_selections = {}
 
 		for key, value in request.POST.items():
 			if is_valid_field(key):
@@ -1333,9 +1334,22 @@ def save_usage_event(request):
 						new_usage_event.delete()
 						return HttpResponseBadRequest('Please enter a project percent value')
 
+				if attribute == "chosen_sample":
+					sample_field = "selected_sample__" + str(index)
+					samples = request.POST.get(sample_field)
+					sample_selections[index] = samples.split(",")
+
 		for p in project_events.values():
 			p.full_clean()
 			p.save()
+
+		# save any samples included in the submission
+		if sample_selections is not None and sample_selections != {}:
+			for k in project_events.keys():
+				if k in sample_selections:
+					for s in sample_selections[k]:
+						project_events[k].sample.add(Sample.objects.get(id=int(s)))
+
 
 		params['new_usage_event'] = new_usage_event
 		params['uep'] = UsageEventProject.objects.filter(usage_event=new_usage_event)
@@ -1405,6 +1419,12 @@ def save_usage_event(request):
 				p.full_clean()
 				p.save()
 
+			if sample_selections is not None and sample_selections != {}:
+				for k in project_charges.keys():
+					if k in sample_selections:
+						for s in sample_selections[k]:
+							project_charges[k].sample.add(Sample.objects.get(id=int(s)))
+
 		area_access_record = request.POST.get("area_access_record")
 
 		if area_access_record:
@@ -1437,6 +1457,9 @@ def save_usage_event(request):
 				aarp.created = timezone.now()
 				aarp.updated = timezone.now()
 				aarp.save()
+
+				for s in project_events[p].sample.all():
+					aarp.sample.add(s)
 
 
 	except Exception as inst:

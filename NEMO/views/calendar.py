@@ -499,6 +499,15 @@ def create_reservation(request):
 						for s in sample_selections[k]:
 							reservation_projects[k].sample.add(Sample.objects.get(id=int(s)))
 
+			else:
+				samples = request.POST['selected_sample']
+				sample_list = samples.split(",")
+
+				if sample_list != []:
+					rp = ReservationProject.objects.filter(reservation=new_reservation)
+					for r in rp:
+						for s in sample_list:
+							r.sample.add(Sample.objects.get(id=int(s)))
 		else:
 			samples = request.POST['selected_sample']
 			sample_list = samples.split(",")
@@ -507,8 +516,7 @@ def create_reservation(request):
 				rp = ReservationProject.objects.filter(reservation=new_reservation)
 				for r in rp:
 					for s in sample_list:
-						if s in r.project.sample_project.all():
-							r.sample.add(s)
+						r.sample.add(Sample.objects.get(id=int(s)))
 
 		# create an email with the reservation information
 		if b_send_mail:

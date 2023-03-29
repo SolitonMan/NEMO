@@ -488,7 +488,8 @@
 			var parameters =
 			{
 				"project_id": project_id,
-				"entry_number": row
+				"entry_number": row,
+				"ad_hoc": ad_hoc,
 			};
 			var url = "{% url 'get_samples' %}?" + jQuery.param(parameters);
 			var report_error = ajax_complete_callback("Could not fetch samples for user", "There was a problem obtaining the list of samples for the user.");

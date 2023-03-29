@@ -238,14 +238,20 @@
 		<th>Customer</th>
 		<td>
 			<span id="selected_operator"></span>
-			<input type="hidden" name="chosen_user__0" id="ad_hoc_user_textbox__0" value="" />
-			<input type="hidden" name="project_percent__0" id="ad_hoc_project_percent__0" value="100" />
+			<input type="hidden" name="chosen_user__1" id="ad_hoc_user_textbox__1" value="" />
+			<input type="hidden" name="project_percent__1" id="ad_hoc_project_percent__1" value="100" />
 		</td>
 	</tr>
 	<tr>
 		<th>Project</th>
-		<td id="ad_hoc_project__0" style="vertical-align: middle">
+		<td id="ad_hoc_project__1" style="vertical-align: top">
 			
+		</td>
+	</tr>
+	<tr>
+		<th>Samples</th>
+		<td id="ad_hoc_sample__1">
+
 		</td>
 	</tr>
 </table>
@@ -314,8 +320,8 @@ function set_mode(iMode)
 		$("#event_details").append($("#other_customer").html());
 	} else {
 		$("#event_details").append($("#operator_customer").html());
-		$("#ad_hoc_user_textbox__0").val($("#operator").val());
-		fetch_projects(0, $("#operator").val());
+		$("#ad_hoc_user_textbox__1").val($("#operator").val());
+		fetch_projects(1, $("#operator").val(), true);
 		{% if request.user.is_superuser or request.user.is_staff %}
 		$("#selected_operator").html(selected_operator);
 		{% else %}

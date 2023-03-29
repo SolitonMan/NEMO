@@ -1275,6 +1275,8 @@ def begin_staff_area_charge(request):
 	area_access.staff_charge = charge
 	area_access.created = timezone.now()
 	area_access.updated = timezone.now()
+	if charge.related_usage_event is not None:
+		area_access.related_usage_event = charge.related_usage_event
 	area_access.save()
 
 	scp = StaffChargeProject.objects.filter(staff_charge=charge, active_flag=True)
@@ -1287,6 +1289,9 @@ def begin_staff_area_charge(request):
 		aarp.created = timezone.now()
 		aarp.updated = timezone.now()
 		aarp.save()
+
+		for smp in s.sample.all():
+			aarp.sample.add(smp)
 
 	return redirect(reverse('staff_charges'))
 

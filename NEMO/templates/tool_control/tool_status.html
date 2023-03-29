@@ -326,11 +326,15 @@
 						{% endif %}
 					{% endfor %}
 					<h4>What would you like to do?</h4>
-					<div class="radio"><label><input type="radio" onchange="use_tool_for_self({{ tool.id }}){% if my_reservation %};set_start_button(0);{% endif %}" name="staff_charge" value="false" {% if my_reservation %}{% if my_reservation_projects is None %} checked{% endif %}{% endif %}>Use this tool for my own project</label></div>
-					<div class="radio"><label><input type="radio" onchange="use_tool_for_other({{ tool.id }}){% if my_reservation %};set_start_button(1);{% endif %}" name="staff_charge" value="false" {% if my_reservation %}{% if my_reservation_projects %} checked{% endif %}{% endif %}>Use this tool on behalf of another user</label></div>
-					<div id="project_choice"></div>
+					<div class="radio"><label><input type="radio" onchange="use_tool_for_self({{ tool.id }}){% if my_reservation %};set_start_button(0);{% endif %}" name="staff_charge" value="false" {% if not staff_member_for_customer %} checked{% endif %}>Use this tool for my own project</label></div>
+					<div class="radio"><label><input type="radio" onchange="use_tool_for_other({{ tool.id }}){% if my_reservation %};set_start_button(1);{% endif %}" name="staff_charge" value="false" {% if staff_member_for_customer %} checked{% endif %}>Use this tool on behalf of another user</label></div>
+					<div id="project_choice">
+					{% if not staff_member_for_customer and my_reservation_projects is not None %}
+
+					{% endif %}
+					</div>
 					<div id="project_choice_multi">
-					{% if my_reservation_projects is not None %}
+					{% if staff_member_for_customer and my_reservation_projects is not None %}
 					<table id="usage_event_entries" class="table">
 					<tr>
 						<th>&nbsp;</th>
@@ -746,8 +750,57 @@
 		}
 	}
 
-	{% if my_reservation and my_reservation_projects is None %}
+	{% if not staff_member_for_customer and my_reservation_projects is None %}
 	use_tool_for_self({{ tool.id }});
+	{% elif not staff_member_for_customer and my_reservation_projects.count == 1 %}
+	$("#override_staff_charge").remove();
+	$("#start").unbind("click");
+	$("#start").click(enable_tool);
+	var project_id;
+	if ($("#user_projects").length > 0) {
+		$("#user_projects option").each(function() {
+			if ($(this).prop("selected")) {
+				project_id = $(this).val();
+			}
+		});
+	}
+
+	var a_selected_samples = [];
+	{% for s in my_reservation_projects.0.sample.all %}
+	a_selected_samples.push({{ s.id }});
+	{% endfor %}
+
+	var parameters =
+	{
+		"project_id": project_id,
+		"entry_number": 0
+	};
+
+	var target_element = "#sample";
+
+	var url = "{% url 'get_samples' %}?" + jQuery.param(parameters);
+	var report_error = ajax_complete_callback("Could not fetch samples for user", "There was a problem obtaining the list of samples for the user.");
+
+	$(target_element).load(url, undefined, function(responseTxt, statusTxt, xhr) {
+		if (statusTxt == "success") {
+			$("#sample_id").change(function() {
+				$("#selected_sample").val($(this).val());
+			});
+
+			$("#sample_id option").each(function() {
+				if (a_selected_samples.includes(parseInt($(this).val()))) {
+					$(this).prop("selected",true);
+				}
+			});
+			$("#selected_sample").val($("#sample_id").val());
+		} else {
+			ajax_complete_callback("Could not fetch samples for the project", "There was a problem obtaining the list of samples for the project.");
+		}
+	});
+
+	$("#project_choice_multi").hide();
+	$("#project_choice_multi").html("");
+	current_entry_number = 2;
 	{% endif %}
 	{% if my_reservation_projects is not None %}
 	current_entry_number = parseInt({{ my_reservation_projects.count }}) + 1;

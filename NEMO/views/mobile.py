@@ -61,7 +61,7 @@ def new_reservation(request, tool_id, date=None):
 	dictionary = tool.get_configuration_information(user=request.user, start=None)
 	dictionary['tool'] = tool
 	dictionary['date'] = date
-	dictionary['users'] = User.objects.filter(is_active=True, projects__active=True).distinct()
+	dictionary['users'] = User.objects.filter(is_active=True, projects__active=True).exclude(id=request.user.id).distinct()
 	#dictionary['start_value'] = start_value
 	#dictionary['end_value'] = end_value
 	#dictionary['start_date'] = str(datetime.today().year) + '-' + str(datetime.today().month) + '-' + str(datetime.today().day) 
