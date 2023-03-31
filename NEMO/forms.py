@@ -277,16 +277,19 @@ class ScheduledOutageForm(ModelForm):
 class SampleForm(ModelForm):
 	project_choices = None
 	project = forms.ModelMultipleChoiceField(label='Project',queryset=project_choices,required=True)
+	sample_choices = None
+	parent_sample = forms.ModelMultipleChoiceField(label='Parent Sample',queryset=sample_choices,required=False)
 
 	class Meta:
 		model = Sample
-		fields = ['identifier','nickname','description','project','parent_sample','active_flag']
+		fields = ['nickname','customer_nickname','description','project','parent_sample','active_flag','identifier']
 
 	def __init__(self, *args, **kwargs):
 		super(SampleForm, self).__init__(*args, **kwargs)
 		self.project_choices = Project.objects.filter(active=True, end_date__gte=timezone.now().date()).order_by('project_number')
 		self.fields['project'].queryset = self.project_choices
-
+		self.sample_choices = Sample.objects.filter(active_flag=True).order_by('nickname')
+		self.fields['parent_sample'].queryset = self.sample_choices
 
 def nice_errors(form, non_field_msg='General form errors'):
 	result = ErrorDict()

@@ -5,14 +5,14 @@
 
 <h1>Modify Sample: {{ form.instance.identifier }}</h1>
 <br/>
-<input type="text" class="form-control" name="search" id="search" placeholder="filter projects by user" style="width:25%; display: inline" />
-</br/>
 <form action="{% url 'create_or_modify_sample' sample_id %}" method="post">
 	{% csrf_token %}
 	<table class="table">
 	{{ form.as_table }}
 	</table>
 	<input type="submit" value="Submit" class="btn btn-success" />
+
+	<br/><br/>
 </form>
 <select id="search_holder" style="display: none;" name="search_holder">
 
@@ -69,6 +69,7 @@ function select_user(jquery_event, search_selection, dataset_name)
 
 function on_load()
 {
+	var search_field = "<input type=\"text\" class=\"form-control\" name=\"search\" id=\"search\" placeholder=\"filter projects by user\" style=\"width:25%; display: inline\" />";
 	var clear_btn = "<input type=\"button\" value=\"Clear Search\" class=\"btn btn-danger\" onclick=\"clear_user();\" style=\"display:inline;\" />";
 
 	$("input").each(function() {
@@ -91,9 +92,45 @@ function on_load()
 		}
 	});
 
+	$("#id_project").before(search_field);
+
 	$('#search').autocomplete('users', select_user, {{ users|json_search_base }}).focus();
 
 	$("#search").after(clear_btn);
+
+	var parent_sample_search = "<input type=\"text\" value=\"\" class=\"form-control\" style=\"display:block; width:25%;\" name=\"parent_sample_search\" id=\"parent_sample_search\" placeholder=\"filter parent sample options\" />";
+
+	$("#id_parent_sample").before(parent_sample_search);
+	$("#parent_sample_search").keyup(function() {
+		var options = $("#id_parent_sample option");
+
+		var data = this.value;
+
+		if (data.length < 3) {
+			options.show();
+			return;
+		}
+
+		options.hide();
+
+		options.filter(function(i,v) {
+			var $t = $(this);
+
+			var s = data.toUpperCase();
+
+			if ($t.text().toUpperCase().indexOf(s) > -1) {
+				return true;
+			}
+		}).show();
+	});
+	$("#id_parent_sample option").click(function() {
+		if ($(this).prop("selected")) {
+			var opt = $(this);
+			$("#id_parent_sample option:selected").each(function() {
+				if ($(this).val() != opt.val()) $(this).removeAttr("selected");
+			});
+		}
+	});
 }
 $(on_load);
 </script>

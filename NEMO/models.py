@@ -1941,6 +1941,7 @@ class NotificationSchemeToolAction(models.Model):
 class Sample(models.Model):
 	identifier = models.CharField(null=True,blank=True,max_length=255)
 	nickname = models.CharField(null=True,blank=True,max_length=500)
+	customer_nickname = models.CharField(null=True,blank=True,max_length=500)
 	description = models.TextField(null=True,blank=True)
 	project = models.ManyToManyField("Project", blank=True, related_name="sample_project")
 	parent_sample = models.ForeignKey('self',null=True,blank=True,on_delete=models.SET_NULL,related_name='precursor')
@@ -1951,6 +1952,6 @@ class Sample(models.Model):
 	updated_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, related_name='sample_updated_by')
 
 	def __str__(self):
-		return str(self.identifier) + " (" + str(self.created_by) + ") - " + str(self.nickname)
+		return str(self.nickname) + " (" + str(self.created_by) + ") - " + str(self.identifier)
 
 

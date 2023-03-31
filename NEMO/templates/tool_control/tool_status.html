@@ -752,7 +752,9 @@
 
 	{% if not staff_member_for_customer and my_reservation_projects is None %}
 	use_tool_for_self({{ tool.id }});
-	{% elif not staff_member_for_customer and my_reservation_projects.count == 1 %}
+	{% elif not staff_member_for_customer and my_reservation_projects is not None %}
+	
+
 	$("#override_staff_charge").remove();
 	$("#start").unbind("click");
 	$("#start").click(enable_tool);
@@ -763,39 +765,43 @@
 				project_id = $(this).val();
 			}
 		});
+	} else {
+		project_id = {{ my_reservation_projects.0.project.id }};
 	}
 
-	var a_selected_samples = [];
-	{% for s in my_reservation_projects.0.sample.all %}
-	a_selected_samples.push({{ s.id }});
-	{% endfor %}
+	$("#project_choice").html("Fetching project list...").show().load("/get_projects_for_self/" + "{{ tool.id }}", undefined, function() {
+		var a_selected_samples = [];
+		{% for s in my_reservation_projects.0.sample.all %}
+		a_selected_samples.push({{ s.id }});
+		{% endfor %}
 
-	var parameters =
-	{
-		"project_id": project_id,
-		"entry_number": 0
-	};
+		var parameters =
+		{
+			"project_id": project_id,
+			"entry_number": 0
+		};
 
-	var target_element = "#sample";
+		var target_element = "#sample";
 
-	var url = "{% url 'get_samples' %}?" + jQuery.param(parameters);
-	var report_error = ajax_complete_callback("Could not fetch samples for user", "There was a problem obtaining the list of samples for the user.");
+		var url = "{% url 'get_samples' %}?" + jQuery.param(parameters);
+		var report_error = ajax_complete_callback("Could not fetch samples for user", "There was a problem obtaining the list of samples for the user.");
 
-	$(target_element).load(url, undefined, function(responseTxt, statusTxt, xhr) {
-		if (statusTxt == "success") {
-			$("#sample_id").change(function() {
-				$("#selected_sample").val($(this).val());
-			});
+		$(target_element).load(url, undefined, function(responseTxt, statusTxt, xhr) {
+			if (statusTxt == "success") {
+				$("#sample_id").change(function() {
+					$("#selected_sample").val($(this).val());
+				});
 
-			$("#sample_id option").each(function() {
-				if (a_selected_samples.includes(parseInt($(this).val()))) {
-					$(this).prop("selected",true);
-				}
-			});
-			$("#selected_sample").val($("#sample_id").val());
-		} else {
-			ajax_complete_callback("Could not fetch samples for the project", "There was a problem obtaining the list of samples for the project.");
-		}
+				$("#sample_id option").each(function() {
+					if (a_selected_samples.includes(parseInt($(this).val()))) {
+						$(this).prop("selected",true);
+					}
+				});
+				$("#selected_sample").val($("#sample_id").val());
+			} else {
+				ajax_complete_callback("Could not fetch samples for the project", "There was a problem obtaining the list of samples for the project.");
+			}
+		});
 	});
 
 	$("#project_choice_multi").hide();
