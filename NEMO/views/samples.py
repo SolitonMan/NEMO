@@ -44,13 +44,15 @@ def get_samples(request):
 	entry_number = request.GET.get('entry_number', None)
 	try:
 		sample_list = Sample.objects.filter(project__in=[project_id]).order_by('identifier')
+		project = Project.objects.get(id=int(project_id))
 	except:
 		sample_list = None
+		project = request.user.active_projects.all()[0]
 
 	if sample_list is not None and  sample_list.count() == 0:
 		sample_list = None
 
-	return render(request, 'sample/get_samples.html', {'samples': sample_list, "entry_number": entry_number})
+	return render(request, 'sample/get_samples.html', {'samples': sample_list, "entry_number": entry_number, "project": project })
 
 
 @staff_member_required(login_url=None)
@@ -62,8 +64,10 @@ def create_or_modify_sample(request, sample_id):
 
 	try:
 		sample = Sample.objects.get(id=sample_id)
+		dictionary['new_sample'] = False
 	except:
 		sample = None
+		dictionary['new_sample'] = True
 
 
 	if request.method == "GET":
@@ -91,4 +95,40 @@ def create_or_modify_sample(request, sample_id):
 		return redirect('samples')
 
 
+@staff_member_required(login_url=None)
+@require_http_methods(['GET', 'POST'])
+def modal_create_sample(request, project_id):
+	dictionary = {
+		'project': Project.objects.get(id=int(project_id)),
+		'sample_id': None,
+	}
+	sample_id = None
 
+	try:
+		sample = Sample.objects.get(id=sample_id)
+	except:
+		sample = None
+
+
+	if request.method == "GET":
+		dictionary['form'] = SampleForm(instance=sample)
+		return render(request, 'sample/modal_create_sample.html', dictionary)
+
+	elif request.method == "POST":
+		form = SampleForm(request.POST, instance=sample)
+		dictionary['form'] = form
+
+		if not form.is_valid():
+			return render(request, 'sample/modal_create_sample.html', dictionary)
+
+		r = form.save()
+		r.updated = timezone.now()
+		r.updated_by = request.user
+
+		if sample is None:
+			r.created = timezone.now()
+			r.created_by = request.user
+
+		r.save()
+
+		return redirect('samples')

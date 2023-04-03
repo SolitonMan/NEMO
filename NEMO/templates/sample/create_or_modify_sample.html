@@ -3,7 +3,7 @@
 {% block title %}Manage Sample{% endblock %}
 {% block content %}
 
-<h1>Modify Sample: {{ form.instance.identifier }}</h1>
+<h1>Modify Sample: {% if form.instance.identifier is not None %}{{ form.instance.identifier }}{% else %}New Sample{% endif %}</h1>
 <br/>
 <form action="{% url 'create_or_modify_sample' sample_id %}" method="post">
 	{% csrf_token %}
@@ -100,7 +100,8 @@ function on_load()
 
 	var parent_sample_search = "<input type=\"text\" value=\"\" class=\"form-control\" style=\"display:block; width:25%;\" name=\"parent_sample_search\" id=\"parent_sample_search\" placeholder=\"filter parent sample options\" />";
 
-	$("#id_parent_sample").before(parent_sample_search);
+	$("#id_parent_sample").before(parent_sample_search).prop("multiple","multiple");
+	$("#id_parent_sample option:selected").remove();
 	$("#parent_sample_search").keyup(function() {
 		var options = $("#id_parent_sample option");
 
@@ -130,6 +131,50 @@ function on_load()
 				if ($(this).val() != opt.val()) $(this).removeAttr("selected");
 			});
 		}
+	});
+
+	{% if new_sample %}
+	var identifier_span = "<span id=\"identifier_span\" style=\"width:30%;\"></span>";
+	$("#id_identifier").prop("placeholder","user defined identifier - limit to letters, numbers, dashes and underscores").css("display","inline").css("width","80%").before(identifier_span);
+
+	var current_date = new Date();
+	var YYYY = current_date.getFullYear();
+
+	var MM = parseInt(current_date.getMonth()) + 1;
+	if (MM < 10) MM = "0" + MM.toString();
+
+	var DD = parseInt(current_date.getDate());
+	if (DD < 10) DD = "0" + DD.toString();
+
+	var HH = parseInt(current_date.getHours());
+	if (HH < 10) HH = "0" + HH.toString();
+
+	var mins = parseInt(current_date.getMinutes());
+	if (mins < 10) mins = "0" + mins.toString();
+
+	var ss = parseInt(current_date.getSeconds());
+	if (ss < 10) ss = "0" + ss.toString();
+
+	$("#identifier_span").html(YYYY + MM + DD + HH + mins + ss + "   -   ");
+
+	$("#id_identifier").keypress(function(e) {
+		var char = String.fromCharCode(e.which);
+		var accepted = "01234567890_abcdefghijklmnopqrstuvwxyz-ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+		if (accepted.indexOf(char) == -1) {
+			e.preventDefault();
+		}
+	});
+	{% else %}
+	$("#id_identifier").prop("disabled","true");
+	{% endif %}
+
+	$("form").submit(function() {
+		var userval = $("#id_identifier").val();
+		var timeval = $("#identifier_span").html();
+
+		$("#id_identifier").val(timeval + userval);
+
+		$("#id_parent_sample").removeAttr("multiple")
 	});
 }
 $(on_load);

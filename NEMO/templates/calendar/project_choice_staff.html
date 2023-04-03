@@ -197,6 +197,33 @@
 		});
 	}
 
+	function add_sample(project_id)
+	{
+		var url = "/modal_create_sample/" + project_id;
+		var ajax_post = {
+			"url": url,
+			"data": {},
+			"type": "GET",
+			"dataType": "html"
+		};
+
+		jQuery.ajax(ajax_post)
+			.fail(ajax_failure_callback("Oops, something went wrong!"))
+			.done(function(response, status, xml_http_request)
+			{
+				if(response === "") {
+					refresh_calendar_and_sidebar();
+				} else {
+					$("#dialog .modal-content").html(response);
+					$("#dialog").one('hidden.bs.modal', function() {
+						$("#dialog").modal('hide');
+						$("#dialog .modal-content").html("");
+					});
+					$("#dialog").modal('show');
+				}
+			});
+	}
+
 	function purge_customer(row)
 	{
 		$("#user_button__" + row).hide();
