@@ -135,4 +135,4 @@ def modal_create_sample(request, project_id):
 
 		r.save()
 
-		return HttpResponse(status=200)
+		return HttpResponse(r.id)

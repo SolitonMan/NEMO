@@ -50,6 +50,7 @@
 	</form>
 	<script type="text/javascript">
 	{% load custom_tags_and_filters %}
+	var ss = [];
 
 	function set_project(id)
 	{
@@ -74,6 +75,14 @@
 					$('#dialog_cancelled').val(false);
 					$('#dialog').modal('hide');
 				}).prop("disabled",false);
+
+				if (ss.length > 0) {
+					$("#sample_id option").each(function() {
+						if (ss.indexOf(parseInt($(this).val())) > -1) $(this).prop("selected","selected");
+					});
+					ss.length = 0;
+				}
+
 			} else {
 				ajax_complete_callback("Could not fetch samples for the project", "There was a problem obtaining the list of samples for the project.");
 			}
@@ -188,8 +197,13 @@
 			if (statusTxt == "success") {
 
 				// add select lists with samples for the project
-				var s1 = $("#chosen_sample__" + row);
-				s1.focus();
+				var s1 = "#chosen_sample__" + row;
+				if (ss.length > 0) {
+					s1_options = s1 + " option";
+					$(s1_options).each(function() {
+						if (ss.indexOf(parseInt($(this).val())) > -1) $(this).prop("selected","selected");
+					});
+				}
 
 			} else {
 				ajax_complete_callback("Could not fetch samples for the project", "There was a problem obtaining the list of samples for the project.");
@@ -199,6 +213,20 @@
 
 	function add_sample(project_id, entry_number)
 	{
+		var sample_list;
+
+		if (entry_number == 0) {
+			sample_list = "#sample_id"
+		} else {
+			sample_list = "#chosen_sample__" + entry_number;
+		}
+
+		sample_list += " option:selected";
+
+		$(sample_list).each(function() {
+			ss.push(parseInt($(this).val()));
+		});
+
 		var url = "/modal_create_sample/" + project_id + "/";
 		var ajax_post = {
 			"url": url,
@@ -227,6 +255,8 @@
 							url: url,
 							data: serialize("#sample_dialog .modal-content form"),
 							success: function(response, status, xml_http_request) { 
+								ss.push(parseInt(response));
+								//alert(ss.join("\n"));
 								$("#sample_dialog").modal('hide');
 								$("#sample_dialog .modal-content").html("");
 								var sl = "#chosen_project__" + entry_number;
@@ -328,5 +358,6 @@
 	}
 
 	$(on_load);
+	//# sourceURL=calendar/project_choice_staff.html
 	</script>
 </div>
