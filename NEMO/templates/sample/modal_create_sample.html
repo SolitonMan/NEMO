@@ -1,0 +1,114 @@
+<div class="modal-header">
+	<button type="button" class="close" data-dismiss="modal">&times;</button>
+	<h4 class="modal-title">Create a sample for project {{ project.project_number }}</h4>
+</div>
+
+<div class="modal-body">
+
+<form action="{% url 'modal_create_sample' project.id %}" method="post">
+{% csrf_token %}
+<table class="table">
+{{ form.as_table }}
+</table>
+<input type="submit" value="Submit" class="btn btn-success" />
+</form>
+<script type="text/javascript">
+function on_load()
+{
+	$("input").each(function() {
+		if ($(this).prop("type") == "text") {
+			if ($(this).prop("class") == "") {
+				$(this).prop("class","form-control");
+			}
+		}
+	});
+
+	$("select").each(function() {
+		if ($(this).prop("class") == "") {
+			$(this).prop("class","form-control");
+		}
+	});
+
+	$("textarea").each(function() {
+		if ($(this).prop("class") == "") {
+			$(this).prop("class","form-control");
+		}
+	});
+
+	var parent_sample_search = "<input type=\"text\" value=\"\" class=\"form-control\" style=\"display:block; width:25%;\" name=\"parent_sample_search\" id=\"parent_sample_search\" placeholder=\"filter parent sample options\" />";
+
+	$("#id_parent_sample").before(parent_sample_search);
+	$("#parent_sample_search").keyup(function() {
+		var options = $("#id_parent_sample option");
+
+		var data = this.value;
+
+		if (data.length < 3) {
+			options.show();
+			return;
+		}
+
+		options.hide();
+
+		options.filter(function(i,v) {
+			var $t = $(this);
+
+			var s = data.toUpperCase();
+
+			if ($t.text().toUpperCase().indexOf(s) > -1) {
+				return true;
+			}
+		}).show();
+	});
+	$("#id_parent_sample option").click(function() {
+		if ($(this).prop("selected")) {
+			var opt = $(this);
+			$("#id_parent_sample option:selected").each(function() {
+				if ($(this).val() != opt.val()) $(this).removeAttr("selected");
+			});
+		}
+	});
+
+	var identifier_span = "<span id=\"identifier_span\" style=\"width:30%;\"></span>";
+	$("#id_identifier").prop("placeholder","user defined identifier - limit to letters, numbers, dashes and underscores").css("display","inline").css("width","80%").before(identifier_span);
+
+	var current_date = new Date();
+	var YYYY = current_date.getFullYear();
+
+	var MM = parseInt(current_date.getMonth()) + 1;
+	if (MM < 10) MM = "0" + MM.toString();
+
+	var DD = parseInt(current_date.getDate());
+	if (DD < 10) DD = "0" + DD.toString();
+
+	var HH = parseInt(current_date.getHours());
+	if (HH < 10) HH = "0" + HH.toString();
+
+	var mins = parseInt(current_date.getMinutes());
+	if (mins < 10) mins = "0" + mins.toString();
+
+	var ss = parseInt(current_date.getSeconds());
+	if (ss < 10) ss = "0" + ss.toString();
+
+	$("#identifier_span").html(YYYY + MM + DD + HH + mins + ss + "   -   ");
+
+	$("#id_identifier").keypress(function(e) {
+		var char = String.fromCharCode(e.which);
+		var accepted = "01234567890_abcdefghijklmnopqrstuvwxyz-ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+		if (accepted.indexOf(char) == -1) {
+			e.preventDefault();
+		}
+	});
+
+	$("form").submit(function() {
+		var userval = $("#id_identifier").val();
+		var timeval = $("#identifier_span").html();
+
+		$("#id_identifier").val(timeval + userval);
+
+		$("#id_parent_sample").removeAttr("multiple")
+	});
+}
+$(on_load);	
+</script>
+</div>

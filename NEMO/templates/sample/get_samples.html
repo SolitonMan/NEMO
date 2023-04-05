@@ -13,7 +13,6 @@
 {% endif %}
 <br/>
 {% if user.is_staff %}
-<input type="button" value="Add Sample" class="btn btn-success" onclick="add_sample({{ project.id }});" />
+<input type="button" value="Add Sample" class="btn btn-success" onclick="add_sample({{ project.id }},{{ entry_number }});" />
 {% endif %}
 <br/>
-<!--input type="button" class="btn btn-success" value="Add New Sample" onclick="alert('Execute New Sample Interface Here');" /-->

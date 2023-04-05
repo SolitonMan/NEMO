@@ -15,7 +15,7 @@
 		<p>Associate your reservation with a project.</p>
 		<input type="hidden" id="project_id" name="project_id">
 		<input type='hidden' name='selected_sample' id='selected_sample' value='' />
-		<select class="form-control" onchange="return set_project(this.options[this.selectedIndex].value);">
+		<select name="chosen_project__0" id="chosen_project__0" class="form-control" onchange="return set_project(this.options[this.selectedIndex].value);">
 			<option value="">Please select a project</option>
 		{% for project in active_projects %}
 			<option value="{{ project.id }}">{{ project }}</option>
@@ -197,12 +197,15 @@
 		});
 	}
 
-	function add_sample(project_id)
+	function add_sample(project_id, entry_number)
 	{
-		var url = "/modal_create_sample/" + project_id;
+		var url = "/modal_create_sample/" + project_id + "/";
 		var ajax_post = {
 			"url": url,
-			"data": {},
+			"data": {
+				"modal_caller": "",
+				"request_mode": "reservation", 
+			},
 			"type": "GET",
 			"dataType": "html"
 		};
@@ -214,12 +217,36 @@
 				if(response === "") {
 					refresh_calendar_and_sidebar();
 				} else {
-					$("#dialog .modal-content").html(response);
-					$("#dialog").one('hidden.bs.modal', function() {
-						$("#dialog").modal('hide');
-						$("#dialog .modal-content").html("");
+					$("#sample_dialog .modal-content").html(response);
+					$("#sample_dialog").modal('show');
+					$("#sample_dialog .modal-content form").submit(function() {
+						event.preventDefault();
+						$("#sample_dialog .modal-content form").off("submit");
+						$.ajax({
+							type: "POST",
+							url: url,
+							data: serialize("#sample_dialog .modal-content form"),
+							success: function(response, status, xml_http_request) { 
+								$("#sample_dialog").modal('hide');
+								$("#sample_dialog .modal-content").html("");
+								var sl = "#chosen_project__" + entry_number;
+								if ($(sl).tagName == "SELECT") {
+									$(sl).trigger("change");
+								} else {
+									// if the case is for self call set_project
+									if ($("input[name='staff_charge']:checked").val() == "self") {
+										set_project(project_id);
+									} else {
+										fetch_samples(entry_number, false);
+									}
+								}
+
+								$("#done").click(on_submit);
+								$("#done").show();
+
+							}
+						});
 					});
-					$("#dialog").modal('show');
 				}
 			});
 	}
@@ -284,6 +311,10 @@
 			}
 		}
 
+		// clean up empty fields
+		$("#additional_event_parameters input[type='hidden'], input[type='text'], select").each(function() {
+			if ($(this).val() == "") $(this).remove(); 
+		});
 
 		$('#dialog_cancelled').val(false);
 		$('#dialog').modal('hide');

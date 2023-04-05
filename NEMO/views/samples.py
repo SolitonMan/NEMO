@@ -111,10 +111,14 @@ def modal_create_sample(request, project_id):
 
 
 	if request.method == "GET":
-		dictionary['form'] = SampleForm(instance=sample)
+		dictionary['modal_caller'] = request.GET.get('modal_caller', None)
+		dictionary['form'] = SampleForm(instance=sample, initial={'project':[project_id]})
 		return render(request, 'sample/modal_create_sample.html', dictionary)
 
 	elif request.method == "POST":
+		dictionary['modal_caller'] = request.POST.get('modal_caller', None)
+
+		request_mode = request.POST.get('request_mode')
 		form = SampleForm(request.POST, instance=sample)
 		dictionary['form'] = form
 
@@ -131,4 +135,4 @@ def modal_create_sample(request, project_id):
 
 		r.save()
 
-		return redirect('samples')
+		return HttpResponse(status=200)
