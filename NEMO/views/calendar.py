@@ -59,6 +59,10 @@ def calendar(request, tool_id=None, qualified_only=None, core_only=None):
 	categorized_tools = mark_safe(categorized_tools)
 
 	rendered_tool_tree_html = ToolTree().render(None, {'tools': tools})
+
+	if tool_id is None:
+		tool_id = 0
+
 	dictionary = {
 		'rendered_tool_tree_html': rendered_tool_tree_html,
 		'tools': tools,

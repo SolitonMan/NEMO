@@ -58,19 +58,19 @@ function update_tool_filter(btn)
 	// toggle between all tools and core tools, depending on filter button title
 	if (btn.title == "Show all tools") {
 		// call view calendar.calendar for showing all tools
-		window.open("{% url 'calendar' 0 0 0 %}","_self");
+		window.open("{% url 'calendar' auto_select_tool 0 0 %}","_self");
 	} else {
 		// call view calendar.calendar for showing only core tools
-		window.open("{% url 'calendar' 0 0 1 %}","_self");
+		window.open("{% url 'calendar' auto_select_tool 0 1 %}","_self");
 	}	
 {% else %}
 	// toggle between all tools and qualified tools, depending on filter button title
 	if (btn.title == "Show all tools") {
 		// call view calendar.calendar for showing all tools
-		window.open("{% url 'calendar' 0 0 0 %}","_self");
+		window.open("{% url 'calendar' auto_select_tool 0 0 %}","_self");
 	} else {
 		// call view calendar.calendar for showing only qualified tools
-		window.open("{% url 'calendar' 0 1 0 %}","_self");
+		window.open("{% url 'calendar' auto_select_tool 1 0 %}","_self");
 	}
 {% endif %}
 }

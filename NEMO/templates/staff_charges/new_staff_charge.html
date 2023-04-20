@@ -46,7 +46,7 @@
 				<th style="min-width:300px">Samples</th>
 			</tr>
 			{# Rows are inserted here on load and when "Add another customer" is clicked. #}
-			{% include 'staff_charges/staff_charge_entry.html' with entry_number=1 %}
+			{% include 'staff_charges/staff_charge_entry.html' with entry_number=2 %}
 			<tr>
 				<td colspan="4" style="text-align:center"><a href="javascript:void(0)" onclick="add_customer()">Add another customer</a></td>
 			</tr>
@@ -269,7 +269,7 @@
 					{% endif %}
 				{% endfor %}
 			{% else %}
-				{% include 'staff_charges/ad_hoc_staff_charge_entry.html' with entry_number=1 %}
+				{% include 'staff_charges/ad_hoc_staff_charge_entry.html' with entry_number=2 %}
 			{% endif %}
 			<tr>
 				<td colspan="5" style="text-align:center"><a href="javascript:void(0)" onclick="add_ad_hoc_customer()">Add another customer</a></td>
@@ -348,6 +348,7 @@
 	<script>
 		var current_entry_number = 2;
 		var ad_hoc_entry_number = 2;
+		var ss = [];
 
 		{% if ad_hoc_entries %}
 			{% for a in ad_hoc_entries %}
@@ -498,14 +499,77 @@
 				if (statusTxt == "success") {
 
 					// add select lists with samples for the project
-					var s1 = $("#chosen_sample__" + row);
-					s1.focus();
+					var s1 = "#chosen_sample__" + row;
+					if (ss.length > 0) {
+						s1_options = s1 + " option";
+						$(s1_options).each(function() {
+							if (ss.indexOf(parseInt($(this).val())) > -1) $(this).prop("selected","selected");
+						});
+						ss.length = 0;
+					}
 
 				} else {
 					ajax_complete_callback("Could not fetch samples for the project", "There was a problem obtaining the list of samples for the project.");
 				}
 			});
 		}
+
+		function add_sample(project_id, entry_number, ad_hoc=false)
+		{
+			var sample_list;
+
+			sample_list = "#chosen_sample__" + entry_number + " option:selected";
+
+			$(sample_list).each(function() {
+				ss.push(parseInt($(this).val()));
+			});
+
+			var url = "/modal_create_sample/" + project_id + "/";
+			var ajax_post = {
+				"url": url,
+				"data": {
+					"modal_caller": "",
+					"request_mode": "reservation", 
+				},
+				"type": "GET",
+				"dataType": "html"
+			};
+
+			jQuery.ajax(ajax_post)
+				.fail(ajax_failure_callback("Oops, something went wrong!"))
+				.done(function(response, status, xml_http_request)
+				{
+					if(response === "") {
+						refresh_calendar_and_sidebar();
+					} else {
+						$("#sample_dialog .modal-content").html(response);
+						$("#sample_dialog").modal('show');
+						$("#sample_dialog .modal-content form").submit(function() {
+							event.preventDefault();
+							$("#sample_dialog .modal-content form").off("submit");
+							$.ajax({
+								type: "POST",
+								url: url,
+								data: serialize("#sample_dialog .modal-content form"),
+								success: function(response, status, xml_http_request) { 
+									ss.push(parseInt(response));
+									//alert(ss.join("\n"));
+									$("#sample_dialog").modal('hide');
+									$("#sample_dialog .modal-content").html("");
+									var sl = "#chosen_project__" + entry_number;
+									if ($(sl).tagName == "SELECT") {
+										$(sl).trigger("change");
+									} else {
+										fetch_samples(entry_number, ad_hoc);
+									}
+
+								}
+							});
+						});
+					}
+				});
+		}
+
 
 		function purge_customer(row)
 		{
@@ -539,7 +603,7 @@
 			var failure_dialog = ajax_failure_callback("Could not begin charging staff time");
 
 			// create hidden fields for samples since multiple select lists are not submitting from modal
-			for (var i=0; i<current_entry_number; i++) {
+			for (var i=0; i<=current_entry_number; i++) {
 				fn = "chosen_sample__" + i;
 
 				el = "*[name='" + fn + "']";
@@ -589,7 +653,7 @@
 			//var failure_dialog = ajax_failure_callback("There was a problem with your ad hoc submission");
 			//ajax_post("{% url 'ad_hoc_staff_charge' %}", serialize("#ad_hoc_staff_charge"), ad_hoc_overlap_callback, failure_dialog);
 			/*  save sample selections */
-			for (var i=0; i<ad_hoc_entry_number; i++) {
+			for (var i=0; i<=ad_hoc_entry_number; i++) {
 				fn = "chosen_sample__" + i;
 				el = "#ad_hoc_sample__" + i + " > *[name='" + fn + "']";
 
@@ -662,8 +726,8 @@
 		function on_load()
 		{
 			hide_user_charges();
-			enable_autocompletion(1);
-			enable_ad_hoc_autocompletion(1);
+			enable_autocompletion(current_entry_number);
+			enable_ad_hoc_autocompletion(ad_hoc_entry_number);
 			$("#ad_hoc_start").datetimepicker({ useCurrent: false, format: 'YYYY-MM-DD hh:mm A', minDate: '{{ start_date }} 00:00', maxDate: '{{ end_date }} 23:59'});
 			$("#ad_hoc_start").val({% if ad_hoc_start %}"{{ ad_hoc_start }}"{% else %}""{% endif %});
 			$("#ad_hoc_end").datetimepicker({ useCurrent: false, format: 'YYYY-MM-DD hh:mm A', minDate: '{{ start_date }} 00:00', maxDate: '{{ end_date }} 23:59'});

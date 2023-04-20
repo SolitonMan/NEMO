@@ -31,7 +31,7 @@
 	</script>
 {% else %}
 	<h1>New area access record</h1>
-	<form action="{% url 'new_area_access_record' %}" class="form-horizontal" method="post">
+	<form id="access_form" action="{% url 'new_area_access_record' %}" class="form-horizontal" method="post" onsubmit="return on_submit();">
 		{% csrf_token %}
 		<input type="hidden" name="self_login_flag" value="{{ self_login_flag }}" />
 		<div class="form-group">
@@ -49,10 +49,12 @@
 					Which of the customer's projects would you like to bill?
 					<div class="radio">
 						{% for p in customer.active_projects %}
-							<label class="control-label"><input type="radio" name="project" value="{{ p.id }}" required> {{ p }}</label><br>
+							<label class="control-label"><input type="radio" name="project" value="{{ p.id }}" onclick="fetch_samples({{ p.id }}, false);" required> {{ p }}</label><br>
 						{% endfor %}
 					</div>
 				{% endif %}
+				<br/>
+				<div id="live_sample"></div>
 			</div>
 		</div>
 		<div class="form-group">
@@ -216,16 +218,24 @@
 	</form>
 
 	<script type="text/javascript">
+	var ss = [];
+
 	function fetch_samples(project_id, ad_hoc)
 	{
-		var target_element = "#sample";
+		var target_element;
 
+		if (ad_hoc) {
+			target_element = "#sample";
+		} else {
+			target_element = "#live_sample";
+		}
 		$(target_element).html("");
 
 		var parameters =
 		{
 			"project_id": project_id,
-			"entry_number": 0
+			"entry_number": 0,
+			"ad_hoc": ad_hoc
 		};
 
 		var url = "{% url 'get_samples' %}?" + jQuery.param(parameters);
@@ -236,6 +246,60 @@
 				ajax_complete_callback("Could not fetch samples for the project", "There was a problem obtaining the list of samples for the project.");
 			}
 		});
+	}
+
+	function add_sample(project_id, entry_number, ad_hoc=false)
+	{
+		var sample_list = "#sample_id option:selected";
+
+		$(sample_list).each(function() {
+			ss.push(parseInt($(this).val()));
+		});
+
+		var url = "/modal_create_sample/" + project_id + "/";
+		var ajax_post = {
+			"url": url,
+			"data": {
+				"modal_caller": "",
+				"request_mode": "reservation", 
+			},
+			"type": "GET",
+			"dataType": "html"
+		};
+
+		jQuery.ajax(ajax_post)
+			.fail(ajax_failure_callback("Oops, something went wrong!"))
+			.done(function(response, status, xml_http_request)
+			{
+				if(response === "") {
+					refresh_calendar_and_sidebar();
+				} else {
+					$("#sample_dialog .modal-content").html(response);
+					$("#sample_dialog").modal('show');
+					$("#sample_dialog .modal-content form").submit(function() {
+						event.preventDefault();
+						$("#sample_dialog .modal-content form").off("submit");
+						$.ajax({
+							type: "POST",
+							url: url,
+							data: serialize("#sample_dialog .modal-content form"),
+							success: function(response, status, xml_http_request) { 
+								ss.push(parseInt(response));
+								//alert(ss.join("\n"));
+								$("#sample_dialog").modal('hide');
+								$("#sample_dialog .modal-content").html("");
+								var sl = "#sample_id";
+								if ($(sl).tagName == "SELECT") {
+									$(sl).trigger("change");
+								} else {
+									fetch_samples(project_id, ad_hoc);
+								}
+
+							}
+						});
+					});
+				}
+			});
 	}
 
 	function check_ad_hoc_submit()
@@ -295,9 +359,11 @@
 		}
 
 		// check for samples
-		if ($("#sample_id").val() != "") {
-			var input = "<input type='hidden' name='selected_sample' value='" + $("#sample_id").val() + "' />";
-			$("#ad_hoc_form").append(input);
+		if ($("#sample_id").length > 0) {
+			if ($("#sample_id").val() != "") {
+				var input = "<input type='hidden' name='selected_sample' value='" + $("#sample_id").val() + "' />";
+				$("#ad_hoc_form").append(input);
+			}
 		}
 
 		{% if show_confirm %}
@@ -305,6 +371,18 @@
 		{% else %}
 		return true;
 		{% endif %}
+	}
+
+	function on_submit()
+	{
+		if ($("#sample_id").length > 0) { 
+			if ($("#sample_id").val() != "") {
+				var input = "<input type='hidden' name='selected_sample' value='" + $("#sample_id").val() + "' />";
+				$("#access_form").append(input);
+			}
+		}
+
+		return true;
 	}
 
 	function on_autocomplete_selection(jquery_event, search_selection, dataset_name)

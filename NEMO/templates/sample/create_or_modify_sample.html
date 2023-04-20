@@ -168,12 +168,15 @@ function on_load()
 	$("#id_identifier").prop("disabled","true");
 	{% endif %}
 
-	$("form").submit(function() {
+	$("form").on('submit', function() {
+		{% if new_sample %}
 		var userval = $("#id_identifier").val();
 		var timeval = $("#identifier_span").html();
 
 		$("#id_identifier").val(timeval + userval);
-
+		{% else %}
+		$("#id_identifier").removeAttr("disabled");
+		{% endif %}
 		$("#id_parent_sample").removeAttr("multiple")
 	});
 }

@@ -101,7 +101,6 @@ def create_or_modify_tool(request, tool_id):
 @login_required
 @require_GET
 def tool_control(request, tool_id=None, qualified_only=None, core_only=None):
-
 	""" Presents the tool control view to the user, allowing them to being/end using a tool or see who else is using it. """
 	if request.user.active_project_count() == 0:
 		return render(request, 'no_project.html')
@@ -129,6 +128,9 @@ def tool_control(request, tool_id=None, qualified_only=None, core_only=None):
 	categorized_tools = mark_safe(categorized_tools)
 
 	users = User.objects.filter(is_active=True, projects__active=True).exclude(id=request.user.id).distinct()
+
+	if tool_id is None:
+		tool_id = 0
 
 	dictionary = {
 		'tools': tools,

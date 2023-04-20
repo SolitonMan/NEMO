@@ -42,8 +42,18 @@ def samples(request):
 def get_samples(request):
 	project_id = request.GET.get('project_id', None)
 	entry_number = request.GET.get('entry_number', None)
+	ad_hoc = request.GET.get('ad_hoc', None)
+	if ad_hoc is None:
+		ad_hoc = False
+	else:
+		if ad_hoc == "true":
+			ad_hoc = True
+		else:
+			ad_hoc = False
+
+
 	try:
-		sample_list = Sample.objects.filter(project__in=[project_id]).order_by('identifier')
+		sample_list = Sample.objects.filter(project__in=[project_id], active_flag=True).order_by('identifier')
 		project = Project.objects.get(id=int(project_id))
 	except:
 		sample_list = None
@@ -52,10 +62,10 @@ def get_samples(request):
 	if sample_list is not None and  sample_list.count() == 0:
 		sample_list = None
 
-	return render(request, 'sample/get_samples.html', {'samples': sample_list, "entry_number": entry_number, "project": project })
+	return render(request, 'sample/get_samples.html', {'samples': sample_list, "entry_number": entry_number, "project": project, "ad_hoc": ad_hoc })
 
 
-@staff_member_required(login_url=None)
+@login_required
 @require_http_methods(['GET', 'POST'])
 def create_or_modify_sample(request, sample_id):
 	dictionary = {
@@ -95,7 +105,7 @@ def create_or_modify_sample(request, sample_id):
 		return redirect('samples')
 
 
-@staff_member_required(login_url=None)
+@login_required
 @require_http_methods(['GET', 'POST'])
 def modal_create_sample(request, project_id):
 	dictionary = {

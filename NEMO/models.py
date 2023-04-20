@@ -1289,11 +1289,18 @@ class Interlock(models.Model):
 					cmdst = 1
 
 			#uri = 'http://' + str(self.card.server) + '/state.xml?relay' + str(self.card.number) + 'State=' + str(cmdst)
-			uri = 'http://' + str(self.card.server) + '/state.xml?relay1State=' + str(cmdst)
-			req = requests.get(uri, timeout=3.0)
+			if self.card.type.name == "Web Switch Plus":
+				uri = 'http://' + str(self.card.server) + '/state.xml?relay1=' + str(cmdst)
+				req = requests.get(uri, timeout=3.0)
 
-			uri2 = 'http://' + str(self.card.server) + '/state.xml?relay2State=' + str(cmdst)
-			req2 = requests.get(uri2, timeout=3.0)
+				uri2 = 'http://' + str(self.card.server) + '/state.xml?relay2=' + str(cmdst)
+				req2 = requests.get(uri2, timeout=3.0)
+			else:
+				uri = 'http://' + str(self.card.server) + '/state.xml?relay1State=' + str(cmdst)
+				req = requests.get(uri, timeout=3.0)
+
+				uri2 = 'http://' + str(self.card.server) + '/state.xml?relay2State=' + str(cmdst)
+				req2 = requests.get(uri2, timeout=3.0)
 
 			self.most_recent_reply = "Executed " + uri + " successfully at " + str(timezone.now())
 			self.state = command_type

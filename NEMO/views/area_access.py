@@ -179,6 +179,13 @@ def login_to_area(request, door_id=None, area_id=None):
 		aarp.updated = timezone.now()
 		aarp.save()
 
+		samples = request.POST.get("selected_sample")
+
+		if samples != "" and samples is not None:
+			samples = samples.split(",")
+			for s in samples:
+				aarp.sample.add(Sample.objects.get(id=int(s)))
+
 		if door_id is not None and door_id != 0:
 			unlock_door(door.id)
 		return render(request, 'area_access/login_success.html', {'area': area, 'name': user.first_name, 'project': record.project, 'previous_area': previous_area})
@@ -218,6 +225,13 @@ def login_to_area(request, door_id=None, area_id=None):
 			aarp.created = timezone.now()
 			aarp.updated = timezone.now()
 			aarp.save()
+
+			samples = request.POST.get("selected_sample")
+
+			if samples != "" and samples is not None:
+				samples = samples.split(",")
+				for s in samples:
+					aarp.sample.add(Sample.objects.get(id=int(s)))
 
 			if door_id is not None and door_id != 0:
 				unlock_door(door.id)
@@ -360,6 +374,9 @@ def change_project(request, new_project=None):
 	record.updated = timezone.now()
 	record.save()
 	area = record.area
+
+	record_project = AreaAccessRecord.objects.filter(area_access_record=record)[0]
+
 	# Start billing the user's new project
 	record = AreaAccessRecord()
 	record.area = area
@@ -376,6 +393,10 @@ def change_project(request, new_project=None):
 	aarp.created = timezone.now()
 	aarp.updated = timezone.now()
 	aarp.save()
+
+	for s in record_project.samples.all():
+		aarp.samples.add(s)
+
 	return redirect(reverse('landing'))
 
 
@@ -475,6 +496,14 @@ def new_area_access_record(request, customer=None):
 		aarp.created = timezone.now()
 		aarp.updated = timezone.now()
 		aarp.save()
+
+		samples = request.POST.get("selected_sample")
+
+		if samples != "" and samples is not None:
+			samples = samples.split(",")
+			for s in samples:
+				aarp.sample.add(Sample.objects.get(id=int(s)))
+
 		dictionary['success'] = '{} is now logged in to the {}.'.format(user, area.name.lower())
 		if request.POST['self_login_flag'] == "True":
 			return HttpResponseRedirect(reverse('landing'))

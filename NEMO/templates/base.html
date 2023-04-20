@@ -68,27 +68,12 @@
 		</div>
 		<div class="navbar-collapse collapse" id="nemo-navigation">
 			<ul class="nav navbar-nav">
-				{% if user.is_superuser %}
 				<li><a href="{% url 'calendar' %}">Calendar</a></li>
-				{% endif %}
-				{% if user.is_staff and not user.is_superuser %}
-				<li><a href="{% url 'calendar' 0 0 1 %}">Calendar</a></li>
-				{% endif %}
-				{% if not user.is_staff and not user.is_superuser %}
-				<li><a href="{% url 'calendar' 0 1 0 %}">Calendar</a></li>
-				{% endif %}
-				{% if user.is_superuser %}
 				<li><a href="{% url 'tool_control' %}">Tool control</a></li>
-				{% endif %}
-				{% if user.is_staff and not user.is_superuser %}
-				<li><a href="{% url 'tool_control' 0 0 1 %}">Tool control</a></li>
-				{% endif %}
-				{% if not user.is_staff and not user.is_superuser %}
-				<li><a href="{% url 'tool_control' 0 1 0 %}">Tool control</a></li>
-				{% endif %}
 				{% if user.physical_access_levels.all|length > 0 %}
 				<li><a href="{% url 'new_area_access_customer' request.user.id %}">Area Access</a></li>
 				{% endif %}
+				{% navigation_url 'samples' 'Samples' %}
 				<li><a href="{% url 'status_dashboard' %}">Status dashboard</a></li>
 				{% if request.session.pi or user_delegate %}
 				{% if not request.session.technical_staff %}
@@ -148,7 +133,6 @@
 							{% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
 							{% navigation_url 'resources' 'Resources' %}
 							{% endif %}
-							{% navigation_url 'samples' 'Samples' %}
 							{% if request.session.core_admin or request.session.technical_staff or user.is_superuser %}
 							{% navigation_url 'staff_charges' 'Staff charges' %}
 							{% endif %}
