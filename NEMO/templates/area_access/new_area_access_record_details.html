@@ -12,9 +12,23 @@
 
 {% if customer.in_area %}
 	<h1>Currently Signed In</h1>
+	{% with samples=customer.area_access_record.areaaccessrecordproject_set.all.0.sample.all %}
+	{% if samples is not None %}
+	<p>
+	You are currently signed in to the {{ customer.area_access_record.area.name }} to work on the following sample(s):
+	<ul>
+	{% for s in samples %}
+		<li>{{ s }}</li>
+	{% endfor %}
+	</ul>
+	You may sign out below.  The text field can be used to add a comment about your time.
+	</p>
+	{% else %}
 	<p>
 	You are currently signed in to the {{ customer.area_access_record.area.name }}.  You may sign out below.  The text field can be used to add a comment about your time.
 	</p>
+	{% endif %}
+	{% endwith %}
 	<form action="{% url 'logout_of_area_form' %}" method="POST">
 		{% csrf_token %}
 		<input type="hidden" name="area_access_record_id" value="{{ customer.area_access_record.id }}" />

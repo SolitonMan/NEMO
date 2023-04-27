@@ -317,6 +317,80 @@
 			ajax_post("{% url 'end_area_access_charge' %}", data, success_callbacks, failure_dialog);
 		}
 
+			function add_sample(project_id, entry_number)
+			{
+				var sample_list;
+
+				if (entry_number == 0) {
+					sample_list = "#sample_id"
+				} else {
+					sample_list = "#chosen_sample__" + entry_number;
+				}
+
+				sample_list += " option:selected";
+
+				$(sample_list).each(function() {
+					ss.push(parseInt($(this).val()));
+				});
+
+				var url = "/modal_create_sample/" + project_id + "/";
+				var ajax_post = {
+					"url": url,
+					"data": {
+						"modal_caller": "",
+						"request_mode": "reservation", 
+					},
+					"type": "GET",
+					"dataType": "html"
+				};
+
+				jQuery.ajax(ajax_post)
+					.fail(ajax_failure_callback("Oops, something went wrong!"))
+					.done(function(response, status, xml_http_request)
+					{
+						if(response === "") {
+							refresh_calendar_and_sidebar();
+						} else {
+							$("#sample_dialog .modal-content").html(response);
+							$("#sample_dialog").modal('show');
+							$("#sample_dialog .modal-content form").submit(function() {
+								event.preventDefault();
+								$("#sample_dialog .modal-content form").off("submit");
+								$.ajax({
+									type: "POST",
+									url: url,
+									data: serialize("#sample_dialog .modal-content form"),
+									success: function(response, status, xml_http_request) { 
+										ss.push(parseInt(response));
+										//alert(ss.join("\n"));
+										$("#sample_dialog").modal('hide');
+										$("#sample_dialog .modal-content").html("");
+										var sl = "#chosen_project__" + entry_number;
+
+										if (sl == "#chosen_project__0") sl = "#user_projects"; 
+
+										if ($(sl).tagName == "SELECT") {
+											$(sl).trigger("change");
+										} else {
+											{% if user.is_staff %}
+											// if the case is for self call select_project
+											if ($("input[name='staff_charge']:checked").val() == "false") {
+												select_project($(sl), project_id);
+											} else {
+												fetch_samples(entry_number, false);
+											}
+											{% else %}
+											select_project($(sl), project_id);
+											{% endif %}
+										}
+
+									}
+								});
+							});
+						}
+					});
+			}
+
 		{% if user.is_staff %}
 
 			{# Only staff can perform the functions in this if-block. #}
@@ -589,76 +663,6 @@
 						ajax_complete_callback("Could not fetch samples for the project", "There was a problem obtaining the list of samples for the project.");
 					}
 				});
-			}
-
-			function add_sample(project_id, entry_number)
-			{
-				var sample_list;
-
-				if (entry_number == 0) {
-					sample_list = "#sample_id"
-				} else {
-					sample_list = "#chosen_sample__" + entry_number;
-				}
-
-				sample_list += " option:selected";
-
-				$(sample_list).each(function() {
-					ss.push(parseInt($(this).val()));
-				});
-
-				var url = "/modal_create_sample/" + project_id + "/";
-				var ajax_post = {
-					"url": url,
-					"data": {
-						"modal_caller": "",
-						"request_mode": "reservation", 
-					},
-					"type": "GET",
-					"dataType": "html"
-				};
-
-				jQuery.ajax(ajax_post)
-					.fail(ajax_failure_callback("Oops, something went wrong!"))
-					.done(function(response, status, xml_http_request)
-					{
-						if(response === "") {
-							refresh_calendar_and_sidebar();
-						} else {
-							$("#sample_dialog .modal-content").html(response);
-							$("#sample_dialog").modal('show');
-							$("#sample_dialog .modal-content form").submit(function() {
-								event.preventDefault();
-								$("#sample_dialog .modal-content form").off("submit");
-								$.ajax({
-									type: "POST",
-									url: url,
-									data: serialize("#sample_dialog .modal-content form"),
-									success: function(response, status, xml_http_request) { 
-										ss.push(parseInt(response));
-										//alert(ss.join("\n"));
-										$("#sample_dialog").modal('hide');
-										$("#sample_dialog .modal-content").html("");
-										var sl = "#chosen_project__" + entry_number;
-
-										if (sl == "#chosen_project__0") sl = "#user_projects"; 
-
-										if ($(sl).tagName == "SELECT") {
-											$(sl).trigger("change");
-										} else {
-											// if the case is for self call select_project
-											if ($("input[name='staff_charge']:checked").val() == "false") {
-												select_project($(sl), project_id);
-											} else {
-												fetch_samples(entry_number, false);
-											}
-										}
-
-									}
-								});
-							});
-						}
-					});
 			}
 
 			function purge_customer(row)

@@ -63,6 +63,11 @@
 		{% csrf_token %}
 		<p>You are currently charging staff time to the following customer(s):</p>
 		<table class="table">
+		<tr>
+			<th>Customer</th>
+			<th>Project</th>
+			<th>Samples</th>
+		</tr>
 		{% for s in scp %}
 		<tr>
 			<td>{{ s.customer }}</td>
@@ -727,7 +732,9 @@
 		{
 			hide_user_charges();
 			enable_autocompletion(current_entry_number);
+			current_entry_number++;
 			enable_ad_hoc_autocompletion(ad_hoc_entry_number);
+			ad_hoc_entry_number++;
 			$("#ad_hoc_start").datetimepicker({ useCurrent: false, format: 'YYYY-MM-DD hh:mm A', minDate: '{{ start_date }} 00:00', maxDate: '{{ end_date }} 23:59'});
 			$("#ad_hoc_start").val({% if ad_hoc_start %}"{{ ad_hoc_start }}"{% else %}""{% endif %});
 			$("#ad_hoc_end").datetimepicker({ useCurrent: false, format: 'YYYY-MM-DD hh:mm A', minDate: '{{ start_date }} 00:00', maxDate: '{{ end_date }} 23:59'});

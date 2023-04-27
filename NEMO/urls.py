@@ -322,6 +322,8 @@ if settings.ALLOW_CONDITIONAL_URLS:
 		re_path(r'^create_or_modify_sample/(?P<sample_id>\d+)/$', samples.create_or_modify_sample, name='create_or_modify_sample'),
 		re_path(r'^get_samples/$', samples.get_samples, name='get_samples'),
 		re_path(r'^modal_create_sample/(?P<project_id>\d+)/$', samples.modal_create_sample, name='modal_create_sample'),
+		re_path(r'^sample_history/(?P<sample_id>\d+)/$', samples.sample_history, name='sample_history'),
+		re_path(r'^sample_history/$', samples.sample_history, name='sample_history_user'),
 	]
 
 if settings.DEBUG:

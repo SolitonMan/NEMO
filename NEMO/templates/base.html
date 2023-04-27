@@ -161,7 +161,7 @@
 					<li class="hidden-sm">
 						<p class="navbar-text">
 							<a id="staff_charge_link" href="{% url 'staff_charges' %}" style="color:red; text-decoration: none" data-toggle="tooltip" data-placement="bottom" title="{% with user.get_staff_charge as staff_charge %}You are charging staff time to {{ staff_charge.customers.all.0 }} {% if staff_charge.customers.all.count > 1 %}and others{% endif %} since {{ staff_charge.start }}.{% endwith %}">
-								Charging staff time
+								Staff time
 							</a>
 						</p>
 						<script>

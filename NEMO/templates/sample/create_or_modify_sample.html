@@ -92,11 +92,14 @@ function on_load()
 		}
 	});
 
+
+	{% if request.user.is_staff %}
 	$("#id_project").before(search_field);
 
 	$('#search').autocomplete('users', select_user, {{ users|json_search_base }}).focus();
 
 	$("#search").after(clear_btn);
+	{% endif %}
 
 	var parent_sample_search = "<input type=\"text\" value=\"\" class=\"form-control\" style=\"display:block; width:25%;\" name=\"parent_sample_search\" id=\"parent_sample_search\" placeholder=\"filter parent sample options\" />";
 

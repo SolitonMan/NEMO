@@ -14,6 +14,7 @@ from logging import getLogger
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
+from django.db import connection
 from django.db.models import Q, Max
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotFound, HttpResponseServerError, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
@@ -82,11 +83,11 @@ def create_or_modify_sample(request, sample_id):
 
 	if request.method == "GET":
 		dictionary['users'] = User.objects.filter(is_active=True, projects__active=True).distinct().order_by('last_name')
-		dictionary['form'] = SampleForm(instance=sample)
+		dictionary['form'] = SampleForm(request.user, instance=sample)
 		return render(request, 'sample/create_or_modify_sample.html', dictionary)
 
 	elif request.method == "POST":
-		form = SampleForm(request.POST, instance=sample)
+		form = SampleForm(request.user, request.POST, instance=sample)
 		dictionary['form'] = form
 
 		if not form.is_valid():
@@ -122,14 +123,14 @@ def modal_create_sample(request, project_id):
 
 	if request.method == "GET":
 		dictionary['modal_caller'] = request.GET.get('modal_caller', None)
-		dictionary['form'] = SampleForm(instance=sample, initial={'project':[project_id]})
+		dictionary['form'] = SampleForm(request.user, instance=sample, initial={'project':[project_id]})
 		return render(request, 'sample/modal_create_sample.html', dictionary)
 
 	elif request.method == "POST":
 		dictionary['modal_caller'] = request.POST.get('modal_caller', None)
 
 		request_mode = request.POST.get('request_mode')
-		form = SampleForm(request.POST, instance=sample)
+		form = SampleForm(request.user, request.POST, instance=sample)
 		dictionary['form'] = form
 
 		if not form.is_valid():
@@ -146,3 +147,42 @@ def modal_create_sample(request, project_id):
 		r.save()
 
 		return HttpResponse(r.id)
+
+
+@login_required
+def sample_history(request, sample_id=None):
+	cursor = connection.cursor()
+	# if no sample is specified retrieve all the sample histories for the current user
+	if sample_id is None:
+		raw_sql = '''select s.identifier, us.username, t.name, u.start, u.end, p.project_number
+			from "NEMO_usageevent" u
+			left outer join "NEMO_user" us on u.operator_id = us.id
+			left outer join "NEMO_usageeventproject" uep on u.id=uep.usage_event_id
+			left outer join "NEMO_usageeventproject_sample" ueps on ueps.usageeventproject_id = uep.id
+			inner join "NEMO_sample" s on ueps.sample_id = s.id
+			inner join "NEMO_project" p on uep.project_id=p.id
+			inner join "NEMO_tool" t on t.id = u.tool_id
+			where u.operator_id=%s
+			order by s.identifier, u.start'''
+		cursor.execute(raw_sql, [request.user.id])
+	else:
+		raw_sql = '''select s.identifier, us.username, t.name, u.start, u.end, p.project_number
+			from "NEMO_usageevent" u
+			left outer join "NEMO_user" us on u.operator_id = us.id
+			left outer join "NEMO_usageeventproject" uep on u.id=uep.usage_event_id
+			left outer join "NEMO_usageeventproject_sample" ueps on ueps.usageeventproject_id = uep.id
+			inner join "NEMO_sample" s on ueps.sample_id = s.id
+			inner join "NEMO_project" p on uep.project_id=p.id
+			inner join "NEMO_tool" t on t.id = u.tool_id
+			where s.id=%s
+			order by s.identifier, u.start'''
+		cursor.execute(raw_sql, [sample_id])
+
+	sh = cursor.fetchall()
+
+	if sample_id is None:
+		current_sample = None
+	else:
+		current_sample = Sample.objects.get(id=sample_id)
+
+	return render(request, "sample/sample_history.html",{"sample_history":sh,"sample_id":sample_id,"current_sample": current_sample})

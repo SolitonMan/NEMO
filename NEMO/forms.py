@@ -282,9 +282,12 @@ class SampleForm(ModelForm):
 		model = Sample
 		fields = ['nickname','customer_nickname','description','project','parent_sample','active_flag','identifier']
 
-	def __init__(self, *args, **kwargs):
+	def __init__(self, user, *args, **kwargs):
 		super(SampleForm, self).__init__(*args, **kwargs)
-		self.project_choices = Project.objects.filter(active=True, end_date__gte=timezone.now().date()).order_by('project_number')
+		if user.is_staff:
+			self.project_choices = Project.objects.filter(active=True, end_date__gte=timezone.now().date()).order_by('project_number')
+		else:
+			self.project_choices = user.active_projects()
 		self.fields['project'].queryset = self.project_choices
 
 def nice_errors(form, non_field_msg='General form errors'):

@@ -12,7 +12,5 @@
 	</select>
 {% endif %}
 <br/>
-{% if user.is_staff %}
 <input type="button" value="Add Sample" class="btn btn-success" onclick="add_sample({{ project.id }},{{ entry_number }}{% if ad_hoc %},true{% endif %});" />
-{% endif %}
 <br/>
