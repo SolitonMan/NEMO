@@ -84,7 +84,7 @@
 		<tr>
 			<td colspan="3" align="left" valign="top">
 				<label for="staff_member_comment">Comment / Purpose of Charge</label>
-				<textarea name="staff_member_comment" id="staff_member_comment" onblur="save_staff_comment()" rows="6" cols="50" placeholder="Please enter a description of the work done or reason the charge is being made">{% if staff_charge.staff_member_comment is not None %}{{ staff_charge.staff_member_comment }}{% endif %}</textarea>
+				<textarea name="staff_member_comment" id="staff_member_comment" onblur="save_staff_comment()" class="form-control" rows="6" cols="30" placeholder="Please enter a description of the work done or reason the charge is being made">{% if staff_charge.staff_member_comment is not None %}{{ staff_charge.staff_member_comment }}{% endif %}</textarea>
 			</td>
 		</tr>
 		</table>

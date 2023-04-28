@@ -26,7 +26,7 @@ from django.utils.safestring import mark_safe
 from django.urls import reverse
 
 from NEMO.forms import SampleForm, nice_errors
-from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, Sample, StaffCharge, StaffChargeProject, UsageEvent, UsageEventProject, Reservation, ReservationProject, Project, User
+from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, Sample, StaffCharge, StaffChargeProject, UsageEvent, UsageEventProject, UsageEventProjectSample, Reservation, ReservationProject, Project, User
 
 @login_required
 @require_GET
@@ -54,7 +54,7 @@ def get_samples(request):
 
 
 	try:
-		sample_list = Sample.objects.filter(project__in=[project_id], active_flag=True).order_by('identifier')
+		sample_list = Sample.objects.filter(project__in=[project_id], active_flag=True).order_by('-updated','-created')
 		project = Project.objects.get(id=int(project_id))
 	except:
 		sample_list = None
@@ -63,7 +63,7 @@ def get_samples(request):
 	if sample_list is not None and  sample_list.count() == 0:
 		sample_list = None
 
-	return render(request, 'sample/get_samples.html', {'samples': sample_list, "entry_number": entry_number, "project": project, "ad_hoc": ad_hoc })
+	return render(request, 'sample/get_samples.html', {"samples": sample_list, "entry_number": entry_number, "project": project, "ad_hoc": ad_hoc })
 
 
 @login_required
@@ -186,3 +186,83 @@ def sample_history(request, sample_id=None):
 		current_sample = Sample.objects.get(id=sample_id)
 
 	return render(request, "sample/sample_history.html",{"sample_history":sh,"sample_id":sample_id,"current_sample": current_sample})
+
+
+@login_required
+def save_sample_comment(request):
+	try:
+		uep_id = request.GET.get('uep_id', None)
+		sample_id = request.GET.get('sample_id', None)
+		notes = request.GET.get('notes', None)
+		
+		uep = UsageEventProject.objects.get(id=int(uep_id))
+		sample = Sample.objects.get(id=int(sample_id))
+
+		ueps = UsageEventProjectSample.objects.get(usage_event_project=uep, sample=sample)
+
+		ueps.notes = notes
+		ueps.updated = timezone.now()
+		ueps.save()
+
+	except:
+		pass
+
+	return HttpResponse()
+
+
+@login_required
+def remove_sample(request):
+	try:
+		uep_id = request.GET.get('uep_id', None)
+		sample_id = request.GET.get('sample_id', None)
+
+		uep = UsageEventProject.objects.get(id=int(uep_id))
+		sample = Sample.objects.get(id=int(sample_id))
+
+		ueps = UsageEventProjectSample.objects.get(usage_event_project=uep, sample=sample)
+
+		ueps.active_flag = False
+		ueps.updated = timezone.now()
+		ueps.save()
+
+	except:
+		pass
+
+	return HttpResponse()
+
+
+@login_required
+def add_run_existing_sample(request, uep_id, sample_id):
+	try:
+		uep = UsageEventProject.objects.get(id=int(uep_id))
+		sample = Sample.objects.get(id=int(sample_id))
+
+		if UsageEventProjectSample.objects.filter(usage_event_project=uep, sample=sample).exists():
+			ueps = UsageEventProjectSample.objects.get(usage_event_project=uep, sample=sample)
+			ueps.active_flag = True
+			ueps.updated = timezone.now()
+			ueps.save()
+		else:
+			uep.sample.add(sample)
+			uep.sample_detail.add(sample)
+
+	except:
+		pass
+
+	return HttpResponse()
+
+
+@login_required
+def modal_select_sample(request, project_id):
+	data = {}
+	try:
+		project = Project.objects.get(id=int(project_id))
+		samples = Sample.objects.filter(project=project, active_flag=True)
+
+		data["project"] = project
+		data["samples"] = samples
+	except:
+		data["project"] = None
+		data["samples"] = None
+
+	return render(request, "sample/modal_select_sample.html", data)

@@ -488,6 +488,7 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge, billing_mod
 					smp = Sample.objects.get(id=int(s))
 					if smp in uep.project.sample_project.all():
 						uep.sample.add(smp)
+						uep.sample_detail.add(smp)
 
 	return response
 
@@ -613,6 +614,7 @@ def enable_tool_multi(request):
 				if k in sample_selections:
 					for s in sample_selections[k]:
 						project_events[k].sample.add(Sample.objects.get(id=int(s)))
+						project_events[k].sample_detail.add(Sample.objects.get(id=int(s)))
 
 		# All policy checks passed so enable the tool for the user.
 		if tool.interlock and not tool.interlock.unlock():
@@ -1351,6 +1353,7 @@ def save_usage_event(request):
 				if k in sample_selections:
 					for s in sample_selections[k]:
 						project_events[k].sample.add(Sample.objects.get(id=int(s)))
+						project_events[k].sample_detail.add(Sample.objects.get(id=int(s)))
 
 
 		params['new_usage_event'] = new_usage_event

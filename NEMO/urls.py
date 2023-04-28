@@ -324,6 +324,10 @@ if settings.ALLOW_CONDITIONAL_URLS:
 		re_path(r'^modal_create_sample/(?P<project_id>\d+)/$', samples.modal_create_sample, name='modal_create_sample'),
 		re_path(r'^sample_history/(?P<sample_id>\d+)/$', samples.sample_history, name='sample_history'),
 		re_path(r'^sample_history/$', samples.sample_history, name='sample_history_user'),
+		re_path(r'^save_sample_comment/$', samples.save_sample_comment, name='save_sample_comment'),
+		re_path(r'^remove_sample/$', samples.remove_sample, name='remove_sample'),
+		re_path(r'^add_run_existing_sample/(?P<uep_id>\d+)/(?P<sample_id>\d+)/$', samples.add_run_existing_sample, name='add_run_existing_sample'),
+		re_path(r'^modal_select_sample/(?P<project_id>\d+)/$', samples.modal_select_sample, name='modal_select_sample'),
 	]
 
 if settings.DEBUG:

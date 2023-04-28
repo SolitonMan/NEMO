@@ -44,7 +44,7 @@
 	{% endif %}
 {% endif %}
 <br/>
-<div class="tab-content"{% if device != 'mobile' %} style="width: 50%"{% endif %}>
+<div class="tab-content"{% if device != 'mobile' %} style="width: 75%"{% endif %}>
 	<div class="tab-pane active" id="summary">
 		{# Display tool status... #}
 		{% if tool.in_use %}
@@ -78,11 +78,25 @@
 										<td>{{ uep.customer }}</td>
 										<td>{{ uep.project }}</td>
 										<td>
-										{% for s in uep.sample.all %}
-										{{ s }}<br/>
-										{% endfor %}
+										{% if uep.sample_detail.all is not None %}
+										<table>
+										{% for s in uep.usageeventprojectsample_set.all %}
+										{% if s.active_flag %}
+										<tr>
+										<td style="width: 60%">{{ s.sample }}</td>
+										<td>
+										<textarea rows="2" cols="5" class="form-control" name="smpc__{{uep.id}}__{{s.sample.id}}" id=="smpc__{{uep.id}}__{{s.sample.id}}" onblur="save_sample_comment(this);">{{ s.notes }}</textarea>
 										</td>
-										<td><textarea rows="3" cols="60" name="cc__{{ uep.id }}" id="cc__{{ uep.id }}" value="{{ uep.comment }}" onblur="save_comment(this);">{% if uep.comment is not None %}{{ uep.comment }}{% endif %}</textarea></td>
+										<td><input type="button" class="btn btn-danger" value="-" onclick="remove_sample({{uep.id}},{{s.sample.id}});" title="Remove this sample from the run" /></td>
+										</tr>
+										{% endif %}
+										{% endfor %}
+										<tr><td colspan="2"><input type="button" class="btn btn-success" value="++" onclick="add_run_sample({{uep.project.id}},{{uep.id}});" title="Add a new sample" /><input type="button" class="btn" value="+" onclick="add_run_existing_sample({{uep.project.id}},{{uep.id}});" title="Add an existing sample" style="background-color: #0000ff;" /></td></tr>
+										</table>
+										{% else %}
+										{% endif %}
+										</td>
+										<td><textarea rows="3" cols="30" class="form-control" name="cc__{{ uep.id }}" id="cc__{{ uep.id }}" value="{{ uep.comment }}" onblur="save_comment(this);">{% if uep.comment is not None %}{{ uep.comment }}{% endif %}</textarea></td>
 									</tr>
 								{% endfor %}
 									</tbody>
@@ -93,14 +107,23 @@
 						{% else %}
 							for the project named {{ current_usage_event.projects.all.0 }}
 
-							{% if current_usage_event.usageeventproject_set.all.0.sample.all.count > 0 %}
+							{% if current_usage_event.usageeventproject_set.all.0.sample_detail.all.count > 0 %}
 							<div>
 								<h5>Samples</h5>
-								<ul>
-								{% for s in current_usage_event.usageeventproject_set.all.0.sample.all %}
-								<li>{{ s }}</li>
+								<table class="table">
+								{% for s in current_usage_event.usageeventproject_set.all.0.usageeventprojectsample_set.all %}
+									{% if s.active_flag %}
+									<tr>
+										<td style="width: 50%">{{ s.sample }}</td>
+										<td style="width: 50%">
+										<textarea rows="2" cols="5" class="form-control" name="smpc__{{current_usage_event.usageeventproject_set.all.0.id}}__{{s.sample.id}}" id=="smpc__{{current_usage_event.usageeventproject_set.all.0.id}}__{{s.sample.id}}" onblur="save_sample_comment(this);">{{ s.notes }}</textarea>
+										</td>
+										<td><input type="button" class="btn btn-danger" value="-" onclick="remove_sample({{current_usage_event.usageeventproject_set.all.0.id}},{{s.sample.id}});" title="Remove this sample from the run" /></td>
+									</tr>
+									{% endif %}
 								{% endfor %}
-								</ul>
+									<tr><td colspan="2"><input type="button" class="btn btn-success" value="++" onclick="add_run_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add a new sample" /><input type="button" class="btn" value="+" onclick="add_run_existing_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add an existing sample" style="background-color: #0000ff;" /></td></tr>
+								</table>
 							</div>
 							{% endif %}
 						{% endif %}
@@ -307,7 +330,7 @@
 
 					<div class="form-group" style="align: left; vertical-algin: top;">
 						<label class="control-label col-sm-2" for="operator_comment">Comment / Description of Run</label>
-						<textarea name="operator_comment" id="operator_comment" onblur="save_operator_comment()" rows="6" cols="50" placeholder="Please enter a brief description of the work performed, or make any notes you'd find useful for reference">{% if current_usage_event.operator_comment is not None %}{{ current_usage_event.operator_comment }}{% endif %}</textarea>
+						<textarea class="form-control" name="operator_comment" id="operator_comment" onblur="save_operator_comment()" rows="6" cols="50" placeholder="Please enter a brief description of the work performed, or make any notes you'd find useful for reference">{% if current_usage_event.operator_comment is not None %}{{ current_usage_event.operator_comment }}{% endif %}</textarea>
 					</div>
 					{% endwith %}
 					<div id="stop_wrapper" style="display:inline-block" data-toggle="tooltip" data-placement="bottom" title="Please answer the required questions (above) to proceed">
@@ -638,6 +661,14 @@
 	function save_operator_comment() 
 	{
 		ajax_get("{% url 'save_operator_comment' %}", { "usage_id": {{ tool.get_current_usage_event.id }}, "operator_comment": $("#operator_comment").val() },undefined,undefined);
+	}
+
+	function save_sample_comment(el)
+	{
+		uep_id = $(el).prop("id").split("__")[1];
+		sample_id = parseInt($(el).prop("id").split("__")[2]);
+
+		ajax_get("{% url 'save_sample_comment' %}", { "uep_id": uep_id, "notes": $(el).val(), "sample_id": sample_id}, undefined, undefined);
 	}
 
 	function save_comment(el) 

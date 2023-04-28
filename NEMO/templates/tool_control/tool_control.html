@@ -161,6 +161,98 @@
 
 		}
 
+		function remove_sample(uep_id, sample_id)
+		{
+			if (confirm("This will remove the sample from the current tool run.  Click OK to proceed or Cancel to abort the removal.")) {
+				ajax_get("{% url 'remove_sample' %}",{"uep_id": uep_id, "sample_id":sample_id},[reload_page],undefined);
+			}
+		}
+
+		function add_run_sample(project_id, uep_id)
+		{
+			// get the sample creation form for the project
+			var url = "/modal_create_sample/" + project_id + "/";
+			var ajax_post = {
+				"url": url,
+				"data": {
+					"modal_caller": "",
+					"request_mode": "reservation", 
+				},
+				"type": "GET",
+				"dataType": "html"
+			};
+
+			jQuery.ajax(ajax_post)
+				.fail(ajax_failure_callback("Oops, something went wrong!"))
+				.done(function(response, status, xml_http_request)
+				{
+					if(response === "") {
+						refresh_calendar_and_sidebar();
+					} else {
+						$("#sample_dialog .modal-content").html(response);
+						$("#sample_dialog").modal('show');
+						$("#sample_dialog .modal-content form").submit(function() {
+							event.preventDefault();
+							$("#sample_dialog .modal-content form").off("submit");
+							$.ajax({
+								type: "POST",
+								url: url,
+								data: serialize("#sample_dialog .modal-content form"),
+								success: function(response, status, xml_http_request) { 
+									$("#sample_dialog").modal('hide');
+									$("#sample_dialog .modal-content").html("");
+									
+									// create the UsageEventProjectSample record
+									var add_sample_url = "/add_run_existing_sample/" + uep_id + "/" + response;
+									ajax_get(add_sample_url, {}, [reload_page], undefined, undefined, undefined);
+								}
+							});
+						});
+					}
+				});
+
+
+
+		}
+
+		function add_run_existing_sample(project_id, uep_id)
+		{
+			// display a list of existing samples for the project then create or restore a relationship to the sample in the 
+			// UsageEventProjectSample table
+			var url = "/modal_select_sample/" + project_id + "/";
+			var ajax_post = {
+				"url": url,
+				"data": {
+					"modal_caller": "",
+					"request_mode": "reservation", 
+				},
+				"type": "GET",
+				"dataType": "html"
+			};
+	
+			jQuery.ajax(ajax_post)
+				.fail(ajax_failure_callback("Oops, something went wrong!"))
+				.done(function(response, status, xml_http_request)
+				{
+					if(response === "") {
+						refresh_calendar_and_sidebar();
+					} else {
+						$("#sample_dialog .modal-content").html(response);
+						$("#sample_dialog").modal('show');
+						$("#sample_dialog .modal-content form").submit(function() {
+							event.preventDefault();
+							$("#sample_dialog .modal-content form").off("submit");
+							$("#sample_dialog").modal('hide');
+									
+							// create the UsageEventProjectSample record
+							var add_sample_url = "/add_run_existing_sample/" + uep_id + "/" + $("#select_sample").val();
+							ajax_get(add_sample_url, {}, [reload_page], undefined, undefined, undefined);
+							$("#sample_dialog .modal-content").html("");
+						});
+					}
+				});
+		}
+
 		function load_projects(jquery_event, search_selection, dataset_name)
 		{
 			$("#user_search").typeahead('val', '').hide();

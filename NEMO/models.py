@@ -635,7 +635,7 @@ class StaffCharge(CalendarDisplay):
 	contest_record = GenericRelation('ContestTransaction', related_query_name='staff_charge_contests')
 	charge_end_override = models.BooleanField(default=False, blank=True)
 	override_confirmed = models.BooleanField(default=False, blank=True)
-	related_override_charge = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True)
+	related_override_charge = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True)
 	ad_hoc_replaced = models.BooleanField(default=False, blank=True)
 	ad_hoc_related = models.CharField(max_length=500, blank=True, null=True)
 	projects = models.ManyToManyField('Project', through='StaffChargeProject')
@@ -680,9 +680,9 @@ class StaffCharge(CalendarDisplay):
 		return str(self.id)
 
 class StaffChargeProject(models.Model):
-	staff_charge = models.ForeignKey('StaffCharge', on_delete=models.CASCADE)
-	project = models.ForeignKey('Project', on_delete=models.CASCADE, null=True)
-	customer = models.ForeignKey('User', on_delete=models.CASCADE, null=True)
+	staff_charge = models.ForeignKey('StaffCharge', on_delete=models.SET_NULL, null=True)
+	project = models.ForeignKey('Project', on_delete=models.SET_NULL, null=True)
+	customer = models.ForeignKey('User', on_delete=models.SET_NULL, null=True)
 	project_percent = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
 	comment = models.TextField(null=True, blank=True)
 	created = models.DateTimeField(null=True, blank=True)
@@ -768,9 +768,9 @@ class AreaAccessRecord(CalendarDisplay):
 
 
 class AreaAccessRecordProject(models.Model):
-	area_access_record = models.ForeignKey('AreaAccessRecord', on_delete=models.CASCADE)
-	project = models.ForeignKey('Project', on_delete=models.CASCADE)
-	customer = models.ForeignKey('User', on_delete=models.CASCADE)
+	area_access_record = models.ForeignKey('AreaAccessRecord', on_delete=models.SET_NULL, null=True)
+	project = models.ForeignKey('Project', on_delete=models.SET_NULL, null=True)
+	customer = models.ForeignKey('User', on_delete=models.SET_NULL, null=True)
 	project_percent = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
 	created = models.DateTimeField(null=True, blank=True)
 	updated = models.DateTimeField(null=True, blank=True)
@@ -975,17 +975,17 @@ class ReservationConfiguration(models.Model):
 
 
 class ReservationProject(models.Model):
-	reservation = models.ForeignKey('Reservation', on_delete=models.CASCADE, null=True, blank=True)
-	project = models.ForeignKey('Project', on_delete=models.CASCADE)
-	customer = models.ForeignKey('User', on_delete=models.CASCADE)
-	sample = models.ManyToManyField('Sample', null=True, blank=True)
+	reservation = models.ForeignKey('Reservation', on_delete=models.SET_NULL, null=True, blank=True)
+	project = models.ForeignKey('Project', on_delete=models.SET_NULL, null=True)
+	customer = models.ForeignKey('User', on_delete=models.SET_NULL, null=True)
+	sample = models.ManyToManyField('Sample', blank=True)
 	created = models.DateTimeField(null=True, blank=True)
 	updated = models.DateTimeField(null=True, blank=True)
 
 
 class ReservationNotification(models.Model):
-	reservation = models.ForeignKey('Reservation', on_delete=models.CASCADE, null=True, blank=True)
-	user = models.ForeignKey('User', on_delete=models.CASCADE)
+	reservation = models.ForeignKey('Reservation', on_delete=models.SET_NULL, null=True, blank=True)
+	user = models.ForeignKey('User', on_delete=models.SET_NULL, null=True)
 
 
 class UsageEvent(CalendarDisplay):
@@ -1051,10 +1051,10 @@ class UsageEvent(CalendarDisplay):
 		return str(self.id)
 
 class UsageEventProject(models.Model):
-	usage_event = models.ForeignKey('UsageEvent', on_delete=models.CASCADE)
-	project = models.ForeignKey('Project', on_delete=models.CASCADE)
+	usage_event = models.ForeignKey('UsageEvent', on_delete=models.SET_NULL, null=True)
+	project = models.ForeignKey('Project', on_delete=models.SET_NULL, null=True)
 	project_percent = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
-	customer = models.ForeignKey('User', on_delete=models.CASCADE)
+	customer = models.ForeignKey('User', on_delete=models.SET_NULL, null=True)
 	comment = models.TextField(null=True, blank=True)
 	created = models.DateTimeField(null=True, blank=True)
 	updated = models.DateTimeField(null=True, blank=True)
@@ -1064,7 +1064,15 @@ class UsageEventProject(models.Model):
 	sample_num = models.IntegerField(null=True, blank=True)
 	cost_per_sample = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 	sample = models.ManyToManyField('Sample', blank=True, related_name='uep_sample')
+	sample_detail = models.ManyToManyField('Sample', blank=True, through='UsageEventProjectSample', related_name='uep_sample_detail')
 
+class UsageEventProjectSample(models.Model):
+	sample = models.ForeignKey('Sample', on_delete=models.SET_NULL, null=True)
+	usage_event_project = models.ForeignKey('UsageEventProject', on_delete=models.SET_NULL, null=True)
+	notes =  models.TextField(null=True, blank=True)
+	active_flag = models.BooleanField(default=True)
+	created = models.DateTimeField(null=True, blank=True, default=timezone.now)
+	updated = models.DateTimeField(null=True, blank=True, default=timezone.now)
 
 class Consumable(models.Model):
 	name = models.CharField(max_length=100)
@@ -1953,9 +1961,9 @@ class Sample(models.Model):
 	project = models.ManyToManyField("Project", blank=True, related_name="sample_project")
 	parent_sample = models.ForeignKey('self',null=True,blank=True,on_delete=models.SET_NULL,related_name='precursor')
 	active_flag = models.BooleanField(null=False, blank=False, default=True)
-	created = models.DateTimeField(null=True, blank=True, default=timezone.now())
+	created = models.DateTimeField(null=True, blank=True, default=timezone.now)
 	created_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, related_name='sample_created_by')
-	updated = models.DateTimeField(null=True, blank=True, default=timezone.now())
+	updated = models.DateTimeField(null=True, blank=True, default=timezone.now)
 	updated_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, related_name='sample_updated_by')
 
 	def __str__(self):
