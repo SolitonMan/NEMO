@@ -1,0 +1,21 @@
+<div class="modal-header">
+	<button type="button" class="close" data-dismiss="modal">&times;</button>
+	<h4 class="modal-title">Select a sample from project {{ project.project_number }}</h4>
+</div>
+
+<div class="modal-body">
+
+<form method="post">
+{% csrf_token %}
+{% if samples is None %}
+No samples have been created for this project.	
+{% else %}
+<select name="select_sample" id="select_sample" class="form-control">
+	{% for s in samples %}
+	<option value="{{s.id}}">{{ s }}</option>
+	{% endfor %}
+</select>
+{% endif %}
+<input type="submit" value="Submit" class="btn btn-success" />
+</form>
+</div>

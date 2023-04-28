@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% load custom_tags_and_filters %}
+{% block title %}Sample History{% endblock %}
+{% block content %}
+
+{% if current_sample is None %}
+<h1>Sample History for {{ request.user }}</h1>
+<p>The table displays the history of all sample transactions for {{ request.user }}.</p>
+{% else %}
+<h1>Sample History for {{ current_sample}}</h1>
+<p>The table displays the transaction history for the sample {{ current_sample }}.</p>
+{% endif %}
+
+<table class="table">
+<thead>
+	<tr>
+	<th>Identifier</th>
+	<th>Username</th>
+	<th>Tool</th>
+	<th>Start</th>
+	<th>End</th>
+	<th>Project Number</th>
+	</tr>
+</thead>
+<tbody>
+	{% for sh in sample_history %}
+	<tr>
+		{% for i in sh %}
+		<td>{{ i }}</td>
+		{% endfor %}
+	</tr>
+	{% endfor %}
+</tbody>
+</table>
+{% endblock %}
