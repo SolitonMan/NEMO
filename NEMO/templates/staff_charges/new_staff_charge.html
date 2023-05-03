@@ -73,11 +73,22 @@
 			<td>{{ s.customer }}</td>
 			<td>{{ s.project }}</td>
 			<td>
-			{% if s.sample.all.count > 0 %}
-				{% for smp in s.sample.all %}
-					{{ smp }}<br/>
-				{% endfor %}
+			<table>
+			{% if s.sample_detail.all is not None %}
+			{% for smp in s.staffchargeprojectsample_set.all %}
+			{% if smp.active_flag %}
+			<tr>
+			<td style="width: 60%">{{ smp.sample }}</td>
+			<td>
+			<textarea rows="2" cols="5" class="form-control" name="smpc__{{s.id}}__{{smp.sample.id}}" id=="smpc__{{s.id}}__{{smp.sample.id}}" onblur="save_sample_comment(this);">{% if smp.notes is not None %}{{ smp.notes }}{% endif %}</textarea>
+			</td>
+			<td><input type="button" class="btn btn-danger" value="-" onclick="remove_sample({{s.id}},{{smp.sample.id}});" title="Remove this sample from the run" /></td>
+			</tr>
 			{% endif %}
+			{% endfor %}
+			{% endif %}
+			<tr><td colspan="2"><input type="button" class="btn btn-success" value="+New" onclick="add_run_sample({{s.project.id}},{{s.id}});" title="Add a new sample" /><input type="button" class="btn" value="+Existing" onclick="add_run_existing_sample({{s.project.id}},{{s.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff" {% if s.project.sample_set.all.count == 0 %}disabled {% endif %}/></td></tr>
+			</table>
 			</td>
 		</tr>
 		{% endfor %}
@@ -117,22 +128,33 @@
 
 	<div class="col-sm-12">
 		<p>You are currently charging staff time to the following customer(s):</p>
-                <table class="table">
-                {% for s in scp %}
-                <tr>
-                        <td>{{ s.customer }}</td>
-                        <td>{{ s.project }}</td>
+		<table class="table">
+		{% for s in scp %}
+		<tr>
+			<td>{{ s.customer }}</td>
+			<td>{{ s.project }}</td>
 			<td>
-			{% if s.sample.all.count > 0 %}
-				{% for smp in s.sample.all %}
-					{{ smp }}<br/>
-				{% endfor %}
-			{% endif %}
+			<table>
+			{% if s.sample_detail.all is not None %}
+			{% for smp in s.staffchargeprojectsample_set.all %}
+			{% if smp.active_flag %}
+			<tr>
+			<td style="width: 60%">{{ smp.sample }}</td>
+			<td>
+			<textarea rows="2" cols="5" class="form-control" name="smpc__{{s.id}}__{{smp.sample.id}}" id=="smpc__{{s.id}}__{{smp.sample.id}}" onblur="save_sample_comment(this);">{% if smp.notes is not None %}{{ smp.notes }}{% endif %}</textarea>
 			</td>
-                </tr>
-                {% endfor %}
-                </table>
-                <br/>
+			<td><input type="button" class="btn btn-danger" value="-" onclick="remove_sample({{s.id}},{{smp.sample.id}});" title="Remove this sample from the run" /></td>
+			</tr>
+			{% endif %}
+			{% endfor %}
+			{% endif %}
+			<tr><td colspan="2"><input type="button" class="btn btn-success" value="+New" onclick="add_run_sample({{s.project.id}},{{s.id}});" title="Add a new sample" /><input type="button" class="btn" value="+Existing" onclick="add_run_existing_sample({{s.project.id}},{{s.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff" {% if s.project.sample_set.all.count == 0 %}disabled {% endif %}/></td></tr>
+			</table>
+			</td>
+		</tr>
+		{% endfor %}
+		</table>
+		<br/>
 
 		<form action="{% url 'end_staff_area_charge' %}" class="form-horizontal" method="post">
 			{% csrf_token %}
@@ -575,6 +597,108 @@
 				});
 		}
 
+		function save_sample_comment(el)
+		{
+			scp_id = $(el).prop("id").split("__")[1];
+			sample_id = parseInt($(el).prop("id").split("__")[2]);
+
+			ajax_post("{% url 'save_sample_comment' %}", { "scp_id": scp_id, "notes": $(el).val(), "sample_id": sample_id}, undefined, undefined);
+		}
+
+		function remove_sample(scp_id, sample_id)
+		{
+			if (confirm("This will remove the sample from the current tool run.  Click OK to proceed or Cancel to abort the removal.")) {
+				var data = {"scp_id": scp_id, "sample_id":sample_id}
+				ajax_post("{% url 'remove_sample' %}",data,[reload_staff_charges],undefined);
+			}
+		}
+
+		function add_run_sample(project_id, scp_id)
+		{
+			// get the sample creation form for the project
+			var url = "/modal_create_sample/" + project_id + "/";
+			var ap = {
+				"url": url,
+				"data": {
+					"modal_caller": "",
+					"request_mode": "reservation", 
+				},
+				"type": "GET",
+				"dataType": "html"
+			};
+
+			jQuery.ajax(ap)
+				.fail(ajax_failure_callback("Oops, something went wrong!"))
+				.done(function(response, status, xml_http_request)
+				{
+					if(response === "") {
+						//refresh_calendar_and_sidebar();
+					} else {
+						$("#sample_dialog .modal-content").html(response);
+						$("#sample_dialog").modal('show');
+						$("#sample_dialog .modal-content form").submit(function() {
+							event.preventDefault();
+							$("#sample_dialog .modal-content form").off("submit");
+							$.ajax({
+								type: "POST",
+								url: url,
+								data: serialize("#sample_dialog .modal-content form"),
+								success: function(response, status, xml_http_request) { 
+									$("#sample_dialog").modal('hide');
+									$("#sample_dialog .modal-content").html("");
+									
+									// create the UsageEventProjectSample record
+									var add_sample_url = "/add_run_existing_sample/";
+									var data = {"scp_id":scp_id,"sample_id":response,}
+									ajax_post(add_sample_url, data, [reload_staff_charges], undefined, undefined);
+								}
+							});
+						});
+					}
+				});
+
+
+
+		}
+
+		function add_run_existing_sample(project_id, scp_id)
+		{
+			// display a list of existing samples for the project then create or restore a relationship to the sample in the 
+			// UsageEventProjectSample table
+			var url = "/modal_select_sample/" + project_id + "/";
+			var ap = {
+				"url": url,
+				"data": {
+					"modal_caller": "",
+					"request_mode": "reservation", 
+				},
+				"type": "GET",
+				"dataType": "html"
+			};
+	
+			jQuery.ajax(ap)
+				.fail(ajax_failure_callback("Oops, something went wrong!"))
+				.done(function(response, status, xml_http_request)
+				{
+					if(response === "") {
+						//refresh_calendar_and_sidebar();
+					} else {
+						$("#sample_dialog .modal-content").html(response);
+						$("#sample_dialog").modal('show');
+						$("#sample_dialog .modal-content form").submit(function() {
+							event.preventDefault();
+							$("#sample_dialog .modal-content form").off("submit");
+							$("#sample_dialog").modal('hide');
+									
+							// create the UsageEventProjectSample record
+							var add_sample_url = "/add_run_existing_sample/";
+							var data = {"scp_id":scp_id,"sample_id":$("#select_sample").val(),}
+							ajax_post(add_sample_url, data, [reload_staff_charges], undefined, undefined);
+							$("#sample_dialog .modal-content").html("");
+						});
+					}
+				});
+		}
 
 		function purge_customer(row)
 		{

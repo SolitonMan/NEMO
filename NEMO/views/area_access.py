@@ -422,9 +422,6 @@ def change_project(request, new_project=None):
 		aarp.updated = timezone.now()
 		aarp.save()
 
-		for s in rp.sample.all():
-			aarp.sample.add(s)
-			aarp.sample_detail.add(s)
 
 	return redirect(reverse('landing'))
 
@@ -482,7 +479,7 @@ def new_area_access_record(request, customer=None):
 			return render(request, 'area_access/new_area_access_record_details.html', dictionary)
 		except Exception as inst:
 			#raise Exception()
-			#dictionary['error_message'] = inst
+			dictionary['error_message'] = inst
 			return render(request, 'area_access/new_area_access_record.html', dictionary)
 
 		return render(request, 'area_access/new_area_access_record.html', dictionary)

@@ -191,18 +191,39 @@ def sample_history(request, sample_id=None):
 @login_required
 def save_sample_comment(request):
 	try:
-		uep_id = request.GET.get('uep_id', None)
-		sample_id = request.GET.get('sample_id', None)
-		notes = request.GET.get('notes', None)
-		
-		uep = UsageEventProject.objects.get(id=int(uep_id))
+		uep_id = request.POST.get('uep_id', None)
+		scp_id = request.POST.get('scp_id', None)
+		aarp_id = request.POST.get('aarp_id', None)
+		sample_id = request.POST.get('sample_id', None)
+		notes = request.POST.get('notes', None)
 		sample = Sample.objects.get(id=int(sample_id))
 
-		ueps = UsageEventProjectSample.objects.get(usage_event_project=uep, sample=sample)
+		if uep_id is not None:
+			uep = UsageEventProject.objects.get(id=int(uep_id))
 
-		ueps.notes = notes
-		ueps.updated = timezone.now()
-		ueps.save()
+			ueps = UsageEventProjectSample.objects.get(usage_event_project=uep, sample=sample)
+
+			ueps.notes = notes
+			ueps.updated = timezone.now()
+			ueps.save()
+
+		if scp_id is not None:
+			scp = StaffChargeProject.objects.get(id=int(scp_id))
+
+			scps = StaffChargeProjectSample.objects.get(staff_charge_project=scp, sample=sample)
+
+			scps.notes = notes
+			scps.updated = timezone.now()
+			scps.save()
+
+		if aarp_id is not None:
+			aarp = AreaAccessRecordProject.objects.get(id=int(aarp_id))
+
+			aarps = AreaAccessRecordProjectSample.objects.get(area_access_record_project=aarp, sample=sample)
+
+			aarps.notes = notes
+			aarps.updated = timezone.now()
+			aarps.save()
 
 	except:
 		pass
@@ -213,40 +234,73 @@ def save_sample_comment(request):
 @login_required
 def remove_sample(request):
 	try:
-		uep_id = request.GET.get('uep_id', None)
-		sample_id = request.GET.get('sample_id', None)
-
-		uep = UsageEventProject.objects.get(id=int(uep_id))
+		uep_id = request.POST.get('uep_id', None)
+		scp_id = request.POST.get('scp_id', None)
+		aarp_id = request.POST.get('aarp_id', None)
+		sample_id = request.POST.get('sample_id', None)
 		sample = Sample.objects.get(id=int(sample_id))
 
-		ueps = UsageEventProjectSample.objects.get(usage_event_project=uep, sample=sample)
+		if uep_id is not None:
+			uep = UsageEventProject.objects.get(id=int(uep_id))
 
-		ueps.active_flag = False
-		ueps.updated = timezone.now()
-		ueps.save()
+			ueps = UsageEventProjectSample.objects.get(usage_event_project=uep, sample=sample)
 
-		# check for a staff charge currently happening
-		if StaffCharge.objects.filter(related_usage_event=uep.usage_event, end=None).exists():
-			sc = StaffCharge.objects.get(related_usage_event=uep.usage_event, end=None)
-			scp = StaffChargeProject.objects.filter(staff_charge=sc, customer=uep.customer, project=uep.project)
+			ueps.active_flag = False
+			ueps.updated = timezone.now()
+			ueps.save()
 
-			for s in scp:
-				if StaffChargeProjectSample.objects.filter(staff_charge_project=s, sample=sample).exists():
-					scps = StaffChargeProjectSample.objects.get(staff_charge_project=s, sample=sample)
-					scps.active_flag = False
-					scps.updated = timezone.now()
-					scps.save()
+			# check for a staff charge currently happening
+			if StaffCharge.objects.filter(related_usage_event=uep.usage_event, end=None).exists():
+				sc = StaffCharge.objects.get(related_usage_event=uep.usage_event, end=None)
+				scp = StaffChargeProject.objects.filter(staff_charge=sc, customer=uep.customer, project=uep.project)
 
-		if AreaAccessRecord.objects.filter(related_usage_event=uep.usage_event, end=None).exists():
-			aar = AreaAccessRecord.objects.get(related_usage_event=uep.usage_event, end=None)
-			aarp = AreaAccessRecordProject.objects.filter(area_access_record=aar, customer=uep.customer, project=uep.project)
+				for s in scp:
+					if StaffChargeProjectSample.objects.filter(staff_charge_project=s, sample=sample).exists():
+						scps = StaffChargeProjectSample.objects.get(staff_charge_project=s, sample=sample)
+						scps.active_flag = False
+						scps.updated = timezone.now()
+						scps.save()
 
-			for a in aarp:
-				if AreaAccessRecordProjectSample.objects.filter(area_access_record_project=a, sample=sample).exists():
-					aarps = AreaAccessRecordProjectSample.objects.get(area_access_record_project=a, sample=sample)
-					aarps.active_flag = False
-					aarps.updated = timezone.now()
-					aarps.save()
+			if AreaAccessRecord.objects.filter(related_usage_event=uep.usage_event, end=None).exists():
+				aar = AreaAccessRecord.objects.get(related_usage_event=uep.usage_event, end=None)
+				aarp = AreaAccessRecordProject.objects.filter(area_access_record=aar, customer=uep.customer, project=uep.project)
+
+				for a in aarp:
+					if AreaAccessRecordProjectSample.objects.filter(area_access_record_project=a, sample=sample).exists():
+						aarps = AreaAccessRecordProjectSample.objects.get(area_access_record_project=a, sample=sample)
+						aarps.active_flag = False
+						aarps.updated = timezone.now()
+						aarps.save()
+
+		if scp_id is not None:
+			scp = StaffChargeProject.objects.get(id=int(scp_id))
+
+			scps = StaffChargeProjectSample.objects.get(staff_charge_project=scp, sample=sample)
+
+			scps.active_flag = False
+			scps.updated = timezone.now()
+			scps.save()
+
+			if AreaAccessRecord.objects.filter(staff_charge=scp.staff_charge, end=None).exists():
+				aar = AreaAccessRecord.objects.get(staff_charge=scp.staff_charge, end=None)
+				aarp = AreaAccessRecordProject.objects.filter(area_access_record=aar, customer=scp.customer, project=scp.project)
+
+				for a in aarp:
+					if AreaAccessRecordProjectSample.objects.filter(area_access_record_project=a, sample=sample).exists():
+						aarps = AreaAccessRecordProjectSample.objects.get(area_access_record_project=a, sample=sample)
+						aarps.active_flag = False
+						aarps.updated = timezone.now()
+						aarps.save()
+
+		if aarp_id is not None:
+			aarp = AreaAccessRecordProject.objects.get(id=int(aarp_id))
+
+			aarps = AreaAccessRecordProjectSample.objects.get(area_access_record_project=aarp, sample=sample)
+
+			aarps.active_flag = False
+			aarps.updated = timezone.now()
+			aarps.save()	
+
 
 	except Exception as inst:
 		return HttpResponseBadRequest(inst)
@@ -255,53 +309,91 @@ def remove_sample(request):
 
 
 @login_required
-def add_run_existing_sample(request, uep_id, sample_id):
+def add_run_existing_sample(request):
 	try:
-		uep = UsageEventProject.objects.get(id=int(uep_id))
+		uep_id = request.POST.get('uep_id', None)
+		scp_id = request.POST.get('scp_id', None)
+		aarp_id = request.POST.get('aarp_id', None)
+		sample_id = request.POST.get('sample_id', None)
 		sample = Sample.objects.get(id=int(sample_id))
 
-		if UsageEventProjectSample.objects.filter(usage_event_project=uep, sample=sample).exists():
-			ueps = UsageEventProjectSample.objects.get(usage_event_project=uep, sample=sample)
-			ueps.active_flag = True
-			ueps.updated = timezone.now()
-			ueps.save()
-		else:
-			uep.sample.add(sample)
-			uep.sample_detail.add(sample)
+		if uep_id is not None:
+			uep = UsageEventProject.objects.get(id=int(uep_id))
 
-		# check for a staff charge currently happening that should include this
-		if StaffCharge.objects.filter(related_usage_event=uep.usage_event, end=None).exists():
-			sc = StaffCharge.objects.get(related_usage_event=uep.usage_event, end=None)
-			scp = StaffChargeProject.objects.filter(staff_charge=sc, customer=uep.customer, project=uep.project)
+			if UsageEventProjectSample.objects.filter(usage_event_project=uep, sample=sample).exists():
+				ueps = UsageEventProjectSample.objects.get(usage_event_project=uep, sample=sample)
+				ueps.active_flag = True
+				ueps.updated = timezone.now()
+				ueps.save()
+			else:
+				uep.sample.add(sample)
+				uep.sample_detail.add(sample)
 
-			b_sample_added = False
+			# check for a staff charge currently happening that should include this
+			if StaffCharge.objects.filter(related_usage_event=uep.usage_event, end=None).exists():
+				sc = StaffCharge.objects.get(related_usage_event=uep.usage_event, end=None)
+				scp = StaffChargeProject.objects.get(staff_charge=sc, customer=uep.customer, project=uep.project)
 
-			for s in scp:
-				b_sample_added = False
-				for smp in s.sample.all():
-					if smp == sample:
-						b_sample_added = True
+				if StaffChargeProjectSample.objects.filter(staff_charge_project=scp, sample=sample).exists():
+					scps = StaffChargeProjectSample.objects.get(staff_charge_project=scp, sample=sample)
+					scps.active_flag = True
+					scps.updated = timezone.now()
+					scps.save()
+				else:
+					scp.sample.add(sample)
+					scp.sample_detail.add(sample)
 
-				if not b_sample_added:
-					s.sample.add(sample)
-					s.sample_detail.add(sample)
+			# check for an area access record related to the run
+			if AreaAccessRecord.objects.filter(related_usage_event=uep.usage_event, end=None).exists():
+				aar = AreaAccessRecord.objects.get(related_usage_event=uep.usage_event, end=None)
+				aarp = AreaAccessRecordProject.objects.get(area_access_record=aar, customer=uep.customer, project=uep.project)
 
-		# check for an area access record related to the run
-		if AreaAccessRecord.objects.filter(related_usage_event=uep.usage_event, end=None).exists():
-			aar = AreaAreaAccessRecord.objects.get(related_usage_event=uep.usage_event, end=None)
-			aarp = AreaAreaAccessRecordProject.objects.filter(area_access_record=aar, customer=uep.customer, project=uep.project)
+				if AreaAccessRecordProjectSample.objects.filter(area_access_record_project=aarp, sample=sample).exists():
+					aarps = AreaAccessRecordProjectSample.objects.get(area_access_record_project=aarp, sample=sample)
+					aarps.active_flag = True
+					aarps.updated = timezone.now()
+					aarps.save()
+				else:
+					aarps.sample.add(sample)
+					aarps.sample_detail.add(sample)
 
-			b_sample_added = False
+		if scp_id is not None:
+			scp = StaffChargeProject.objects.get(id=int(scp_id))
 
-			for a in aarp:
-				b_sample_added = False
-				for smp in a.sample.all():
-					if smp == sample:
-						b_sample_added = True
+			if StaffChargeProjectSample.objects.filter(staff_charge_project=scp, sample=sample).exists():
+				scps = StaffChargeProjectSample.objects.get(staff_charge_project=scp, sample=sample)
+				scps.active_flag = True
+				scps.updated = timezone.now()
+				scps.save()
+			else:
+				scp.sample.add(sample)
+				scp.sample_detail.add(sample)
 
-				if not b_sample_added:
-					a.sample.add(sample)
-					a.sample_detail.add(sample)
+			# check for a related area access charge
+			if AreaAccessRecord.objects.filter(staff_charge=scp.staff_charge, end=None).exists():
+				aar = AreaAccessRecord.objects.get(staff_charge=scp.staff_charge, end=None)
+				aarp = AreaAccessRecordProject.objects.get(area_access_record=aar, customer=scp.customer, project=scp.project)
+
+				if AreaAccessRecordProjectSample.objects.filter(area_access_record_project=aarp, sample=sample).exists():
+					aarps = AreaAccessRecordProjectSample.objects.get(area_access_record_project=aarp, sample=sample)
+					aarps.active_flag = True
+					aarps.updated = timezone.now()
+					aarps.save()
+				else:
+					aarps.sample.add(sample)
+					aarps.sample_detail.add(sample)
+
+		if aarp_id is not None:
+			aarp = AreaAccessRecordProject.objects.get(id=int(aarp_id))
+
+			if AreaAccessRecordProjectSample.objects.filter(area_access_record_project=aarp, sample=sample).exists():
+				aarps = AreaAccessRecordProjectSample.objects.get(area_access_record_project=aarp, sample=sample)
+				aarps.active_flag = True
+				aarps.updated = timezone.now()
+				aarps.save()
+			else:
+				aarps.sample.add(sample)
+				aarps.sample_detail.add(sample)
 
 	except Exception as inst:
 		return HttpResponseBadRequest(inst)

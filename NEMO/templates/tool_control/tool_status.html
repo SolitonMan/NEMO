@@ -672,7 +672,7 @@
 		uep_id = $(el).prop("id").split("__")[1];
 		sample_id = parseInt($(el).prop("id").split("__")[2]);
 
-		ajax_get("{% url 'save_sample_comment' %}", { "uep_id": uep_id, "notes": $(el).val(), "sample_id": sample_id}, undefined, undefined);
+		ajax_post("{% url 'save_sample_comment' %}", { "uep_id": uep_id, "notes": $(el).val(), "sample_id": sample_id}, undefined, undefined);
 	}
 
 	function save_comment(el) 

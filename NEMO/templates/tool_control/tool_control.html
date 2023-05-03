@@ -164,7 +164,8 @@
 		function remove_sample(uep_id, sample_id)
 		{
 			if (confirm("This will remove the sample from the current tool run.  Click OK to proceed or Cancel to abort the removal.")) {
-				ajax_get("{% url 'remove_sample' %}",{"uep_id": uep_id, "sample_id":sample_id},[reload_page],undefined);
+				var data = {"uep_id": uep_id, "sample_id":sample_id,}
+				ajax_post("{% url 'remove_sample' %}",data,[reload_page],undefined);
 			}
 		}
 
@@ -172,7 +173,7 @@
 		{
 			// get the sample creation form for the project
 			var url = "/modal_create_sample/" + project_id + "/";
-			var ajax_post = {
+			var ap = {
 				"url": url,
 				"data": {
 					"modal_caller": "",
@@ -182,7 +183,7 @@
 				"dataType": "html"
 			};
 
-			jQuery.ajax(ajax_post)
+			jQuery.ajax(ap)
 				.fail(ajax_failure_callback("Oops, something went wrong!"))
 				.done(function(response, status, xml_http_request)
 				{
@@ -203,8 +204,9 @@
 									$("#sample_dialog .modal-content").html("");
 									
 									// create the UsageEventProjectSample record
-									var add_sample_url = "/add_run_existing_sample/" + uep_id + "/" + response;
-									ajax_get(add_sample_url, {}, [reload_page], undefined, undefined, undefined);
+									var add_sample_url = "/add_run_existing_sample/";
+									var data = {"uep_id":uep_id,"sample_id":response,}
+									ajax_post(add_sample_url, data, [reload_page], undefined, undefined);
 								}
 							});
 						});
@@ -220,7 +222,7 @@
 			// display a list of existing samples for the project then create or restore a relationship to the sample in the 
 			// UsageEventProjectSample table
 			var url = "/modal_select_sample/" + project_id + "/";
-			var ajax_post = {
+			var ap = {
 				"url": url,
 				"data": {
 					"modal_caller": "",
@@ -230,7 +232,7 @@
 				"dataType": "html"
 			};
 	
-			jQuery.ajax(ajax_post)
+			jQuery.ajax(ap)
 				.fail(ajax_failure_callback("Oops, something went wrong!"))
 				.done(function(response, status, xml_http_request)
 				{
@@ -245,8 +247,9 @@
 							$("#sample_dialog").modal('hide');
 									
 							// create the UsageEventProjectSample record
-							var add_sample_url = "/add_run_existing_sample/" + uep_id + "/" + $("#select_sample").val();
-							ajax_get(add_sample_url, {}, [reload_page], undefined, undefined, undefined);
+							var add_sample_url = "/add_run_existing_sample/";
+							var data = {"uep_id":uep_id,"sample_id":$("#select_sample").val(),}
+							ajax_post(add_sample_url, data, [reload_page], undefined, undefined);
 							$("#sample_dialog .modal-content").html("");
 						});
 					}
