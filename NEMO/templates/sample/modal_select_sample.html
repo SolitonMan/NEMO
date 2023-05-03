@@ -1,3 +1,4 @@
+{% load custom_tags_and_filters %}
 <div class="modal-header">
 	<button type="button" class="close" data-dismiss="modal">&times;</button>
 	<h4 class="modal-title">Select a sample from project {{ project.project_number }}</h4>
@@ -15,7 +16,47 @@ No samples have been created for this project.
 	<option value="{{s.id}}">{{ s }}</option>
 	{% endfor %}
 </select>
+<br/>
+<input type="submit" value="Submit" class="btn btn-success" onclick="$('#select_sample').removeAttr('multiple');" />
 {% endif %}
-<input type="submit" value="Submit" class="btn btn-success" />
 </form>
 </div>
+{% if samples|length > 7 %}
+<script type="text/javascript">
+var sample_search = "<input type=\"text\" value=\"\" class=\"form-control\" style=\"display:block; width:25%;\" name=\"sample_search\" id=\"sample_search\" placeholder=\"filter sample options\" />";
+
+$("#select_sample").before(sample_search).prop("multiple","multiple");
+$("#select_sample option:selected").remove();
+$("#sample_search").keyup(function() {
+	var options = $("#select_sample option");
+
+	var data = this.value;
+	if (data.length < 3) {
+		options.show();
+		return;
+	}
+
+	options.hide();
+
+	options.filter(function(i,v) {
+		var $t = $(this);
+
+		var s = data.toUpperCase();
+
+		if ($t.text().toUpperCase().indexOf(s) > -1) {
+			return true;
+		}
+	}).show();
+});
+$("#select_sample option").click(function() {
+	if ($(this).prop("selected")) {
+		var opt = $(this);
+		$("#select_sample option:selected").each(function() {
+			if ($(this).val() != opt.val()) $(this).removeAttr("selected");
+		});
+	}
+});
+
+</script>
+{% endif %}
+

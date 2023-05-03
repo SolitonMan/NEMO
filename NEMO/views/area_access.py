@@ -181,10 +181,12 @@ def login_to_area(request, door_id=None, area_id=None):
 
 		samples = request.POST.get("selected_sample")
 
-		if samples != "" and samples is not None:
+		if samples != "" and samples is not None and samples != "null":
 			samples = samples.split(",")
 			for s in samples:
 				aarp.sample.add(Sample.objects.get(id=int(s)))
+				aarp.sample_detail.add(Sample.objects.get(id=int(s)))
+
 
 		if door_id is not None and door_id != 0:
 			unlock_door(door.id)
@@ -228,10 +230,12 @@ def login_to_area(request, door_id=None, area_id=None):
 
 			samples = request.POST.get("selected_sample")
 
-			if samples != "" and samples is not None:
+			if samples != "" and samples is not None and samples != "null":
 				samples = samples.split(",")
 				for s in samples:
 					aarp.sample.add(Sample.objects.get(id=int(s)))
+					aarp.sample_detail.add(Sample.objects.get(id=int(s)))
+
 
 			if door_id is not None and door_id != 0:
 				unlock_door(door.id)
@@ -351,6 +355,28 @@ def open_door(request, door_id):
 @require_http_methods(['GET', 'POST'])
 def change_project(request, new_project=None):
 	""" For area access, allow the user to stop billing a project and start billing another project. """
+	staff_check_record = request.user.area_access_record()
+	aarp = AreaAccessRecordProject.objects.filter(area_access_record=staff_check_record)
+	if aarp.count() > 1:
+		dictionary = {
+			'error': "You're charging area access to a customer - you can't change projects via this method"
+		}
+		return render(request, 'area_access/change_project.html', dictionary)
+	else:
+		if aarp.count() == 1:
+			if not aarp[0].project in request.user.active_projects():
+				dictionary = {
+					'error': "You're charging area access to a customer - you can't change projects via this method"
+				}
+				return render(request, 'area_access/change_project.html', dictionary)
+			else:
+				if aarp[0].customer != request.user:
+					dictionary = {
+						'error': "You're charging area access to a customer - you can't change projects via this method"
+					}
+					return render(request, 'area_access/change_project.html', dictionary)
+
+
 	if request.method == 'GET':
 		return render(request, 'area_access/change_project.html')
 	old_project = request.user.billing_to_project()
@@ -375,7 +401,7 @@ def change_project(request, new_project=None):
 	record.save()
 	area = record.area
 
-	record_project = AreaAccessRecord.objects.filter(area_access_record=record)[0]
+	record_projects = AreaAccessRecordProject.objects.filter(area_access_record=record)
 
 	# Start billing the user's new project
 	record = AreaAccessRecord()
@@ -386,16 +412,19 @@ def change_project(request, new_project=None):
 	record.created = timezone.now()
 	record.updated = timezone.now()
 	record.save()
-	aarp = AreaAccessRecordProject()
-	aarp.area_access_record = record
-	aarp.project = new_project
-	aarp.customer = request.user
-	aarp.created = timezone.now()
-	aarp.updated = timezone.now()
-	aarp.save()
 
-	for s in record_project.samples.all():
-		aarp.samples.add(s)
+	for rp in record_projects:
+		aarp = AreaAccessRecordProject()
+		aarp.area_access_record = record
+		aarp.project = new_project
+		aarp.customer = rp.customer
+		aarp.created = timezone.now()
+		aarp.updated = timezone.now()
+		aarp.save()
+
+		for s in rp.sample.all():
+			aarp.sample.add(s)
+			aarp.sample_detail.add(s)
 
 	return redirect(reverse('landing'))
 
@@ -499,7 +528,7 @@ def new_area_access_record(request, customer=None):
 
 		samples = request.POST.get("selected_sample")
 
-		if samples != "" and samples is not None:
+		if samples != "" and samples is not None and samples != "null":
 			samples = samples.split(",")
 			for s in samples:
 				aarp.sample.add(Sample.objects.get(id=int(s)))
@@ -627,7 +656,7 @@ def ad_hoc_area_access_record(request):
 
 	samples = request.POST.get("selected_sample")
 
-	if samples != "" and samples is not None:
+	if samples != "" and samples is not None and samples != "null":
 		samples = samples.split(",")
 		for s in samples:
 			aarp.sample.add(Sample.objects.get(id=int(s)))

@@ -480,7 +480,7 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge, billing_mod
 
 		# check for samples and save if any
 		samples = request.POST['selected_sample']
-		if samples is not None and samples != '':
+		if samples is not None and samples != '' and samples != "null":
 			sample_list = samples.split(",")
 
 			if sample_list != [] and sample_list != ['']:
@@ -524,97 +524,107 @@ def enable_tool_multi(request):
 	if UsageEvent.objects.filter(operator=operator, tool=tool, end=None, start__lt=timezone.now()).exists():
 		pass
 	else:
-		new_usage_event = UsageEvent()
-		new_usage_event.operator = operator
-		new_usage_event.tool = tool
-		new_usage_event.project = None
-		new_usage_event.user = None
-		new_usage_event.created = timezone.now()
-		new_usage_event.updated = timezone.now()
-		if billing_mode:
-			new_usage_event.cost_per_sample_run = True
-		if set_for_autologout:
-			new_usage_event.set_for_autologout = True
-			new_usage_event.end_time = autologout_endtime
-		if end_scheduled_outage:
-			new_usage_event.end_scheduled_outage = True
-		new_usage_event.save()	
-	
-		project_events = {}
-		sample_selections = {}
-
-		for key, value in request.POST.items():
-			if is_valid_field(key):
-				attribute, separator, index = key.partition("__")
-				index = int(index)
-				if index not in project_events:
-					project_events[index] = UsageEventProject()
-					project_events[index].usage_event = new_usage_event
-					project_events[index].created = timezone.now()
-					project_events[index].updated = timezone.now()
-				if attribute == "chosen_user":
-					if value is not None and value != "":
-						project_events[index].customer = User.objects.get(id=value)
-					else:
-						new_usage_event.delete()
-						return HttpResponseBadRequest('Please choose a user for whom the tool will be run.')
-				if attribute == "chosen_project":
-					if value is not None and value != "" and value != "-1":
-						cp = Project.objects.get(id=value)
-						if cp.check_date(new_usage_event.start):
-							project_events[index].project = Project.objects.get(id=value)
-						else:
-							msg = 'The project ' + str(cp.project_number) + ' cannot be used for a transaction with a start date of ' + str(new_usage_event.start) + ' because the project start date is ' + str(cp.start_date)
-							new_usage_event.delete()
-							return HttpResponseBadRequest(msg)
-					else:
-						new_usage_event.delete()
-						return HttpResponseBadRequest('Please choose a project for charges made during this run.')
-
-				if attribute == "chosen_sample":
-					sample_field = "selected_sample__" + str(index)
-					samples = request.POST.get(sample_field)
-					sample_selections[index] = samples.split(",")
-
-
-				if hasattr(project_events[index], 'customer') and hasattr(project_events[index], 'project'):
-					response = check_policy_to_enable_tool_for_multi(tool, operator, project_events[index].customer, project_events[index].project, request)
-					if response.status_code != HTTPStatus.OK:
-						new_usage_event.delete()
-						return response
-
-		# if set for autologout, automatically divide 100 percent by the total number of customers
-		customer_count = 0
-		for p in project_events.values():
-			customer_count += 1
-
-		if set_for_autologout:
-			current_count = 0
-			for p in project_events.values():
-				current_count += 1
-				current_percent_total = 0.0
-				if current_count < customer_count:
-					p.project_percent = round(Decimal(100/customer_count),2)
-					current_percent_total += round(Decimal(100/customer_count),2)
-				else:
-					#p.project_percent = round(Decimal(100 - (customer_count - 1)*(100/customer_count)),2)
-					p.project_percent = round(Decimal(100.0 - current_percent_total), 2)
-
-		for p in project_events.values():
+		try:
+			new_usage_event = UsageEvent()
+			new_usage_event.operator = operator
+			new_usage_event.tool = tool
+			new_usage_event.project = None
+			new_usage_event.user = None
+			new_usage_event.created = timezone.now()
+			new_usage_event.updated = timezone.now()
+			if billing_mode:
+				new_usage_event.cost_per_sample_run = True
 			if set_for_autologout:
-				p.full_clean()
-			else:
-				p.full_clean(exclude='project_percent')
-			p.save()
+				new_usage_event.set_for_autologout = True
+				new_usage_event.end_time = autologout_endtime
+			if end_scheduled_outage:
+				new_usage_event.end_scheduled_outage = True
+			new_usage_event.save()	
+	
+			project_events = {}
+			sample_selections = {}
+
+			for key, value in request.POST.items():
+				if is_valid_field(key):
+					attribute, separator, index = key.partition("__")
+					index = int(index)
+					if index not in project_events:
+						project_events[index] = UsageEventProject()
+						project_events[index].usage_event = new_usage_event
+						project_events[index].created = timezone.now()
+						project_events[index].updated = timezone.now()
+					if attribute == "chosen_user":
+						if value is not None and value != "":
+							project_events[index].customer = User.objects.get(id=int(value))
+						else:
+							new_usage_event.delete()
+							return HttpResponseBadRequest('Please choose a user for whom the tool will be run.')
+					if attribute == "chosen_project":
+						if value is not None and value != "" and value != "-1":
+							cp = Project.objects.get(id=int(value))
+							if cp.check_date(new_usage_event.start):
+								if cp is not None:
+									project_events[index].project = cp
+								else:
+									msg = 'The project cannot be None'
+									new_usage_event.delete()
+									return HttpResponseBadRequest(msg)
+							else:
+								msg = 'The project ' + str(cp.project_number) + ' cannot be used for a transaction with a start date of ' + str(new_usage_event.start) + ' because the project start date is ' + str(cp.start_date)
+								new_usage_event.delete()
+								return HttpResponseBadRequest(msg)
+						else:
+							new_usage_event.delete()
+							return HttpResponseBadRequest('Please choose a project for charges made during this run.')
+
+					if attribute == "chosen_sample":
+						sample_field = "selected_sample__" + str(index)
+						samples = request.POST.get(sample_field)
+						if samples != "null":
+							sample_selections[index] = samples.split(",")
+
+					if hasattr(project_events[index], 'customer') and hasattr(project_events[index], 'project'):
+						if project_events[index].customer is not None and project_events[index].project is not None:
+							response = check_policy_to_enable_tool_for_multi(tool, operator, project_events[index].customer, project_events[index].project, request)
+							if response.status_code != HTTPStatus.OK:
+								new_usage_event.delete()
+								return response
+
+			# if set for autologout, automatically divide 100 percent by the total number of customers
+			customer_count = 0
+			for p in project_events.values():
+				customer_count += 1
+
+			if set_for_autologout:
+				current_count = 0
+				for p in project_events.values():
+					current_count += 1
+					current_percent_total = 0.0
+					if current_count < customer_count:
+						p.project_percent = round(Decimal(100/customer_count),2)
+						current_percent_total += round(Decimal(100/customer_count),2)
+					else:
+						#p.project_percent = round(Decimal(100 - (customer_count - 1)*(100/customer_count)),2)
+						p.project_percent = round(Decimal(100.0 - current_percent_total), 2)
+
+			for p in project_events.values():
+				if set_for_autologout:
+					p.full_clean()
+				else:
+					p.full_clean(exclude='project_percent')
+				p.save()
 
 
-		# when everything else is saved for the tool run, save the sample data
-		if sample_selections is not None and sample_selections != {}:
-			for k in project_events.keys():
-				if k in sample_selections:
-					for s in sample_selections[k]:
-						project_events[k].sample.add(Sample.objects.get(id=int(s)))
-						project_events[k].sample_detail.add(Sample.objects.get(id=int(s)))
+			# when everything else is saved for the tool run, save the sample data
+			if sample_selections is not None and sample_selections != {}:
+				for k in project_events.keys():
+					if k in sample_selections:
+						for s in sample_selections[k]:
+							project_events[k].sample.add(Sample.objects.get(id=int(s)))
+							project_events[k].sample_detail.add(Sample.objects.get(id=int(s)))
+
+		except Exception as inst:
+			return HttpResponse(inst)
 
 		# All policy checks passed so enable the tool for the user.
 		if tool.interlock and not tool.interlock.unlock():
@@ -694,6 +704,7 @@ def enable_tool_multi(request):
 					for uep in UsageEventProject.objects.filter(usage_event=new_usage_event, project=p.project, customer=p.customer, active_flag=True):
 						for s in uep.sample.all():
 							p.sample.add(s)
+							p.sample_detail.add(s)
 		 
 		if tool.requires_area_access and AreaAccessRecord.objects.filter(area=tool.requires_area_access,user=operator,end=None, active_flag=True).count() == 0:
 			if AreaAccessRecord.objects.filter(user=operator,end=None, active_flag=True).count() > 0:
@@ -741,6 +752,7 @@ def enable_tool_multi(request):
 					# copy samples from staff charge project record
 					for smp in s.sample.all():
 						aarp.sample.add(smp)
+						aarp.sample_detail.add(smp)
 
 	return response
 
@@ -1341,7 +1353,8 @@ def save_usage_event(request):
 				if attribute == "chosen_sample":
 					sample_field = "selected_sample__" + str(index)
 					samples = request.POST.get(sample_field)
-					sample_selections[index] = samples.split(",")
+					if samples != "null":
+						sample_selections[index] = samples.split(",")
 
 		for p in project_events.values():
 			p.full_clean()
@@ -1429,6 +1442,7 @@ def save_usage_event(request):
 					if k in sample_selections:
 						for s in sample_selections[k]:
 							project_charges[k].sample.add(Sample.objects.get(id=int(s)))
+							project_charges[k].sample_detail.add(Sample.objects.get(id=int(s)))
 
 		area_access_record = request.POST.get("area_access_record")
 
@@ -1465,6 +1479,7 @@ def save_usage_event(request):
 
 				for s in project_events[p].sample.all():
 					aarp.sample.add(s)
+					aarp.sample_detail.add(s)
 
 
 	except Exception as inst:

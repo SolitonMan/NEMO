@@ -199,7 +199,8 @@ def begin_staff_charge(request):
 				if attribute == "chosen_sample":
 					sample_field = "selected_sample__" + str(index)
 					samples = request.POST.get(sample_field)
-					sample_selections[index] = samples.split(",")
+					if samples != "null":
+						sample_selections[index] = samples.split(",")
 
 		for p in project_charges.values():
 			p.full_clean(exclude='project_percent')
@@ -211,6 +212,7 @@ def begin_staff_charge(request):
 				if k in sample_selections:
 					for s in sample_selections[k]:
 						project_charges[k].sample.add(Sample.objects.get(id=int(s)))
+						project_charges[k].sample_detail.add(Sample.objects.get(id=int(s)))
 
 
 	except Exception:
@@ -410,7 +412,8 @@ def ad_hoc_staff_charge(request):
 						sample_field = "selected_sample__" + str(index)
 						samples = request.POST.get(sample_field)
 						proj_tag = "chosen_project__"  + str(index)
-						sample_ids.append([request.POST.get(proj_tag), samples.split(",")])
+						if samples != "null":
+							sample_ids.append([request.POST.get(proj_tag), samples.split(",")])
 
 			projects = Project.objects.filter(id__in=project_ids)
 			customers = User.objects.filter(id__in=customer_ids)
@@ -497,7 +500,8 @@ def ad_hoc_staff_charge(request):
 				if attribute == "chosen_sample":
 					sample_field = "selected_sample__" + str(index)
 					samples = request.POST.get(sample_field)
-					sample_selections[index] = samples.split(",")
+					if samples != "null":
+						sample_selections[index] = samples.split(",")
 
 				if attribute == "project_percent":
 					if value == '':
@@ -525,6 +529,7 @@ def ad_hoc_staff_charge(request):
 				if k in sample_selections:
 					for s in sample_selections[k]:
 						project_charges[k].sample.add(Sample.objects.get(id=int(s)))
+						project_charges[k].sample_detail.add(Sample.objects.get(id=int(s)))
 
 		params['staff_charges'] = StaffCharge.objects.filter(id=charge.id, active_flag=True)
 		params['no_staff_charge_saved'] = save_charge == False
@@ -556,6 +561,7 @@ def ad_hoc_staff_charge(request):
 
 				for s in project_charges[pc].sample.all():
 					aarp.sample.add(s)
+					aarp.sample_detail.add(s)
 
 
 	except Exception as inst:
@@ -729,11 +735,13 @@ def ad_hoc_overlap_resolution(request):
 				if attribute == "chosen_sample" and index not in ad_hoc_cp:
 					s_str = "selected_sample__" + str(index)
 					samples = request.POST.get(s_str)
-					ad_hoc_cp[index] = [0, 0, 0, samples.split(",")]
+					if samples != "null":
+						ad_hoc_cp[index] = [0, 0, 0, samples.split(",")]
 				if attribute == "chosen_sample" and index in ad_hoc_cp:
 					s_str = "selected_sample__" + str(index)
 					samples = request.POST.get(s_str)
-					ad_hoc_cp[index][3] = samples.split(",")
+					if samples != "null":
+						ad_hoc_cp[index][3] = samples.split(",")
 
 
 		# create initial ad hoc staff charge
@@ -779,6 +787,7 @@ def ad_hoc_overlap_resolution(request):
 			if a[3] != 0:
 				for s in a[3]:
 					scp.sample.add(Sample.objects.get(id=int(s)))
+					scp.sample_detail.add(Sample.objects.get(id=int(s)))
 
 			if include_area_access:
 				ahaarp = AreaAccessRecordProject()
@@ -793,6 +802,7 @@ def ad_hoc_overlap_resolution(request):
 				if a[3] != 0:
 					for s in a[3]:
 						ahaarp.sample.add(Sample.objects.get(id=int(s)))
+						ahaarp.sample_detail.add(Sample.objects.get(id=int(s)))
 
 		# get the StaffCharges that overlap the ad hoc charge
 		overlaps = StaffCharge.objects.filter(id__in=overlap_ids, active_flag=True).order_by("start")
@@ -1292,6 +1302,7 @@ def begin_staff_area_charge(request):
 
 		for smp in s.sample.all():
 			aarp.sample.add(smp)
+			aarp.sample_detail.add(smp)
 
 	return redirect(reverse('staff_charges'))
 

@@ -26,7 +26,7 @@ from django.utils.safestring import mark_safe
 from django.urls import reverse
 
 from NEMO.forms import SampleForm, nice_errors
-from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, Sample, StaffCharge, StaffChargeProject, UsageEvent, UsageEventProject, UsageEventProjectSample, Reservation, ReservationProject, Project, User
+from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, AreaAccessRecordProjectSample, Sample, StaffCharge, StaffChargeProject, StaffChargeProjectSample, UsageEvent, UsageEventProject, UsageEventProjectSample, Reservation, ReservationProject, Project, User
 
 @login_required
 @require_GET
@@ -225,8 +225,31 @@ def remove_sample(request):
 		ueps.updated = timezone.now()
 		ueps.save()
 
-	except:
-		pass
+		# check for a staff charge currently happening
+		if StaffCharge.objects.filter(related_usage_event=uep.usage_event, end=None).exists():
+			sc = StaffCharge.objects.get(related_usage_event=uep.usage_event, end=None)
+			scp = StaffChargeProject.objects.filter(staff_charge=sc, customer=uep.customer, project=uep.project)
+
+			for s in scp:
+				if StaffChargeProjectSample.objects.filter(staff_charge_project=s, sample=sample).exists():
+					scps = StaffChargeProjectSample.objects.get(staff_charge_project=s, sample=sample)
+					scps.active_flag = False
+					scps.updated = timezone.now()
+					scps.save()
+
+		if AreaAccessRecord.objects.filter(related_usage_event=uep.usage_event, end=None).exists():
+			aar = AreaAccessRecord.objects.get(related_usage_event=uep.usage_event, end=None)
+			aarp = AreaAccessRecordProject.objects.filter(area_access_record=aar, customer=uep.customer, project=uep.project)
+
+			for a in aarp:
+				if AreaAccessRecordProjectSample.objects.filter(area_access_record_project=a, sample=sample).exists():
+					aarps = AreaAccessRecordProjectSample.objects.get(area_access_record_project=a, sample=sample)
+					aarps.active_flag = False
+					aarps.updated = timezone.now()
+					aarps.save()
+
+	except Exception as inst:
+		return HttpResponseBadRequest(inst)
 
 	return HttpResponse()
 
@@ -246,8 +269,42 @@ def add_run_existing_sample(request, uep_id, sample_id):
 			uep.sample.add(sample)
 			uep.sample_detail.add(sample)
 
-	except:
-		pass
+		# check for a staff charge currently happening that should include this
+		if StaffCharge.objects.filter(related_usage_event=uep.usage_event, end=None).exists():
+			sc = StaffCharge.objects.get(related_usage_event=uep.usage_event, end=None)
+			scp = StaffChargeProject.objects.filter(staff_charge=sc, customer=uep.customer, project=uep.project)
+
+			b_sample_added = False
+
+			for s in scp:
+				b_sample_added = False
+				for smp in s.sample.all():
+					if smp == sample:
+						b_sample_added = True
+
+				if not b_sample_added:
+					s.sample.add(sample)
+					s.sample_detail.add(sample)
+
+		# check for an area access record related to the run
+		if AreaAccessRecord.objects.filter(related_usage_event=uep.usage_event, end=None).exists():
+			aar = AreaAreaAccessRecord.objects.get(related_usage_event=uep.usage_event, end=None)
+			aarp = AreaAreaAccessRecordProject.objects.filter(area_access_record=aar, customer=uep.customer, project=uep.project)
+
+			b_sample_added = False
+
+			for a in aarp:
+				b_sample_added = False
+				for smp in a.sample.all():
+					if smp == sample:
+						b_sample_added = True
+
+				if not b_sample_added:
+					a.sample.add(sample)
+					a.sample_detail.add(sample)
+
+	except Exception as inst:
+		return HttpResponseBadRequest(inst)
 
 	return HttpResponse()
 

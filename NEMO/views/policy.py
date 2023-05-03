@@ -6,7 +6,7 @@ from django.http import HttpResponse, HttpResponseBadRequest
 from django.template import Template, Context
 from django.utils import timezone
 
-from NEMO.models import Reservation, AreaAccessRecord, ScheduledOutage, PhysicalAccessLevel, User, Tool, ProbationaryQualifications
+from NEMO.models import Reservation, AreaAccessRecord, ScheduledOutage, PhysicalAccessLevel, Project, User, Tool, ProbationaryQualifications
 from NEMO.utilities import format_datetime
 from NEMO.views.customization import get_customization, get_media_file_contents
 
@@ -60,7 +60,7 @@ def check_policy_to_enable_tool(tool, operator, user, project, staff_charge, req
 
 	# Users may only charge to projects they are members of.
 	if project not in user.active_projects():
-		return HttpResponseBadRequest('The designated user is not assigned to the selected project.')
+		return HttpResponseBadRequest('The user ' + str(user) + 'is not assigned to the project ' + str(project))
 
 	# The tool operator must not have a lock on usage
 	if operator.training_required:
@@ -139,7 +139,7 @@ def check_policy_to_enable_tool_for_multi(tool, operator, user, project, request
 
 	# Users may only charge to projects they are members of.
 	if project not in user.active_projects():
-		return HttpResponseBadRequest('The designated user is not assigned to the selected project.')
+		return HttpResponseBadRequest('The user ' + str(user) + ' is not assigned to the project ' + str(project))
 
 	# The tool operator must not have a lock on usage
 	if operator.training_required:

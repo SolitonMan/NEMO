@@ -691,7 +691,16 @@ class StaffChargeProject(models.Model):
 	no_charge_flag = models.BooleanField(default=False)
 	active_flag = models.BooleanField(default=True)
 	sample = models.ManyToManyField('Sample', blank=True, related_name='scp_sample')
+	sample_detail = models.ManyToManyField('Sample', blank=True, through='StaffChargeProjectSample', related_name='scp_sample_detail')
 
+
+class StaffChargeProjectSample(models.Model):
+	sample = models.ForeignKey('Sample', on_delete=models.SET_NULL, null=True)
+	staff_charge_project = models.ForeignKey('StaffChargeProject', on_delete=models.SET_NULL, null=True)
+	notes =  models.TextField(null=True, blank=True)
+	active_flag = models.BooleanField(default=True)
+	created = models.DateTimeField(null=True, blank=True, default=timezone.now)
+	updated = models.DateTimeField(null=True, blank=True, default=timezone.now)
 
 class StaffChargeNotificationLog(models.Model):
 	staff_charge = models.ForeignKey(StaffCharge, on_delete=models.SET_NULL, null=True)
@@ -779,7 +788,17 @@ class AreaAccessRecordProject(models.Model):
 	active_flag = models.BooleanField(default=True)
 	comment = models.TextField(null=True, blank=True)
 	sample = models.ManyToManyField('Sample', blank=True, related_name='aarp_sample')
+	sample_detail = models.ManyToManyField('Sample', blank=True, through='AreaAccessRecordProjectSample', related_name='aarp_sample_detail')
 
+
+class AreaAccessRecordProjectSample(models.Model):
+	sample = models.ForeignKey('Sample', on_delete=models.SET_NULL, null=True)
+	area_access_record_project = models.ForeignKey('AreaAccessRecordProject', on_delete=models.SET_NULL, null=True)
+	notes =  models.TextField(null=True, blank=True)
+	active_flag = models.BooleanField(default=True)
+	created = models.DateTimeField(null=True, blank=True, default=timezone.now)
+	updated = models.DateTimeField(null=True, blank=True, default=timezone.now)
+ 
 
 class ConfigurationHistory(models.Model):
 	configuration = models.ForeignKey(Configuration, on_delete=models.SET_NULL, null=True)

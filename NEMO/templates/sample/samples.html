@@ -46,6 +46,7 @@ $("#search").keyup(function () {
 		<th>Nickname</th>
 		<th>Project</th>
 		<th>Creator</th>
+		<th>Created</th>
 		<th>Parent Sample</th>
 		<th>Description</th>
 		<th>History</th>
@@ -62,6 +63,7 @@ $("#search").keyup(function () {
 			{% endfor %}
 		</td>
 		<td>{{ s.created_by }}</td>
+		<td>{{ s.created|date:"m-d-Y g:i A" }}</td>
 		<td>{{ s.parent_sample.identifier }}</td>
 		<td>{{ s.description }}</td>
 		<td><a href='{% url 'sample_history' s.id %}'>History</a></td>
