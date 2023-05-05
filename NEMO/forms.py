@@ -20,7 +20,7 @@ class UserForm(ModelForm):
 class ToolForm(ModelForm):
 	class Meta:
 		model = Tool
-		fields = ['name', 'qualification_duration', 'reservation_horizon', 'minimum_usage_block_time', 'maximum_usage_block_time', 'maximum_reservations_per_day', 'minimum_time_between_reservations', 'maximum_future_reservation_time', 'missed_reservation_threshold', 'reservation_required','allow_autologout']
+		fields = ['name', 'visible', 'operational', 'qualification_duration', 'reservation_horizon', 'minimum_usage_block_time', 'maximum_usage_block_time', 'maximum_reservations_per_day', 'minimum_time_between_reservations', 'maximum_future_reservation_time', 'missed_reservation_threshold', 'reservation_required','allow_autologout']
 		widgets = {
 			'name': forms.TextInput(attrs={'readonly': 'readonly', 'class': 'form-control'}),
 			'qualification_duration': forms.NumberInput(attrs={'class': 'form-control'}),

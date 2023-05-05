@@ -154,29 +154,65 @@ def sample_history(request, sample_id=None):
 	cursor = connection.cursor()
 	# if no sample is specified retrieve all the sample histories for the current user
 	if sample_id is None:
-		raw_sql = '''select s.identifier, us.username, t.name, u.start, u.end, p.project_number
+		raw_sql = '''select 'Tool Use' as transaction_type, s.identifier as identifier, p.project_number, us.username, t.name, u.start as start_date, u.end as end_date, ueps.notes
 			from "NEMO_usageevent" u
 			left outer join "NEMO_user" us on u.operator_id = us.id
 			left outer join "NEMO_usageeventproject" uep on u.id=uep.usage_event_id
-			left outer join "NEMO_usageeventproject_sample" ueps on ueps.usageeventproject_id = uep.id
+			left outer join "NEMO_usageeventprojectsample" ueps on ueps.usage_event_project_id = uep.id
 			inner join "NEMO_sample" s on ueps.sample_id = s.id
 			inner join "NEMO_project" p on uep.project_id=p.id
 			inner join "NEMO_tool" t on t.id = u.tool_id
 			where u.operator_id=%s
-			order by s.identifier, u.start'''
-		cursor.execute(raw_sql, [request.user.id])
+			UNION
+			select 'Staff Charge' as transaction_type, s.identifier as identifier, p.project_number, us.username, 'n/a', sc.start as start_date, sc.end as end_date, scps.notes
+			from "NEMO_staffcharge" sc
+			left outer join "NEMO_user" us on sc.staff_member_id = us.id
+			left outer join "NEMO_staffchargeproject" scp on sc.id=scp.staff_charge_id
+			left outer join "NEMO_staffchargeprojectsample" scps on scps.staff_charge_project_id = scp.id
+			inner join "NEMO_sample" s on scps.sample_id = s.id
+			inner join "NEMO_project" p on scp.project_id=p.id
+			where sc.staff_member_id=%s
+			UNION
+			select 'Area Access' as transaction_type, s.identifier as identifier, p.project_number, us.username, 'n/a', aar.start as start_date, aar.end as end_date, aarps.notes
+			from "NEMO_areaaccessrecord" aar
+			left outer join "NEMO_user" us on aar.user_id = us.id
+			left outer join "NEMO_areaaccessrecordproject" aarp on aar.id=aarp.area_access_record_id
+			left outer join "NEMO_areaaccessrecordprojectsample" aarps on aarps.area_access_record_project_id = aarp.id
+			inner join "NEMO_sample" s on aarps.sample_id = s.id
+			inner join "NEMO_project" p on aarp.project_id=p.id
+			where aar.user_id=%s
+			order by identifier, start_date'''
+		cursor.execute(raw_sql, [request.user.id,request.user.id,request.user.id])
 	else:
-		raw_sql = '''select s.identifier, us.username, t.name, u.start, u.end, p.project_number
+		raw_sql = '''select 'Tool Use' as transaction_type, s.identifier as identifier, p.project_number, us.username, t.name, u.start as start_date, u.end as end_date, ueps.notes
 			from "NEMO_usageevent" u
 			left outer join "NEMO_user" us on u.operator_id = us.id
 			left outer join "NEMO_usageeventproject" uep on u.id=uep.usage_event_id
-			left outer join "NEMO_usageeventproject_sample" ueps on ueps.usageeventproject_id = uep.id
+			left outer join "NEMO_usageeventprojectsample" ueps on ueps.usage_event_project_id = uep.id
 			inner join "NEMO_sample" s on ueps.sample_id = s.id
 			inner join "NEMO_project" p on uep.project_id=p.id
 			inner join "NEMO_tool" t on t.id = u.tool_id
 			where s.id=%s
-			order by s.identifier, u.start'''
-		cursor.execute(raw_sql, [sample_id])
+			UNION
+			select 'Staff Charge' as transaction_type, s.identifier as identifier, p.project_number, us.username, 'n/a', sc.start as start_date, sc.end as end_date, scps.notes
+			from "NEMO_staffcharge" sc
+			left outer join "NEMO_user" us on sc.staff_member_id = us.id
+			left outer join "NEMO_staffchargeproject" scp on sc.id=scp.staff_charge_id
+			left outer join "NEMO_staffchargeprojectsample" scps on scps.staff_charge_project_id = scp.id
+			inner join "NEMO_sample" s on scps.sample_id = s.id
+			inner join "NEMO_project" p on scp.project_id=p.id
+			where s.id=%s
+			UNION
+			select 'Area Access' as transaction_type, s.identifier as identifier, p.project_number, us.username, 'n/a', aar.start as start_date, aar.end as end_date, aarps.notes
+			from "NEMO_areaaccessrecord" aar
+			left outer join "NEMO_user" us on aar.user_id = us.id
+			left outer join "NEMO_areaaccessrecordproject" aarp on aar.id=aarp.area_access_record_id
+			left outer join "NEMO_areaaccessrecordprojectsample" aarps on aarps.area_access_record_project_id = aarp.id
+			inner join "NEMO_sample" s on aarps.sample_id = s.id
+			inner join "NEMO_project" p on aarp.project_id=p.id
+			where s.id=%s
+			order by identifier, start_date'''
+		cursor.execute(raw_sql, [sample_id,sample_id,sample_id])
 
 	sh = cursor.fetchall()
 
@@ -326,7 +362,7 @@ def add_run_existing_sample(request):
 				ueps.updated = timezone.now()
 				ueps.save()
 			else:
-				uep.sample.add(sample)
+				#uep.sample.add(sample)
 				uep.sample_detail.add(sample)
 
 			# check for a staff charge currently happening that should include this
@@ -340,7 +376,7 @@ def add_run_existing_sample(request):
 					scps.updated = timezone.now()
 					scps.save()
 				else:
-					scp.sample.add(sample)
+					#scp.sample.add(sample)
 					scp.sample_detail.add(sample)
 
 			# check for an area access record related to the run
@@ -354,8 +390,8 @@ def add_run_existing_sample(request):
 					aarps.updated = timezone.now()
 					aarps.save()
 				else:
-					aarps.sample.add(sample)
-					aarps.sample_detail.add(sample)
+					#aarp.sample.add(sample)
+					aarp.sample_detail.add(sample)
 
 		if scp_id is not None:
 			scp = StaffChargeProject.objects.get(id=int(scp_id))
@@ -366,7 +402,7 @@ def add_run_existing_sample(request):
 				scps.updated = timezone.now()
 				scps.save()
 			else:
-				scp.sample.add(sample)
+				#scp.sample.add(sample)
 				scp.sample_detail.add(sample)
 
 			# check for a related area access charge
@@ -380,8 +416,8 @@ def add_run_existing_sample(request):
 					aarps.updated = timezone.now()
 					aarps.save()
 				else:
-					aarps.sample.add(sample)
-					aarps.sample_detail.add(sample)
+					#aarp.sample.add(sample)
+					aarp.sample_detail.add(sample)
 
 		if aarp_id is not None:
 			aarp = AreaAccessRecordProject.objects.get(id=int(aarp_id))
@@ -392,8 +428,8 @@ def add_run_existing_sample(request):
 				aarps.updated = timezone.now()
 				aarps.save()
 			else:
-				aarps.sample.add(sample)
-				aarps.sample_detail.add(sample)
+				#aarp.sample.add(sample)
+				aarp.sample_detail.add(sample)
 
 	except Exception as inst:
 		return HttpResponseBadRequest(inst)

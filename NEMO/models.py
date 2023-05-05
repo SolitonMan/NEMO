@@ -690,7 +690,7 @@ class StaffChargeProject(models.Model):
 	contest_data = GenericRelation('ContestTransactionData')
 	no_charge_flag = models.BooleanField(default=False)
 	active_flag = models.BooleanField(default=True)
-	sample = models.ManyToManyField('Sample', blank=True, related_name='scp_sample')
+	#sample = models.ManyToManyField('Sample', blank=True, related_name='scp_sample')
 	sample_detail = models.ManyToManyField('Sample', blank=True, through='StaffChargeProjectSample', related_name='scp_sample_detail')
 
 
@@ -787,7 +787,7 @@ class AreaAccessRecordProject(models.Model):
 	no_charge_flag = models.BooleanField(default=False)
 	active_flag = models.BooleanField(default=True)
 	comment = models.TextField(null=True, blank=True)
-	sample = models.ManyToManyField('Sample', blank=True, related_name='aarp_sample')
+	#sample = models.ManyToManyField('Sample', blank=True, related_name='aarp_sample')
 	sample_detail = models.ManyToManyField('Sample', blank=True, through='AreaAccessRecordProjectSample', related_name='aarp_sample_detail')
 
 
@@ -1082,7 +1082,7 @@ class UsageEventProject(models.Model):
 	active_flag = models.BooleanField(default=True)
 	sample_num = models.IntegerField(null=True, blank=True)
 	cost_per_sample = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-	sample = models.ManyToManyField('Sample', blank=True, related_name='uep_sample')
+	#sample = models.ManyToManyField('Sample', blank=True, related_name='uep_sample')
 	sample_detail = models.ManyToManyField('Sample', blank=True, through='UsageEventProjectSample', related_name='uep_sample_detail')
 
 class UsageEventProjectSample(models.Model):

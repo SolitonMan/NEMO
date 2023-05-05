@@ -211,7 +211,7 @@ def begin_staff_charge(request):
 			for k in project_charges.keys():
 				if k in sample_selections:
 					for s in sample_selections[k]:
-						project_charges[k].sample.add(Sample.objects.get(id=int(s)))
+						#project_charges[k].sample.add(Sample.objects.get(id=int(s)))
 						project_charges[k].sample_detail.add(Sample.objects.get(id=int(s)))
 
 
@@ -528,7 +528,7 @@ def ad_hoc_staff_charge(request):
 			for k in project_charges.keys():
 				if k in sample_selections:
 					for s in sample_selections[k]:
-						project_charges[k].sample.add(Sample.objects.get(id=int(s)))
+						#project_charges[k].sample.add(Sample.objects.get(id=int(s)))
 						project_charges[k].sample_detail.add(Sample.objects.get(id=int(s)))
 
 		params['staff_charges'] = StaffCharge.objects.filter(id=charge.id, active_flag=True)
@@ -559,8 +559,8 @@ def ad_hoc_staff_charge(request):
 				aarp.updated = timezone.now()
 				aarp.save()
 
-				for s in project_charges[pc].sample.all():
-					aarp.sample.add(s)
+				for s in project_charges[pc].sample_detail.all():
+					#aarp.sample.add(s)
 					aarp.sample_detail.add(s)
 
 
@@ -786,7 +786,7 @@ def ad_hoc_overlap_resolution(request):
 
 			if a[3] != 0:
 				for s in a[3]:
-					scp.sample.add(Sample.objects.get(id=int(s)))
+					#scp.sample.add(Sample.objects.get(id=int(s)))
 					scp.sample_detail.add(Sample.objects.get(id=int(s)))
 
 			if include_area_access:
@@ -801,7 +801,7 @@ def ad_hoc_overlap_resolution(request):
 
 				if a[3] != 0:
 					for s in a[3]:
-						ahaarp.sample.add(Sample.objects.get(id=int(s)))
+						#ahaarp.sample.add(Sample.objects.get(id=int(s)))
 						ahaarp.sample_detail.add(Sample.objects.get(id=int(s)))
 
 		# get the StaffCharges that overlap the ad hoc charge
@@ -1300,8 +1300,8 @@ def begin_staff_area_charge(request):
 		aarp.updated = timezone.now()
 		aarp.save()
 
-		for smp in s.sample.all():
-			aarp.sample.add(smp)
+		for smp in s.sample_detail.all():
+			#aarp.sample.add(smp)
 			aarp.sample_detail.add(smp)
 
 	return redirect(reverse('staff_charges'))

@@ -35,8 +35,8 @@
 			<td>{{ s.customer }}</td>
 			<td>{{ s.project }}</td>
 			<td>
-			{% if s.sample.all.count > 0 %}
-				{% for smp in s.sample.all %}
+			{% if s.sample_detail.all.count > 0 %}
+				{% for smp in s.sample_detail.all %}
 					{{ smp }}<br/>
 				{% endfor %}
 			{% endif %}

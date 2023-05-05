@@ -53,6 +53,32 @@ def save_tool_comment(request):
 	uep.save()
 	return HttpResponse()
 
+@login_required
+def save_fixed_comment(request):
+	uep_id = request.POST.get('uep_id', None)
+	save_type = request.POST.get('save_type', None)
+	value = request.POST.get('value')
+
+	if uep_id is not None:
+		b_updated = False
+		uep = UsageEventProject.objects.get(id=int(uep_id))
+
+		if save_type == "fixed_cost":
+			uep.cost_per_sample = value
+			b_updated = True
+
+		if save_type == "num_samples":
+			uep.sample_num = value
+			b_updated = True
+
+		if save_type == "sample_notes":
+			uep.comment = value
+			b_updated = True
+
+		if b_updated:
+			uep.save()
+	return HttpResponse()
+		
 
 @staff_member_required(login_url=None)
 @require_GET
@@ -151,9 +177,9 @@ def tool_control(request, tool_id=None, qualified_only=None, core_only=None):
 
 		for s in staff_charge_projects:
 			s_samples = ""
-			if s.sample.all().count() > 0:
+			if s.sample_detail.all().count() > 0:
 				s_samples = '['
-				for smp in s.sample.all():
+				for smp in s.sample_detail.all():
 					s_samples += '{"sample":"' + str(smp) + '","sample_id":"' + str(smp.id) + '"},'
 				s_samples = s_samples.rstrip(",") + ']'
 			if s_samples == "":
@@ -367,6 +393,14 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge, billing_mod
 	billing_mode = billing_mode == 'true'
 	end_scheduled_outage = int(request.POST.get('end_scheduled_outage')) == 1
 
+	# initialize some variables
+	new_usage_event = None
+	uep = None
+	new_staff_charge = None
+	scp = None
+	aar = None
+	aarp = None
+
 	# check for auto logout settings
 	set_for_autologout = request.POST.get("set_for_autologout")
 	if set_for_autologout:
@@ -487,8 +521,14 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge, billing_mod
 				for s in sample_list:
 					smp = Sample.objects.get(id=int(s))
 					if smp in uep.project.sample_project.all():
-						uep.sample.add(smp)
+						#uep.sample.add(smp)
 						uep.sample_detail.add(smp)
+					if scp is not None:
+						#scp.sample.add(smp)
+						scp.sample_detail.add(smp)
+					if aarp is not None:
+						#aarp.sample.add(smp)
+						aarp.sample_detail.add(smp)
 
 	return response
 
@@ -620,7 +660,7 @@ def enable_tool_multi(request):
 				for k in project_events.keys():
 					if k in sample_selections:
 						for s in sample_selections[k]:
-							project_events[k].sample.add(Sample.objects.get(id=int(s)))
+							#project_events[k].sample.add(Sample.objects.get(id=int(s)))
 							project_events[k].sample_detail.add(Sample.objects.get(id=int(s)))
 
 		except Exception as inst:
@@ -702,8 +742,8 @@ def enable_tool_multi(request):
 				# copy samples from usage event project relationship to staff charge project relationship
 				if UsageEventProject.objects.filter(usage_event=new_usage_event, project=p.project, customer=p.customer, active_flag=True).exists():
 					for uep in UsageEventProject.objects.filter(usage_event=new_usage_event, project=p.project, customer=p.customer, active_flag=True):
-						for s in uep.sample.all():
-							p.sample.add(s)
+						for s in uep.sample_detail.all():
+							#p.sample.add(s)
 							p.sample_detail.add(s)
 		 
 		if tool.requires_area_access and AreaAccessRecord.objects.filter(area=tool.requires_area_access,user=operator,end=None, active_flag=True).count() == 0:
@@ -750,8 +790,8 @@ def enable_tool_multi(request):
 					aarp.save()
 
 					# copy samples from staff charge project record
-					for smp in s.sample.all():
-						aarp.sample.add(smp)
+					for smp in s.sample_detail.all():
+						#aarp.sample.add(smp)
 						aarp.sample_detail.add(smp)
 
 	return response
@@ -1365,7 +1405,7 @@ def save_usage_event(request):
 			for k in project_events.keys():
 				if k in sample_selections:
 					for s in sample_selections[k]:
-						project_events[k].sample.add(Sample.objects.get(id=int(s)))
+						#project_events[k].sample.add(Sample.objects.get(id=int(s)))
 						project_events[k].sample_detail.add(Sample.objects.get(id=int(s)))
 
 
@@ -1441,7 +1481,7 @@ def save_usage_event(request):
 				for k in project_charges.keys():
 					if k in sample_selections:
 						for s in sample_selections[k]:
-							project_charges[k].sample.add(Sample.objects.get(id=int(s)))
+							#project_charges[k].sample.add(Sample.objects.get(id=int(s)))
 							project_charges[k].sample_detail.add(Sample.objects.get(id=int(s)))
 
 		area_access_record = request.POST.get("area_access_record")
@@ -1477,8 +1517,8 @@ def save_usage_event(request):
 				aarp.updated = timezone.now()
 				aarp.save()
 
-				for s in project_events[p].sample.all():
-					aarp.sample.add(s)
+				for s in project_events[p].sample_detail.all():
+					#aarp.sample.add(s)
 					aarp.sample_detail.add(s)
 
 

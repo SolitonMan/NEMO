@@ -69,6 +69,7 @@ urlpatterns = [
 	re_path(r'^save_usage_event/$', tool_control.save_usage_event, name='save_usage_event'),
 	re_path(r'^save_operator_comment/$', tool_control.save_operator_comment, name='save_operator_comment'),
 	re_path(r'^save_tool_comment/$', tool_control.save_tool_comment, name='save_tool_comment'),
+	re_path(r'^save_fixed_comment/$', tool_control.save_fixed_comment, name='save_fixed_comment'),
 
 	# Tasks:
 	re_path(r'^create_task/$', tasks.create, name='create_task'),

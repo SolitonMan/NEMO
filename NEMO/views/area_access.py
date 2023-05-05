@@ -184,7 +184,7 @@ def login_to_area(request, door_id=None, area_id=None):
 		if samples != "" and samples is not None and samples != "null":
 			samples = samples.split(",")
 			for s in samples:
-				aarp.sample.add(Sample.objects.get(id=int(s)))
+				#aarp.sample.add(Sample.objects.get(id=int(s)))
 				aarp.sample_detail.add(Sample.objects.get(id=int(s)))
 
 
@@ -233,7 +233,7 @@ def login_to_area(request, door_id=None, area_id=None):
 			if samples != "" and samples is not None and samples != "null":
 				samples = samples.split(",")
 				for s in samples:
-					aarp.sample.add(Sample.objects.get(id=int(s)))
+					#aarp.sample.add(Sample.objects.get(id=int(s)))
 					aarp.sample_detail.add(Sample.objects.get(id=int(s)))
 
 
@@ -528,7 +528,8 @@ def new_area_access_record(request, customer=None):
 		if samples != "" and samples is not None and samples != "null":
 			samples = samples.split(",")
 			for s in samples:
-				aarp.sample.add(Sample.objects.get(id=int(s)))
+				#aarp.sample.add(Sample.objects.get(id=int(s)))
+				aarp.sample_detail.add(Sample.objects.get(id=int(s)))
 
 		dictionary['success'] = '{} is now logged in to the {}.'.format(user, area.name.lower())
 		if request.POST['self_login_flag'] == "True":
@@ -656,7 +657,7 @@ def ad_hoc_area_access_record(request):
 	if samples != "" and samples is not None and samples != "null":
 		samples = samples.split(",")
 		for s in samples:
-			aarp.sample.add(Sample.objects.get(id=int(s)))
+			aarp.sample_detail.add(Sample.objects.get(id=int(s)))
 
 
 

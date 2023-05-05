@@ -313,7 +313,6 @@
 										<th>Project</th>
 										<th>Cost per Sample</th>
 										<th># of Samples</th>
-										<th>Notes</th>
 									</tr>
 									</thead>
 									<tbody>
@@ -321,9 +320,8 @@
 									<tr>
 										<td>{{ uep.customer }}<input type="hidden" value="{{ uep.customer.id }}" name="chosen_user__{{ uep.id }}" /></td>
 										<td>{{ uep.project }}<input type="hidden" value="{{ uep.project.id }}" name="chosen_project__{{ uep.id }}" /></td>
-										<td><input type="text" name="fixed_cost__{{uep.id}}" id="fixed_cost__{{uep.id}}" value="" /></td>
-										<td><input type="text" name="num_samples__{{uep.id}}" id="num_samples__{{uep.id}}" value="" /></td>
-										<td><input type="text" name="sample_notes__{{uep.id}}" id="sample_notes__{{uep.id}}" /></td>
+										<td><input type="text" class="form-control" name="fixed_cost__{{uep.id}}" id="fixed_cost__{{uep.id}}" value={% if uep.cost_per_sample is not None%}"{{uep.cost_per_sample}}"{% else %}""{% endif %} onblur="save_fixed_comment(this);" onkeypress="check_accepted(event, '0123456789.');" /></td>
+										<td><input type="text" class="form-control" name="num_samples__{{uep.id}}" id="num_samples__{{uep.id}}" value={% if uep.sample_num is not None%}"{{uep.sample_num}}"{% else %}""{% endif %} onblur="save_fixed_comment(this);" onkeypress="check_accepted(event, '0123456789');" /></td>
 									</tr>
 								{% endfor %}
 									</tbody>
@@ -667,6 +665,15 @@
 		ajax_get("{% url 'save_operator_comment' %}", { "usage_id": {{ tool.get_current_usage_event.id }}, "operator_comment": $("#operator_comment").val() },undefined,undefined);
 	}
 
+	function save_fixed_comment(el)
+	{
+		save_type = $(el).prop("id").split("__")[0];
+		uep_id = $(el).prop("id").split("__")[1];
+		value = $(el).val();
+
+		ajax_post("{% url 'save_fixed_comment' %}", { "uep_id": uep_id, "save_type": save_type, "value": value}, undefined, undefined);
+	}
+
 	function save_sample_comment(el)
 	{
 		uep_id = $(el).prop("id").split("__")[1];
@@ -679,6 +686,14 @@
 	{
 		id = $(el).prop("id").split("__")[1];
 		ajax_get("{% url 'save_tool_comment' %}", { "uep_id": id, "comment": $(el).val() }, undefined, undefined);
+	}
+
+	function check_accepted(e, check_string)
+	{
+		var char = String.fromCharCode(e.which);
+		if (check_string.indexOf(char) == -1) {
+			e.preventDefault();
+		}
 	}
 
 	window.onunload = save_operator_comment;

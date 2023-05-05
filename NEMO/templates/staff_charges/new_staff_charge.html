@@ -339,7 +339,7 @@
 				<td>{{ s.customer }}</td>
 				<td>{{ s.project }}</td>
 				<td>
-				{% for smp in s.sample.all %}
+				{% for smp in s.sample_detail.all %}
 					{{ smp }}<br/>
 				{% endfor %}
 				</td>
@@ -464,6 +464,12 @@
                         if(dataset_name == "user")
                                 fetch_projects(row, search_selection.id, true);
                 }
+
+		function save_staff_comment() {
+			ajax_get("{% url 'save_staff_comment' %}", { "staff_charge_id": {{ staff_charge.id }}, "staff_member_comment": $("#staff_member_comment").val() },undefined,undefined);
+		}
+
+		window.onunload = save_staff_comment;
 
 		function fetch_projects(row, user_id, ad_hoc)
 		{

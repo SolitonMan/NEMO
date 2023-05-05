@@ -26,14 +26,14 @@
 		<td>{{ aarp.project }}</td>
 		<td>
 			<table>
-			{% for s in aarp.sample_detail.all %}
+			{% for s in aarp.areaaccessrecordprojectsample_set.all %}
 			{% if s.active_flag %}
 			<tr>
-			<td style="width: 60%">{{ s }}</td>
+			<td style="width: 60%">{{ s.sample }}</td>
 			<td>
-			<textarea rows="2" cols="5" class="form-control" name="smpc__{{aarp.id}}__{{s.id}}" id=="smpc__{{aarp.id}}__{{s.id}}" onblur="save_sample_comment(this);">{% if s.notes is not None %}{{ s.notes }}{% endif %}</textarea>
+			<textarea rows="2" cols="5" class="form-control" name="smpc__{{aarp.id}}__{{s.sample.id}}" id=="smpc__{{aarp.id}}__{{s.sample.id}}" onblur="save_sample_comment(this);">{% if s.notes is not None %}{{ s.notes }}{% endif %}</textarea>
 			</td>
-			<td><input type="button" class="btn btn-danger" value="-" onclick="remove_sample({{aarp.id}},{{s.id}});" title="Remove this sample" /></td>
+			<td><input type="button" class="btn btn-danger" value="-" onclick="remove_sample({{aarp.id}},{{s.sample.id}});" title="Remove this sample" /></td>
 			</tr>
 			{% endif %}
 			{% endfor %}
@@ -58,7 +58,112 @@
 		ajax_get("{% url 'save_area_access_comment' %}",{ "area_access_id": {{ customer.area_access_record.id }}, "area_access_comment": $("#comment").val() }, undefined, undefined);
 	}
 	window.onunload = save_area_access_comment;
+	function save_sample_comment(el)
+	{
+		aarp_id = $(el).prop("id").split("__")[1];
+		sample_id = parseInt($(el).prop("id").split("__")[2]);
+
+		ajax_post("{% url 'save_sample_comment' %}", { "aarp_id": aarp_id, "notes": $(el).val(), "sample_id": sample_id}, undefined, undefined);
+	}
+
+	function remove_sample(aarp_id, sample_id)
+	{
+		if (confirm("This will remove the sample from the current tool run.  Click OK to proceed or Cancel to abort the removal.")) {
+			var data = {"aarp_id": aarp_id, "sample_id":sample_id}
+			ajax_post("{% url 'remove_sample' %}",data,[reload_page],undefined);
+		}
+	}
+
+	function add_run_sample(project_id, aarp_id)
+	{
+		// get the sample creation form for the project
+		var url = "/modal_create_sample/" + project_id + "/";
+		var ap = {
+			"url": url,
+			"data": {
+				"modal_caller": "",
+				"request_mode": "reservation", 
+			},
+			"type": "GET",
+			"dataType": "html"
+		};
+
+		jQuery.ajax(ap)
+			.fail(ajax_failure_callback("Oops, something went wrong!"))
+			.done(function(response, status, xml_http_request)
+			{
+				if(response === "") {
+					//refresh_calendar_and_sidebar();
+				} else {
+					$("#sample_dialog .modal-content").html(response);
+					$("#sample_dialog").modal('show');
+					$("#sample_dialog .modal-content form").submit(function() {
+						event.preventDefault();
+						$("#sample_dialog .modal-content form").off("submit");
+						$.ajax({
+							type: "POST",
+							url: url,
+							data: serialize("#sample_dialog .modal-content form"),
+							success: function(response, status, xml_http_request) { 
+								$("#sample_dialog").modal('hide');
+								$("#sample_dialog .modal-content").html("");
+								
+								// create the UsageEventProjectSample record
+								var add_sample_url = "/add_run_existing_sample/";
+								var data = {"aarp_id":aarp_id,"sample_id":response,}
+								ajax_post(add_sample_url, data, [reload_page], undefined, undefined);
+							}
+						});
+					});
+				}
+			});
+
+
+	}
+
+	function add_run_existing_sample(project_id, aarp_id)
+	{
+		// display a list of existing samples for the project then create or restore a relationship to the sample in the 
+		// UsageEventProjectSample table
+		var url = "/modal_select_sample/" + project_id + "/";
+		var ap = {
+			"url": url,
+			"data": {
+				"modal_caller": "",
+				"request_mode": "reservation", 
+			},
+			"type": "GET",
+			"dataType": "html"
+		};
 	
+		jQuery.ajax(ap)
+			.fail(ajax_failure_callback("Oops, something went wrong!"))
+			.done(function(response, status, xml_http_request)
+			{
+				if(response === "") {
+					//refresh_calendar_and_sidebar();
+				} else {
+					$("#sample_dialog .modal-content").html(response);
+					$("#sample_dialog").modal('show');
+					$("#sample_dialog .modal-content form").submit(function() {
+						event.preventDefault();
+						$("#sample_dialog .modal-content form").off("submit");
+						$("#sample_dialog").modal('hide');
+									
+						// create the UsageEventProjectSample record
+						var add_sample_url = "/add_run_existing_sample/";
+						var data = {"aarp_id":aarp_id,"sample_id":$("#select_sample").val(),}
+						ajax_post(add_sample_url, data, [reload_page], undefined, undefined);
+						$("#sample_dialog .modal-content").html("");
+					});
+				}
+			});
+	}
+
+	function reload_page()
+	{
+		location.reload();
+	}
 	</script>
 {% else %}
 	<h1>New area access record</h1>
@@ -331,113 +436,6 @@
 					});
 				}
 			});
-	}
-
-	function save_sample_comment(el)
-	{
-		aarp_id = $(el).prop("id").split("__")[1];
-		sample_id = parseInt($(el).prop("id").split("__")[2]);
-
-		ajax_post("{% url 'save_sample_comment' %}", { "aarp_id": aarp_id, "notes": $(el).val(), "sample_id": sample_id}, undefined, undefined);
-	}
-
-	function remove_sample(aarp_id, sample_id)
-	{
-		if (confirm("This will remove the sample from the current tool run.  Click OK to proceed or Cancel to abort the removal.")) {
-			var data = {"aarp_id": aarp_id, "sample_id":sample_id}
-			ajax_post("{% url 'remove_sample' %}",data,[reload_staff_charges],undefined);
-		}
-	}
-
-	function add_run_sample(project_id, aarp_id)
-	{
-		// get the sample creation form for the project
-		var url = "/modal_create_sample/" + project_id + "/";
-		var ap = {
-			"url": url,
-			"data": {
-				"modal_caller": "",
-				"request_mode": "reservation", 
-			},
-			"type": "GET",
-			"dataType": "html"
-		};
-
-		jQuery.ajax(ap)
-			.fail(ajax_failure_callback("Oops, something went wrong!"))
-			.done(function(response, status, xml_http_request)
-			{
-				if(response === "") {
-					//refresh_calendar_and_sidebar();
-				} else {
-					$("#sample_dialog .modal-content").html(response);
-					$("#sample_dialog").modal('show');
-					$("#sample_dialog .modal-content form").submit(function() {
-						event.preventDefault();
-						$("#sample_dialog .modal-content form").off("submit");
-						$.ajax({
-							type: "POST",
-							url: url,
-							data: serialize("#sample_dialog .modal-content form"),
-							success: function(response, status, xml_http_request) { 
-								$("#sample_dialog").modal('hide');
-								$("#sample_dialog .modal-content").html("");
-								
-								// create the UsageEventProjectSample record
-								var add_sample_url = "/add_run_existing_sample/";
-								var data = {"aarp_id":aarp_id,"sample_id":response,}
-								ajax_post(add_sample_url, data, [reload_page], undefined, undefined);
-							}
-						});
-					});
-				}
-			});
-
-
-	}
-
-	function add_run_existing_sample(project_id, aarp_id)
-	{
-		// display a list of existing samples for the project then create or restore a relationship to the sample in the 
-		// UsageEventProjectSample table
-		var url = "/modal_select_sample/" + project_id + "/";
-		var ap = {
-			"url": url,
-			"data": {
-				"modal_caller": "",
-				"request_mode": "reservation", 
-			},
-			"type": "GET",
-			"dataType": "html"
-		};
-	
-		jQuery.ajax(ap)
-			.fail(ajax_failure_callback("Oops, something went wrong!"))
-			.done(function(response, status, xml_http_request)
-			{
-				if(response === "") {
-					//refresh_calendar_and_sidebar();
-				} else {
-					$("#sample_dialog .modal-content").html(response);
-					$("#sample_dialog").modal('show');
-					$("#sample_dialog .modal-content form").submit(function() {
-						event.preventDefault();
-						$("#sample_dialog .modal-content form").off("submit");
-						$("#sample_dialog").modal('hide');
-									
-						// create the UsageEventProjectSample record
-						var add_sample_url = "/add_run_existing_sample/";
-						var data = {"aarp_id":aarp_id,"sample_id":$("#select_sample").val(),}
-						ajax_get(add_sample_url, {}, [reload_page], undefined, undefined);
-						$("#sample_dialog .modal-content").html("");
-					});
-				}
-			});
-	}
-
-	function reload_page()
-	{
-		location.reload();
 	}
 
 	function check_ad_hoc_submit()
