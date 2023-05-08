@@ -320,12 +320,19 @@
 									<tr>
 										<td>{{ uep.customer }}<input type="hidden" value="{{ uep.customer.id }}" name="chosen_user__{{ uep.id }}" /></td>
 										<td>{{ uep.project }}<input type="hidden" value="{{ uep.project.id }}" name="chosen_project__{{ uep.id }}" /></td>
-										<td><input type="text" class="form-control" name="fixed_cost__{{uep.id}}" id="fixed_cost__{{uep.id}}" value={% if uep.cost_per_sample is not None%}"{{uep.cost_per_sample}}"{% else %}""{% endif %} onblur="save_fixed_comment(this);" onkeypress="check_accepted(event, '0123456789.');" /></td>
-										<td><input type="text" class="form-control" name="num_samples__{{uep.id}}" id="num_samples__{{uep.id}}" value={% if uep.sample_num is not None%}"{{uep.sample_num}}"{% else %}""{% endif %} onblur="save_fixed_comment(this);" onkeypress="check_accepted(event, '0123456789');" /></td>
+										<td><input type="text" class="form-control" name="fixed_cost__{{uep.id}}" id="fixed_cost__{{uep.id}}" value={% if uep.cost_per_sample is not None%}"{{uep.cost_per_sample}}"{% else %}""{% endif %} onblur="save_fixed_comment(this);" /></td>
+										<td><input type="text" class="form-control" name="num_samples__{{uep.id}}" id="num_samples__{{uep.id}}" value={% if uep.sample_num is not None%}"{{uep.sample_num}}"{% else %}""{% endif %} onblur="save_fixed_comment(this);" /></td>
 									</tr>
 								{% endfor %}
 									</tbody>
 								</table>
+
+								<script type="text/javascript">
+								{% for uep in current_usage_event.usageeventproject_set.all %}
+								$("#fixed_cost__{{uep.id}}").limitInputCharacters(NUMBERS_ONLY);
+								$("#num_samples__{{uep.id}}").limitInputCharacters(INTEGERS_ONLY);
+								{% endfor %}
+								</script>
 							{% endif %}
 
 						{% endif %}

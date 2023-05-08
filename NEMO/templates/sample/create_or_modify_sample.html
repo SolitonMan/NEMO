@@ -160,13 +160,14 @@ function on_load()
 
 	$("#identifier_span").html(YYYY + MM + DD + HH + mins + ss + "   -   ");
 
-	$("#id_identifier").keypress(function(e) {
+/*	$("#id_identifier").keypress(function(e) {
 		var char = String.fromCharCode(e.which);
 		var accepted = "01234567890_abcdefghijklmnopqrstuvwxyz-ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 		if (accepted.indexOf(char) == -1) {
 			e.preventDefault();
 		}
-	});
+	});*/
+	$("#id_identifier").limitInputCharacters(LETTERS_AND_NUMBERS + "-_");
 	{% else %}
 	$("#id_identifier").prop("disabled","true");
 	{% endif %}

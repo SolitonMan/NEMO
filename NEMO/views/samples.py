@@ -164,17 +164,19 @@ def sample_history(request, sample_id=None):
 			inner join "NEMO_tool" t on t.id = u.tool_id
 			where u.operator_id=%s
 			UNION
-			select 'Staff Charge' as transaction_type, s.identifier as identifier, p.project_number, us.username, 'n/a', sc.start as start_date, sc.end as end_date, scps.notes
+			select 'Staff Charge' as transaction_type, s.identifier as identifier, p.project_number, sm.username, concat(us.first_name,' ',us.last_name), sc.start as start_date, sc.end as end_date, scps.notes
 			from "NEMO_staffcharge" sc
-			left outer join "NEMO_user" us on sc.staff_member_id = us.id
+			left outer join "NEMO_user" sm on sc.staff_member_id = sm.id
 			left outer join "NEMO_staffchargeproject" scp on sc.id=scp.staff_charge_id
+			left outer join "NEMO_user" us on scp.customer_id = us.id
 			left outer join "NEMO_staffchargeprojectsample" scps on scps.staff_charge_project_id = scp.id
 			inner join "NEMO_sample" s on scps.sample_id = s.id
 			inner join "NEMO_project" p on scp.project_id=p.id
 			where sc.staff_member_id=%s
 			UNION
-			select 'Area Access' as transaction_type, s.identifier as identifier, p.project_number, us.username, 'n/a', aar.start as start_date, aar.end as end_date, aarps.notes
+			select 'Area Access' as transaction_type, s.identifier as identifier, p.project_number, us.username, a.name, aar.start as start_date, aar.end as end_date, aarps.notes
 			from "NEMO_areaaccessrecord" aar
+			left outer join "NEMO_area" a on aar.area_id = a.id
 			left outer join "NEMO_user" us on aar.user_id = us.id
 			left outer join "NEMO_areaaccessrecordproject" aarp on aar.id=aarp.area_access_record_id
 			left outer join "NEMO_areaaccessrecordprojectsample" aarps on aarps.area_access_record_project_id = aarp.id
@@ -194,17 +196,19 @@ def sample_history(request, sample_id=None):
 			inner join "NEMO_tool" t on t.id = u.tool_id
 			where s.id=%s
 			UNION
-			select 'Staff Charge' as transaction_type, s.identifier as identifier, p.project_number, us.username, 'n/a', sc.start as start_date, sc.end as end_date, scps.notes
+			select 'Staff Charge' as transaction_type, s.identifier as identifier, p.project_number, sm.username, concat(us.first_name,' ',us.last_name), sc.start as start_date, sc.end as end_date, scps.notes
 			from "NEMO_staffcharge" sc
-			left outer join "NEMO_user" us on sc.staff_member_id = us.id
+			left outer join "NEMO_user" sm on sc.staff_member_id = sm.id
 			left outer join "NEMO_staffchargeproject" scp on sc.id=scp.staff_charge_id
+			left outer join "NEMO_user" us on scp.customer_id = us.id
 			left outer join "NEMO_staffchargeprojectsample" scps on scps.staff_charge_project_id = scp.id
 			inner join "NEMO_sample" s on scps.sample_id = s.id
 			inner join "NEMO_project" p on scp.project_id=p.id
 			where s.id=%s
 			UNION
-			select 'Area Access' as transaction_type, s.identifier as identifier, p.project_number, us.username, 'n/a', aar.start as start_date, aar.end as end_date, aarps.notes
+			select 'Area Access' as transaction_type, s.identifier as identifier, p.project_number, us.username, a.name, aar.start as start_date, aar.end as end_date, aarps.notes
 			from "NEMO_areaaccessrecord" aar
+			left outer join "NEMO_area" a on aar.area_id = a.id
 			left outer join "NEMO_user" us on aar.user_id = us.id
 			left outer join "NEMO_areaaccessrecordproject" aarp on aar.id=aarp.area_access_record_id
 			left outer join "NEMO_areaaccessrecordprojectsample" aarps on aarps.area_access_record_project_id = aarp.id
