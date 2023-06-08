@@ -28,7 +28,7 @@
 	{% for sh in sample_history %}
 	<tr>
 		{% for i in sh %}
-		<td>{{ i }}</td>
+		<td>{% if i is not None %}{{ i }}{% endif %}</td>
 		{% endfor %}
 	</tr>
 	{% endfor %}

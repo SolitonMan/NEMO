@@ -90,18 +90,50 @@ def create_or_modify_sample(request, sample_id):
 		form = SampleForm(request.user, request.POST, instance=sample)
 		dictionary['form'] = form
 
+		multiple_samples = request.POST.get('create_multiple_samples', None)
+
 		if not form.is_valid():
 			return render(request, 'sample/create_or_modify_sample.html', dictionary)
 
-		r = form.save()
-		r.updated = timezone.now()
-		r.updated_by = request.user
+		if multiple_samples:
 
-		if sample is None:
-			r.created = timezone.now()
-			r.created_by = request.user
+			sample_count = request.POST.get('sample_count', None)
 
-		r.save()
+			if sample_count is not None:
+
+				sample_count = int(sample_count)
+
+				for i in range(1, sample_count+1):
+					form = SampleForm(request.user, request.POST, None)
+					r = form.save()
+					identifier = r.identifier
+					if i < 10:
+						identifier += "_000" + str(i)
+					elif i > 9 and i < 100:
+						identifier += "_00" + str(i)
+					elif i > 99 and i < 1000:
+						identifier += "_0" + str(i)
+					else:
+						identifier += "_" + str(i)
+
+					r.identifier = identifier
+					r.updated = timezone.now()
+					r.updated_by = request.user
+					r.created = timezone.now()
+					r.created_by = request.user
+					r.save()
+
+		else:
+			form = SampleForm(request.user, request.POST, instance=sample)
+			r = form.save()
+			r.updated = timezone.now()
+			r.updated_by = request.user
+
+			if sample is None:
+				r.created = timezone.now()
+				r.created_by = request.user
+
+			r.save()
 
 		return redirect('samples')
 

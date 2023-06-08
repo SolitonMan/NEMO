@@ -161,7 +161,7 @@ class ToolAdminForm(forms.ModelForm):
 
 @register(Tool)
 class ToolAdmin(admin.ModelAdmin):
-	list_display = ('name', 'category', 'core_id', 'visible', 'operational', 'problematic', 'is_configurable')
+	list_display = ('name', 'category', 'core_id', 'visible', 'operational', 'is_configurable', 'interlock')
 	list_filter = ('visible', 'operational', 'core_id')
 	form = ToolAdminForm
 
@@ -611,7 +611,7 @@ class InterlockCardAdmin(admin.ModelAdmin):
 
 @register(Interlock)
 class InterlockAdmin(admin.ModelAdmin):
-	list_display = ('id', 'card', 'channel', 'state', 'tool', 'door')
+	list_display = ('id', 'card', 'channel', 'state', 'tool')
 	actions = [lock_selected_interlocks, unlock_selected_interlocks, synchronize_with_tool_usage]
 	readonly_fields = ['state', 'most_recent_reply']
 

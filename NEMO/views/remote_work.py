@@ -60,7 +60,8 @@ def remote_work(request):
 		usage_events = usage_events.exclude(~Q(operator_id=operator.id))
 		staff_charges = staff_charges.exclude(~Q(staff_member_id=operator.id))
 		#area_access_records = area_access_records.exclude(~Q(staff_charge__staff_member_id=operator.id) & ~(Q(staff_charge__staff_member_id__isnull=True) & Q(customer_id=operator.id)))
-		area_access_records = area_access_records.exclude((~Q(customer_id=operator.id) & Q(customer_id__isnull=False)) | (~Q(user_id=operator.id)) | ~Q(customers__id=operator.id))
+		#area_access_records = area_access_records.exclude((~Q(customer_id=operator.id) & Q(customer_id__isnull=False)) | (~Q(user_id=operator.id)) | ~Q(customers__id=operator.id))
+		area_access_records = area_access_records.exclude(~Q(user_id=operator.id))
 		consumable_withdraws = consumable_withdraws.exclude(~Q(merchant_id=operator.id))
 
 		#if operator == request.user:

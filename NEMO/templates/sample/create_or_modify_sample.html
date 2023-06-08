@@ -10,6 +10,10 @@
 	<table class="table">
 	{{ form.as_table }}
 	</table>
+	{% if form.instance.identifier is None and 1 == 0%}
+	<input type="checkbox" name="create_multiple_samples" id="create_multiple_samples" value="1" onchange="set_sample_count(this);" /> Check to create multiple entries for this sample record
+	<input type="text" name="sample_count" id="sample_count" value="" disabled style="width: 100px;" placeholder="Enter a number greater than 1" /><br/>
+	{% endif %}
 	<input type="submit" value="Submit" class="btn btn-success" />
 
 	<br/><br/>
@@ -18,6 +22,15 @@
 
 </select>
 <script type="text/javascript">
+function set_sample_count(el)
+{
+	if (el.checked) {
+		$("#sample_count").removeAttr("disabled");
+		$("#sample_count").limitInputCharacters(INTEGERS_ONLY);
+	} else {
+		$("#sample_count").prop("disabled","disabled");
+	}
+}
 function clear_user()
 {
 	var project_options = $("#id_project option");
@@ -182,6 +195,12 @@ function on_load()
 		$("#id_identifier").removeAttr("disabled");
 		{% endif %}
 		$("#id_parent_sample").removeAttr("multiple");
+		if ($("#create_multiple_samples").is(":checked")) {
+			sample_count = $("#sample_count").val();
+			if (isNaN(sample_count) || sample_count < 2) {
+				$("#create_multiple_samples").prop("checked", false);
+			}
+		}
 	});
 }
 $(on_load);

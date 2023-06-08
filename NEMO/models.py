@@ -1355,6 +1355,10 @@ class Interlock(models.Model):
 		uri1 = 'http://' + str(self.card.server) + '/state.xml?relay1State=2'
 		uri2 = 'http://' + str(self.card.server) + '/state.xml?relay2State=2'
 
+		if self.card.type.name == "Web Switch Plus":
+			uri1 = 'http://' + str(self.card.server) + '/state.xml?relay1=2'
+			uri2 = 'http://' + str(self.card.server) + '/state.xml?relay2=2'
+
 		try:
 			req1 = requests.get(uri1, timeout=3.0)
 			req2 = requests.get(uri2, timeout=3.0)
@@ -1379,7 +1383,10 @@ class Interlock(models.Model):
 		try:
 			req = requests.get(uri, timeout=0.01)
 			data = xmltodict.parse(req.text)
-			s = 'relay' + str(self.card.number) + 'state'
+			if self.card.type.name == "Web Switch Plus":
+				s = 'relay' + str(self.card.number)
+			else:
+				s = 'relay' + str(self.card.number) + 'state'
 			req = data['datavalues'][s]
 
 		except requests.exceptions.RequestException as e:
