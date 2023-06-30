@@ -309,8 +309,9 @@ def check_policy_to_save_reservation(request, cancelled_reservation, new_reserva
 			business_start = time(8,0,0)
 			business_end = time(17,0,0)
 			intDay = new_reservation.start.weekday()
-			reservation_time = new_reservation.start.time()
-			if (intDay == 5 or intDay == 6 or reservation_time < business_start or reservation_time > business_end) and not user.is_staff:
+			reservation_start = new_reservation.start.time()
+			reservation_end = new_reservation.end.time()
+			if (intDay == 5 or intDay == 6 or reservation_start < business_start or reservation_start > business_end or reservation_end < business_start or reservation_end > business_end) and not user.is_staff:
 				policy_problems.append("You are a probationary user of the {}.  You may only reserve the tool for times during normal business hours of 8 am to 5 pm Monday - Friday.".format(new_reservation.tool.name))
 
 	# The reservation start time may not exceed the tool's reservation horizon.

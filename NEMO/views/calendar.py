@@ -382,14 +382,14 @@ def create_reservation(request):
 		# If the user only has one project then associate it with the reservation.
 		# Otherwise, present a dialog box for the user to choose which project to associate.
 		active_projects = user.active_projects()
-		if len(active_projects) == 1:
-			new_reservation.project = active_projects[0]
+		#if len(active_projects) == 1:
+		#	new_reservation.project = active_projects[0]
 			
-		else:
-			try:
-				new_reservation.project = Project.objects.get(id=request.POST['project_id'])
-			except:
-				return render(request, 'calendar/project_choice.html', {'active_projects': active_projects})
+		#else:
+		try:
+			new_reservation.project = Project.objects.get(id=request.POST['project_id'])
+		except:
+			return render(request, 'calendar/project_choice.html', {'active_projects': active_projects})
 	
 		# Make sure the user is actually enrolled on the project. We wouldn't want someone
 		# forging a request to reserve against a project they don't belong to.

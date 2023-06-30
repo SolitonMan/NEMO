@@ -17,7 +17,7 @@ from django.utils import timezone
 from django.utils.dateformat import DateFormat
 from django.views.decorators.http import require_GET, require_POST
 
-from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, Consumable, ConsumableWithdraw, ContestTransaction, ContestTransactionData, ContestTransactionNewData, LockBilling, Project, UsageEvent, UsageEventProject, StaffCharge, StaffChargeProject, Tool, User
+from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, AreaAccessRecordProjectSample, Consumable, ConsumableWithdraw, ContestTransaction, ContestTransactionData, ContestTransactionNewData, LockBilling, Project, UsageEvent, UsageEventProject, UsageEventProjectSample, StaffCharge, StaffChargeProject, StaffChargeProjectSample, Tool, User
 from NEMO.utilities import month_list, get_month_timeframe
 
 
@@ -893,10 +893,12 @@ def resolve_staff_charge_contest(request):
 			scp_type = ContentType.objects.get_for_model(scp)
 			if scp.id not in project_data:
 				project_data[scp.id] = {}
-			for fn in StaffChargeProject._meta.get_fields():
-				if fn.name not in project_data[scp.id]:
+				project_data[scp.id]["field_names"] = StaffChargeProject._meta.get_fields(True,True)
+			for fn in StaffChargeProject._meta.get_fields(True,True):
+				if fn.name not in project_data[scp.id] and not fn.is_relation:
 					project_data[scp.id][fn.name] = getattr(scp, fn.name)
-
+				elif fn.name not in project_data[scp.id] and fn.name in ("customer","project"):
+					project_data[scp.id][fn.name] = getattr(scp, fn.name)
 					if fn.name == "customer":
 						project_data[scp.id]["original_customer"] = getattr(scp, fn.name)
 						project_data[scp.id]["original_customer_id"] = int(getattr(scp, fn.name).id)
@@ -1004,8 +1006,10 @@ def resolve_usage_event_contest(request):
 			uep_type = ContentType.objects.get_for_model(uep)
 			if uep.id not in project_data:
 				project_data[uep.id] = {}
-			for fn in UsageEventProject._meta.get_fields():
-				if fn.name not in project_data[uep.id]:
+			for fn in UsageEventProject._meta.get_fields(True,True):
+				if fn.name not in project_data[uep.id] and not fn.is_relation:
+					project_data[uep.id][fn.name] = getattr(uep, fn.name)
+				elif fn.name not in project_data[uep.id] and fn.name in ("customer","project"):
 					project_data[uep.id][fn.name] = getattr(uep, fn.name)
 
 					if fn.name == "customer":
@@ -1125,8 +1129,10 @@ def resolve_area_access_record_contest(request):
 			aarp_type = ContentType.objects.get_for_model(aarp)
 			if aarp.id not in project_data:
 				project_data[aarp.id] = {}
-			for fn in AreaAccessRecordProject._meta.get_fields():
-				if fn.name not in project_data[aarp.id]:
+			for fn in AreaAccessRecordProject._meta.get_fields(True,True):
+				if fn.name not in project_data[aarp.id] and not fn.is_relation:
+					project_data[aarp.id][fn.name] = getattr(aarp, fn.name)
+				elif fn.name not in project_data[aarp.id] and fn.name in ("customer","project"):
 					project_data[aarp.id][fn.name] = getattr(aarp, fn.name)
 
 					if fn.name == "customer":

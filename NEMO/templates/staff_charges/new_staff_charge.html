@@ -465,11 +465,13 @@
                                 fetch_projects(row, search_selection.id, true);
                 }
 
+		{% if charging_staff_time %}
 		function save_staff_comment() {
 			ajax_get("{% url 'save_staff_comment' %}", { "staff_charge_id": {{ staff_charge.id }}, "staff_member_comment": $("#staff_member_comment").val() },undefined,undefined);
 		}
 
 		window.onunload = save_staff_comment;
+		{% endif %}
 
 		function fetch_projects(row, user_id, ad_hoc)
 		{

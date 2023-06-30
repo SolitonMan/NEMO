@@ -284,6 +284,7 @@
 <script type="text/javascript">
 var current_entry_number = 2;
 var selected_operator = "";
+var ss = [];
 
 function toggle_area()
 {
@@ -448,13 +449,75 @@ function fetch_samples(row, ad_hoc)
 		if (statusTxt == "success") {
 
 			// add select lists with samples for the project
-			var s1 = $("#chosen_sample__" + row);
-			s1.focus();
+			var s1 = "#chosen_sample__" + row;
+			if (ss.length > 0) {
+				s1_options = s1 + " option";
+				$(s1_options).each(function() {
+					if (ss.indexOf(parseInt($(this).val())) > -1) $(this).prop("selected","selected");
+				});
+				ss.length = 0;
+			}
 
 		} else {
 			ajax_complete_callback("Could not fetch samples for the project", "There was a problem obtaining the list of samples for the project.");
 		}
 	});
+}
+
+function add_sample(project_id, entry_number, ad_hoc=true)
+{
+	var sample_list;
+
+	sample_list = "#chosen_sample__" + entry_number + " option:selected";
+
+	$(sample_list).each(function() {
+		ss.push(parseInt($(this).val()));
+	});
+
+	var url = "/modal_create_sample/" + project_id + "/";
+	var ajax_post = {
+		"url": url,
+		"data": {
+			"modal_caller": "",
+			"request_mode": "reservation", 
+		},
+		"type": "GET",
+		"dataType": "html"
+	};
+
+	jQuery.ajax(ajax_post)
+		.fail(ajax_failure_callback("Oops, something went wrong!"))
+		.done(function(response, status, xml_http_request)
+		{
+			if(response === "") {
+				refresh_calendar_and_sidebar();
+			} else {
+				$("#sample_dialog .modal-content").html(response);
+				$("#sample_dialog").modal('show');
+				$("#sample_dialog .modal-content form").submit(function() {
+					event.preventDefault();
+					$("#sample_dialog .modal-content form").off("submit");
+					$.ajax({
+						type: "POST",
+						url: url,
+						data: serialize("#sample_dialog .modal-content form"),
+						success: function(response, status, xml_http_request) { 
+							ss.push(parseInt(response));
+							//alert(ss.join("\n"));
+							$("#sample_dialog").modal('hide');
+							$("#sample_dialog .modal-content").html("");
+							var sl = "#chosen_project__" + entry_number;
+							if ($(sl).tagName == "SELECT") {
+								$(sl).trigger("change");
+							} else {
+								fetch_samples(entry_number, ad_hoc);
+							}
+
+						}
+					});
+				});
+			}
+		});
 }
 
 function purge_ad_hoc_customer(row)

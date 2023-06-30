@@ -53,7 +53,7 @@ class DynamicForm:
 		for question in self.questions:
 			# Only record the answer when the question was answered. Discard questions that were left blank
 			if request.POST.get(question['name']):
-				results[question['consumable_id']] = request.POST[question['name']]
+				results[str(question['consumable_id']) + "__" + str(question['configuration_id'])] = request.POST[question['name']]
 		return dumps(results, indent='\t', sort_keys=True) if len(results) else ''
 
 	def charge_for_consumable(self, customer, merchant, project, run_data, usage_event=None, project_percent=None, cost_per_sample_run=False):
@@ -67,8 +67,9 @@ class DynamicForm:
 				if c_id > 0:
 					consumable = Consumable.objects.get(id=c_id)
 					quantity = 0
+					question_key = str(c_id) + "__" + str(question["configuration_id"])
 					if question['type'] == 'textbox':
-						quantity = quiet_int(run_data[question['consumable_id']])
+						quantity = quiet_int(run_data[question_key])
 					elif question['type'] == 'radio':
 						quantity = 1
 	

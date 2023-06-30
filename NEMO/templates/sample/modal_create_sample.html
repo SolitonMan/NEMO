@@ -20,6 +20,9 @@ function on_load()
 			if ($(this).prop("class") == "") {
 				$(this).prop("class","form-control");
 			}
+			{% if device == 'mobile' %}
+			$(this).css("width","200px");
+			{% endif %}
 		}
 	});
 
@@ -27,12 +30,18 @@ function on_load()
 		if ($(this).prop("class") == "") {
 			$(this).prop("class","form-control");
 		}
+		{% if device == 'mobile' %}
+		$(this).css("width","200px");
+		{% endif %}
 	});
 
 	$("textarea").each(function() {
 		if ($(this).prop("class") == "") {
 			$(this).prop("class","form-control");
 		}
+		{% if device == 'mobile' %}
+		$(this).css("width","200px");
+		{% endif %}
 	});
 
 	var parent_sample_search = "<input type=\"text\" value=\"\" class=\"form-control\" style=\"display:block; width:25%;\" name=\"parent_sample_search\" id=\"parent_sample_search\" placeholder=\"filter parent sample options\" />";
@@ -108,6 +117,16 @@ function on_load()
 
 		$("#id_parent_sample").removeAttr("multiple")
 	});
+
+	var project_id = $("#id_project").val();
+	var project_name = $("#id_project").find(":selected").text();
+
+	$("#id_project").prop("name","id_project")
+
+	var project_field = "<span>" + project_name + "<input type='hidden' name='project' value='" + project_id + "'/></span>";
+
+	$("#id_project").before(project_field);
+	$("#id_project").hide();
 }
 $(on_load);	
 </script>

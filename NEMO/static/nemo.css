@@ -323,4 +323,15 @@ nav {
 	top: 0;
 	width: 100%;
 }
+
+
+
+@media screen and (max-width: 1200px) {
+  .navbar-toggle {
+    display: block;
+  }
+  .navbar-collapse.collapse {
+    display: none!important;
+  }
+}
 */

@@ -472,9 +472,11 @@ class Tool(models.Model):
 						conf["required"] = "true"
 						conf["default_choice"] = "null"
 						conf["placeholder"] = "0"
-						conf["name"] = str(Consumable.objects.get(id=consumable_id).name)
+						#conf["name"] = str(Consumable.objects.get(id=consumable_id).name)
+						conf["name"] = "consumable__" + str(consumable_id) + "__" + str(c.id)
 						conf["consumable"] = str(Consumable.objects.get(id=consumable_id).name)
 						conf["consumable_id"] = str(consumable_id)
+						conf["configuration_id"] = str(c.id)
 					else:
 						conf["type"] = "textbox"
 						conf["title"] = "None option selected"
@@ -486,6 +488,7 @@ class Tool(models.Model):
 						conf["name"] = "None"
 						conf["consumable"] = "None"
 						conf["consumable_id"] = "0"
+						conf["configuration_id"] = str(c.id)
 						
 					post_usage_questions.append(conf)
 		self.post_usage_questions = json.dumps(post_usage_questions)

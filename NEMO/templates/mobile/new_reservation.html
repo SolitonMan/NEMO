@@ -12,30 +12,26 @@
 		{% csrf_token %}
 		<input type="hidden" name="tool_id" value="{{ tool.id }}">
 		{% if not user.is_staff %}
-			{% if user.active_project_count == 1 %}
-				<input type="hidden" name="project_id" value="{{ user.active_projects.0.id }}">
-			{% elif user.active_project_count > 1 %}
-				<h4>Which project is this for?</h4>
-				<input type="hidden" id="project_id" name="project_id">
-				<input type='hidden' name='selected_sample' id='selected_sample' value='' />
-				<select class="form-control" onchange="return set_project(this.options[this.selectedIndex].value);">
-					<option value="">Please select a project</option>
-				{% for project in user.active_projects %}
-					<option value="{{ project.id }}">{{ project }}</option>
-				{% endfor %}
-				</select>
-				<br/>
-				<div id="sample">
-				</div>
-				</br/>
-			{% endif %}
+			<h4>Which project is this for?</h4>
+			<input type="hidden" id="project_id" name="project_id">
+			<input type='hidden' name='selected_sample' id='selected_sample' value='' />
+			<select class="form-control" name="project_select" id="project_select" onchange="return set_project();">
+				<option value="">Please select a project</option>
+			{% for project in user.active_projects %}
+				<option value="{{ project.id }}">{{ project }}</option>
+			{% endfor %}
+			</select>
+			<br/>
+			<div id="sample">
+			</div>
+			</br/>
 		{% else %}
 			<div class="radio"><label><input type="radio" onchange="show_self_ui()" name="staff_charge" id="staff_charge" value="self">Reserve this tool for my own project</label></div>
 			<div id="self_ui" style="display: none;">
 			<p>Associate your reservation with a project.</p>
 			<input type="hidden" id="project_id" name="project_id">
 			<input type='hidden' name='selected_sample' id='selected_sample' value='' />
-			<select class="form-control" onchange="return set_project(this.options[this.selectedIndex].value);">
+			<select class="form-control" name="project_select" id="project_select" onchange="return set_project();">
 				<option value="">Please select a project</option>
 			{% for project in user.active_projects %}
 				<option value="{{ project.id }}">{{ project }}</option>
@@ -86,8 +82,10 @@
 	</form>
 	<div style="height:350px"></div>
 	<script type="text/javascript">
-	function set_project(id)
+	function set_project()
 	{
+		var id = $("#project_select").val();
+
 		if (id == "") return false;
 		$('#project_id').val(id);
 
@@ -108,6 +106,13 @@
 				$("#sample_id").change(function() {
 					$("#selected_sample").val($("#sample_id").val());
 				});
+
+				if (ss.length > 0) {
+					$("#sample_id option").each(function() {
+						if (ss.indexOf(parseInt($(this).val())) > -1) $(this).prop("selected","selected");
+					});
+					ss.length = 0;
+				}
 			} else {
 				ajax_complete_callback("Could not fetch samples for the project", "There was a problem obtaining the list of samples for the project.");
 			}
@@ -117,6 +122,7 @@
 	}
 
 	var current_entry_number = 2;
+	var ss = [];
 
 	function show_self_ui()
 	{
@@ -170,7 +176,8 @@
 		{
 			"source_template": "staff_charges",
 			"user_id": user_id,
-			"entry_number": row
+			"entry_number": row,
+			"ad_hoc": false,
 		};
 		var target_element = "#project__" + row;
 		var url = "{% url 'get_projects' %}?" + jQuery.param(parameters);
@@ -195,10 +202,22 @@
 	function fetch_samples(row, ad_hoc) 
 	{
 		// A function to retrieve a list of samples for a project and load it into the interface
-		var target_element = "#sample__" + row;
+		var target_element;
+
+		if (row == 0) {
+			target_element = "#sample";
+		} else {
+			target_element = "#sample__" + row;
+		}
 		$(target_element).html("");
 	
-		var project_id = $("#chosen_project__" + row).val();
+		var project_id;
+
+		if (row == 0) {
+			project_id = $("#project_select").val();
+		} else {
+			project_id = $("#chosen_project__" + row).val();
+		}
 
 		var parameters =
 		{
@@ -213,13 +232,88 @@
 			if (statusTxt == "success") {
 
 				// add select lists with samples for the project
-				var s1 = $("#chosen_sample__" + row);
-				s1.focus();
-
+				var s1;
+				if (row == 0) {
+					s1 = "#sample_id";
+				} else {
+				 	s1 = "#chosen_sample__" + row;
+				}
+				if (ss.length > 0) {
+					s1_options = s1 + " option";
+					$(s1_options).each(function() {
+						if (ss.indexOf(parseInt($(this).val())) > -1) $(this).prop("selected","selected");
+					});
+					ss.length = 0;
+				}
 			} else {
 				ajax_complete_callback("Could not fetch samples for the project", "There was a problem obtaining the list of samples for the project.");
 			}
 		});
+	}
+
+	function add_sample(project_id, entry_number, ad_hoc=false)
+	{
+		var sample_list;
+
+		if (entry_number == 0) {
+			sample_list = "#sample_id option:selected";
+		} else {
+			sample_list = "#chosen_sample__" + entry_number + " option:selected";
+		}
+
+		$(sample_list).each(function() {
+			ss.push(parseInt($(this).val()));
+		});
+
+		var url = "/modal_create_sample/" + project_id + "/";
+		var ajax_post = {
+			"url": url,
+			"data": {
+				"modal_caller": "",
+				"request_mode": "reservation", 
+			},
+			"type": "GET",
+			"dataType": "html"
+		};
+
+		jQuery.ajax(ajax_post)
+			.fail(ajax_failure_callback("Oops, something went wrong!"))
+			.done(function(response, status, xml_http_request)
+			{
+				if(response === "") {
+					refresh_calendar_and_sidebar();
+				} else {
+					$("#sample_dialog .modal-content").css("min-width","400px").html(response);
+					$("#sample_dialog").modal('show');
+					$("#sample_dialog .modal-content form").submit(function() {
+						event.preventDefault();
+						$("#sample_dialog .modal-content form").off("submit");
+						$.ajax({
+							type: "POST",
+							url: url,
+							data: serialize("#sample_dialog .modal-content form"),
+							success: function(response, status, xml_http_request) { 
+								ss.push(parseInt(response));
+								//alert(ss.join("\n"));
+								$("#sample_dialog").modal('hide');
+								$("#sample_dialog .modal-content").html("");
+								var sl;
+								if (entry_number == 0) {
+									sl = "#project_select";
+								} else {
+									sl = "#chosen_project__" + entry_number;
+								}
+								if ($(sl).tagName == "SELECT") {
+									$(sl).trigger("change");
+								} else {
+									fetch_samples(entry_number, ad_hoc);
+								}
+
+							}
+						});
+					});
+				}
+			});
 	}
 
 	function purge_customer(row)

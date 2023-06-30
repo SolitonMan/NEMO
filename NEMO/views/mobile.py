@@ -198,7 +198,7 @@ def make_reservation(request):
 		samples = request.POST['selected_sample']
 		sample_list = samples.split(",")
 
-		if sample_list != []:
+		if sample_list != [] and sample_list != ['']:
 			rp = ReservationProject.objects.filter(reservation=reservation)
 			for r in rp:
 				for s in sample_list:

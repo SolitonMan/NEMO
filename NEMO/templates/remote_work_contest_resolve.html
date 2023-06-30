@@ -4,6 +4,18 @@
 {% block title %}{% if usage_event %}Usage Event{% endif %}{% if staff_charge %}Staff Charge{% endif %}{% if consumable_withdraw %}Consumable Withdraw{% endif %}{% if area_access_record %}Area Access Record{% endif %} Contest Resolution{% endblock %}
 
 {% block content %}
+
+{% if project_data %}
+<span style="display:none;">{{ project_data }}</span>
+{% endif %}
+{% if staff_charge_projects %}
+<span style="display:none;">{{ staff_charge_projects }}</span>
+{% endif %}
+{% if field_names %}
+<span style="display:none;">{{ field_names }}</span>
+{% endif %}
+
+
 	{% if usage_event %}
 	<h1>Usage Event Contest Resolution</h1>
 
