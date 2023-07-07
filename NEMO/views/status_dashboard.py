@@ -82,6 +82,7 @@ def merge(request, tools, tasks, unavailable_resources, usage_events, scheduled_
 			'scheduled_outage': False,
 			'include_force_logout': False,
 			'allow_force_logoff': True,
+			'watched': request.user in tool.tool_watchers.all(),
 		}
 	for task in tasks:
 		result[task.tool.id]['problematic'] = True

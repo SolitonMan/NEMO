@@ -1551,3 +1551,22 @@ def save_usage_event(request):
 
 	return render(request, 'tool_control/ad_hoc_usage_event_confirmation.html', params)
 
+
+@login_required
+def toggle_tool_watching(request):
+	try:
+		tool_id = request.POST.get('tool_id', None)
+		user_id = request.POST.get('user_id', None)
+
+		tool = Tool.objects.get(id=int(tool_id))
+		user = User.objects.get(id=int(user_id))
+
+		if tool in user.watching.all():
+			user.watching.remove(tool)
+		else:
+			user.watching.add(tool)
+
+	except Exception as inst:
+		return HttpResponseBadRequest(inst)
+
+	return HttpResponse() 

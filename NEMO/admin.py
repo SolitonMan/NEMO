@@ -711,9 +711,9 @@ if admin.site.is_registered(User):
 
 @register(User)
 class UserAdmin(admin.ModelAdmin):
-	filter_horizontal = ('groups', 'user_permissions', 'projects', 'physical_access_levels', 'pi_delegates')
+	filter_horizontal = ('groups', 'user_permissions', 'projects', 'physical_access_levels', 'pi_delegates', 'watching')
 	fieldsets = (
-		('Personal information', {'fields': ('first_name', 'last_name', 'username', 'email', 'badge_number', 'type', 'domain', 'credit_cost_collector', 'core_ids', 'contact', 'projects', 'user_comment')}),
+		('Personal information', {'fields': ('first_name', 'last_name', 'username', 'email', 'badge_number', 'type', 'domain', 'credit_cost_collector', 'core_ids', 'contact', 'projects', 'watching', 'user_comment')}),
 		('Permissions', {'fields': ('is_active', 'is_staff', 'is_technician', 'is_superuser', 'training_required', 'groups', 'user_permissions', 'physical_access_levels', 'pi_delegates')}),
 		('Important dates', {'fields': ('date_joined', 'last_login', 'access_expiration')}),
 	)
@@ -737,6 +737,8 @@ class UserAdmin(admin.ModelAdmin):
 		return super(UserAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 	def formfield_for_manytomany(self, db_field, request, **kwargs):
+		if db_field.name == 'watching':
+			kwargs["queryset"] = Tool.objects.all().order_by('name')
 		if db_field.name == 'projects':
 			kwargs["queryset"] = Project.objects.filter(active=True,end_date__gte=timezone.now().date()).order_by('project_number')
 		return super(UserAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)

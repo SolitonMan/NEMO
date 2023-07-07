@@ -501,3 +501,17 @@ function sort_options(sel)
 		$(o).text(arr[i].t);
 	});
 }
+
+function toggle_tool_watching(tool_id, user_id)
+{
+	if (isNaN(tool_id) || isNaN(user_id)) return false;
+
+	var params = {
+		"tool_id": tool_id,
+		"user_id": user_id
+	}
+
+	var url = "/toggle_tool_watching/";
+
+	ajax_post(url, params, [refresh_sidebar_icons], undefined);
+}

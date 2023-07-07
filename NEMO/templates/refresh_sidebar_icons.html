@@ -1,5 +1,15 @@
 $('#sidebar .sidebar-status-icon').remove();
+$('#temp_holding_element').html("{{ tool_summary }}");
 {% for tool in tool_summary %}
+	if ($('a[data-tool-id={{ tool.id }}]').prev().prop("tagName") == "SPAN") {
+		$('a[data-tool-id={{ tool.id }}]').prev().remove();
+	}
+	{% if tool.watched %}
+		$('a[data-tool-id={{ tool.id }}]').before('<span style="display: inline; color: #075098;" class="glyphicon glyphicon-eye-open" title="You are watching the {{ tool.name }}" onclick="toggle_tool_watching({{tool.id}},{{user.id}});"></span>');
+	{% else %}
+		$('a[data-tool-id={{ tool.id }}]').before('<span style="display: inline; color: #cac9c8;" class="glyphicon glyphicon-eye-close" title="You are not watching the {{ tool.name }}" onclick="toggle_tool_watching({{tool.id}},{{user.id}});"></span>');
+	{% endif %}
+	
 	{% if tool.in_use %}
 		$('a[data-tool-id={{ tool.id }}]').append('<span class="glyphicon glyphicon-user primary-highlight sidebar-status-icon" title="{{ tool.user }} is using this tool"></span>');
 	{% endif %}

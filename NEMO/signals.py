@@ -1,8 +1,8 @@
-from django.db.models.signals import post_save, pre_save
+from django.db.models.signals import post_save, pre_save, pre_delete, post_delete
 from django.dispatch import receiver
-from django.utils import timezone
+from django.utils import timezone, dateformat
 
-from NEMO.models import Reservation, User, UsageEvent, NotificationSchemeToolAction
+from NEMO.models import Reservation, User, UsageEvent, NotificationSchemeToolAction, Tool, ScheduledOutage
 from NEMO.utilities import send_mail
 from NEMO.views.customization import get_media_file_contents
 
@@ -124,5 +124,35 @@ def tool_status_update(sender, instance, **kwargs):
 
 
 @receiver(post_save, sender=Reservation)
-def reservation_status_update(sender, instance, created, **kwargs):
+def reservation_status_update(sender, instance, **kwargs):
+	
+	tool = instance.tool
+	user = instance.user
+
+	if instance.cancelled and instance.descendant is None:
+		# reservation was specifically cancelled, not just modified
+		watchers = tool.tool_watchers.all()
+		msg = "A reservation for the " + str(tool) + " tool from " + str(dateformat.format(instance.start, "m-d-Y g:i:s A")) + " to " + str(dateformat.format(instance.end, "m-d-Y g:i:s A")) + " has been cancelled.  Please visit the LEO calendar if you would like to reserve this tool."
+		msg_from = "LEOHelp@psu.edu"
+		msg_to = list(watchers.values_list("email", flat=True))
+		subject = "Reservation cancelled on the " + str(tool)
+
+		if msg_to != []:
+			send_mail(subject, msg, msg_from, msg_to)
+
+	return
+
+@receiver(pre_delete, sender=ScheduledOutage)
+def scheduledoutage_status_update(sender, instance, **kwargs):
+
+	tool = instance.tool
+	watchers = tool.tool_watchers.all()
+	msg = "A scheduled outage for the " + str(tool) + " tool from " + str(dateformat.format(instance.start, "m-d-Y g:i:s A")) + " to " + str(dateformat.format(instance.end, "m-d-Y g:i:s A")) + " has been cancelled.  Please visit the LEO calendar if you would like to reserve this tool."
+	msg_from = "LEOHelp@psu.edu"
+	msg_to = list(watchers.values_list("email", flat=True))
+	subject = "Scheduled outage cancelled on the " + str(tool)
+
+	if msg_to != []:
+		send_mail(subject, msg, msg_from, msg_to)
+
 	return

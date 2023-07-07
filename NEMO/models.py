@@ -104,6 +104,7 @@ class User(models.Model):
 	last_login = models.DateTimeField(null=True, blank=True)
 
 	# Laboratory information:
+	watching = models.ManyToManyField('Tool', blank=True, help_text='Tools watched for notifications', related_name="tool_watchers")
 	probationary_qualifications = models.ManyToManyField('Tool', blank=True, help_text='A detailed table for user qualifications', through='ProbationaryQualifications', related_name='probationary_qualifications')
 	qualifications = models.ManyToManyField('Tool', blank=True, help_text='Select the tools that the user is qualified to use.')
 	projects = models.ManyToManyField('Project', blank=True, help_text='Select the projects that this user is currently working on.')
@@ -501,7 +502,6 @@ class ToolUseNotificationLog(models.Model):
 	usage_event = models.ForeignKey('UsageEvent', on_delete=models.SET_NULL, null=True, help_text="The usage event which is running long")
 	message = models.TextField(blank=True, null=True, help_text="The HTML message sent to the user")
 	sent = models.DateTimeField(null=True, blank=True)
-
 
 class Configuration(models.Model):
 	tool = models.ForeignKey(Tool, on_delete=models.SET_NULL, null=True, help_text="The tool that this configuration option applies to.")

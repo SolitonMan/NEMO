@@ -89,7 +89,7 @@ class ToolTreeHelper:
 		"""
 		result += '<li>'
 		if node.__is_leaf():
-			result += f'<a href="javascript:void(0);" onclick="set_selected_item(this)" data-tool-id="{node.id}" data-type="tool link">{node.name}</a>'
+			result += f'<a href="javascript:void(0);" style="display: inline;" onclick="set_selected_item(this)" data-tool-id="{node.id}" data-type="tool link">{node.name}</a>'
 		if not node.__is_leaf():
 			result += f'<label class="tree-toggler nav-header"><div>{node.name}</div></label><ul class="nav nav-list tree" data-category="{node.name}">'
 			for child in node.children:
