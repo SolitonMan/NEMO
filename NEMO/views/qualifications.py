@@ -171,6 +171,7 @@ def promote_user(request, user_id, tool_id):
 	tool = Tool.objects.get(id=tool_id)
 	pq = ProbationaryQualifications.objects.get(tool=tool,user=user)
 	pq.probationary_user = False
+	pq.qualification_date = timezone.now()
 	pq.save()
 	return HttpResponse()
 

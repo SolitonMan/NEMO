@@ -240,12 +240,20 @@ class User(models.Model):
 	def current_reservation_for_tool(self, tool):
 		current_reservation = None
 		try:
-			if Reservation.objects.filter(start__lte=timezone.now()+timedelta(0,0,0,0,15,0,0), end__gt=timezone.now(), cancelled=False, missed=False, user=self, tool=tool).exists():
-				current_reservation = Reservation.objects.filter(start__lte=timezone.now()+timedelta(0,0,0,0,15,0,0), end__gt=timezone.now(), cancelled=False, missed=False, user=self, tool=tool).order_by('-updated')[0]
-				#current_reservation = Reservation.objects.get(start__lte=timezone.now(), end__gt=timezone.now(), cancelled=False, missed=False, user=self, tool=tool)
+			if Reservation.objects.filter(start__lte=timezone.now()+timedelta(0,0,0,0,15,0,0), end__gt=timezone.now(), cancelled=False, missed=False, shortened=False, user=self, tool=tool).exists():
+				current_reservation = Reservation.objects.filter(start__lte=timezone.now()+timedelta(0,0,0,0,15,0,0), end__gt=timezone.now(), cancelled=False, missed=False, shortened=False, user=self, tool=tool).order_by('start')[0]
+				#current_reservation = Reservation.objects.get(start__lte=timezone.now()+timedelta(0,0,0,0,15,0,0), end__gt=timezone.now(), cancelled=False, missed=False, user=self, tool=tool)
 		except Reservation.DoesNotExist:
 			pass
 		return current_reservation
+
+	def current_tool_use(self, tool):
+		current_tool_use = None
+		try:
+			current_tool_use = UsageEvent.objects.filter(end=None, operator=self, tool=tool)
+		except UsageEvent.DoesNotExist:
+			pass
+		return current_tool_use
 
 	def set_password(self, raw_password):
 		return False;

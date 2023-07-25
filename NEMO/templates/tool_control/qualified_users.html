@@ -11,7 +11,7 @@
 		<p id="btn_target">Only qualified users are able to operate the {{ tool.name }}.</p>
 		{% if tool.grant_physical_access_level_upon_qualification %}<p class="danger-highlight">Qualifying a user for this tool automatically grants them the physical access level &quot;{{ tool.grant_physical_access_level_upon_qualification }}&quot;.</p>{% endif %}
 
-		{% if user.is_staff or tool.primary_owner == user %}
+		{% if user.is_staff %}
 		<form id="add_qualified_user_form" class="form-inline" style="margin-bottom:10px">
 			<div class="container">
 				<div class="row" style="width: 570px;">
@@ -35,7 +35,7 @@
 		{% endif %}
 		{% with tool.user_set.all as qualified_users %}
 			{% if qualified_users %}
-				{% if user.is_staff or tool.primary_owner == user %}
+				{% if user.is_staff %}
 				<p> 
 				<form action="{% url 'compose_email' %}" method="POST" style="display: inline;">
 					{% csrf_token %}
@@ -50,7 +50,7 @@
 					{% for u in qualified_users %}
 						{% if u.is_active %}
 							<span>
-							{% if user.is_staff or tool.primary_owner == user %}
+							{% if user.is_staff %}
 							<a href="javascript:remove_qualified_user('{{ u.id }}', '{{ tool.id }}')" class="grey hover-black" title="Disqualify {{ u.first_name }}"><span class="glyphicon glyphicon-remove-circle"></span></a> 
 							{% if probationary_qualifications is not None %}
 							{% if probationary_qualifications|get_item:u.id %}
@@ -65,7 +65,7 @@
 							</span>
 						{% else %}
 							<span class="light-grey">
-							{% if user.is_staff or tool.primary_owner == user %}
+							{% if user.is_staff %}
 							<a href="javascript:remove_qualified_user('{{ u.id }}', '{{ tool.id }}')" class="light-grey hover-black" title="Disqualify {{ u.first_name }}"><span class="glyphicon glyphicon-remove-circle"></span></a>
 							{% if probationary_qualifications is not None %}
 							{% if probationary_qualifications|get_item:u.id %}
@@ -87,7 +87,7 @@
 		{% endwith %}
 	</div>
 </div>
-{% if user.is_staff or tool.primary_owner == user %}
+{% if user.is_staff %}
 <script>
 	$('#add_qualified_user_search_box').autocomplete('users', add_qualified_user, {{ users|json_search_base }}).focus();
 	$('#add_probationary_user_search_box').autocomplete('users', add_probationary_user, {{ users|json_search_base }}).focus();

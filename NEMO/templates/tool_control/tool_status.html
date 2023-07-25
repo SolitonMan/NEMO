@@ -1,4 +1,10 @@
 {% load custom_tags_and_filters %}
+
+<div id="django-debug" style="display: none;">
+my_reservation = {{ my_reservation }}
+my_reservation_projects = {{ my_reservation_projects }}
+</div>
+
 <div>
 	{% if device == 'mobile' %}
 		<h1>{{ tool.name }}</h1>

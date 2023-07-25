@@ -231,7 +231,10 @@ def tool_status(request, tool_id):
 	try:
 		
 		current_reservation = request.user.current_reservation_for_tool(tool)
-		if current_reservation is not None:
+		current_usage_event = tool.get_current_usage_event()
+
+		if current_reservation is not None: 
+#and current_usage_event.start >= current_reservation.start-timedelta(0,0,0,0,15,0,0) and current_usage_event.start <= current_reservation.start+timedelta(0,0,0,0,15,0,0)) or (current_reservation is not None and current_usage_event is None):
 			dictionary['time_left'] = current_reservation.end
 			dictionary['my_reservation'] = current_reservation
 			if ReservationProject.objects.filter(reservation=current_reservation).exists():
@@ -816,7 +819,8 @@ def disable_tool(request, tool_id):
 		return HttpResponseBadRequest('Tool control is only available on campus.')
 
 	tool = get_object_or_404(Tool, id=tool_id)
-	if tool.get_current_usage_event() is None:
+	usage_event = tool.get_current_usage_event()
+	if usage_event is None:
 		return HttpResponse()
 	downtime = timedelta(minutes=quiet_int(request.POST.get('downtime')))
 	response = check_policy_to_disable_tool(tool, request.user, downtime, request)
@@ -826,20 +830,30 @@ def disable_tool(request, tool_id):
 		#current_reservation = Reservation.objects.get(start__lt=timezone.now(), end__gt=timezone.now(), cancelled=False, missed=False, shortened=False, user=request.user, tool=tool)
 		current_reservation = request.user.current_reservation_for_tool(tool)
 
+		if request.user.is_staff:
+			res_start_max = current_reservation.end
+		else:
+			res_start_max = current_reservation.start + timedelta(0,0,0,0,15,0,0)
+
+		if usage_event.start >= (current_reservation.start - timedelta(0,0,0,0,15,0,0)) and usage_event.start <= res_start_max:
+			current_reservation = current_reservation
+		else:
+			current_reservation = None
+
 		# Staff are exempt from mandatory reservation shortening when tool usage is complete.
-		# if request.user.is_staff is False:
+		if current_reservation is not None:
 			# Shorten the user's reservation to the current time because they're done using the tool.
-		new_reservation = deepcopy(current_reservation)
-		new_reservation.id = None
-		new_reservation.pk = None
-		new_reservation.end = timezone.now() + downtime
-		new_reservation.updated = timezone.now()
-		new_reservation.created = timezone.now()
-		new_reservation.save()
-		current_reservation.shortened = True
-		current_reservation.updated = timezone.now()
-		current_reservation.descendant = new_reservation
-		current_reservation.save()
+			new_reservation = deepcopy(current_reservation)
+			new_reservation.id = None
+			new_reservation.pk = None
+			new_reservation.end = timezone.now() + downtime
+			new_reservation.updated = timezone.now()
+			new_reservation.created = timezone.now()
+			new_reservation.save()
+			current_reservation.shortened = True
+			current_reservation.updated = timezone.now()
+			current_reservation.descendant = new_reservation
+			current_reservation.save()
 	except:
 		pass
 

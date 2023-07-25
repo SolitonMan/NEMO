@@ -138,7 +138,8 @@ def reservation_status_update(sender, instance, **kwargs):
 		subject = "Reservation cancelled on the " + str(tool)
 
 		if msg_to != []:
-			send_mail(subject, msg, msg_from, msg_to)
+			for m in msg_to:
+				send_mail(subject, msg, msg_from, [m])
 
 	return
 
@@ -153,6 +154,7 @@ def scheduledoutage_status_update(sender, instance, **kwargs):
 	subject = "Scheduled outage cancelled on the " + str(tool)
 
 	if msg_to != []:
-		send_mail(subject, msg, msg_from, msg_to)
+		for m in msg_to:
+			send_mail(subject, msg, msg_from, [m])
 
 	return

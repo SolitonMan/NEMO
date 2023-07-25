@@ -10,26 +10,38 @@ from django.utils import timezone
 from django.utils.html import strip_tags
 
 from NEMO.models import Interlock, Tool, UsageEvent, StaffCharge, AreaAccessRecord, ConsumableWithdraw, GlobalFlag, ProbationaryQualifications, ToolUseNotificationLog
+from NEMO.utilities import send_mail
+
 
 #end_run = None
 def update_probationary_users():
 	date_now = timezone.now()
-	#d1 = datetime.strptime(date_now,"%Y-%m-%d")
 	probationary_qualifications = ProbationaryQualifications.objects.all()
 
 	for pq in probationary_qualifications:
-		if pq.tool_last_used is not None:
-			#d2 = datetime.strptime(pq.tool_last_used,"%Y-%m-%d")
-			d2 = pq.tool_last_used
-			if abs((date_now-d2).days) > 182:
+		if not pq.user.is_staff:
+			bSendMail = False
+			d2 = None
+			if pq.qualification_date is not None and pq.tool_last_used is not None:
+				if pq.qualification_date > pq.tool_last_used:
+					d2 = pq.qualification_date
+				else:
+					d2 = pq.tool_last_used
+			elif pq.qualification_date is not None:
+				d2 = pq.qualification_date
+
+			if d2 is not None:
+				if abs((date_now-d2).days) > 182:
+					pq.probationary_user = True
+					pq.save()
+				elif abs((date_now-d2).days) == 152:
+					bSendMail = True
+			else:
 				pq.probationary_user = True
 				pq.save()
-		elif pq.qualification_date is not None:
-			#d2 = datetime.strptime(pq.qualification_date,"%Y-%m-%d")
-			d2 = pq.qualification_date
-			if abs((date_now-d2).days) > 182:
-				pq.probationary_user = True
-				pq.save()
+
+			if bSendMail and pq.probationary_user == False:
+				send_mail("Full qualification on the " + str(pq.tool) + " will expire soon", "Your full qualification status on the " + str(pq.tool) + " will expire in 30 days if you have not used the instrument before that time.  If the full qualification lapses you'll still be able to use the tool without assistance, but only during staff-attended business hours.  Accessing the tool outside of business hours will require staff assistance.  If needed and appropriate, full access can be reset by a staff member.  If you have any questions about this please email LEOHelp@psu.edu.  LEO busines hours are Monday-Friday, 8 am - 5 pm.", "LEOHelp@psu.edu", [pq.user.email])
 			
 
 def pulse_interlocks():
