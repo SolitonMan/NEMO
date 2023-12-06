@@ -147,6 +147,8 @@ def reservation_status_update(sender, instance, **kwargs):
 def scheduledoutage_status_update(sender, instance, **kwargs):
 
 	tool = instance.tool
+	if tool is None:
+		return
 	watchers = tool.tool_watchers.all()
 	msg = "A scheduled outage for the " + str(tool) + " tool from " + str(dateformat.format(instance.start, "m-d-Y g:i:s A")) + " to " + str(dateformat.format(instance.end, "m-d-Y g:i:s A")) + " has been cancelled.  Please visit the LEO calendar if you would like to reserve this tool."
 	msg_from = "LEOHelp@psu.edu"

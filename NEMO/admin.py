@@ -9,7 +9,7 @@ from microsoft_auth.models import MicrosoftAccount
 from microsoft_auth.admin import MicrosoftAccountAdmin
 
 from NEMO.actions import lock_selected_interlocks, synchronize_with_tool_usage, unlock_selected_interlocks
-from NEMO.models import Account, ActivityHistory, Alert, Area, AreaAccessRecord, AreaAccessRecordProject, BillingType, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableUnit, ConsumableCategory, ConsumableType, ConsumableWithdraw, ContactInformation, ContactInformationCategory, ContestTransaction, ContestTransactionData, ContestTransactionNewData, Core, CreditCostCollector, Customization, Door, EmailLog, GlobalFlag, Interlock, InterlockCard, LandingPageChoice, LockBilling, MembershipHistory, News, Notification, NsfCategory, Organization, OrganizationType, PhysicalAccessLevel, PhysicalAccessLog, Project, Reservation, ReservationConfiguration, ReservationProject, Resource, ResourceCategory, SafetyIssue, Sample, ScheduledOutage, ScheduledOutageCategory, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskHistory, TaskStatus, Tool, TrainingSession, UsageEvent, UsageEventProject, User, UserType, UserProfile, UserProfileSetting
+from NEMO.models import Account, ActivityHistory, Alert, Area, AreaAccessRecord, AreaAccessRecordProject, BillingType, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableUnit, ConsumableCategory, ConsumableType, ConsumableWithdraw, ContactInformation, ContactInformationCategory, ContestTransaction, ContestTransactionData, ContestTransactionNewData, Core, CreditCostCollector, Customization, Door, EmailLog, GlobalFlag, Interlock, InterlockCard, LandingPageChoice, LockBilling, MembershipHistory, News, Notification, NsfCategory, Organization, OrganizationType, PhysicalAccessLevel, PhysicalAccessLog, Project, Project2DCC, Reservation, ReservationConfiguration, ReservationProject, Resource, ResourceCategory, SafetyIssue, Sample, ScheduledOutage, ScheduledOutageCategory, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskHistory, TaskStatus, Tool, TrainingSession, UsageEvent, UsageEventProject, User, UserType, UserProfile, UserProfileSetting
 from NEMO.utilities import send_mail
 from NEMO.views.customization import get_customization, get_media_file_contents
 
@@ -711,9 +711,9 @@ if admin.site.is_registered(User):
 
 @register(User)
 class UserAdmin(admin.ModelAdmin):
-	filter_horizontal = ('groups', 'user_permissions', 'projects', 'physical_access_levels', 'pi_delegates', 'watching')
+	filter_horizontal = ('groups', 'user_permissions', 'projects', 'projects2dcc', 'physical_access_levels', 'pi_delegates', 'watching')
 	fieldsets = (
-		('Personal information', {'fields': ('first_name', 'last_name', 'username', 'email', 'badge_number', 'type', 'domain', 'credit_cost_collector', 'core_ids', 'contact', 'projects', 'watching', 'user_comment')}),
+		('Personal information', {'fields': ('first_name', 'last_name', 'username', 'email', 'badge_number', 'type', 'domain', 'credit_cost_collector', 'core_ids', 'contact', 'projects', 'projects2dcc', 'watching', 'user_comment')}),
 		('Permissions', {'fields': ('is_active', 'is_staff', 'is_technician', 'is_superuser', 'training_required', 'groups', 'user_permissions', 'physical_access_levels', 'pi_delegates')}),
 		('Important dates', {'fields': ('date_joined', 'last_login', 'access_expiration')}),
 	)
@@ -726,6 +726,7 @@ class UserAdmin(admin.ModelAdmin):
 		super().save_model(request, obj, form, change)
 
 		record_local_many_to_many_changes(request, obj, form, 'projects')
+		record_local_many_to_many_changes(request, obj, form, 'projects2dcc')
 		#record_local_many_to_many_changes(request, obj, form, 'qualifications')
 		record_local_many_to_many_changes(request, obj, form, 'physical_access_levels')
 		record_local_many_to_many_changes(request, obj, form, 'core_ids')
@@ -741,6 +742,8 @@ class UserAdmin(admin.ModelAdmin):
 			kwargs["queryset"] = Tool.objects.all().order_by('name')
 		if db_field.name == 'projects':
 			kwargs["queryset"] = Project.objects.filter(active=True,end_date__gte=timezone.now().date()).order_by('project_number')
+		if db_field.name == 'projects2dcc':
+			kwargs["queryset"] = Project2DCC.objects.all().order_by('project_id')
 		return super(UserAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
 
 	def has_delete_permission(self, request, obj=None):

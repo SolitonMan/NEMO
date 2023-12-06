@@ -8,8 +8,9 @@ from re import match, search
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.mail import send_mail, EmailMessage
-from django.db.models import Q, CharField, Value
+from django.db.models import F, Q, CharField, Value
 from django.db.models.functions import Concat
 from django.http import HttpResponseBadRequest, HttpResponse, HttpResponseNotFound, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404, redirect
@@ -398,9 +399,20 @@ def create_reservation(request):
 
 	else:
 
+		user_2dcc = False
+
+		if "2DCC" in request.user.core_ids.values_list('name', flat=True):
+			user_2dcc = True
+
 		# Present the staff member with a form to choose if the reservation is for themselves for or one or more customers.
 		if request.POST.get('staff_charge') is None:
-			return render(request, 'calendar/project_choice_staff.html', { 'active_projects': user.active_projects(), 'users': User.objects.filter(is_active=True, projects__active=True).exclude(id=request.user.id).distinct().order_by('last_name')})
+			#users = User.objects.filter(is_active=True, projects__active=True).exclude(id=request.user.id).annotate(project_number=ArrayAgg('projects2dcc__project_id', distinct=True)).distinct().order_by('last_name')
+			users = User.objects.filter(is_active=True, projects__active=True).exclude(id=request.user.id).annotate(project_number=F('projects2dcc__project_id')).distinct().order_by('last_name')
+
+			if user_2dcc and request.user.core_ids.all().count() == 1:
+				users = users.filter(is_staff=False, projects2dcc__in=request.user.projects2dcc.all())
+			
+			return render(request, 'calendar/project_choice_staff.html', { 'active_projects': user.active_projects(), 'users': users, 'user_2dcc': user_2dcc})
 		else:
 			# process submission to determine the reservation details
 			mode = request.POST['staff_charge']

@@ -661,7 +661,11 @@
 			function enable_autocompletion(entry_number)
 			{
 				var id = "#user_textbox__" + entry_number;
-				$(id).autocomplete('user', on_autocomplete_selection, {{ users|json_search_base }}).focus();
+				{% if user_2dcc %}
+				$(id).autocomplete('user', on_autocomplete_selection, {% json_search_base_with_extra_fields users 'username' 'project_number' %}).focus();
+				{% else %}
+				$(id).autocomplete('user', on_autocomplete_selection, {{ users|json_search_base}}).focus();
+				{% endif %}
 			}
 			function remove_row(number)
 			{
@@ -672,7 +676,13 @@
 				$(this).typeahead('val', search_selection.id).hide();
 				var row = $(this).data('row');
 				var button_id = "#" + dataset_name + "_button__" + row;
+
+				{% if user_2dcc %}
+				$(button_id).val(search_selection.name + " [" + search_selection.project_number + "]").show();
+				$("<input>").attr("type","hidden").attr("id","p2dcc__"+row).attr("name","p2dcc__"+row).val(search_selection.project_number).appendTo($(button_id).parent());
+				{% else %}
 				$(button_id).val(search_selection.name).show();
+				{% endif %}
 				if(dataset_name == "user")
 					fetch_projects(row, search_selection.id);
 			}

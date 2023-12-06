@@ -108,6 +108,7 @@ class User(models.Model):
 	probationary_qualifications = models.ManyToManyField('Tool', blank=True, help_text='A detailed table for user qualifications', through='ProbationaryQualifications', related_name='probationary_qualifications')
 	qualifications = models.ManyToManyField('Tool', blank=True, help_text='Select the tools that the user is qualified to use.')
 	projects = models.ManyToManyField('Project', blank=True, help_text='Select the projects that this user is currently working on.')
+	projects2dcc = models.ManyToManyField('Project2DCC', blank=True, help_text='Project identifiers from List for use with 2DCC projects')
 
 	USERNAME_FIELD = 'username'
 	REQUIRED_FIELDS = ['first_name', 'last_name', 'email']
@@ -294,6 +295,34 @@ class ProbationaryQualifications(models.Model):
 	qualification_date = models.DateTimeField(default=timezone.now, null=True, blank=True)
 	probationary_user = models.BooleanField(default=False)
 	tool_last_used = models.DateTimeField(null=True, blank=True)
+	disabled = models.BooleanField(default=False)
+
+
+class Project2DCC(models.Model):
+	class ProjectType(object):
+		UNKNOWN = -1
+		RESEARCH = 1
+		SAMPLE = 2
+		RSVP = 3
+		Choices = (
+			(UNKNOWN, 'Unknown'),
+			(RESEARCH, 'Research'),
+			(SAMPLE, 'Sample'),
+			(RSVP,'RSVP'),
+		)
+
+	project_id = models.CharField(max_length=20, unique=True)
+	project_type = models.IntegerField(choices=ProjectType.Choices, default=ProjectType.UNKNOWN)
+	leo_project = models.ForeignKey('Project', on_delete=models.SET_NULL, null=True, blank=True)
+
+	class Meta:
+		constraints = [
+			models.UniqueConstraint(fields=['project_id'], name='2dcc unique name')
+		]
+
+	def __str__(self):
+		return str(self.project_id)
+	
 
 class UserRelationshipType(models.Model):
 	name = models.CharField(max_length=255, unique=True)
@@ -336,7 +365,7 @@ class Tool(models.Model):
 	post_usage_questions = models.TextField(null=True, blank=True, help_text="")
 	reservation_required = models.BooleanField(default=False, help_text='Require that users have a current (within 15 minutes) reservation in order to use the tool')
 	allow_autologout = models.BooleanField(default=False, help_text='Allow users to set an end time for the tool run.')
-	qualification_duration = models.PositiveIntegerField(default=182, null=True, blank=True, help_text="The tool may indicate the number of days without use a user will be considered qualified.  The default is 182 days (6 months).  Each night a script will run to check a user's last date of use for a tool against this time period.  If the date of last use is greater than the qualification_duration value the user will be set to probationary status.  This change can be reversed in LEO.")
+	qualification_duration = models.PositiveIntegerField(default=182, null=True, blank=True, help_text="The tool may indicate the number of days without use a user will be considered qualified.  The default is 182 days (6 months).  Each night a script will run to check a user's last date of use for a tool against this time period.  If the date of last use is greater than the qualification_duration value the user will be set to limited status.  This change can be reversed in LEO.")
 
 	# Core info
 	core_id = models.ForeignKey('Core', related_name="tool_core", on_delete=models.SET_NULL, help_text="The core facility of which this tool is part.", null=True)
@@ -388,12 +417,12 @@ class Tool(models.Model):
 		return result
 
 	def delayed_logoff_in_progress(self):
-		result = UsageEvent.objects.filter(tool=self.id, end__gt=timezone.now(), active_flag=True).exists()
+		result = UsageEvent.objects.filter(tool=self.id, end__gt=timezone.now(), active_flag=True, ad_hoc_created=False).exists()
 		return result
 
 	def get_delayed_logoff_usage_event(self):
 		try:
-			return UsageEvent.objects.get(tool=self.id, end__gt=timezone.now())
+			return UsageEvent.objects.get(tool=self.id, end__gt=timezone.now(), active_flag=True, ad_hoc_created=False)
 		except UsageEvent.DoesNotExist:
 			return None
 

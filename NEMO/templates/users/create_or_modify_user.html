@@ -31,7 +31,7 @@
 	<h2>Tools</h2>
 	<div>
 		<input type="button" value="Promote all tools to full" class="btn btn-success" onclick="promote_all_tools();" />
-		<input type="button" value="Demote all tools to probationary" class="btn btn-danger" onclick="demote_all_tools();" />
+		<input type="button" value="Demote all tools to limited" class="btn btn-danger" onclick="demote_all_tools();" />
 		<input type="button" value="Disqualify user from all tools" class="btn btn-danger" onclick="disqualify_all_tools();" />
 	</div>
 	<form id="add_qualified_tool_form" class="form-inline" style="margin-bottom:10px">
@@ -44,7 +44,7 @@
 				</div>
 				<div class="col-md-6">
 					<div class="form-group">
-					<label class="control-label">Add a probationary tool <input type="text" id="add_probationary_tool_search_box" placeholder="Search for a tool" class="form-control"></label>
+					<label class="control-label">Add a limited tool <input type="text" id="add_probationary_tool_search_box" placeholder="Search for a tool" class="form-control"></label>
 					</div>
 				</div>
 			</div>
@@ -77,7 +77,7 @@
 				{% endif %}
 				{{ t }}
 				{% if probationary_qualifications is not None %}
-					{% if probationary_qualifications|get_item:t.id %} - probationary
+					{% if probationary_qualifications|get_item:t.id %} - limited
 					{% else %} - full
 					{% endif %}
 				{% endif %}
@@ -481,7 +481,7 @@
 
 		function demote_all_tools()
 		{
-			if (confirm("Taking this action will demote the user to probationary status  on all qualified tools.  This action cannot be undone.  Are you sure you wish to proceed?")) {
+			if (confirm("Taking this action will demote the user to limited status  on all qualified tools.  This action cannot be undone.  Are you sure you wish to proceed?")) {
 				$("#add_qualified_tool_search_box").prop("placeholder","Demoting tools, please wait...");
 				$("#add_probationary_tool_search_box").prop("placeholder","Demoting tools, please wait...");
 				var url;

@@ -14,7 +14,8 @@ from logging import getLogger
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q, Max
+from django.contrib.postgres.aggregates import ArrayAgg
+from django.db.models import F, Q, Max
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotFound, HttpResponseServerError, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -146,15 +147,26 @@ def tool_control(request, tool_id=None, qualified_only=None, core_only=None):
 		tools = tools.filter(Q(core_id__in=request.user.core_ids.all()) | Q(id__in=request.user.qualifications.all())).order_by('category', 'name')
 		ctools = ctools.filter(Q(core_id__in=request.user.core_ids.all()) | Q(id__in=request.user.qualifications.all())).order_by('category', 'name')
 
+	user_2dcc = False
+
+	if request.user.is_staff:
+		if "2DCC" in request.user.core_ids.values_list('name', flat=True):
+			user_2dcc = True
+
 	# create searchable names for tools that include the category
 	categorized_tools = "["
 	for t in ctools:
 		categorized_tools += '{{"name":"{0}", "id":{1}}},'.format(escape(str(t.category))+"/"+escape(str(t.name)), t.id)
 	categorized_tools = categorized_tools.rstrip(",") + "]"
 	categorized_tools = mark_safe(categorized_tools)
+	
+	fil = Q(projects__active=True, projects__end_date__gt=timezone.now())
+	# users = User.objects.filter(is_active=True, projects__active=True).exclude(id=request.user.id).annotate(project_number=ArrayAgg('projects2dcc__project_id', distinct=True)).distinct()
+	users = User.objects.filter(is_active=True, projects__active=True).exclude(id=request.user.id).annotate(project_number=F('projects2dcc__project_id')).distinct()
 
-	users = User.objects.filter(is_active=True, projects__active=True).exclude(id=request.user.id).distinct()
-
+	if user_2dcc and request.user.core_ids.all().count() == 1:
+		users = users.filter(is_staff=False, projects2dcc__in=request.user.projects2dcc.all())
+		
 	if tool_id is None:
 		tool_id = 0
 
@@ -165,6 +177,7 @@ def tool_control(request, tool_id=None, qualified_only=None, core_only=None):
 		'core_only': core_only,
 		'cat_tools': categorized_tools,
 		'users': users,
+		'user_2dcc': user_2dcc,
 	}
 
 
@@ -626,6 +639,10 @@ def enable_tool_multi(request):
 						if samples != "null":
 							sample_selections[index] = samples.split(",")
 
+					if attribute == "p2dcc":
+						project_events[index].comment = value
+
+
 					if hasattr(project_events[index], 'customer') and hasattr(project_events[index], 'project'):
 						if project_events[index].customer is not None and project_events[index].project is not None:
 							response = check_policy_to_enable_tool_for_multi(tool, operator, project_events[index].customer, project_events[index].project, request)
@@ -801,7 +818,7 @@ def enable_tool_multi(request):
 
 
 def is_valid_field(field):
-	return search("^(chosen_user|chosen_project|project_percent|event_comment|fixed_cost|num_samples|sample_notes|chosen_sample)__[0-9]+$", field) is not None
+	return search("^(chosen_user|chosen_project|project_percent|event_comment|fixed_cost|num_samples|sample_notes|chosen_sample|p2dcc)__[0-9]+$", field) is not None
 
 
 @staff_member_required(login_url=None)

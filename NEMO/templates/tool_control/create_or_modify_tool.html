@@ -38,7 +38,7 @@
 
 	function disqualify_all_users()
 	{
-		if (confirm("Taking this action will remove all qualified users (both probationary and full) from this tool.  This cannot be undone.  Are you sure you wish to proceed?")) {
+		if (confirm("Taking this action will remove all qualified users (both limited and full) from this tool.  This cannot be undone.  Are you sure you wish to proceed?")) {
 			$("#add_qualified_user_search_box").prop("placeholder","Disqualifying users, please wait...");
 			$("#add_probationary_user_search_box").prop("placeholder","Disqualifying users, please wait...");
 			var data = {};
@@ -104,7 +104,7 @@
 
 	function demote_all_users()
 	{
-		if (confirm("Taking this action will demote all users of the {{ form.name.value }} to probationary status.  This action cannot be undone.  Are you sure you wish to proceed?")) {
+		if (confirm("Taking this action will demote all users of the {{ form.name.value }} to limited status.  This action cannot be undone.  Are you sure you wish to proceed?")) {
 			$("#add_qualified_user_search_box").prop("placeholder","Demoting users, please wait...");
 			$("#add_probationary_user_search_box").prop("placeholder","Demoting users, please wait...");
 			var url;
@@ -134,7 +134,7 @@
 	</form>
 	<div id="bulk_buttons">
 		<input type="button" value="Promote all users to full" class="btn btn-success" onclick="promote_all_users();" />
-		<input type="button" value="Demote all users to probationary" class="btn btn-danger" onclick="demote_all_users();" />
+		<input type="button" value="Demote all users to limited" class="btn btn-danger" onclick="demote_all_users();" />
 		<input type="button" value="Disqualify all users from tool" class="btn btn-danger" onclick="disqualify_all_users();" />
 	</div>
 

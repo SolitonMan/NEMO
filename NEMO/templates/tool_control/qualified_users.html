@@ -22,7 +22,7 @@
 					</div>
 					<div class="col-md-6">
 						<div class="form-group">
-						<label class="control-label">Add a probationary user <input type="text" id="add_probationary_user_search_box" placeholder="Search for a user" class="form-control"></label>
+						<label class="control-label">Add a limited user <input type="text" id="add_probationary_user_search_box" placeholder="Search for a user" class="form-control"></label>
 						</div>
 					</div>
 				</div>
@@ -61,7 +61,7 @@
 							{% endif %}
 							{% endif %}
 							<a href="mailto:{{ u.email }}">{{ u }}</a>
-							{% if probationary_qualifications is not None %}{% if probationary_qualifications|get_item:u.id %} - probationary{% else %} - full{% endif %}{% endif %}
+							{% if probationary_qualifications is not None %}{% if probationary_qualifications|get_item:u.id %} - limited{% else %} - full{% endif %}{% endif %}
 							</span>
 						{% else %}
 							<span class="light-grey">
@@ -76,7 +76,7 @@
 							{% endif %}
 							{% endif %}
 							<a href="mailto:{{ u.email }}">{{ u }}</a>
-							{% if probationary_qualifications is not None %}{% if probationary_qualifications|get_item:u.id %} - probationary{% else %} - full{% endif %}{% endif %}
+							{% if probationary_qualifications is not None %}{% if probationary_qualifications|get_item:u.id %} - limited{% else %} - full{% endif %}{% endif %}
 							</span>
 						{% endif %}
 

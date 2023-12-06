@@ -440,6 +440,9 @@ def new_area_access_record(request, customer=None):
 
 	if request.method == 'GET':
 		try:
+			if request.user.is_staff and request.GET.get('customer') is None and customer is None:
+				# present a simple search filter to choose a user
+				return render(request, 'area_access/new_area_access_record.html', dictionary)
 			if customer:
 				customer_to_send = User.objects.get(id=customer, is_active=True)
 				dictionary['self_login_flag'] = True

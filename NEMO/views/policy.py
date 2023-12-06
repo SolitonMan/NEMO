@@ -67,7 +67,7 @@ def check_policy_to_enable_tool(tool, operator, user, project, staff_charge, req
 		return HttpResponseBadRequest("You are blocked from using all tools in the laboratory. Please complete the laboratory rules tutorial in order to use tools.")
 
 	if ProbationaryQualifications.objects.filter(tool=tool, user=operator).exists():
-		# check if user is probationary, and if they are running the tool within business hours
+		# check if user is limited, and if they are running the tool within business hours
 		if ProbationaryQualifications.objects.filter(tool=tool, user=operator, probationary_user=True).exists():
 			business_start = time(8,0,0)
 			business_end = time(17,0,0)
@@ -76,7 +76,7 @@ def check_policy_to_enable_tool(tool, operator, user, project, staff_charge, req
 			if (intDay == 5 or intDay == 6 or current_time < business_start or current_time > business_end) and not operator.is_staff:
 				td=timedelta(minutes=15)
 				if not Reservation.objects.filter(start__lt=timezone.now()+td, end__gt=timezone.now(), cancelled=False, missed=False, shortened=False, user=operator, tool=tool).exists():
-					return HttpResponseBadRequest("You are a probationary user of the {}.  You may only operate the tool during normal business hours of 8 am to 5 pm Monday - Friday.".format(tool.name))
+					return HttpResponseBadRequest("You are a limited user of the {}.  You may only operate the tool during normal business hours of 8 am to 5 pm Monday - Friday.".format(tool.name))
 
 	# Users may only use a tool when delayed logoff is not in effect. Staff are exempt from this rule.
 	if tool.delayed_logoff_in_progress() and not operator.is_staff:
@@ -312,7 +312,7 @@ def check_policy_to_save_reservation(request, cancelled_reservation, new_reserva
 			reservation_start = new_reservation.start.time()
 			reservation_end = new_reservation.end.time()
 			if (intDay == 5 or intDay == 6 or reservation_start < business_start or reservation_start > business_end or reservation_end < business_start or reservation_end > business_end) and not user.is_staff:
-				policy_problems.append("You are a probationary user of the {}.  You may only reserve the tool for times during normal business hours of 8 am to 5 pm Monday - Friday.".format(new_reservation.tool.name))
+				policy_problems.append("You are a limited user of the {}.  You may only reserve the tool for times during normal business hours of 8 am to 5 pm Monday - Friday.".format(new_reservation.tool.name))
 
 	# The reservation start time may not exceed the tool's reservation horizon.
 	# Staff may break this rule.
