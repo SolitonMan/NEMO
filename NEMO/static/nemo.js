@@ -352,8 +352,11 @@ function matcher(items, search_fields)
 				if(data['email'])
 					result += '<span style="font-size:small; font-weight:bold; color:#bbbbbb" class="pull-right">' + data['email'] + '</span>';
 
-				if(data['project_number'])
-					result += '<span style="font-size:small; font-weight:bold; color:#bbbbbb" class="pull-right">' + data['project_number'] + '</span>';
+				if(data['project_number']) {
+					sPN = data['project_number'];
+					sPN = sPN.substring(0,49);
+					result += '<span style="font-size:small; font-weight:bold; color:#bbbbbb" class="pull-right">' + sPN + '</span>';
+				}
 
 				return result;
 			}

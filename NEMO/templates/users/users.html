@@ -6,13 +6,28 @@
 		Users
 	</h1>
 	<p>
-	Users displayed with a <span style="background-color: #d0d0d0;">grey background</span> are inactive.
+	Users displayed with a <span style="background-color: #d0d0d0;">grey background</span> are inactive.  Use the field below to search for users.  You may search by first, last or user name or email address.  Once your search is completed the displayed results can be filtered by the search field. To search for new results return to the <a href='/users/'>Users</a> page.
 	</p>
-	<div class="row">
-		<div class="col-md-4">
-			<input id="search" type="text" placeholder="Search for a user" class="form-control" autofocus>
-		</div>
+
+	<div class="col-md-4">
+
+	{% if use_form %}
+	<form name="search_form" method="post">
+		{% csrf_token %}
+	{% endif %}
+
+		<input id="search" name="search" type="text" placeholder="Search for a user" class="form-control" style="display: inline!important;" autofocus></input>
+
+	{% if use_form %}
+
+		<input type="submit" value="Search" class="btn btn-success" style="display: inline!important;"></input>
+
+	</form>
+	{% endif %}
+
 	</div>
+
+	{% if not use_form %}
 	<script>
 	$("#search").keyup(function () {
 		var data = this.value.split(" ");
@@ -37,7 +52,37 @@
 		.show();
 	});
 	</script>
+	{% endif %}
 
+{% if 1 == 0 %}
+<div class="pagination">
+	<span class="step-links">
+	{% if users.has_previous %}
+		<a href="?page=1">&laquo; first</a>
+		<a href="?page={{ users.previous_page_number }}">previous</a>
+	{% endif %}
+
+	<span class="current">
+		Page {{ users.number }} of {{ users.paginator.num_pages }}
+	</span>
+
+		{% if users.has_next %}
+			<a href="?page={{ users.next_page_number }}">next</a>
+			<a href="?page={{ users.paginator.num_pages }}">last &raquo;</a>
+		{% endif %}
+	</span>
+
+	<span class="step-links">
+		Go to page
+		<select class="form-control" name="page_selector" id="page_selector_bottom" onchange="open_page('bottom');" style="display:inline!important;">
+			<option value="0">Please select a page</option>
+
+		</select>
+	</span>
+</div>
+{% endif %}
+
+{% if not use_form %}
 	<table class="table">
 		<thead>
 		<tr>
@@ -76,4 +121,58 @@
 	{% endfor %}
 		</tbody>
 	</table>
+{% endif %}
+
+{% if 1 == 0 %}
+<div class="pagination">
+	<span class="step-links">
+	{% if users.has_previous %}
+		<a href="?page=1">&laquo; first</a>
+		<a href="?page={{ users.previous_page_number }}">previous</a>
+	{% endif %}
+
+	<span class="current">
+		Page {{ users.number }} of {{ users.paginator.num_pages }}
+	</span>
+
+		{% if users.has_next %}
+			<a href="?page={{ users.next_page_number }}">next</a>
+			<a href="?page={{ users.paginator.num_pages }}">last &raquo;</a>
+		{% endif %}
+	</span>
+
+	<span class="step-links">
+		Go to page
+		<select class="form-control" name="page_selector" id="page_selector_bottom" onchange="open_page('bottom');" style="display:inline!important;">
+			<option value="0">Please select a page</option>
+
+		</select>
+	</span>
+</div>
+{% endif %}
+
+<script type="text/javascript">
+function on_load() {
+	var page_count = {{ page_count }};
+	var list = $("select[name='page_selector']");
+
+	$(list).each(function() {
+		for (i=1; i<=page_count; i++) {
+			var op = "<option value=" + i + ">" + i + "</option>";
+			$(this).append(op);
+		}
+	});
+
+}
+
+function open_page(sloc) {
+	var s = "#page_selector_" + sloc + " option:selected";
+	var page = $(s).val();
+	var loc = "?page=" + page;
+	location.href = loc;
+}
+
+$(on_load);
+</script>
+
 {% endblock %}

@@ -5,13 +5,56 @@
 	<h1>
 		Projects
 	</h1>
-	<div class="row">
-		<div class="col-md-4" id="search_container">
-			<input id="search" type="text" placeholder="Search for a project" class="form-control" autofocus>
-		</div>
-	</div>
 
+	<p>Use the field below to search for projects.  You may search for the name, project number, application identifier or various SIMBA account numbers.  Or you can search by users who have access to the project.  Once your search is completed the displayed results can be filtered by the search field. To search for new results return to the <a href="/accounts_and_projects/">Projects</a> page.</p>
 
+	<div class="col-md-4">
+
+	{% if use_form %}
+	<form name="search_form" method="post">
+		{% csrf_token %}
+	{% endif %}
+
+		<input id="search" name="search" type="text" placeholder="Search for a project" class="form-control" style="display: inline!important;" autofocus></input>
+
+	{% if use_form %}
+
+		<input type="submit" value="Search" class="btn btn-success" style="display: inline!important;"></input>
+
+	</form>
+	{% endif %}
+
+	</div>	
+
+{% if 1 == 0 %}
+<div class="pagination">
+	<span class="step-links">
+	{% if projects.has_previous %}
+		<a href="?page=1">&laquo; first</a>
+		<a href="?page={{ projects.previous_page_number }}">previous</a>
+	{% endif %}
+
+	<span class="current">
+		Page {{ projects.number }} of {{ projects.paginator.num_pages }}
+	</span>
+
+		{% if projects.has_next %}
+			<a href="?page={{ projects.next_page_number }}">next</a>
+			<a href="?page={{ projects.paginator.num_pages }}">last &raquo;</a>
+		{% endif %}
+	</span>
+
+	<span class="step-links">
+		Go to page
+		<select class="form-control" name="page_selector" id="page_selector_bottom" onchange="open_page('bottom');" style="display:inline!important;">
+			<option value="0">Please select a page</option>
+
+		</select>
+	</span>
+</div>
+{% endif %}
+
+{% if projects is not None %}
 	<table class="table">
 		<thead>
 		<tr>
@@ -104,6 +147,35 @@
 
 		</tbody>
 	</table>
+{% endif %}
+
+{% if 1 == 0 %}
+<div class="pagination">
+	<span class="step-links">
+	{% if projects.has_previous %}
+		<a href="?page=1">&laquo; first</a>
+		<a href="?page={{ projects.previous_page_number }}">previous</a>
+	{% endif %}
+
+	<span class="current">
+		Page {{ projects.number }} of {{ projects.paginator.num_pages }}
+	</span>
+
+		{% if projects.has_next %}
+			<a href="?page={{ projects.next_page_number }}">next</a>
+			<a href="?page={{ projects.paginator.num_pages }}">last &raquo;</a>
+		{% endif %}
+	</span>
+
+	<span class="step-links">
+		Go to page
+		<select class="form-control" name="page_selector" id="page_selector_bottom" onchange="open_page('bottom');" style="display:inline!important;">
+			<option value="0">Please select a page</option>
+
+		</select>
+	</span>
+</div>
+{% endif %}
 
 	<script>
 		function get_account(jquery_event, search_selection, dataset_name)
@@ -227,9 +299,18 @@
 			id = "#cancel_" + project_id;
 			$(id).click(cancel_user);
 		}
+
+		function open_page(sloc) {
+			var s = "#page_selector_" + sloc + " option:selected";
+			var page = $(s).val();
+			var loc = "?page=" + page;
+			location.href = loc;
+		}
+
 		function on_load()
 		{
-			//$('#search').autocomplete('accounts_and_projects', get_account, {% json_search_base_with_extra_fields accounts_and_projects 'application_identifier' %});
+
+			{% if not use_form %}
 			$("#search").keyup(function () {
 				//var data = this.value.split(" ");
 				var data = this.value;
@@ -254,6 +335,7 @@
 				})
 				.show();
 			});
+			{% endif %}
 
 			{% for p in projects %}
 			id = "#selection_" + '{{ p.id }}';
@@ -261,11 +343,25 @@
 			enable_autocompletion({{ p.id }});
 			{% endfor %}
 
+	
+			var page_count = {{ page_count }};
+			var list = $("select[name='page_selector']");
+
+			$(list).each(function() {
+				for (i=1; i<=page_count; i++) {
+					var op = "<option value=" + i + ">" + i + "</option>";
+					$(this).append(op);
+				}
+			});
+
 			//$('.user_search').autocomplete('users', on_autocomplete_selection, {{ users|json_search_base }});
 			//$('.user_search_span').hide();
 			//$('.user_add').click(add_user_to_project);
 			//$('.user_cancel').click(cancel_user);
 		}
+
+		
+
 		$(on_load);
 	</script>
 	<style>

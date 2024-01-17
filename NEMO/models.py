@@ -311,7 +311,7 @@ class Project2DCC(models.Model):
 			(RSVP,'RSVP'),
 		)
 
-	project_id = models.CharField(max_length=20, unique=True)
+	project_id = models.CharField(max_length=255, unique=True)
 	project_type = models.IntegerField(choices=ProjectType.Choices, default=ProjectType.UNKNOWN)
 	leo_project = models.ForeignKey('Project', on_delete=models.SET_NULL, null=True, blank=True)
 
@@ -1356,7 +1356,7 @@ class Interlock(models.Model):
 					cmdst = 1
 
 			#uri = 'http://' + str(self.card.server) + '/state.xml?relay' + str(self.card.number) + 'State=' + str(cmdst)
-			if self.card.type.name == "Web Switch Plus":
+			if self.card.type.name == "Web Switch Plus" or self.card.type.name == "X-401":
 				uri = 'http://' + str(self.card.server) + '/state.xml?relay1=' + str(cmdst)
 				req = requests.get(uri, timeout=3.0)
 
@@ -1395,9 +1395,9 @@ class Interlock(models.Model):
 		uri1 = 'http://' + str(self.card.server) + '/state.xml?relay1State=2'
 		uri2 = 'http://' + str(self.card.server) + '/state.xml?relay2State=2'
 
-		if self.card.type.name == "Web Switch Plus":
-			uri1 = 'http://' + str(self.card.server) + '/state.xml?relay1=2'
-			uri2 = 'http://' + str(self.card.server) + '/state.xml?relay2=2'
+		if self.card.type.name == "Web Switch Plus" or self.card.type.name == "X-401":
+			uri1 = 'http://' + str(self.card.server) + '/state.xml?relay1=0'
+			uri2 = 'http://' + str(self.card.server) + '/state.xml?relay2=0'
 
 		try:
 			req1 = requests.get(uri1, timeout=3.0)
@@ -1423,7 +1423,7 @@ class Interlock(models.Model):
 		try:
 			req = requests.get(uri, timeout=0.01)
 			data = xmltodict.parse(req.text)
-			if self.card.type.name == "Web Switch Plus":
+			if self.card.type.name == "Web Switch Plus" or self.card.type.name == "X-401":
 				s = 'relay' + str(self.card.number)
 			else:
 				s = 'relay' + str(self.card.number) + 'state'

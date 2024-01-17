@@ -11,6 +11,34 @@
 <p>The table displays the transaction history for the sample {{ current_sample }}.</p>
 {% endif %}
 
+<div class="row">
+	<div class="col-md-4">
+		<input id="search" type="text" placeholder="Search for a sample" class="form-control" autofocus>
+	</div>
+</div>
+
+<script>
+$("#search").keyup(function () {
+	var data = this.value; //.split(" ");
+	var tr = $("#sample_data").find("tr");
+	if (this.value == "") {
+		tr.show();
+		return;
+	}
+	tr.hide();
+	tr.filter(function(i, v) {
+		var $t = $(this);
+		//for (var d = 0; d < data.length; ++d) {
+			var s = data[d].toUpperCase();
+			if ($t.text().toUpperCase().indexOf(s) > -1) {
+				return true;
+			}
+		//}
+	})
+	.show();
+});
+</script>
+
 <table class="table">
 <thead>
 	<tr>
@@ -24,7 +52,7 @@
 	<th>Notes</th>
 	</tr>
 </thead>
-<tbody>
+<tbody id="sample_data">
 	{% for sh in sample_history %}
 	<tr>
 		{% for i in sh %}

@@ -1,5 +1,7 @@
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+from django.db.models import Q
 from django.db.models.expressions import RawSQL
 from django.http import HttpResponseBadRequest, HttpResponseRedirect, JsonResponse, HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
@@ -9,54 +11,88 @@ from NEMO.forms import ProjectForm, AccountForm
 from NEMO.models import Account, Project, User, MembershipHistory, ActivityHistory
 
 @login_required
-@require_GET
+@require_http_methods(['GET', 'POST'])
 def accounts_and_projects(request, kind=None, identifier=None):
-	try:
-		if kind == 'project':
-			account = Project.objects.get(id=identifier).account
-		elif kind == 'account':
-			account = Account.objects.get(id=identifier)
-		else:
-			account = None
-	except:
-		account = None
+	#try:
+	#	if kind == 'project':
+	#		account = Project.objects.get(id=identifier).account
+	#	elif kind == 'account':
+	#		account = Account.objects.get(id=identifier)
+	#	else:
+	#		account = None
+	#except:
+	account = None
 
 	account_list = None
 	accounts_and_projects = None
 
-	if request.user.is_superuser or request.user.groups.filter(name="Technical Staff").exists() or request.user.groups.filter(name="Financial Admin").exists():
-#	if request.user.is_superuser or request.session['financial_admin'] or request.session['technical_staff']:
-		account_list = Account.objects.all()
-		accounts_and_projects = set(Account.objects.all()) | set(Project.objects.all())
-		projects = Project.objects.all()
-		user_delegate = False
-	elif request.user.groups.filter(name="PI").exists():
-#	elif request.session['pi']:
-		account_list = Account.objects.filter(owner=request.user)
-		accounts_and_projects = set(Account.objects.filter(owner=request.user)) | set(Project.objects.filter(owner=request.user))
-		projects = Project.objects.filter(owner=request.user)
-		user_delegate = False
-	elif not request.user.groups.filter(name="PI").exists() and User.objects.filter(pi_delegates=request.user).exists():
-#	elif not request.session['pi'] and User.objects.filter(pi_delegates=request.user).exists():
-		account_list = Account.objects.filter(owner__pi_delegates=request.user)
-		accounts_and_projects = set(Account.objects.filter(owner__pi_delegates=request.user)) | set(Project.objects.filter(owner__pi_delegates=request.user))
-		projects = Project.objects.filter(owner__pi_delegates=request.user)
-		user_delegate = True
+	if request.method == "GET":
+		dictionary = {
+			'account': account,
+			'account_list': account_list,
+			'accounts_and_projects': accounts_and_projects,
+			'users': User.objects.filter(is_active=True),
+			'projects': None,
+			'user_delegate': False,
+			'use_form': True,
+			'page_count': 0,
+		}
+		return render(request, 'accounts_and_projects/accounts_and_projects.html', dictionary)
 	else:
-		account_list = None
-		accounts_and_projects = None
-		projects = None
-		user_delegate = False
 
-	dictionary = {
-		'account': account,
-		'account_list': account_list,
-		'accounts_and_projects': accounts_and_projects,
-		'users': User.objects.filter(is_active=True),
-		'projects': projects,
-		'user_delegate': user_delegate,
-	}
-	return render(request, 'accounts_and_projects/accounts_and_projects.html', dictionary)
+		search_string = request.POST.get('search',None)
+
+		if search_string is None:
+
+			if request.user.is_superuser or request.user.groups.filter(name="Technical Staff").exists() or request.user.groups.filter(name="Financial Admin").exists():
+				account_list = Account.objects.all()
+				accounts_and_projects = set(Account.objects.all()) | set(Project.objects.all())
+				projects = Project.objects.all()
+				user_delegate = False
+			elif request.user.groups.filter(name="PI").exists():
+				account_list = Account.objects.filter(owner=request.user)
+				accounts_and_projects = set(Account.objects.filter(owner=request.user)) | set(Project.objects.filter(owner=request.user))
+				projects = Project.objects.filter(owner=request.user)
+				user_delegate = False
+			elif not request.user.groups.filter(name="PI").exists() and User.objects.filter(pi_delegates=request.user).exists():
+				account_list = Account.objects.filter(owner__pi_delegates=request.user)
+				accounts_and_projects = set(Account.objects.filter(owner__pi_delegates=request.user)) | set(Project.objects.filter(owner__pi_delegates=request.user))
+				projects = Project.objects.filter(owner__pi_delegates=request.user)
+				user_delegate = True
+			else:
+				account_list = None
+				accounts_and_projects = None
+				projects = None
+				user_delegate = False
+
+		else:
+
+			account_list = None
+			accounts_and_projects = None
+			projects = Project.objects.filter(Q(name__icontains=search_string) | Q(application_identifier__icontains=search_string) | Q(project_number__icontains=search_string) | Q(simba_cost_center__icontains=search_string) | Q(internal_order__icontains=search_string) | Q(wbs_element__icontains=search_string) | Q(user__first_name__icontains=search_string) | Q(user__last_name__icontains=search_string) | Q(user__username__icontains=search_string)).distinct()
+			user_delegate = False
+
+
+		paginator = Paginator(projects, 50)
+		page_number = request.GET.get('page')
+	
+		if page_number is None:
+			page_number = 1
+
+		projects = paginator.get_page(page_number)
+		page_count = paginator.num_pages
+
+		dictionary = {
+			'account': account,
+			'account_list': account_list,
+			'accounts_and_projects': accounts_and_projects,
+			'users': User.objects.filter(is_active=True),
+			'projects': projects,
+			'user_delegate': user_delegate,
+			'page_count': page_count,
+			'use_form': False,
+		}
+		return render(request, 'accounts_and_projects/accounts_and_projects.html', dictionary)
 
 
 @login_required

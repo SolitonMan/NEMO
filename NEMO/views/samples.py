@@ -14,6 +14,7 @@ from logging import getLogger
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from django.db import connection
 from django.db.models import Q, Max
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotFound, HttpResponseServerError, HttpResponseRedirect
@@ -29,13 +30,32 @@ from NEMO.forms import SampleForm, nice_errors
 from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, AreaAccessRecordProjectSample, Sample, StaffCharge, StaffChargeProject, StaffChargeProjectSample, UsageEvent, UsageEventProject, UsageEventProjectSample, Reservation, ReservationProject, Project, User
 
 @login_required
-@require_GET
+@require_http_methods(['GET', 'POST'])
 def samples(request):
-	if request.user.is_superuser or request.user.is_staff:
-		sample_list = Sample.objects.all().order_by('identifier')
+
+	if request.method == "GET":
+		return render(request, 'sample/samples.html', {'samples': None, 'page_count': 0, 'use_form': True})
 	else:
-		sample_list = Sample.objects.filter(Q(project__in=request.user.projects.all()) | Q(created_by=request.user)).order_by('identifier')
-	return render(request, 'sample/samples.html', {'samples': sample_list})
+		search_string = request.POST.get('search',None)
+
+		if search_string is None:
+
+			if request.user.is_superuser or request.user.is_staff:
+				sample_list = Sample.objects.all().order_by('identifier')
+			else:
+				sample_list = Sample.objects.filter(Q(project__in=request.user.projects.all()) | Q(created_by=request.user)).order_by('identifier')
+		else:
+			sample_list = Sample.objects.filter(Q(identifier__icontains=search_string) | Q(nickname__icontains=search_string) | Q(created_by__last_name__icontains=search_string) | Q(created_by__first_name__icontains=search_string) | Q(created_by__username__icontains=search_string))
+
+		paginator = Paginator(sample_list, 50)
+		page_number = request.GET.get('page')
+		if page_number is None:
+			page_number = 1
+		samples = paginator.get_page(page_number)
+
+		page_count = paginator.num_pages
+
+		return render(request, 'sample/samples.html', {'samples': sample_list, 'page_count': page_count, 'use_form': False})
 
 
 @login_required

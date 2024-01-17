@@ -452,6 +452,59 @@ class ProjectAdmin(admin.ModelAdmin):
 		return False
 
 
+class Project2DCCAdminForm(forms.ModelForm):
+	class Meta:
+		model = Project2DCC
+		fields = '__all__'
+
+	members = forms.ModelMultipleChoiceField(
+		queryset=User.objects.all(),
+		required=False,
+		widget=FilteredSelectMultiple(
+			verbose_name='Users',
+			is_stacked=False
+		)
+	)
+
+	def __init__(self, *args, **kwargs):
+		super().__init__(*args, **kwargs)
+		if self.instance.pk:
+			self.fields['members'].initial = self.instance.user_set.all()
+
+
+@register(Project2DCC)
+class Project2DCCAdmin(admin.ModelAdmin):
+
+	search_fields = ('project_id', 'project__project_number', 'project__name')
+	list_display = ('project_id', 'get_project_number', 'get_project_name')
+	form = Project2DCCAdminForm
+
+	def get_project_name(self, obj):
+		return obj.leo_project.name
+	get_project_name.admin_order_field = 'project'
+	get_project_name.short_description = 'Project Name'
+
+	def get_project_number(self, obj):
+		return obj.leo_project.project_number
+	get_project_number.admin_order_field = 'project'
+	get_project_number.short_description = 'Project Number'
+
+	def save_model(self, request, obj, form, change):
+		record_remote_many_to_many_changes_and_save(request, obj, form, change, 'members', super().save_model)
+		#super().save_model(request, obj, form, change)
+
+		#record_local_many_to_many_changes(request, obj, form, 'users')
+
+	def formfield_for_foreignkey(self, db_field, request, **kwargs):
+		if db_field.name == 'leo_project':
+			kwargs["queryset"] = Project.objects.filter(active=True, end_date__gt=timezone.now().date()).order_by('project_number')
+		return super(Project2DCCAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
+	def has_delete_permission(self, request, obj=None):
+		return False
+	
+
+
 @register(Reservation)
 class ReservationAdmin(admin.ModelAdmin):
 	list_display = ('id', 'user', 'creator', 'tool', 'project', 'additional_information', 'start', 'end', 'duration', 'cancelled', 'missed')

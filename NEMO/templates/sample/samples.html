@@ -5,9 +5,28 @@
 
 <h1>Samples</h1>
 
+<p>
+Use the field below to search for samples based on their identifiers or nicknames, or by the first, last or user name of the record creator.  Once you've searched the results displayed can be filtered by the search field.  To search for new results use the Samples link in the navigation bar to reload the basic page.
+</p>
+
 <div class="row">
 	<div class="col-md-4">
-		<input id="search" type="text" placeholder="Search for a sample" class="form-control" autofocus>
+
+	{% if use_form %}
+	<form name="search_form" method="post">
+		{% csrf_token %}
+	{% endif %}
+
+		<input id="search" name="search" type="text" placeholder="Search for a sample" class="form-control" style="display: inline!important;" autofocus></input>
+
+        {% if use_form %}
+
+		<input type="submit" value="Search" class="btn btn-success" style="display: inline!important;"></input>
+
+
+	</form>
+	{% endif %}
+
 	</div>
 
 	<div style="position:relative; display: inline; float: right;">
@@ -15,10 +34,10 @@
 		<input type="button" value="Add Sample" onclick="window.location.href='{% url 'create_or_modify_sample' 0 %}'" class="btn btn-success"></input>
 	</div>
 </div>
-
+{% if not use_form %}
 <script>
 $("#search").keyup(function () {
-	var data = this.value.split(" ");
+	var data = this.value; //.split(" ");
 	var tr = $("#sample_data").find("tr");
 	if (this.value == "") {
 		tr.show();
@@ -27,19 +46,47 @@ $("#search").keyup(function () {
 	tr.hide();
 	tr.filter(function(i, v) {
 		var $t = $(this);
-		for (var d = 0; d < data.length; ++d) {
-			var s = data[d].toUpperCase();
+		//for (var d = 0; d < data.length; ++d) {
+			var s = data.toUpperCase();
 			if ($t.text().toUpperCase().indexOf(s) > -1) {
 				return true;
 			}
-		}
+		//}
 	})
 	.show();
 });
 </script>
 
 <br/>
+{% if 1 == 0 %}
+<div class="pagination">
+	<span class="step-links">
+	{% if samples.has_previous %}
+		<a href="?page=1">&laquo; first</a>
+		<a href="?page={{ samples.previous_page_number }}">previous</a>
+	{% endif %}
+
+	<span class="current">
+		Page {{ samples.number }} of {{ samples.paginator.num_pages }}
+	</span>
+
+		{% if samples.has_next %}
+			<a href="?page={{ samples.next_page_number }}">next</a>
+			<a href="?page={{ samples.paginator.num_pages }}">last &raquo;</a>
+		{% endif %}
+	</span>
+	<span class="step-links">
+		Go to page
+		<select class="form-control" name="page_selector" id="page_selector_top" onchange="open_page('top');" style="display:inline!important;">
+			<option value="0">Please select a page</option>
+
+		</select>
+	</span>
+
+</div>
+
 <br/>
+{% endif %}
 <table class="table">
 	<thead>
 	<tr>
@@ -72,4 +119,61 @@ $("#search").keyup(function () {
 	{% endfor %}
 	</tbody>
 </table>
+{% if 1 == 0 %}
+<div class="pagination">
+	<span class="step-links">
+	{% if samples.has_previous %}
+		<a href="?page=1">&laquo; first</a>
+		<a href="?page={{ samples.previous_page_number }}">previous</a>
+	{% endif %}
+
+	<span class="current">
+		Page {{ samples.number }} of {{ samples.paginator.num_pages }}
+	</span>
+
+		{% if samples.has_next %}
+			<a href="?page={{ samples.next_page_number }}">next</a>
+			<a href="?page={{ samples.paginator.num_pages }}">last &raquo;</a>
+		{% endif %}
+	</span>
+
+	<span class="step-links">
+		Go to page 
+		<select class="form-control" name="page_selector" id="page_selector_bottom" onchange="open_page('bottom');" style="display:inline!important;">
+			<option value="0">Please select a page</option>
+
+		</select>
+	</span>
+</div>
+{% endif %}
+<script type="text/javascript">
+function on_load() {
+	var page_count = {{ page_count }};
+	var list = $("select[name='page_selector']");
+
+	$(list).each(function() {
+		for (i=1; i<=page_count; i++) {
+			var op = "<option value=" + i + ">" + i + "</option>";
+			$(this).append(op);
+		}
+	});
+	
+}
+
+function open_page(sloc) {
+	var s = "#page_selector_" + sloc + " option:selected";
+	var page = $(s).val();
+	var loc = "?page=" + page;
+	location.href = loc;
+}
+
+
+function find_sample() {
+	var search_string = $("#search").val();
+	
+}
+$(on_load);
+</script>
+{% endif %}
+
 {% endblock %}

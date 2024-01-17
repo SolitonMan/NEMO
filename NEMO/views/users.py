@@ -7,6 +7,8 @@ import requests
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+from django.db.models import Q
 from django.http import HttpResponseBadRequest, HttpResponseRedirect, JsonResponse, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
@@ -19,10 +21,33 @@ from NEMO.models import Account, UserRelationship, UserRelationshipType, User, U
 
 
 @staff_member_required(login_url=None)
-@require_GET
+@require_http_methods(['GET', 'POST'])
 def users(request):
-	all_users = User.objects.order_by('last_name', 'first_name')
-	return render(request, 'users/users.html', {'users': all_users})
+
+	if request.method == "GET":
+		return render(request, 'users/users.html', {'users': None, 'page_count':0, 'use_form': True, })
+
+	else:
+		all_users = User.objects.order_by('last_name', 'first_name')
+
+		search_string = request.POST.get('search',None)
+
+		if search_string is not None:
+
+			all_users = all_users.filter(Q(first_name__icontains=search_string) | Q(last_name__icontains=search_string) | Q(username__icontains=search_string) | Q(email__icontains=search_string))
+
+		paginator = Paginator(all_users, 50)
+
+		page_number = request.GET.get('page')
+
+		if page_number is None:
+			page_number = 1
+
+		all_users = paginator.get_page(page_number)
+
+		page_count = paginator.num_pages
+
+		return render(request, 'users/users.html', {'users': all_users, 'page_count':page_count, 'use_form': False, })
 
 
 @staff_member_required(login_url=None)
