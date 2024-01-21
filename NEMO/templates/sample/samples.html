@@ -17,7 +17,7 @@ Use the field below to search for samples based on their identifiers or nickname
 		{% csrf_token %}
 	{% endif %}
 
-		<input id="search" name="search" type="text" placeholder="Search for a sample" class="form-control" style="display: inline!important;" autofocus></input>
+		<input id="search" name="search" type="text" placeholder="{% if use_form %}Search for a sample{% else %}Filter samples{% endif %}" class="form-control" style="display: inline!important;" autofocus></input>
 
         {% if use_form %}
 

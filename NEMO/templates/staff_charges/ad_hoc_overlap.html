@@ -69,6 +69,30 @@
 			<th>Existing</th>
 			<th>New</th>
 		</tr>
+	{% if staff_charges_overlap is not None %}
+	{% for s in staff_charges_overlap %}
+		<tr>
+			<td>{{ s.start }}</td>
+			<td>{{ s.end }}</td>
+			<td>
+			{% for c in s.customers.all %}
+				{{ c.first_name }}&nbsp;{{ c.last_name }}<br/>
+			{% endfor %}
+			</td>
+			<td>
+			{% for p in s.projects.all %}
+				{{ p }}<br/>
+			{% endfor %}
+			</td>
+			<td>
+				<input type="radio" name="overlap_choice__{{ s.id }}" value=0 />
+			</td>
+			<td>
+				<input type="radio" name="overlap_choice__{{ s.id }}" value=1 />
+			</td>
+		</tr>
+	{% endfor %}
+	{% else %}
 	{% for s in staff_charges_start %}
 		<tr>
 			<td>{{ s.start }}</td>
@@ -157,6 +181,7 @@
 			</td>
 		</tr>
 	{% endfor %}
+	{% endif %}
 	</table>
 
 	<input type="submit" value="Apply changes and save staff charges" class="btn btn-success" />

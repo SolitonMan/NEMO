@@ -16,7 +16,7 @@
 		{% csrf_token %}
 	{% endif %}
 
-		<input id="search" name="search" type="text" placeholder="Search for a user" class="form-control" style="display: inline!important;" autofocus></input>
+		<input id="search" name="search" type="text" placeholder="{% if use_form %}Search for a user{% else %}Filter users{% endif %}" class="form-control" style="display: inline!important;" autofocus></input>
 
 	{% if use_form %}
 

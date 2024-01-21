@@ -334,31 +334,42 @@ def ad_hoc_staff_charge(request):
 			msg = 'The start date and end date are required to save an ad hoc staff charge. The values must be valid datetimes.'
 			raise Exception(msg)
 
-		if StaffCharge.objects.filter(staff_member=request.user, start__range=(ad_hoc_start, ad_hoc_end), end__gt=ad_hoc_end, active_flag=True, ad_hoc_replaced=False).exists() or StaffCharge.objects.filter(staff_member=request.user, end__range=(ad_hoc_start, ad_hoc_end), start__lt=ad_hoc_start, active_flag=True, ad_hoc_replaced=False).exists() or StaffCharge.objects.filter(staff_member=request.user, start__lt=ad_hoc_start, end__gt=ad_hoc_end, active_flag=True, ad_hoc_replaced=False).exists() or StaffCharge.objects.filter(staff_member=request.user, start__gt=ad_hoc_start, end__lt=ad_hoc_end, active_flag=True, ad_hoc_replaced=False).exists():
+		if StaffCharge.objects.filter(staff_member=request.user, start__range=(ad_hoc_start, ad_hoc_end), end__gte=ad_hoc_end, active_flag=True, ad_hoc_replaced=False).exists() or StaffCharge.objects.filter(staff_member=request.user, end__range=(ad_hoc_start, ad_hoc_end), start__lte=ad_hoc_start, active_flag=True, ad_hoc_replaced=False).exists() or StaffCharge.objects.filter(staff_member=request.user, start__lte=ad_hoc_start, end__gte=ad_hoc_end, active_flag=True, ad_hoc_replaced=False).exists() or StaffCharge.objects.filter(staff_member=request.user, start__gte=ad_hoc_start, end__lte=ad_hoc_end, active_flag=True, ad_hoc_replaced=False).exists():
 
-			if StaffCharge.objects.filter(staff_member=request.user, start__range=(ad_hoc_start, ad_hoc_end), end__gt=ad_hoc_end, charge_end_override=True, override_confirmed=False, active_flag=True, ad_hoc_replaced=False).exists() or StaffCharge.objects.filter(staff_member=request.user, end__range=(ad_hoc_start, ad_hoc_end), start__lt=ad_hoc_start, charge_end_override=True, override_confirmed=False, active_flag=True, ad_hoc_replaced=False).exists() or StaffCharge.objects.filter(staff_member=request.user, start__lt=ad_hoc_start, end__gt=ad_hoc_end, charge_end_override=True, override_confirmed=False, active_flag=True, ad_hoc_replaced=False).exists() or StaffCharge.objects.filter(staff_member=request.user, start__gt=ad_hoc_start, end__lt=ad_hoc_end, charge_end_override=True, override_confirmed=False, active_flag=True, ad_hoc_replaced=False).exists():
+			if StaffCharge.objects.filter(staff_member=request.user, start__range=(ad_hoc_start, ad_hoc_end), end__gte=ad_hoc_end, charge_end_override=True, override_confirmed=False, active_flag=True, ad_hoc_replaced=False).exists() or StaffCharge.objects.filter(staff_member=request.user, end__range=(ad_hoc_start, ad_hoc_end), start__lte=ad_hoc_start, charge_end_override=True, override_confirmed=False, active_flag=True, ad_hoc_replaced=False).exists() or StaffCharge.objects.filter(staff_member=request.user, start__lte=ad_hoc_start, end__gte=ad_hoc_end, charge_end_override=True, override_confirmed=False, active_flag=True, ad_hoc_replaced=False).exists() or StaffCharge.objects.filter(staff_member=request.user, start__gte=ad_hoc_start, end__lte=ad_hoc_end, charge_end_override=True, override_confirmed=False, active_flag=True, ad_hoc_replaced=False).exists():
 				msg = 'You have outstanding staff charges that were overridden and are overlapping with the ad hoc charge you have submitted.  Please resolve any relevant outstanding overridden charges before adding an ad hoc charge during that time period.'
 				raise Exception(msg)
 
-			if StaffCharge.objects.filter(staff_member=request.user, start__range=(ad_hoc_start, ad_hoc_end), end__gt=ad_hoc_end, active_flag=True, ad_hoc_replaced=False).exists():
-				staff_charges_start = StaffCharge.objects.filter(staff_member=request.user, start__range=(ad_hoc_start, ad_hoc_end), end__gt=ad_hoc_end, active_flag=True, ad_hoc_replaced=False)
+			if StaffCharge.objects.filter(staff_member=request.user, start__range=(ad_hoc_start, ad_hoc_end), end__gte=ad_hoc_end, active_flag=True, ad_hoc_replaced=False).exists():
+				staff_charges_start = StaffCharge.objects.filter(staff_member=request.user, start__range=(ad_hoc_start, ad_hoc_end), end__gte=ad_hoc_end, active_flag=True, ad_hoc_replaced=False)
 			else:
 				staff_charges_start = None
 
-			if StaffCharge.objects.filter(staff_member=request.user, end__range=(ad_hoc_start, ad_hoc_end), start__lt=ad_hoc_start, active_flag=True, ad_hoc_replaced=False).exists():
-				staff_charges_end = StaffCharge.objects.filter(staff_member=request.user, end__range=(ad_hoc_start, ad_hoc_end), start__lt=ad_hoc_start, active_flag=True, ad_hoc_replaced=False)
+			if StaffCharge.objects.filter(staff_member=request.user, end__range=(ad_hoc_start, ad_hoc_end), start__lte=ad_hoc_start, active_flag=True, ad_hoc_replaced=False).exists():
+				staff_charges_end = StaffCharge.objects.filter(staff_member=request.user, end__range=(ad_hoc_start, ad_hoc_end), start__lte=ad_hoc_start, active_flag=True, ad_hoc_replaced=False)
 			else:
 				staff_charges_end = None
 
-			if StaffCharge.objects.filter(staff_member=request.user, start__lt=ad_hoc_start, end__gt=ad_hoc_end, active_flag=True, ad_hoc_replaced=False).exists():
-				staff_charges_middle = StaffCharge.objects.filter(staff_member=request.user, start__lt=ad_hoc_start, end__gt=ad_hoc_end, active_flag=True, ad_hoc_replaced=False)
+			if StaffCharge.objects.filter(staff_member=request.user, start__lte=ad_hoc_start, end__gte=ad_hoc_end, active_flag=True, ad_hoc_replaced=False).exists():
+				staff_charges_middle = StaffCharge.objects.filter(staff_member=request.user, start__lte=ad_hoc_start, end__gte=ad_hoc_end, active_flag=True, ad_hoc_replaced=False)
 			else:
 				staff_charges_middle = None
 
-			if StaffCharge.objects.filter(staff_member=request.user, start__gt=ad_hoc_start, end__lt=ad_hoc_end, active_flag=True, ad_hoc_replaced=False).exists():
-				staff_charges_over = StaffCharge.objects.filter(staff_member=request.user, start__gt=ad_hoc_start, end__lt=ad_hoc_end, active_flag=True, ad_hoc_replaced=False)
+			if StaffCharge.objects.filter(staff_member=request.user, start__gte=ad_hoc_start, end__lte=ad_hoc_end, active_flag=True, ad_hoc_replaced=False).exists():
+				staff_charges_over = StaffCharge.objects.filter(staff_member=request.user, start__gte=ad_hoc_start, end__lte=ad_hoc_end, active_flag=True, ad_hoc_replaced=False)
 			else:
 				staff_charges_over = None
+
+			#if staff_charges_start is not None:
+			#	staff_charges_overlap = staff_charges_start.union(staff_charges_end,staff_charges_middle,staff_charges_over)
+			#elif staff_charges_end is not None:
+			#	staff_charges_overlap = staff_charges_end.union(staff_charges_start,staff_charges_middle,staff_charges_over)
+			#elif staff_charges_middle is not None:
+			#	staff_charges_overlap = staff_charges_middle.union(staff_charges_start,staff_charges_end,staff_charges_over)
+			#elif staff_charges_over is not None:
+			#	staff_charges_overlap = staff_charges_over.union(staff_charges_start,staff_charges_end,staff_charges_middle)
+			#else:
+			staff_charges_overlap = None
 
 			params = {
 				'staff_charges_start': staff_charges_start,
@@ -367,6 +378,7 @@ def ad_hoc_staff_charge(request):
 				'staff_charges_over': staff_charges_over,
 				'ad_hoc_start': request.POST.get('ad_hoc_start'),
 				'ad_hoc_end': request.POST.get('ad_hoc_end'),
+				'staff_charges_overlap': staff_charges_overlap,
 			}
 
 
