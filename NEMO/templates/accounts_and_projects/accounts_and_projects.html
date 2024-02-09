@@ -6,24 +6,29 @@
 		Projects
 	</h1>
 
-	<p>Use the field below to search for projects.  You may search for the name, project number, application identifier or various SIMBA account numbers.  Or you can search by users who have access to the project.  Once your search is completed the displayed results can be filtered by the search field. To search for new results return to the <a href="/accounts_and_projects/">Projects</a> page.</p>
+	<p>Use the field below to search for projects.  You may search for the name, project number, application identifier or various SIMBA account numbers.  Or you can search by users who have access to the project.  Once your search is completed the displayed results can be filtered by the filer field that will appear to the right. To search for new results enter the search term in the Search for projects field and click the Search button.</p>
 
-	<div class="col-md-4">
-
-	{% if use_form %}
-	<form name="search_form" method="post">
+	<div>
+	<table width="100%">
+	<tr>
+	<td>
+	<form name="search_form" method="post" style="display: inline; position: relative;">
 		{% csrf_token %}
-	{% endif %}
 
-		<input id="search" name="search" type="text" placeholder="{% if use_form %}Search for a project{% else %}Filter projects{% endif %}" class="form-control" style="display: inline!important;" autofocus></input>
+		<input id="search" name="search" type="text" placeholder="Search for projects" class="form-control" style="display: inline-flex; width: 50%;" autofocus></input>
 
-	{% if use_form %}
 
 		<input type="submit" value="Search" class="btn btn-success" style="display: inline!important;"></input>
 
 	</form>
+	</td>
+	<td>
+	{% if not use_form %}
+		<input id="filter" name="filter" type="text" placeholder="Filter results" class="form-control" style="display: inline!important;position:relative" autofocus></input>
 	{% endif %}
-
+	</td>
+	</tr>
+	</table>
 	</div>	
 
 {% if 1 == 0 %}
@@ -51,6 +56,14 @@
 
 		</select>
 	</span>
+</div>
+{% endif %}
+
+{% if search_string is not None %}
+<div>
+<br/><br/>
+The results of your search for "{{ search_string }}" are:
+<br/>
 </div>
 {% endif %}
 
@@ -311,7 +324,7 @@
 		{
 
 			{% if not use_form %}
-			$("#search").keyup(function () {
+			$("#filter").keyup(function () {
 				//var data = this.value.split(" ");
 				var data = this.value;
 				var tr = $("#project_data").children();

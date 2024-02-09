@@ -6,30 +6,35 @@
 		Users
 	</h1>
 	<p>
-	Users displayed with a <span style="background-color: #d0d0d0;">grey background</span> are inactive.  Use the field below to search for users.  You may search by first, last or user name or email address.  Once your search is completed the displayed results can be filtered by the search field. To search for new results return to the <a href='/users/'>Users</a> page.
+	<b>Users displayed with a <span style="background-color: #d0d0d0;">grey background</span> are inactive.</b>  Use the field below to search for users.  You may search by first, last or user name or email address.  Once your search is completed the displayed results can be filtered by the filter field. To search for new results enter a new value in the Search for users field and click the Search button.
 	</p>
 
-	<div class="col-md-4">
-
-	{% if use_form %}
+	<div>
+	<table width="100%">
+	<tr>
+	<td>
 	<form name="search_form" method="post">
 		{% csrf_token %}
-	{% endif %}
 
-		<input id="search" name="search" type="text" placeholder="{% if use_form %}Search for a user{% else %}Filter users{% endif %}" class="form-control" style="display: inline!important;" autofocus></input>
+		<input id="search" name="search" type="text" placeholder="Search for users" class="form-control" style="display: inline-flex; width: 50%;" autofocus></input>
 
-	{% if use_form %}
 
 		<input type="submit" value="Search" class="btn btn-success" style="display: inline!important;"></input>
 
 	</form>
-	{% endif %}
-
+	</td>
+	<td>
+		{% if not use_form %}
+		<input id="filter" name="filter" type="text" placeholder="Filter users" class="form-control" style="display: inline!important;" autofocus></input>
+		{% endif %}
+	</td>
+	</tr>
+	</table>
 	</div>
 
 	{% if not use_form %}
 	<script>
-	$("#search").keyup(function () {
+	$("#filter").keyup(function () {
 		var data = this.value.split(" ");
 
 		var tr = $("#user_data").find("tr");
@@ -82,6 +87,14 @@
 </div>
 {% endif %}
 
+{% if search_string is not None %}
+<div>
+<br/><br/>
+The results of your search for "{{ search_string }}" are:
+<br/>
+</div>
+{% endif %}
+
 {% if not use_form %}
 	<table class="table">
 		<thead>
@@ -89,6 +102,7 @@
 			<th>Last</th>
 			<th>First</th>
 			<th>Username</th>
+			<th>Email</th>
 			<th>Core</th>
 			<th>Roles</th>
 			<th>Staff?</th>
@@ -103,6 +117,7 @@
 			<td>{{ u.last_name }}</td>
 			<td>{{ u.first_name }}</td>
 			<td><a href="{% url 'create_or_modify_user' u.id %}">{{ u.username }}</a></td>
+			<td>{{ u.email }}</td>
 			<td>
 			{% for c in u.core_ids.all %}
 			{{ c.name }} <br/>
@@ -149,7 +164,6 @@
 		</select>
 	</span>
 </div>
-{% endif %}
 
 <script type="text/javascript">
 function on_load() {
@@ -174,5 +188,5 @@ function open_page(sloc) {
 
 $(on_load);
 </script>
-
+{% endif %}
 {% endblock %}

@@ -35,7 +35,14 @@
 	</script>
 	<div id="landing_notifications">
 	<div class="row">
-		{% if validation_needed %}
+			<div class="col-lg-4" style="display: none;">
+				<h3>Record Counts</h3>
+				Usage Events: {{ ue_count}}<br/>
+				Staff Charges: {{ sc_count }}<br/>
+				Area Access: {{ ar_count }}<br/>
+				Consumables: {{ cw_count }}
+			</div>
+		{% if validation_needed == True %}
 			<div class="col-lg-4">
 				<h3>Validation Needed</h3>
 				<a href="{% url 'remote_work' %}" style="text-decoration: none">

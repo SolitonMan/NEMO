@@ -475,7 +475,7 @@ class Project2DCCAdminForm(forms.ModelForm):
 @register(Project2DCC)
 class Project2DCCAdmin(admin.ModelAdmin):
 
-	search_fields = ('project_id', 'project__project_number', 'project__name')
+	search_fields = ('project_id', 'leo_project__project_number', 'leo_project__name')
 	list_display = ('project_id', 'get_project_number', 'get_project_name')
 	form = Project2DCCAdminForm
 

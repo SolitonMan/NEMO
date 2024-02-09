@@ -43,11 +43,11 @@ def users(request):
 		if page_number is None:
 			page_number = 1
 
-		all_users = paginator.get_page(page_number)
+		#all_users = paginator.get_page(page_number)
 
 		page_count = paginator.num_pages
 
-		return render(request, 'users/users.html', {'users': all_users, 'page_count':page_count, 'use_form': False, })
+		return render(request, 'users/users.html', {'users': all_users, 'page_count':page_count, 'use_form': False, 'search_string': search_string})
 
 
 @staff_member_required(login_url=None)

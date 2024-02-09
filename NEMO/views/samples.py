@@ -51,11 +51,11 @@ def samples(request):
 		page_number = request.GET.get('page')
 		if page_number is None:
 			page_number = 1
-		samples = paginator.get_page(page_number)
+		#samples = paginator.get_page(page_number)
 
 		page_count = paginator.num_pages
 
-		return render(request, 'sample/samples.html', {'samples': sample_list, 'page_count': page_count, 'use_form': False})
+		return render(request, 'sample/samples.html', {'samples': sample_list, 'page_count': page_count, 'use_form': False, 'search_string': search_string, })
 
 
 @login_required

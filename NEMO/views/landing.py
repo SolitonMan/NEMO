@@ -48,8 +48,14 @@ def landing(request):
 				if UsageEvent.objects.filter(Q(validated=False, contested=True, contest_record__contest_resolved=False, active_flag=True), Q(tool__primary_owner=request.user) | Q(tool__backup_owners__in=[request.user])).exclude(operator=request.user).exists() or ConsumableWithdraw.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, consumable__core_id__in=request.user.core_ids.all(), active_flag=True).exclude(customer=request.user).exists() or AreaAccessRecord.objects.filter(validated=False, contested=True, contest_record__contest_resolved=False, area__core_id__in=request.user.core_ids.all(), active_flag=True).exclude(staff_charge__staff_member=request.user).exists():
 					contested_items = True
 
+	ue_count = UsageEvent.objects.filter(operator=request.user, validated=False, active_flag=True, end__isnull=False).count()
+	sc_count = StaffCharge.objects.filter(staff_member=request.user, validated=False, active_flag=True, end__isnull=False).count()
+	ar_count = AreaAccessRecord.objects.filter(user=request.user, validated=False, active_flag=True, end__isnull=False).count()
+	cw_count = ConsumableWithdraw.objects.filter(validated=False, merchant=request.user, active_flag=True).count()
 
-	if UsageEvent.objects.filter(operator=request.user, validated=False, active_flag=True).exists() or StaffCharge.objects.filter(staff_member=request.user, validated=False, active_flag=True).exists() or AreaAccessRecord.objects.filter(user=request.user, validated=False, active_flag=True).exists() or ConsumableWithdraw.objects.filter(validated=False, merchant=request.user, active_flag=True).exists():
+	validation_needed = False
+	#if UsageEvent.objects.filter(operator=request.user, validated=False, active_flag=True).exists() or StaffCharge.objects.filter(staff_member=request.user, validated=False, active_flag=True).exists() or AreaAccessRecord.objects.filter(user=request.user, validated=False, active_flag=True).exists() or ConsumableWithdraw.objects.filter(validated=False, merchant=request.user, active_flag=True).exists():
+	if ue_count > 0 or sc_count > 0 or ar_count > 0 or cw_count > 0:
 		validation_needed = True
 	else:
 		validation_needed = False
@@ -84,6 +90,10 @@ def landing(request):
 		'contested_items': contested_items,
 		'validation_needed': validation_needed,
 		'user_delegate': user_delegate,
+		'ue_count': ue_count,
+		'sc_count': sc_count,
+		'ar_count': ar_count,
+		'cw_count': cw_count,
 	}
 	return render(request, 'landing.html', dictionary)
 

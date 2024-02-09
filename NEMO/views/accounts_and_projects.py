@@ -79,7 +79,7 @@ def accounts_and_projects(request, kind=None, identifier=None):
 		if page_number is None:
 			page_number = 1
 
-		projects = paginator.get_page(page_number)
+		#projects = paginator.get_page(page_number)
 		page_count = paginator.num_pages
 
 		dictionary = {
@@ -91,6 +91,7 @@ def accounts_and_projects(request, kind=None, identifier=None):
 			'user_delegate': user_delegate,
 			'page_count': page_count,
 			'use_form': False,
+			'search_string': search_string,
 		}
 		return render(request, 'accounts_and_projects/accounts_and_projects.html', dictionary)
 
