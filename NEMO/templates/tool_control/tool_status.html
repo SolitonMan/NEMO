@@ -373,6 +373,27 @@ my_reservation_projects = {{ my_reservation_projects }}
 					</div>
 					<div id="project_choice_multi">
 					{% if staff_member_for_customer and my_reservation_projects is not None %}
+
+					{% if multi_core_user %}
+					<select id="core_select" name="core_select" class="form-control" onchange="core_override_select();">
+						<option value="0">Please select the core for which the staff charge related to this tool use is being made</option>
+						{% for c in request.user.core_ids.all %}
+						<option value="{{ c.id }}">{{ c.name }}</option>
+						{% endfor %}
+					</select>
+
+					<select id="credit_cost_collector_select" name="credit_cost_collector_select" class="form-control" style="display: none;">
+						<option value="0">You may select a credit cost collector to receive funds for the staff charge related to this work</option>
+					{% for c in request.user.core_ids.all %}
+
+						{% for ccc in c.creditcostcollector_set.all %}
+						<option value="{{ ccc.id }}" style="display: none;" class="core_{{ c.id }}">{{ ccc.name }}</option>
+						{% endfor %}
+
+					{% endfor %}
+					</select>
+					{% endif %}
+
 					<table id="usage_event_entries" class="table">
 					<tr>
 						<th>&nbsp;</th>
@@ -647,6 +668,26 @@ my_reservation_projects = {{ my_reservation_projects }}
 </div>
 
 <div id="project_choice_multi_source" style="display:none;">
+	{% if multi_core_user %}
+	<select id="core_select" name="core_select" class="form-control" onchange="core_override_select();">
+		<option value="0">Please select the core for which this charge is being made</option>
+		{% for c in request.user.core_ids.all %}
+		<option value="{{ c.id }}">{{ c.name }}</option>
+		{% endfor %}
+	</select>
+
+	<select id="credit_cost_collector_select" name="credit_cost_collector_select" class="form-control" style="display: none;">
+		<option value="0">You may select a credit cost collector to receive funds for this work</option>
+	{% for c in request.user.core_ids.all %}
+
+		{% for ccc in c.creditcostcollector_set.all %}
+			<option value="{{ ccc.id }}" style="display: none;" class="core_{{ c.id }}">{{ ccc.name }}</option>
+		{% endfor %}
+
+	{% endfor %}
+	</select>
+	{% endif %}
+
 	<table id="usage_event_entries" class="table">
 		<tr>
 			<th>&nbsp;</th>
@@ -810,6 +851,27 @@ my_reservation_projects = {{ my_reservation_projects }}
 			var contents = {};
 		
 			ajax_get(url, contents, null, null, null, null);
+		}
+	}
+
+	function core_override_select()
+	{
+		var iCore = $("#core_select option:selected").val();
+
+		var sCore = ".core_" + iCore;
+		$("#credit_cost_collector_select").css("display","none");
+		$("#credit_cost_collector_select option").each(function() {
+			$(this).css("display","none").prop("selected", false);
+		});
+
+		$(sCore).each(function() {
+			$(this).css("display","inline");
+		});
+
+		if ($(sCore).length > 0) {
+			$("#credit_cost_collector_select").css("display","inline");
+		} else {
+			$("#credit_cost_collector_select option").css("display","none");
 		}
 	}
 

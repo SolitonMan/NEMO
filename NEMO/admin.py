@@ -446,6 +446,8 @@ class ProjectAdmin(admin.ModelAdmin):
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "account":
 			kwargs["queryset"] = Account.objects.order_by('name')
+		if db_field.name == "owner" or db_field.name == "bill_to" or db_field.name == "bill_to_alt":
+			kwargs["queryset"] = User.objects.filter(is_active=True).order_by('last_name', 'first_name')
 		return super(ProjectAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 	def has_delete_permission(self, request, obj=None):

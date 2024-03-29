@@ -14,7 +14,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelatio
 from django.contrib.contenttypes.models import ContentType
 from django.core.mail import send_mail
 from django.db import models
-from django.db.models import Q
+from django.db.models import Q, Subquery
 from django.db.models.signals import pre_delete
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotFound, HttpResponseServerError, HttpResponseRedirect
 from django.urls import reverse
@@ -228,8 +228,16 @@ class User(models.Model):
 
 	def get_staff_charge(self):
 		try:
-			return StaffCharge.objects.get(staff_member=self.id, end=None)
-		except StaffCharge.DoesNotExist:
+			sc = StaffCharge.objects.filter(staff_member=self.id, end=None)
+
+			if sc is not None:
+				if sc[0].core_id_override is not None:
+					sc = sc.annotate(core_id_override_name=Subquery(Core.objects.filter(id=sc[0].core_id_override).values('name')))
+				if sc[0].credit_cost_collector_override is not None:
+					sc = sc.annotate(credit_cost_collector_override_name=Subquery(CreditCostCollector.objects.filter(id=sc[0].credit_cost_collector_override).values('name')))
+
+			return sc[0]
+		except:
 			return None
 
 	def get_overridden_staff_charges(self):
@@ -255,6 +263,14 @@ class User(models.Model):
 		except UsageEvent.DoesNotExist:
 			pass
 		return current_tool_use
+
+	def get_current_tools(self):
+		current_tools = None
+		try:
+			current_tools = UsageEvent.objects.filter(end=None, operator=self, active_flag=True)
+		except UsageEvent.DoesNotExist:
+			pass
+		return current_tools
 
 	def set_password(self, raw_password):
 		return False;
@@ -690,6 +706,7 @@ class StaffCharge(CalendarDisplay):
 	core_id_override = models.PositiveIntegerField(null=True, blank=True)
 	cost_per_sample_run = models.BooleanField(default=False)
 	related_usage_event = models.ForeignKey('UsageEvent', on_delete=models.SET_NULL, related_name='sc_related_usage_event', null=True, blank=True)
+	credit_cost_collector_override = models.PositiveIntegerField(null=True, blank=True)
 
 	def duration(self):
 		return calculate_duration(self.start, self.end, "In progress")

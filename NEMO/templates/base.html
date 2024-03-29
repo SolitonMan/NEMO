@@ -58,7 +58,7 @@
 <body>
 <div style="display:none" id="temp_holding_element"></div>
 <nav class="navbar navbar-default navbar-static-top"{% if device != "mobile" %} style="width: 100%;"{% endif %}>
-	<div class="container">
+	<div class="container"{% if device != "mobile" %} style="width: 90%;"{% endif %}>
 		<div class="navbar-header">
 			<button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#nemo-navigation">
 				<span class="icon-bar"></span>
@@ -159,16 +159,18 @@
 			</ul>
 			<ul class="nav navbar-nav navbar-right hidden-xs">
 				{% if user.is_staff and user.charging_staff_time %}
+				{% with user.get_staff_charge as staff_charge %}
 					<li class="hidden-sm">
 						<p class="navbar-text">
-							<a id="staff_charge_link" href="{% url 'staff_charges' %}" style="color:red; text-decoration: none" data-toggle="tooltip" data-placement="bottom" title="{% with user.get_staff_charge as staff_charge %}You are charging staff time to {{ staff_charge.customers.all.0 }} {% if staff_charge.customers.all.count > 1 %}and others{% endif %} since {{ staff_charge.start }}.{% endwith %}">
-								Staff time
+							<a id="staff_charge_link" href="{% url 'staff_charges' %}" style="color:red; text-decoration: none" data-toggle="tooltip" data-placement="bottom" title="You are charging staff time to {{ staff_charge.customers.all.0 }} {% if staff_charge.customers.all.count > 1 %}and others{% endif %} on the project {{ staff_charge.projects.all.0.project_number }} since {{ staff_charge.start }}. {% if staff_charge.core_id_override is not None and staff_charge.core_id_override != 0 %} These charges are being made for {{ staff_charge.core_id_override_name }} {% if staff_charge.credit_cost_collector_override is not None and staff_charge.credit_cost_collector_override != 0%} and being credited to {{ staff_charge.credit_cost_collector_override_name }}.{% endif %}{% endif %}">
+								Staff time ({{ staff_charge.projects.all.0.project_number }}{% if staff_charge.core_id_override is not None and staff_charge.core_id_override != 0 %} for {{ staff_charge.core_id_override_name }}{% else %}{% for ue in user.get_current_tools %}{% if staff_charge.related_usage_event == ue  %} for {{ ue.tool.core_id.name }}{% endif %}{% endfor %}{% endif %}) 
 							</a>
 						</p>
 						<script>
 							$("#staff_charge_link").tooltip();
 						</script>
 					</li>
+				{% endwith %}
 				{% endif %}
 				{% if user.active_projects.count == 0 %}
 				<li class="hidden-sm"><p class="navbar-text">Welcome, {{ user.first_name }}</p></li>

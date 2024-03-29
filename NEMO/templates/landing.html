@@ -107,7 +107,7 @@
 				{% if user.charging_staff_time and user.get_staff_charge is not None %}
 					{% with user.get_staff_charge as current_staff_charge %}
 					<div class="alert alert-warning">
-					You are currently charging staff time to {{ current_staff_charge.customers.all.0 }} for the project named {{ current_staff_charge.projects.all.0 }} since {{ current_staff_charge.start }}{% if current_staff_charge.customers.all.count > 1%}, along with other customers.{% else %}.{% endif %}
+					You are currently charging staff time to {{ current_staff_charge.customers.all.0 }} for the project named {{ current_staff_charge.projects.all.0 }} since {{ current_staff_charge.start }}{% if current_staff_charge.customers.all.count > 1%}, along with other customers.{% else %}.{% endif %}  Charges are being collected in {% if current_staff_charge.credit_cost_collector_override is not None and current_staff_charge.credit_cost_collector_override != 0 %}{{ current_staff_charge.credit_cost_collector_override_name }}{% else %}{{ user.credit_cost_collector.name }}{% endif %}
 					</div>
 					{% endwith %}
 				{% endif %}
@@ -136,6 +136,15 @@
 					</a>
 				{% endif %}
 			</div>
+		{% endif %}
+		{% if user.charging_staff_time and user.get_staff_charge is not None and not usage_events and not user.in_area and not self_log_in%}
+		{% with user.get_staff_charge as current_staff_charge %}
+		<div class="col-lg-4">
+		<div class="alert alert-warning">
+		You are currently charging staff time to {{ current_staff_charge.customers.all.0 }} for the project named {{ current_staff_charge.projects.all.0 }} since {{ current_staff_charge.start }}{% if current_staff_charge.customers.all.count > 1%}, along with other customers.{% else %}.{% endif %}  Charges are being collected in {% if current_staff_charge.credit_cost_collector_override is not None %}{{ current_staff_charge.credit_cost_collector_override_name }}{% else %}{{ user.credit_cost_collector.name }}{% endif %}
+		</div>
+		</div>
+		{% endwith %}
 		{% endif %}
 	</div>
 	</div>

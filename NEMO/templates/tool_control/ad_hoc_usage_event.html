@@ -260,6 +260,26 @@
 	<tr>
 		<td colspan=2>
 			<div class="checkbox"><label><input type="checkbox" name="staff_charge" id="staff_charge" value="1" checked />Include a staff charge for the same customer(s), project(s) and time period.  Any discrepancies can be addressed via the contest feature.</label></div>
+
+			{% if multi_core_user %}
+			<select id="ad_hoc_core_select" name="ad_hoc_core_select" class="form-control" onchange="ad_hoc_core_override_select();">
+				<option value="0">Please select the core for which this charge is being made</option>
+				{% for c in request.user.core_ids.all %}
+				<option value="{{ c.id }}">{{ c.name }}</option>
+				{% endfor %}
+			</select>
+
+			<select id="ad_hoc_credit_cost_collector_select" name="ad_hoc_credit_cost_collector_select" class="form-control" style="display: none;">
+				<option value="0">You may select a credit cost collector to receive funds for this work</option>
+			{% for c in request.user.core_ids.all %}
+
+				{% for ccc in c.creditcostcollector_set.all %}
+					<option value="{{ ccc.id }}" style="display: none;" class="core_{{ c.id }}">{{ ccc.name }}</option>
+				{% endfor %}
+
+			{% endfor %}
+			</select>
+			{% endif %}
 		</td>	
 	</tr>
 	<tr>

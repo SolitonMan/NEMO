@@ -164,8 +164,8 @@ def tool_control(request, tool_id=None, qualified_only=None, core_only=None):
 	# users = User.objects.filter(is_active=True, projects__active=True).exclude(id=request.user.id).annotate(project_number=ArrayAgg('projects2dcc__project_id', distinct=True)).distinct()
 	users = User.objects.filter(is_active=True, projects__active=True).exclude(id=request.user.id).annotate(project_number=F('projects2dcc__project_id')).distinct()
 
-	if user_2dcc and request.user.core_ids.all().count() == 1:
-		users = users.filter(is_staff=False, projects2dcc__in=request.user.projects2dcc.all())
+	#if user_2dcc and request.user.core_ids.all().count() == 1:
+		#users = users.filter(is_staff=False, projects2dcc__in=request.user.projects2dcc.all())
 		
 	if tool_id is None:
 		tool_id = 0
@@ -180,6 +180,10 @@ def tool_control(request, tool_id=None, qualified_only=None, core_only=None):
 		'user_2dcc': user_2dcc,
 	}
 
+	if request.user.core_ids.count() > 1:
+		dictionary['multi_core_user'] = True
+	else:
+		dictionary['multi_core_user'] = False
 
 	if request.user.charging_staff_time():
 		# retrieve staff charges to provide a current listing of customers
@@ -240,6 +244,13 @@ def tool_status(request, tool_id):
 		'post_usage_questions': DynamicForm(tool.post_usage_questions).render(),
 		'upcoming': upcoming,
 	}
+
+	# set multi core user flag
+	if request.user.core_ids.count() > 1:
+		dictionary['multi_core_user'] = True
+	else:
+		dictionary['multi_core_user'] = False
+
 
 	try:
 		
@@ -475,6 +486,10 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge, billing_mod
 			new_staff_charge.related_usage_event = new_usage_event
 			if billing_mode:
 				new_staff_charge.cost_per_sample_run = True
+			if request.POST.get('core_select', None) != None and request.POST.get('core_select') != '0':
+				new_staff_charge.core_id_override = int(request.POST.get('core_select'))
+			if request.POST.get('credit_cost_collector_select', None) != None and request.POST.get('credit_cost_collector_select') != '0':
+				new_staff_charge.credit_cost_collector_override = int(request.POST.get('credit_cost_collector_select'))
 			new_staff_charge.save()
 
 			# create a staff_charge_project record
@@ -718,6 +733,10 @@ def enable_tool_multi(request):
 			new_staff_charge.related_usage_event = new_usage_event
 			if billing_mode:
 				new_staff_charge.cost_per_sample_run = True
+			if request.POST.get('core_select', None) != None and request.POST.get('core_select') != '0':
+				new_staff_charge.core_id_override = int(request.POST.get('core_select'))
+			if request.POST.get('credit_cost_collector_select', None) != None and request.POST.get('credit_cost_collector_select') != '0':
+				new_staff_charge.credit_cost_collector_override = int(request.POST.get('credit_cost_collector_select'))
 			new_staff_charge.save()
 	
 		project_charges = {}
@@ -1278,6 +1297,11 @@ def create_usage_event(request):
 		'show_confirm': show_confirm,
 	}
 
+	if request.user.core_ids.count() > 1:
+		dictionary['multi_core_user'] = True
+	else:
+		dictionary['multi_core_user'] = False
+
 	return render(request, 'tool_control/ad_hoc_usage_event.html', dictionary)
 
 
@@ -1454,6 +1478,10 @@ def save_usage_event(request):
 			new_staff_charge.end = ad_hoc_end
 			if request.POST.get("operator_comment") is not None:
 				new_staff_charge.staff_member_comment = request.POST.get("operator_comment")
+			if request.POST.get('ad_hoc_core_select', None) != None and request.POST.get('ad_hoc_core_select') != '0':
+				new_staff_charge.core_id_override = int(request.POST.get('ad_hoc_core_select'))
+			if request.POST.get('ad_hoc_credit_cost_collector_select', None) != None and request.POST.get('ad_hoc_credit_cost_collector_select') != '0':
+				new_staff_charge.credit_cost_collector_override = int(request.POST.get('ad_hoc_credit_cost_collector_select'))
 			new_staff_charge.ad_hoc_created = True
 			new_staff_charge.related_usage_event = new_usage_event
 			new_staff_charge.save()

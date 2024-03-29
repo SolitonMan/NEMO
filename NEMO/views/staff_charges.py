@@ -10,7 +10,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.core import mail
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
-from django.db.models import Q, Max
+from django.db.models import F, Q, Max
 from django.shortcuts import render, redirect
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -53,6 +53,11 @@ def staff_charges(request):
 	}
 	render_path = ''
 
+	user_2dcc = False
+	if request.user.is_staff:
+		if "2DCC" in request.user.core_ids.values_list('name', flat=True):
+			user_2dcc = True
+
 	charging_staff_time = False
 	charging_area_time = False
 
@@ -88,7 +93,10 @@ def staff_charges(request):
 			return render(request, 'staff_charges/choose_project.html', {'customer': customer})
 		else:
 			error = str(customer) + ' does not have any active projects. You cannot bill staff time to this user.'
-	users = User.objects.filter(is_active=True).exclude(id=request.user.id)
+	users = User.objects.filter(is_active=True, projects__active=True).exclude(id=request.user.id).annotate(project_number=F('projects2dcc__project_id')).distinct()
+
+	#if user_2dcc and request.user.core_ids.all().count() == 1:
+		#users = users.filter(is_staff=False, projects2dcc__in=request.user.projects2dcc.all())
 
 	params['users'] = users 
 	params['error'] = error
@@ -144,6 +152,7 @@ def staff_charges(request):
 	params['show_confirm'] = show_confirm
 	params['charging_staff_time'] = charging_staff_time
 	params['charging_area_time'] = charging_area_time
+	params['user_2dcc'] = user_2dcc
 
 	return render(request, render_path, params)
 
@@ -160,8 +169,10 @@ def begin_staff_charge(request):
 		charge.staff_member = request.user
 		charge.created = timezone.now()
 		charge.updated = timezone.now()
-		if request.POST.get('core_select', None) != None:
+		if request.POST.get('core_select', None) != None and request.POST.get('core_select') != '0':
 			charge.core_id_override = int(request.POST.get('core_select'))
+		if request.POST.get('credit_cost_collector_select', None) != None and request.POST.get('credit_cost_collector_select') != '0':
+			charge.credit_cost_collector_override = int(request.POST.get('credit_cost_collector_select'))
 		charge.save()
 
 		project_charges = {}
@@ -445,6 +456,11 @@ def ad_hoc_staff_charge(request):
 			else:
 				params['area_id'] = None
 
+			if request.POST.get('ad_hoc_core_select', None) != None and request.POST.get('ad_hoc_core_select') != '0':
+				params['core_id_override'] = int(request.POST.get('ad_hoc_core_select'))
+			if request.POST.get('ad_hoc_credit_cost_collector_select', None) != None and request.POST.get('ad_hoc_credit_cost_collector_select') != '0':
+				params['credit_cost_collector_override'] = int(request.POST.get('ad_hoc_credit_cost_collector_select'))
+
 			return render(request, 'staff_charges/ad_hoc_overlap.html', params)
 
 		# dates are legitimate and no overlapping conflicts so save ad hoc charge
@@ -461,8 +477,10 @@ def ad_hoc_staff_charge(request):
 			charge.staff_member_comment = request.POST.get("staff_member_comment")
 		charge.created = timezone.now()
 		charge.updated = timezone.now()
-		if request.POST.get('core_select', None) != None:
-			charge.core_id_override = int(request.POST.get('core_select'))
+		if request.POST.get('ad_hoc_core_select', None) != None and request.POST.get('ad_hoc_core_select') != '0':
+			charge.core_id_override = int(request.POST.get('ad_hoc_core_select'))
+		if request.POST.get('ad_hoc_credit_cost_collector_select', None) != None and request.POST.get('ad_hoc_credit_cost_collector_select') != '0':
+			charge.credit_cost_collector_override = int(request.POST.get('ad_hoc_credit_cost_collector_select'))
 
 		if save_charge:	
 			charge.save()
@@ -762,6 +780,10 @@ def ad_hoc_overlap_resolution(request):
 		ahc.end = request.POST.get("ad_hoc_end")
 		ahc.ad_hoc_created = True
 		ahc.staff_member = request.user
+		if request.POST.get('ad_hoc_core_select', None) != None and request.POST.get('ad_hoc_core_select') != '0':
+			ahc.core_id_override = int(request.POST.get('ad_hoc_core_select'))
+		if request.POST.get('ad_hoc_credit_cost_collector_select', None) != None and request.POST.get('ad_hoc_credit_cost_collector_select') != '0':
+			ahc.credit_cost_collector_override = int(request.POST.get('ad_hoc_credit_cost_collector_select'))
 		ahc.created = timezone.now()
 		ahc.updated = timezone.now()
 		ahc.save()
@@ -947,6 +969,8 @@ def sc_clone(request, charge_to_clone, new_charge_start, new_charge_end):
 	new_charge.start = new_charge_start
 	new_charge.end = new_charge_end
 	new_charge.ad_hoc_created = True
+	new_charge.core_id_override = charge_to_clone.core_id_override
+	new_charge.credit_cost_collector_override = charge_to_clone.credit_cost_collector_override
 	new_charge.created = timezone.now()
 	new_charge.updated = timezone.now()
 	new_charge.save()
@@ -1251,6 +1275,8 @@ def continue_staff_charge(request, staff_charge_id):
 		new_staff_charge.start = timezone.now()
 		new_staff_charge.charge_end_override = False
 		new_staff_charge.override_confirmed = False
+		new_staff_charge.core_id_override = staff_charge.core_id_override
+		new_staff_charge.credit_cost_collector_override = staff_charge.credit_cost_collector_override
 		new_staff_charge.created = timezone.now()
 		new_staff_charge.updated = timezone.now()
 		new_staff_charge.save()

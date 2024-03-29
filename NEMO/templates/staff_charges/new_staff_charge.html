@@ -30,11 +30,22 @@
 		<p>Use this form to charge one or more customers for staff time and area access time when you are working on a project on their behalf.  This will track your charges in real time.</p>
 		{% csrf_token %}
 		{% if multi_core_user %}
-		<select id="core_select" name="core_select" class="form-control">
+		<select id="core_select" name="core_select" class="form-control" onchange="core_override_select();">
 			<option value="0">Please select the core for which this charge is being made</option>
 			{% for c in request.user.core_ids.all %}
 			<option value="{{ c.id }}">{{ c.name }}</option>
 			{% endfor %}
+		</select>
+
+		<select id="credit_cost_collector_select" name="credit_cost_collector_select" class="form-control" style="display: none;">
+			<option value="0">You may select a credit cost collector to receive funds for this work</option>
+		{% for c in request.user.core_ids.all %}
+	
+			{% for ccc in c.creditcostcollector_set.all %}
+				<option value="{{ ccc.id }}" style="display: none;" class="core_{{ c.id }}">{{ ccc.name }}</option>
+			{% endfor %}
+	
+		{% endfor %}
 		</select>
 		{% endif %}
 
@@ -214,12 +225,23 @@
 		{% csrf_token %}
 		<br/><br/>
 		{% if multi_core_user %}
-		<select id="ad_hoc_core_select" name="ad_hoc_core_select" class="form-control">
+		<select id="ad_hoc_core_select" name="ad_hoc_core_select" class="form-control" onchange="ad_hoc_core_override_select();">
 			<option value="0">Please select the core for which this charge is being made</option>
 			{% for c in request.user.core_ids.all %}
 			<option value="{{ c.id }}">{{ c.name }}</option>
 			{% endfor %}
 		</select>
+
+		<select id="ad_hoc_credit_cost_collector_select" name="ad_hoc_credit_cost_collector_select" class="form-control" style="display: none;">
+			<option value="0">You may select a credit cost collector to receive funds for this work</option>
+		{% for c in request.user.core_ids.all %}
+
+			{% for ccc in c.creditcostcollector_set.all %}
+				<option value="{{ ccc.id }}" style="display: none;" class="ad_hoc_core_{{ c.id }}">{{ ccc.name }}</option>
+			{% endfor %}
+		{% endfor %}
+                </select>
+
 		{% endif %}
 		<br/><br/>
 
@@ -394,6 +416,48 @@
 			 $("#existing_charges").hide("slow");
 		}
 
+		function core_override_select()
+		{
+			var iCore = $("#core_select option:selected").val();
+
+			var sCore = ".core_" + iCore;
+			$("#credit_cost_collector_select").css("display","none");
+			$("#credit_cost_collector_select option").each(function() {
+				$(this).css("display","none").prop("selected", false);
+			});
+
+			$(sCore).each(function() {
+				$(this).css("display","inline");
+			});
+
+			if ($(sCore).length > 0) {
+				$("#credit_cost_collector_select").css("display","inline");
+			} else {
+				$("#credit_cost_collector_select option").css("display","none");	
+			}
+		}
+
+		function ad_hoc_core_override_select()
+		{
+			var iCore = $("#ad_hoc_core_select option:selected").val();
+
+			var sCore = ".ad_hoc_core_" + iCore;
+			$("#ad_hoc_credit_cost_collector_select").css("display","none");
+			$("#ad_hoc_credit_cost_collector_select option").each(function() {
+				$(this).css("display","none").prop("selected", false);
+			});
+
+			$(sCore).each(function() {
+				$(this).css("display","inline");
+			});
+
+			if ($(sCore).length > 0) {
+				$("#ad_hoc_credit_cost_collector_select").css("display","inline");
+			} else {
+				$("#ad_hoc_credit_cost_collector_select option").css("display","none");
+			}
+		}
+
 		function select_user(jquery_event, search_selection, dataset_name)
 		{
 			$("#customer").val(search_selection.id);
@@ -426,14 +490,22 @@
 		function enable_autocompletion(entry_number)
 		{
 			var id = "#user_textbox__" + entry_number;
-			$(id).autocomplete('user', on_autocomplete_selection, {{ users|json_search_base }}).focus();
+			{% if user_2dcc %}
+			$(id).autocomplete('user', on_autocomplete_selection, {% json_search_base_with_extra_fields users 'username' 'project_number' %}).focus();
+			{% else %}
+			$(id).autocomplete('user', on_autocomplete_selection, {{ users|json_search_base}}).focus();
+			{% endif %}
 		}
 
 		function enable_ad_hoc_autocompletion(entry_number)
                 {
                         var id = "#ad_hoc_user_textbox__" + entry_number;
+			{% if user_2dcc %}
+			$(id).autocomplete('user', on_ad_hoc_autocomplete_selection, {% json_search_base_with_extra_fields users 'username' 'project_number' %}).focus();
+			{% else %}
                         $(id).autocomplete('user', on_ad_hoc_autocomplete_selection, {{ users|json_search_base }}).focus();
-                }
+			{% endif %}
+		}
 
 		function remove_row(number)
 		{

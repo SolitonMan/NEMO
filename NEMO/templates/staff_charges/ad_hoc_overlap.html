@@ -10,6 +10,14 @@
 	{% csrf_token %}
 	{% if include_area_access is not None %}<input type="hidden" name="include_area_access" value="{{ include_area_access }}" />{% endif %}
 	{% if area_id is not None %}<input type="hidden" name="area_id" value="{{ area_id }}" />{% endif %}
+	
+	{% if core_id_override %}
+	<input type="hidden" name="ad_hoc_core_select" value="{{ core_id_override }}" />
+	{% endif %}
+	{% if  credit_cost_collector_override %}
+	<input type="hidden" name="ad_hoc_credit_cost_collector_select" value="{{ credit_cost_collector_override }}" />
+	{% endif %}
+
 	<table class="table">
 		<tr>
 			<th>Start Time Selected:</th>
