@@ -991,17 +991,17 @@ def disable_tool(request, tool_id):
 
 		#if existing_staff_charge.customers == current_usage_event.customers and existing_staff_charge.projects == current_usage_event.projects:
 
-		b_current = True
+		#b_current = True
 
-		for scp in existing_staff_charge.staffchargeproject_set.all():
-			if not current_usage_event.usageeventproject_set.filter(project=scp.project, customer=scp.customer).exists():
-				b_current = False
+		#for scp in existing_staff_charge.staffchargeproject_set.all():
+		#	if not current_usage_event.usageeventproject_set.filter(project=scp.project, customer=scp.customer).exists():
+		#		b_current = False
 
-		for uep in current_usage_event.usageeventproject_set.all():
-			if not existing_staff_charge.staffchargeproject_set.filter(project=uep.project, customer=uep.customer).exists():
-				b_current = False
+		#for uep in current_usage_event.usageeventproject_set.all():
+		#	if not existing_staff_charge.staffchargeproject_set.filter(project=uep.project, customer=uep.customer).exists():
+		#		b_current = False
 
-		if b_current:
+		if current_usage_event == existing_staff_charge.related_usage_event:
 			return render(request, 'staff_charges/reminder.html', {'tool': tool, 'staff_charge': existing_staff_charge})
 
 	if request.user.in_area():
@@ -1091,25 +1091,26 @@ def disable_tool_multi(request, tool_id, usage_event, dynamic_form):
 				existing_staff_charge = request.user.get_staff_charge()
 				#if existing_staff_charge.customers.all()[0] == usage_event.user and existing_staff_charge.projects.all()[0] == usage_event.project:
 				# set a flag to show that the reminder should be shown
-				b_current = True
+				#b_current = True
 
 				# check that each staff charge project record for the current staff charge has a matching record for the current usage event project records
-				for scp in existing_staff_charge.staffchargeproject_set.all():
-					if not usage_event.usageeventproject_set.filter(project=scp.project, customer=scp.customer).exists():
-						b_current = False
+				#for scp in existing_staff_charge.staffchargeproject_set.all():
+				#	if not usage_event.usageeventproject_set.filter(project=scp.project, customer=scp.customer).exists():
+				#		b_current = False
 
 				# also check the reverse to ensure there are no extraneous usage event project records missed in the previous loop
-				for uep in usage_event.usageeventproject_set.all():
-					if not existing_staff_charge.staffchargeproject_set.filter(project=uep.project, customer=uep.customer).exists():
-						b_current = False
+				#for uep in usage_event.usageeventproject_set.all():
+				#	if not existing_staff_charge.staffchargeproject_set.filter(project=uep.project, customer=uep.customer).exists():
+				#		b_current = False
 
 				
 
-				if b_current:
-					response = render(request, 'staff_charges/reminder.html', {'tool': tool, 'staff_charge': existing_staff_charge })
-				else:
+				#if b_current:
+				#	response = render(request, 'staff_charges/reminder.html', {'tool': tool, 'staff_charge': existing_staff_charge })
+				if existing_staff_charge.related_usage_event == usage_event:
 					response = render(request, 'staff_charges/general_reminder.html', { 'staff_charge': existing_staff_charge})
-
+				else:
+					response = render(request, 'tool_control/disable_confirmation.html', {'tool': tool})
 				return response
 
 			else:
@@ -1213,8 +1214,10 @@ def usage_event_projects_save(request):
 		if request.user.charging_staff_time():
 			existing_staff_charge = request.user.get_staff_charge()
 
-			response = render(request, 'staff_charges/general_reminder.html', {'staff_charge': existing_staff_charge})
-			return response
+			if existing_staff_charge.related_usage_event == event:
+
+				response = render(request, 'staff_charges/general_reminder.html', {'staff_charge': existing_staff_charge})
+				return response
 
 		return render(request, 'tool_control/disable_confirmation.html', {'tool': tool})
 

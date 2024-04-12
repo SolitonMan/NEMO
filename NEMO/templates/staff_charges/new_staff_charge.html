@@ -42,9 +42,22 @@
 		{% for c in request.user.core_ids.all %}
 	
 			{% for ccc in c.creditcostcollector_set.all %}
+			{% if ccc.project.active %}
 				<option value="{{ ccc.id }}" style="display: none;" class="core_{{ c.id }}">{{ ccc.name }}</option>
+			{% endif %}
 			{% endfor %}
 	
+		{% endfor %}
+		</select>
+		{% else %}
+		<select id="credit_cost_collector_select" name="credit_cost_collector_select" class="form-control">
+			<option value="0">You may select a credit cost collector to receive funds for this work</option>
+		{% for c in request.user.core_ids.all %}
+			{% for ccc in c.creditcostcollector_set.all %}
+			{% if ccc.project.active %}
+				<option value="{{ ccc.id }}" class="core_{{ c.id }}">{{ ccc.name }}</option>
+			{% endif %}
+			{% endfor %}
 		{% endfor %}
 		</select>
 		{% endif %}
@@ -237,11 +250,23 @@
 		{% for c in request.user.core_ids.all %}
 
 			{% for ccc in c.creditcostcollector_set.all %}
+			{% if ccc.project.active %}
 				<option value="{{ ccc.id }}" style="display: none;" class="ad_hoc_core_{{ c.id }}">{{ ccc.name }}</option>
+			{% endif %}
 			{% endfor %}
 		{% endfor %}
                 </select>
-
+		{% else %}
+		<select id="ad_hoc_credit_cost_collector_select" name="ad_hoc_credit_cost_collector_select" class="form-control">
+			<option value="0">You may select a credit cost collector to receive funds for this work</option>
+		{% for c in request.user.core_ids.all %}
+			{% for ccc in c.creditcostcollector_set.all %}
+			{% if ccc.project.active %}
+				<option value="{{ ccc.id }}" class="ad_hoc_core_{{ c.id }}">{{ ccc.name }}</option>
+			{% endif %}
+			{% endfor %}
+		{% endfor %}
+		</select>
 		{% endif %}
 		<br/><br/>
 
