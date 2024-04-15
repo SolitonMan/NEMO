@@ -1,6 +1,7 @@
 from logging import getLogger
 from smtplib import SMTPException
 
+from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group
@@ -18,6 +19,7 @@ from django.views.decorators.http import require_GET, require_POST, require_http
 
 from NEMO.forms import EmailBroadcastForm
 from NEMO.models import Area, Tool, Account, Core, Project, User, UsageEvent, UsageEventProject, StaffCharge, StaffChargeProject, AreaAccessRecord, AreaAccessRecordProject, Consumable, ConsumableWithdraw
+from NEMO.utilities import EmailCategory, create_email_log
 from NEMO.views.customization import get_media_file_contents
 
 
@@ -372,14 +374,13 @@ def send_broadcast_email(request):
 		content = content.replace("\r\n", "<br />")
 
 		for u in users:
-			#email = EmailMultiAlternatives(subject, from_email=request.user.email, bcc=set(users))
-			#email = EmailMessage(subject, from_email=request.user.email, to=set(u))
-			#email.attach_alternative(content, 'text/html')
-			#email.send()
-			mail.send_mail(subject, strip_tags(content), request.user.email, [u], html_message=content)
+			email = mail.EmailMessage(subject, strip_tags(content), request.user.email, [u], reply_to=['LEOHelp@psu.edu'])
+			create_email_log(email, EmailCategory.GENERAL)
+			if settings.EMAIL_ENVIRONMENT == "PRODUCTION":
+				mail.send_mail(subject, strip_tags(content), request.user.email, [u], html_message=content)
 
 	except SMTPException as error:
-		error_message = 'NEMO was unable to send the email through the email server. The error message that NEMO received is: ' + str(error)
+		error_message = 'NEMO was unable to send the email through the email server. The error message that NEMO received is: ' + str(error) + ' for users with emails: ' + str(users)
 		logger.exception(error_message)
 		dictionary = {
 			'title': 'Email not sent',
