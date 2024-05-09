@@ -2,7 +2,7 @@
 {% load custom_tags_and_filters %}
 {% block title %}Transaction Validation{% endblock %}
 {% block content %}
-
+{% autoescape off %}
 <style>
 p {
 	font-weight: bold;
@@ -610,4 +610,6 @@ function edit_comment(id, type, comment)
 	$("#dialog").modal('show');
 }
 </script>
+{% endautoescape %}
+
 {% endblock %}

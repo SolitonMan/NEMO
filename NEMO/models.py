@@ -338,6 +338,10 @@ class Project2DCC(models.Model):
 
 	def __str__(self):
 		return str(self.project_id)
+
+	@property
+	def name(self):
+		return str(self.project_id)
 	
 
 class UserRelationshipType(models.Model):

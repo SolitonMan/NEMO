@@ -17,7 +17,7 @@ from django.utils import timezone
 from django.utils.dateformat import DateFormat
 from django.views.decorators.http import require_GET, require_POST
 
-from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, AreaAccessRecordProjectSample, Consumable, ConsumableWithdraw, ContestTransaction, ContestTransactionData, ContestTransactionNewData, LockBilling, Project, UsageEvent, UsageEventProject, UsageEventProjectSample, StaffCharge, StaffChargeProject, StaffChargeProjectSample, Tool, User
+from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, AreaAccessRecordProjectSample, Consumable, ConsumableWithdraw, ContestTransaction, ContestTransactionData, ContestTransactionNewData, Core, CreditCostCollector, LockBilling, Project, UsageEvent, UsageEventProject, UsageEventProjectSample, StaffCharge, StaffChargeProject, StaffChargeProjectSample, Tool, User
 from NEMO.utilities import month_list, get_month_timeframe
 
 
@@ -166,7 +166,7 @@ def remote_work(request):
 				'type': transaction_type,
 				'id': s.id,
 				'operator': str(s.staff_member),
-				'tool': 'Staff Charge',
+				'tool': 'Staff Charge' + show_override(s),
 				'start': s.start,
 				'end': s.end,
 				'validated': s.validated,
@@ -414,6 +414,19 @@ def remote_work(request):
 	}
 	return render(request, 'remote_work.html', dictionary)
 
+
+def show_override(staff_charge):
+	ret = ''
+
+	if staff_charge.core_id_override is not None:
+		core = get_object_or_404(Core, id=staff_charge.core_id_override)
+		ret += '<br/><span style="font-size: 8pt;">Core: ' + str(core) + '</span>'
+
+	if staff_charge.credit_cost_collector_override is not None:
+		ccc = get_object_or_404(CreditCostCollector, id=staff_charge.credit_cost_collector_override)
+		ret += '<br/><span style="font-size: 8pt;">Collector: ' + str(ccc) + '</span>'
+
+	return ret
 
 @staff_member_required(login_url=None)
 @require_POST
