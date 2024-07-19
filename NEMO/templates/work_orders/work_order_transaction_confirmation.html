@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% load custom_tags_and_filters %}
+{% block title %}Work Order {{ work_order_transaction.work_order.work_order_number }} Transaction Confirmation{% endblock %}
+
+{% block content %}
+	<h1>Work Order Transaction Processed</h1>
+
+{% if work_order_transaction is not None %}
+	<p>The following work order transaction has been added:</p>
+
+	<table class="table">
+	<tr>
+		<th>Work Order Number</th>
+		<td>{{ work_order_transaction.work_order.work_order_number }}</td>
+	</tr>
+	<tr>
+		<th>Customer</th>
+		<td>{{ work_order_transaction.work_order.customer }}</td>
+	</tr>
+	<tr>
+		<th>Status</th>
+		{% if work_order_transaction.work_order.status == 1 %}
+		<td>Open</td>
+		{% else %}
+		<td>Closed</td>
+		{% endif %}
+	</tr>
+	<tr>
+		<th>Transaction Type</th>
+		<td>{{ work_order_transaction.content_type }}</td>
+	</tr>
+	<tr>
+		<th>Transaction Detail</th>
+		<td>{{ work_order_transaction.content_object }}</td>
+	</tr>
+	</table>
+
+{% else %}
+	<p>The work order transaction has been deleted</p>	
+{% endif %}
+
+
+
+
+{% endblock %} 
