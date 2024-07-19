@@ -112,13 +112,14 @@ def area_access_logout_reminder():
 			area = r.area
 			start = r.start
 
-			subject = "Access to " + str(area) + " since " + str(start)
+			if not recipient.is_staff:
+				subject = "Access to " + str(area) + " since " + str(start)
 
-			message = "<p>Hello " + str(recipient.first_name) + " " + str(recipient.last_name) + ",</p>"
-			message += "<p>LEO has detected that you have been logged in to the " + str(area) + " since " + str(start) + ".  If this is intended please ignore this message.  If you didn't intend to be logged in this long, please log out and submit a contest for the resulting Area Access record to correct the error.  If you have any questions please contact LEOHelp@psu.edu.</p>"
-			message += "<p>Thank you,<br>The LEO Team</p>"
+				message = "<p>Hello " + str(recipient.first_name) + " " + str(recipient.last_name) + ",</p>"
+				message += "<p>LEO has detected that you have been logged in to the " + str(area) + " since " + str(start) + ".  If this is intended please ignore this message.  If you didn't intend to be logged in this long, please log out and submit a contest for the resulting Area Access record to correct the error.  If you have any questions please contact LEOHelp@psu.edu.</p>"
+				message += "<p>Thank you,<br>The LEO Team</p>"
 
-			mail.send_mail(subject, strip_tags(message), recipient.email, [recipient.email], html_message=message)
+				mail.send_mail(subject, strip_tags(message), recipient.email, [recipient.email], html_message=message)
 
 
 def excessive_tool_use_reminder():
@@ -138,31 +139,33 @@ def excessive_tool_use_reminder():
 
 			# see if a related reservation exists for this tool
 			usage_event = t.get_current_usage_event()
-			if t.maximum_usage_block_time is not None:
-				use_block_limit = t.maximum_usage_block_time
 
-			if (timezone.now() - usage_event.start) >= timedelta(minutes=use_block_limit):
-				b_send_message = False
-				# send a notice if none has been sent recently
-				if ToolUseNotificationLog.objects.filter(usage_event=usage_event).exists():
-					tunl = ToolUseNotificationLog.objects.filter(usage_event=usage_event).order_by('-sent')
-					last_sent = tunl[0].sent
-					if timezone.now() - last_sent >= timedelta(minutes=last_sent_interval):
+			if not usage_event.operator.is_staff:
+				if t.maximum_usage_block_time is not None:
+					use_block_limit = t.maximum_usage_block_time
+
+				if (timezone.now() - usage_event.start) >= timedelta(minutes=use_block_limit):
+					b_send_message = False
+					# send a notice if none has been sent recently
+					if ToolUseNotificationLog.objects.filter(usage_event=usage_event).exists():
+						tunl = ToolUseNotificationLog.objects.filter(usage_event=usage_event).order_by('-sent')
+						last_sent = tunl[0].sent
+						if timezone.now() - last_sent >= timedelta(minutes=last_sent_interval):
+							b_send_message = True
+					else:
 						b_send_message = True
-				else:
-					b_send_message = True
 
-				if b_send_message:
-					recipient = usage_event.operator
-					subject = "Use of the " + t.name + " since " + str(usage_event.start)
+					if b_send_message and not usage_event.operator.is_staff:
+						recipient = usage_event.operator
+						subject = "Use of the " + t.name + " since " + str(usage_event.start)
 
-					message = "<p>Hello " + str(recipient.first_name) + " " + str(recipient.last_name) + ",</p>"
-					message += "<p>LEO has detected that you have been logged in to the " + str(t.name) + " since " + str(usage_event.start) + ".  If this is intended please ignore this message.  If you didn't intend to be logged in this long, please log out and submit a contest for the resulting Usage Event record as well as any related Staff Charge, Area Access or Consumable Withdraw records as necessary to correct the error(s).  If you have any questions please contact LEOHelp@psu.edu.</p>"
-					message += "<p>Thank you,<br>The LEO Team</p>"
+						message = "<p>Hello " + str(recipient.first_name) + " " + str(recipient.last_name) + ",</p>"
+						message += "<p>LEO has detected that you have been logged in to the " + str(t.name) + " since " + str(usage_event.start) + ".  If this is intended please ignore this message.  If you didn't intend to be logged in this long, please log out and submit a contest for the resulting Usage Event record as well as any related Staff Charge, Area Access or Consumable Withdraw records as necessary to correct the error(s).  If you have any questions please contact LEOHelp@psu.edu.</p>"
+						message += "<p>Thank you,<br>The LEO Team</p>"
 
-					mail.send_mail(subject, strip_tags(message), 'LEOHelp@psu.edu', [recipient.email], html_message=message)
+						mail.send_mail(subject, strip_tags(message), 'LEOHelp@psu.edu', [recipient.email], html_message=message)
 
-					tl = ToolUseNotificationLog.objects.create(tool=t, usage_event=usage_event, message=message, sent=timezone.now())
+						tl = ToolUseNotificationLog.objects.create(tool=t, usage_event=usage_event, message=message, sent=timezone.now())
 					
 
 # Items below here are deprecated

@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% load custom_tags_and_filters %}
+{% block title %}Ad Hoc Usage Event Confirmation{% endblock %}
+
+{% block content %}
+	<h1>Work Order Created</h1>
+
+	<p>The following work order has been created:</p>
+
+	<table class="table">
+	<tr>
+		<th>Work Order Number</th>
+		<td>{{ work_order.work_order_number }}</td>
+	</tr>
+	<tr>
+		<th>Customer</th>
+		<td>{{ work_order.customer }}</td>
+	</tr>
+	<tr>
+		<th>Status</th>
+		{% if work_order.status == 1 %}
+		<td>Open</td>
+		{% else %}
+		<td>Closed</td>
+		{% endif %}
+	</tr>
+	<tr>
+		<th>Notes</th>
+		<td>{{ work_order.notes }}</td>
+	</tr>
+	</table>
+
+	<button class="btn btn-success" onclick="location.href='{% url 'work_orders' %}';">Return to Work Orders</button>
+{% endblock %} 

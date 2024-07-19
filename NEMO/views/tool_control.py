@@ -1394,7 +1394,7 @@ def save_usage_event(request):
 		new_usage_event.ad_hoc_created = True
 		if request.POST.get("operator_comment") is not None:
 			new_usage_event.operator_comment = request.POST.get("operator_comment")
-		project_id = request.POST.get("chosen_project__0", None)
+		project_id = request.POST.get("chosen_project__1", None)
 		if project_id is not None and project_id != "":
 			project_id = int(project_id)
 			current_project = Project.objects.get(id=project_id)
@@ -1403,7 +1403,7 @@ def save_usage_event(request):
 			else:
 				msg = 'The project ' + str(current_project.project_number) + ' cannot be used with a transaction that has a date range of ' + str(new_usage_event.start) + ' to ' + str(new_usage_event.end) + ' because the project active date range is ' + str(current_project.start_date) + ' to ' + str(current_project.end_date)
 				raise Exception(msg)
-		user_id = request.POST.get("chosen_user__0", None)
+		user_id = request.POST.get("chosen_user__1", None)
 		if user_id is not None and user_id != "":
 			user_id = int(user_id)
 			new_usage_event.user = User.objects.get(id=user_id)

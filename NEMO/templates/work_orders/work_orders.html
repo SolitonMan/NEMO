@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% load custom_tags_and_filters %}
+{% block title %}Work Orders{% endblock %}
+
+{% block content %}
+	<h1>Work Orders</h1>
+
+	<p>On this page you can view existing work orders or create a new one.</p>
+	<input type="text" value="" id="filter" name="filter" placeholder="Filter work orders" class="form-control" style="position:relative; display: inline; float: left; width: 25%;" />
+	<button class="btn btn-success" id="create" style="position:relative; display: inline; float: right;" onclick="location.href='{% url 'create_work_order' %}'">Add Work Order</button>
+	<table class="table">
+		<thead>
+			<tr>
+			<th>Work Order Number</th>
+			<th>Customer</th>
+			<th>Status</th>
+			<th>Notes</th>
+			<th>Created</th>
+			</tr>
+		</thead>
+		<tbody id="work_orders">
+	{% for w in work_orders %}
+			<tr>
+			<td><a href="{% url 'work_order_transactions' w.id %}">{{ w.work_order_number }}</a></td>
+			<td>{{ w.customer }}</td>
+			<td>{% if w.status == 1 %}OPEN{% else %}CLOSED{% endif %}</td>
+			<td>{{ w.notes }}</td>
+			<td>{{ w.created }}</td>
+			</tr>
+	{% endfor %}
+		</tbody>
+	</table>
+
+	<script type="text/javascript">
+	$("#filter").keyup(function () {
+		var data = this.value.split(" ");
+
+		var tr = $("#work_orders").find("tr");
+		if (this.value == "") {
+			tr.show();
+			return;
+		}
+
+		tr.hide();
+
+		tr.filter(function(i, v) {
+			var $t = $(this);
+			for (var d = 0; d < data.length; ++d) {
+				var s = data[d].toUpperCase();
+				if ($t.text().toUpperCase().indexOf(s) > -1) {
+					return true;
+				}
+			}
+		})
+		.show();
+	});
+	</script>
+{% endblock %}

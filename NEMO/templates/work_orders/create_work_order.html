@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% load custom_tags_and_filters %}
+{% block title %}Create Work Order{% endblock %}
+
+{% block content %}
+
+<h1>Create Work Order</h1>
+
+<p>Use this form to create a new Work Order for a chosen customer.  Once created you can add transactions.</p>
+
+<form id="create_work_order" onsubmit="return on_submit()" method="POST" action="{% url 'save_work_order' %}">
+	{% csrf_token %}
+	<table class="table">
+		<tr>
+			<th>Work Order Number</th>
+			<td><input type=text class="form-control" name="work_order_number" value="" id="work_order_number" /></td>
+		</tr>
+		<tr>
+			<th>Customer</th>
+			<td>
+				<input type="text" class="form-control" id="customer" name="customer" />
+				<input type="button" class="btn btn-default" style="display:none" id="customer_button" onclick="purge_customer();" />
+			</td>
+		</tr>
+		<tr>
+			<th>Notes</th>
+			<td><textarea class="form-control" name="notes" id="notes" cols=60 rows=10></textarea></td>
+		</tr>
+	</table>
+
+	<input type="submit" value="Create Work Order" class="btn btn-success" />
+</form>
+
+<script type="text/javascript">
+$("#work_order_number").limitInputCharacters(LETTERS_AND_NUMBERS + "-_");
+function enable_customer()
+{
+	var id = "#customer";
+	$(id).autocomplete('customer', on_customer_selection, {{ customers|json_search_base }}).focus();
+}
+enable_customer();
+
+function on_customer_selection(jquery_event, search_selection, dataset_name)
+{
+	$(this).typeahead('val', search_selection.id).hide();
+	var button_id = "#customer_button";
+	$(button_id).val(search_selection.name).show();
+}
+
+function purge_customer()
+{
+	$("#customer_button").hide();
+	$("#customer").typeahead('val', '').css("display","inline").focus();
+}
+
+function on_submit()
+{
+	var work_order_number = $("#work_order_number").val();
+	var customer = $("#customer").val();
+
+	if (work_order_number == "") {
+		alert("Please enter a value for the Work Order Number");
+		$("#work_order_number").focus();
+		return false;
+	}
+
+	if (customer == "") {
+		alert("Please select a customer");
+		$("#customer").focus();
+		return false;
+	}
+
+	return true;
+}
+</script>
+
+
+{% endblock %}

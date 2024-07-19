@@ -8,8 +8,14 @@ from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 from pkg_resources import get_distribution, DistributionNotFound
 
+from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, Consumable, ConsumableWithdraw, StaffCharge, StaffChargeProject, UsageEvent, UsageEventProject
+from NEMO.utilities import format_datetime
+
 register = template.Library()
 
+@register.simple_tag
+def get_request_user(request):
+	return request.user
 
 @register.filter
 def class_name(value):
@@ -22,7 +28,7 @@ def is_soon(time):
 	return time <= timezone.now() + timedelta(minutes=10)
 
 
-@register.filter()
+@register.filter
 def to_int(value):
 	return int(value)
 
@@ -76,7 +82,7 @@ def get_item(dictionary, key):
 dist_version: str = 0
 
 
-@register.simple_tag()
+@register.simple_tag
 def app_version() -> str:
 	global dist_version
 	if dist_version != 0:
@@ -91,7 +97,7 @@ def app_version() -> str:
 	return dist_version
 
 
-@register.filter()
+@register.filter
 def smooth_timedelta(timedeltaobj):
 	"""Convert a datetime.timedelta object into Days, Hours, Minutes, Seconds."""
 	if isinstance(timedeltaobj, str):
@@ -116,3 +122,59 @@ def smooth_timedelta(timedeltaobj):
 	if secs > 0:
 		timetot += " {} seconds".format(int(secs))
 	return timetot
+
+
+@register.filter
+def content_type(obj):
+	if not obj:
+		return False
+	return ContentType.objects.get_for_model(obj)
+
+
+@register.simple_tag
+def get_content_data(work_order_transaction):
+	user = work_order_transaction.work_order.customer
+	content_object = work_order_transaction.content_object
+	content_type = ContentType.objects.get_for_model(content_object)
+
+	content_data = {}
+	content_data["customer"] = user
+	content_data["staff_member"] = None
+	content_data["date_range"] = None
+	content_data["project"] = None
+	content_data["type"] = content_type.model
+	content_data["item"] = None
+
+	match content_type.model:
+		case "usageevent":
+			uep = UsageEventProject.objects.filter(usage_event=content_object, customer=user)
+			if uep is not None:
+				content_data["staff_member"] = content_object.operator
+				content_data["item"] = content_object.tool
+				content_data["project"] = uep[0].project
+				content_data["date_range"] = format_datetime(content_object.start) + " - " + format_datetime(content_object.end)
+
+		case "staffcharge":
+			scp = StaffChargeProject.objects.filter(staff_charge=content_object, customer=user)
+			if scp is not None:
+				content_data["staff_member"] = content_object.staff_member
+				content_data["item"] = content_object.staff_member
+				content_data["project"] = scp[0].project
+				content_data["date_range"] = format_datetime(content_object.start) + " - " + format_datetime(content_object.end)
+		case "areaaccessrecord":
+			aarp = AreaAccessRecordProject.objects.filter(area_access_record=content_object, customer=user)
+			if aarp is not None:
+				content_data["staff_member"] = content_object.user
+				content_data["item"] = content_object.area
+				content_data["project"] = aarp[0].project
+				content_data["date_range"] = format_datetime(content_object.start) + " - " + format_datetime(content_object.end)
+		case "consumablewithdraw":
+			cw = content_object
+			content_data["staff_member"] = content_object.merchant
+			content_data["item"] = content_object.consumable
+			content_data["project"] = cw.project
+			content_data["date_range"] = format_datetime(content_object.date)
+
+	return content_data
+
+

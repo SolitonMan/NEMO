@@ -74,11 +74,11 @@ def get_samples(request):
 
 
 	try:
-		sample_list = Sample.objects.filter(project__in=[project_id], active_flag=True).order_by('-updated','-created')
+		sample_list = Sample.objects.filter(project__in=[int(project_id)], active_flag=True).order_by('-updated','-created')
 		project = Project.objects.get(id=int(project_id))
 	except:
 		sample_list = None
-		project = request.user.active_projects.all()[0]
+		project = request.user.active_projects[0]
 
 	if sample_list is not None and  sample_list.count() == 0:
 		sample_list = None
@@ -94,7 +94,7 @@ def create_or_modify_sample(request, sample_id):
 	}
 
 	try:
-		sample = Sample.objects.get(id=sample_id)
+		sample = Sample.objects.get(id=int(sample_id))
 		dictionary['new_sample'] = False
 	except:
 		sample = None
@@ -166,12 +166,7 @@ def modal_create_sample(request, project_id):
 		'sample_id': None,
 	}
 	sample_id = None
-
-	try:
-		sample = Sample.objects.get(id=sample_id)
-	except:
-		sample = None
-
+	sample = None
 
 	if request.method == "GET":
 		dictionary['modal_caller'] = request.GET.get('modal_caller', None)
@@ -181,7 +176,7 @@ def modal_create_sample(request, project_id):
 	elif request.method == "POST":
 		dictionary['modal_caller'] = request.POST.get('modal_caller', None)
 
-		request_mode = request.POST.get('request_mode')
+		#request_mode = request.POST.get('request_mode')
 		form = SampleForm(request.user, request.POST, instance=sample)
 		dictionary['form'] = form
 

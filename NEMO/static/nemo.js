@@ -230,6 +230,11 @@ function ajax_message(url, type, contents, success_callback, failure_callback, a
 		message.always(always_callback);
 }
 
+function reload_page(response, status, xml_http_request)
+{
+	location.reload(true);
+}
+
 //noinspection JSUnusedGlobalSymbols
 function on_change_configuration(configuration_id, slot, choice)
 {

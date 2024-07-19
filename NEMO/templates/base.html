@@ -149,6 +149,9 @@
 							{% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
 							{% navigation_url 'users' 'Users' %}
 							{% endif %}
+							{% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
+							{% navigation_url 'work_orders' 'Work Orders' %}
+							{% endif %}
 						</ul>
 					</li>
 				{% endif %}
@@ -157,7 +160,8 @@
 				{% endif %}
 				<li><a href="mailto:LEOHelp@psu.edu">Report a problem</a></li>
 			</ul>
-			<ul class="nav navbar-nav navbar-right hidden-xs">
+			<div  class="nav-tweak">
+			<ul class="nav-tweak nav navbar-nav navbar-right hidden-xs">
 				{% if user.is_staff and user.charging_staff_time %}
 				{% with user.get_staff_charge as staff_charge %}
 					<li class="hidden-sm">
@@ -181,6 +185,7 @@
 					<li><a href="{% url 'logout' %}">Logout</a></li>
 				{% endif %}
 			</ul>
+			</div>
 		</div>
 	</div>
 </nav>

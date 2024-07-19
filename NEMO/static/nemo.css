@@ -316,16 +316,14 @@ table {
 	min-width: 800px;
 }
 
-/*
-nav {
+
+.nav-tweak {
 	overflow: hidden;
-	position: fixed!important;
-	top: 0;
-	width: 100%;
+	height: 50px!important;
 }
 
 
-
+/*
 @media screen and (max-width: 1200px) {
   .navbar-toggle {
     display: block;

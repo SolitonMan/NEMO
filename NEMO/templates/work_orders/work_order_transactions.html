@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+{% load custom_tags_and_filters %}
+{% block title %}Manage Transactions for Work Order {{ work_order.work_order_number }}{% endblock %}
+
+{% block content %}
+<h1>Manage Transactions for Work Order {{ work_order.work_order_number }}</h1>
+<p>On this page you can manage the transactions associated with a work order.</p>
+
+<div id="work_order">
+<table class="table">
+	<tr>
+		<th>Work Order Number</th>
+		<td>{{ work_order.work_order_number }}</td>
+	</tr>
+	<tr>
+		<th>Customer</th>
+		<td>{{ work_order.customer }}</td>
+	</tr>
+	<tr>
+		<th>Status</th>
+		<td>
+			<input type="radio" name="status" value=1 {% if work_order.status == 1 %}checked{% endif %}/> Open<br/>
+			<input type="radio" name="status" value=0 {% if work_order.status == 0 %}checked{% endif %}/> Closed
+			<input type="hidden" name="work_order_id" value="{{ work_order.id }}" id="work_order_id" />
+		</td>
+	</tr>
+</table>
+</div>
+
+<div id="included">
+<h1>Included</h1>
+<input type="text" name="filter_included" id="filter_included" class="form-control" style="position:relative; display: inline; float: left; width: 25%;" value="" placeholder="Filter included transactions" />
+<table class="table">
+<thead>
+	<tr>
+		<td></td>
+		<th>Item</th>
+		<th>Merchant</th>
+		<th>Project</th>
+		<th>Date(s)</th>
+	</tr>
+</thead>
+<tbody id="included">
+{% for w in work_order_transactions %}
+{% get_content_data w as cd %}
+<tr>
+	<td><button {% if work_order.status == 0%}disabled{% endif %} class="btn btn-danger" onclick="ajax_post('{% url 'remove_work_order_transaction' w.id %}',{},reload_page);">-</button>
+	<td>{{ cd.item }} ({{ cd.type }})</td>
+	<td>{{ cd.staff_member }}</td>
+	<td>{{ cd.project }}</td>
+	<td>{{ cd.date_range }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+
+<div id="available">
+<h1>Available</h1>
+<input type="text" name="filter_available" id="filter_available" class="form-control" style="position:relative; display: inline; float: left; width: 25%;" value="" placeholder="Filter available transactions" />
+<table class="table">
+<thead>
+<tr>
+	<td></td>
+	<th>Type</th>
+	<th>Item</th>
+	<th>Project</th>
+	<th>Dates</th>
+</tr>
+</thead>
+<tbody id="transactions">
+{% for u in uep %}
+<tr>
+	<td><button {% if work_order.status == 0%}disabled{% endif %} class="btn btn-success" onclick="ajax_post('{% url 'add_work_order_transaction' work_order.id usage_events_cid u.usage_event.id  %}',{},reload_page);">+</button>
+	<td>Tool Use</td>
+	<td>{{ u.usage_event.tool }}</td>
+	<td>{{ u.project }}</td>
+	<td>{{ u.usage_event.start }} - {{ u.usage_event.end }}</td>
+</tr>
+{% endfor %}
+
+{% for s in scp %}
+<tr>
+	<td><button {% if work_order.status == 0%}disabled{% endif %} class="btn btn-success" onclick="ajax_post('{% url 'add_work_order_transaction' work_order.id staff_charges_cid s.staff_charge.id  %}',{},reload_page);">+</button>
+	<td>Staff Charge</td>
+	<td>{{ s.staff_charge.staff_member }}</td>
+	<td>{{ s.project }}</td>
+	<td>{{ s.staff_charge.start }} - {{ s.staff_charge.end }}</td>
+</tr>
+{% endfor %}
+
+{% for a in aarp %}
+<tr>
+	<td><button {% if work_order.status == 0%}disabled{% endif %} class="btn btn-success" onclick="ajax_post('{% url 'add_work_order_transaction' work_order.id area_access_records_cid a.area_access_record.id  %}',{},reload_page);">+</button>
+	<td>Area Access Record</td>
+	<td>{{ a.area_access_record.area }}</td>
+	<td>{{ a.project }}</td>
+	<td>{{ a.area_access_record.start }} - {{ a.area_access_record.end }}</td>
+</tr>
+{% endfor %}
+
+{% for c in consumable_withdraws %}
+<tr>
+	<td><button {% if work_order.status == 0%}disabled{% endif %} class="btn btn-success" onclick="ajax_post('{% url 'add_work_order_transaction' work_order.id consumable_withdraws_cid c.id  %}',{},reload_page);">+</button>
+	<td>Consumable Withdraw</td>
+	<td>{{ c.consumable }}</td>
+	<td>{{ c.project }}</td>
+	<td>{{ c.date }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+
+<script type="text/javascript">
+$("input[name='status']").on("click", function() {
+	var selected = $(this).is(":checked");
+	var val = parseInt($(this).val());
+
+
+	var url = "{% url 'update_work_order_status' work_order.id 0  %}";
+	url = url.substring(0, url.length-2) + val + "/";
+	ajax_post(url,{},reload_page);
+/*
+	if (val) {
+		$("button").each(function () {
+			$(this).removeAttr("disabled");
+		});
+	} else {
+		$("button").each(function () {
+			$(this).attr("disabled", "disabled");
+		});
+	}
+*/
+});
+
+$("#filter_available").keyup(function () {
+	var data = this.value.split(" ");
+
+	var tr = $("#transactions").find("tr");
+	if (this.value == "") {
+		tr.show();
+		return;
+	}
+
+	tr.hide();
+
+	tr.filter(function(i, v) {
+		var $t = $(this);
+		for (var d = 0; d < data.length; ++d) {
+			var s = data[d].toUpperCase();
+			if ($t.text().toUpperCase().indexOf(s) > -1) {
+				return true;
+			}
+		}
+	})
+	.show();
+});
+
+$("#filter_included").keyup(function () {
+	var data = this.value.split(" ");
+
+	var tr = $("#included").find("tr");
+	if (this.value == "") {
+		tr.show();
+		return;
+	}
+
+	tr.hide();
+
+	tr.filter(function(i, v) {
+		var $t = $(this);
+		for (var d = 0; d < data.length; ++d) {
+			var s = data[d].toUpperCase();
+			if ($t.text().toUpperCase().indexOf(s) > -1) {
+				return true;
+			}
+		}
+	})
+	.show();
+});
+</script>
+
+{% endblock %}

@@ -8,7 +8,7 @@ from rest_framework import routers
 
 from NEMO.models import GlobalFlag
 from NEMO.scheduler import start_scheduler
-from NEMO.views import abuse, accounts_and_projects, alerts, api, area_access, authentication, calendar, configuration_agenda, consumables, contact_staff, customization, email, feedback, get_projects, history, interlock, jumbotron, kiosk, landing, maintenance, mobile, notifications, usage, news, qualifications, remote_work, resources, safety, samples, sidebar, staff_charges, status_dashboard, tasks, tool_control, training, tutorials, users
+from NEMO.views import abuse, accounts_and_projects, alerts, api, area_access, authentication, calendar, configuration_agenda, consumables, contact_staff, customization, email, feedback, get_projects, history, interlock, jumbotron, kiosk, landing, maintenance, mobile, notifications, usage, news, qualifications, remote_work, resources, safety, samples, sidebar, staff_charges, status_dashboard, tasks, tool_control, training, tutorials, users, work_orders
 
 # Use our custom login page instead of Django's built-in one.
 #admin.site.login = login_required(admin.site.login)
@@ -295,6 +295,15 @@ if settings.ALLOW_CONDITIONAL_URLS:
 
 		# Account, project, and user history
 		re_path(r'^history/(?P<item_type>account|project|user)/(?P<item_id>\d+)/$', history.history, name='history'),
+
+		# Work Orders
+		re_path(r'^work_orders/$', work_orders.work_orders, name='work_orders'),
+		re_path(r'^save_work_order/$', work_orders.add_work_order, name='save_work_order'),
+		re_path(r'^create_work_order/$', work_orders.create_work_order, name='create_work_order'),
+		re_path(r'^work_order_transactions/(?P<work_order_id>\d+)/$', work_orders.work_order_transactions, name='work_order_transactions'),
+		re_path(r'^add_work_order_transaction/(?P<work_order_id>\d+)/(?P<content_type_id>\d+)/(?P<object_id>\d+)/$', work_orders.add_work_order_transaction, name='add_work_order_transaction'),
+		re_path(r'^remove_work_order_transaction/(?P<work_order_transaction_id>\d+)/$', work_orders.remove_work_order_transaction, name='remove_work_order_transaction'),
+		re_path(r'^update_work_order_status/(?P<work_order_id>\d+)/(?P<status_id>\d+)/$', work_orders.update_work_order_status, name='update_work_order_status'),
 
 		# Remote work:
 		re_path(r'^remote_work/$', remote_work.remote_work, name='remote_work'),

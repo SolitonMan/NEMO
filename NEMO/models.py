@@ -711,6 +711,7 @@ class StaffCharge(CalendarDisplay):
 	cost_per_sample_run = models.BooleanField(default=False)
 	related_usage_event = models.ForeignKey('UsageEvent', on_delete=models.SET_NULL, related_name='sc_related_usage_event', null=True, blank=True)
 	credit_cost_collector_override = models.PositiveIntegerField(null=True, blank=True)
+	work_order_transaction = GenericRelation('WorkOrderTransaction', related_query_name='staff_charge_transaction')
 
 	def duration(self):
 		return calculate_duration(self.start, self.end, "In progress")
@@ -808,6 +809,7 @@ class AreaAccessRecord(CalendarDisplay):
 	active_flag = models.BooleanField(default=True)
 	cost_per_sample_run = models.BooleanField(default=False)
 	related_usage_event = models.ForeignKey('UsageEvent', on_delete=models.SET_NULL, related_name='aar_related_usage_event', null=True, blank=True)
+	work_order_transaction = GenericRelation('WorkOrderTransaction', related_query_name='area_access_record_transaction')
 
 	def duration(self):
 		return calculate_duration(self.start, self.end, "In progress")
@@ -1092,7 +1094,7 @@ class UsageEvent(CalendarDisplay):
 	active_flag = models.BooleanField(default=True)
 	end_scheduled_outage = models.BooleanField(default=False)
 	cost_per_sample_run = models.BooleanField(default=False)
-
+	work_order_transaction = GenericRelation('WorkOrderTransaction', related_query_name='usage_event_transaction')
 
 	# a feature to allow for a tool use to be stopped automatically requires some new fields
 	end_time = models.DateTimeField(null=True, blank=True)
@@ -1225,8 +1227,10 @@ class ConsumableWithdraw(models.Model):
 	active_flag = models.BooleanField(default=True)
 	cost_per_sample_run = models.BooleanField(default=False)
 
+
 	# adding related field for UsageEvent for the situation where a consumable is used during tool usage and then the charge is contested
 	usage_event = models.ForeignKey('UsageEvent', on_delete=models.SET_NULL, related_name="consumable_usage_event", null=True, blank=True)
+	work_order_transaction = GenericRelation('WorkOrderTransaction', related_query_name='consumable_withdraw_transaction')
 
 	def auto_validate(self):
 		self.validated = True
@@ -2055,5 +2059,27 @@ class Sample(models.Model):
 
 	def __str__(self):
 		return str(self.nickname) + " (" + str(self.created_by) + ") - " + str(self.identifier)
+
+
+class WorkOrder(models.Model):
+	work_order_number = models.CharField(null=True,blank=True,max_length=500)
+	status = models.PositiveIntegerField()
+	customer = models.ForeignKey('User',on_delete=models.SET_NULL, null=True)
+	notes = models.TextField(null=True,blank=True)
+	created = models.DateTimeField(null=True, blank=True, default=timezone.now)
+	updated = models.DateTimeField(null=True, blank=True, default=timezone.now)
+	closed = models.DateTimeField(null=True, blank=True, default=timezone.now)
+
+	def __str__(self):
+		return "Work Order " + str(self.work_order_number) + " for " + str(self.customer.first_name) + " " + str(self.customer.last_name)
+
+class WorkOrderTransaction(models.Model):
+	work_order = models.ForeignKey('WorkOrder',null=True,blank=True,on_delete=models.SET_NULL)
+	content_type = models.ForeignKey(ContentType, on_delete=models.SET_NULL, null=True)
+	object_id = models.PositiveIntegerField()
+	content_object = GenericForeignKey('content_type', 'object_id')
+
+	def __str__(self):
+		return "Work Order " + str(self.work_order.work_order_number) + " item " + str(self.content_type.model) + " with id " + str(self.object_id)
 
 
