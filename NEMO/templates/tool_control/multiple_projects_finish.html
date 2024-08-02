@@ -5,6 +5,8 @@
 
 <div class="modal-body">
 	<p>Please assign the desired percent of staff charges to each project included (hours and minutes are calculated into percents when minutes textbox loses focus and minutes must total {{ total_minutes }}):</p>
+
+	{% if request.device != 'mobile' %}
 	<form id="usage_event_projects" onsubmit="return on_submit()" class="form-horizontal">
 		{% csrf_token %}
 		<input type="hidden" name="usage_event_id" id="usage_event_id" value="{{ usage_event.id }}" />
@@ -45,6 +47,29 @@
 		<br />
 		<input type="submit" value="Record Tool Usage" class="btn btn-default"/>
 	</form>
+
+	{% else %}
+
+	<form id="usage_event_projects" onsubmit="return on_submit()" class="form-vertical">
+		{% csrf_token %}
+		<input type="hidden" name="usage_event_id" id="usage_event_id" value="{{ usage_event.id }}" />
+		<input type="hidden" name="downtime" id="downtime" value="{{ downtime }}" />
+		<table class="table">
+		{% for u in uep %}
+			<tbody style="border: 5px solid black;">
+			<tr><td>{{ u.customer.first_name }} {{ u.customer.last_name }}</td></tr>
+			<tr><td>{{ u.project.name }}</td></tr>
+			<tr><td>Comment:<br/><input class="form-control" type="text" name="event_comment__{{ u.id }}" value="{% if u.comment is not None %}{{ u.comment }}{% endif %}" /></td></tr>
+			<tr><td>Percent:<br/><input class="form-control" type="text" id="percent__{{ forloop.counter }}" name="project_percent__{{ u.id }}" value="" /></td></tr>
+			</tbody>
+		{% endfor %}
+		</table>
+		<br />
+		<input type="submit" value="Record Tool Usage" class="btn btn-default"/>
+	</form>
+
+	{% endif %}
+
 	<script type="text/javascript">
 	
 	$(document).ready(function() {
@@ -124,7 +149,11 @@
 
 	function on_load()
 	{
+		{% if request.device != 'mobile' %}
 		$(".modal-dialog").css("width", "1000px");
+		{% else %}
+		$(".modal-dialog").css("width", "100%");
+		{% endif %}
 	}
 
 	$(on_load);

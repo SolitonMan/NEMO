@@ -19,7 +19,7 @@ def update_probationary_users():
 	probationary_qualifications = ProbationaryQualifications.objects.all()
 
 	for pq in probationary_qualifications:
-		if not pq.user.is_staff:
+		if not pq.user.is_staff and pq.user.is_active:
 			bSendMail = False
 			d2 = None
 			if pq.qualification_date is not None and pq.tool_last_used is not None:
@@ -112,7 +112,7 @@ def area_access_logout_reminder():
 			area = r.area
 			start = r.start
 
-			if not recipient.is_staff:
+			if not recipient.is_staff and recipient.is_active:
 				subject = "Access to " + str(area) + " since " + str(start)
 
 				message = "<p>Hello " + str(recipient.first_name) + " " + str(recipient.last_name) + ",</p>"
@@ -155,7 +155,7 @@ def excessive_tool_use_reminder():
 					else:
 						b_send_message = True
 
-					if b_send_message and not usage_event.operator.is_staff:
+					if b_send_message and not usage_event.operator.is_staff and usage_event.operator.is_active:
 						recipient = usage_event.operator
 						subject = "Use of the " + t.name + " since " + str(usage_event.start)
 

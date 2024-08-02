@@ -6,6 +6,7 @@
 <div class="modal-body">
 	You are currently charging staff time: <br/>
 
+{% if request.device != 'mobile' %}
 	<table class="table">
 		<thead>
 		<tr>
@@ -22,12 +23,23 @@
 		{% endfor %}
 		</tbody>
 	</table>
+{% else %}
 
+	<table class="table">
+	{% for scp in staff_charge.staffchargeproject_set.all %}
+		<tbody style="border: 3px solid black;">
+		<tr><td>{{ scp.customer }}</td></tr>
+		<tr><td>{{ scp.project }}</td></tr>
+		</tbody>
+	{% endfor %}
+	</table>
+
+{% endif %}
 	Would you like to stop charging staff time?
 </div>
 
 <div class="modal-footer">
 	<button type="button" class="btn btn-success" data-dismiss="modal">Continue charging staff time</button><br><div style="height:10px"></div>
-	<button type="button" class="btn btn-danger" data-dismiss="modal" onclick="$('#dialog').one('hidden.bs.modal', end_staff_charge);">Stop charging staff time</button>
-	<button type="button" class="btn btn-danger" data-dismiss="modal" onclick="$('#dialog').one('hidden.bs.modal', end_staff_charge_with_tool_percents);">Stop charging staff time and assign work percentages as for the tool just used</button>
+	<button type="button" class="btn btn-danger" data-dismiss="modal" onclick="$('#dialog').one('hidden.bs.modal', end_staff_charge);">Stop charging staff time</button><br><div style="height:10px"></div>
+	<button type="button" class="btn btn-danger" data-dismiss="modal" onclick="$('#dialog').one('hidden.bs.modal', end_staff_charge_with_tool_percents);">Stop charging staff time - assign tool use percentages</button>
 </div>

@@ -1,10 +1,10 @@
 {% if projects|length == 0 %}
 	<span class="danger-highlight">No active projects</span>
 {% elif projects|length == 1 %}
-	{{ projects.0 }}
+	<span style="padding: 3px 3px 3px 3px; margin: 3px 3px 3px 3px;">{{ projects.0 }}</span>
 	<input type="hidden" id="chosen_project__{{ entry_number }}" name="chosen_project__{{ entry_number }}" value="{{ projects.0.id }}">
 {% else %}
-	<select name="chosen_project__{{ entry_number }}" class="form-control" id="chosen_project__{{ entry_number }}" onchange="fetch_samples({{ entry_number }},{{ ad_hoc }});">
+	<select name="chosen_project__{{ entry_number }}" class="form-control" id="chosen_project__{{ entry_number }}" onchange="fetch_samples({{ entry_number }},{{ ad_hoc }});" style="width: 100%;">
 		<option value="-1">&nbsp;</option>
 		{% for p in projects %}
 			<option value="{{ p.id }}">{{ p }}</option>

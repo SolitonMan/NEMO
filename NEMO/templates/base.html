@@ -210,14 +210,14 @@
 {# This division is used to display dialog messages via Bootstrap. #}
 <div class="modal fade" id="dialog" tabindex="-10" role="dialog">
 	<div class="modal-dialog">
-		<div class="modal-content modal-center">
+		<div class="modal-content {% if device != 'mobile' %}modal-center{% else %}modal-center-mobile{% endif %}">
 		</div>
 	</div>
 </div>
 
 <div class="modal fade" id="sample_dialog" tabindex="-2" role="dialog">
 	<div class="modal-dialog">
-		<div class="modal-content modal-center">
+		<div class="modal-content {% if device != 'mobile' %}modal-center{% else %}modal-center-mobile{% endif %}">
 		</div>
 	</div>
 </div>

@@ -144,6 +144,8 @@ def get_content_data(work_order_transaction):
 	content_data["project"] = None
 	content_data["type"] = content_type.model
 	content_data["item"] = None
+	content_data["record_id"] = None
+	content_data["parent_record_id"] = None
 
 	match content_type.model:
 		case "usageevent":
@@ -153,6 +155,15 @@ def get_content_data(work_order_transaction):
 				content_data["item"] = content_object.tool
 				content_data["project"] = uep[0].project
 				content_data["date_range"] = format_datetime(content_object.start) + " - " + format_datetime(content_object.end)
+				content_data["record_id"] = content_object.id
+
+		case "usageeventproject":
+			content_data["staff_member"] = content_object.usage_event.operator
+			content_data["item"] = content_object.usage_event.tool
+			content_data["project"] = content_object.project
+			content_data["date_range"] = format_datetime(content_object.usage_event.start) + " - " + format_datetime(content_object.usage_event.end)
+			content_data["record_id"] = content_object.id
+			content_data["parent_record_id"] = content_object.usage_event.id
 
 		case "staffcharge":
 			scp = StaffChargeProject.objects.filter(staff_charge=content_object, customer=user)
@@ -161,6 +172,16 @@ def get_content_data(work_order_transaction):
 				content_data["item"] = content_object.staff_member
 				content_data["project"] = scp[0].project
 				content_data["date_range"] = format_datetime(content_object.start) + " - " + format_datetime(content_object.end)
+				content_data["record_id"] = content_object.id
+
+		case "staffchargeproject":
+			content_data["staff_member"] = content_object.staff_charge.staff_member
+			content_data["item"] = content_object.staff_charge.staff_member
+			content_data["project"] = content_object.project
+			content_data["date_range"] = format_datetime(content_object.staff_charge.start) + " - " + format_datetime(content_object.staff_charge.end)
+			content_data["record_id"] = content_object.id
+			content_data["parent_record_id"] = content_object.staff_charge.id
+
 		case "areaaccessrecord":
 			aarp = AreaAccessRecordProject.objects.filter(area_access_record=content_object, customer=user)
 			if aarp is not None:
@@ -168,12 +189,23 @@ def get_content_data(work_order_transaction):
 				content_data["item"] = content_object.area
 				content_data["project"] = aarp[0].project
 				content_data["date_range"] = format_datetime(content_object.start) + " - " + format_datetime(content_object.end)
+				content_data["record_id"] = content_object.id
+
+		case "areaaccessrecordproject":
+			content_data["staff_member"] = content_object.area_access_record.user
+			content_data["item"] = content_object.area_access_record.area
+			content_data["project"] = content_object.project
+			content_data["date_range"] = format_datetime(content_object.area_access_record.start) + " - " + format_datetime(content_object.area_access_record.end)
+			content_data["record_id"] = content_object.id
+			content_data["parent_record_id"] = content_object.area_access_record.id
+
 		case "consumablewithdraw":
 			cw = content_object
 			content_data["staff_member"] = content_object.merchant
 			content_data["item"] = content_object.consumable
 			content_data["project"] = cw.project
 			content_data["date_range"] = format_datetime(content_object.date)
+			content_data["record_id"] = content_object.id
 
 	return content_data
 

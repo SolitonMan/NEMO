@@ -34,6 +34,7 @@
 <thead>
 	<tr>
 		<td></td>
+		<td></td>
 		<th>Item</th>
 		<th>Merchant</th>
 		<th>Project</th>
@@ -44,8 +45,12 @@
 {% for w in work_order_transactions %}
 {% get_content_data w as cd %}
 <tr>
+	<td>
+		R: {{ cd.record_id }}<br/>
+		P: {{ cd.parent_record_id }}
+	</td>
 	<td><button {% if work_order.status == 0%}disabled{% endif %} class="btn btn-danger" onclick="ajax_post('{% url 'remove_work_order_transaction' w.id %}',{},reload_page);">-</button>
-	<td>{{ cd.item }} ({{ cd.type }})</td>
+	<td>{{ cd.item }} ({{ cd.type }}){% if cd.type == "consumablewithdraw" %}<br/>{{ w.content_object.quantity }} {{ w.content_object.consumable.unit }}{% endif %}</td>
 	<td>{{ cd.staff_member }}</td>
 	<td>{{ cd.project }}</td>
 	<td>{{ cd.date_range }}</td>
@@ -62,50 +67,74 @@
 <thead>
 <tr>
 	<td></td>
+	<td></td>
 	<th>Type</th>
 	<th>Item</th>
 	<th>Project</th>
 	<th>Dates</th>
+	<th>Percent</th>
 </tr>
 </thead>
 <tbody id="transactions">
 {% for u in uep %}
 <tr>
-	<td><button {% if work_order.status == 0%}disabled{% endif %} class="btn btn-success" onclick="ajax_post('{% url 'add_work_order_transaction' work_order.id usage_events_cid u.usage_event.id  %}',{},reload_page);">+</button>
+	<td>
+		R: {{ u.id }}<br/>
+		P: {{ u.usage_event.id }}
+	</td>
+	<td><button {% if work_order.status == 0%}disabled{% endif %} class="btn btn-success" onclick="ajax_post('{% url 'add_work_order_transaction' work_order.id usage_event_projects_cid u.id  %}',{},reload_page);">+</button>
 	<td>Tool Use</td>
 	<td>{{ u.usage_event.tool }}</td>
 	<td>{{ u.project }}</td>
 	<td>{{ u.usage_event.start }} - {{ u.usage_event.end }}</td>
+	<td>{{ u.project_percent }}</td>
 </tr>
 {% endfor %}
 
 {% for s in scp %}
 <tr>
-	<td><button {% if work_order.status == 0%}disabled{% endif %} class="btn btn-success" onclick="ajax_post('{% url 'add_work_order_transaction' work_order.id staff_charges_cid s.staff_charge.id  %}',{},reload_page);">+</button>
+	<td>
+		R: {{ s.id }}<br/>
+		P: {{ s.staff_charge.id }}
+	</td>
+	<td><button {% if work_order.status == 0%}disabled{% endif %} class="btn btn-success" onclick="ajax_post('{% url 'add_work_order_transaction' work_order.id staff_charge_projects_cid s.id  %}',{},reload_page);">+</button>
 	<td>Staff Charge</td>
 	<td>{{ s.staff_charge.staff_member }}</td>
 	<td>{{ s.project }}</td>
 	<td>{{ s.staff_charge.start }} - {{ s.staff_charge.end }}</td>
+	<td>{{ s.project_percent }}</td>
 </tr>
 {% endfor %}
 
 {% for a in aarp %}
 <tr>
-	<td><button {% if work_order.status == 0%}disabled{% endif %} class="btn btn-success" onclick="ajax_post('{% url 'add_work_order_transaction' work_order.id area_access_records_cid a.area_access_record.id  %}',{},reload_page);">+</button>
+	<td>
+		R: {{ a.id }}<br/>
+		P: {{ a.area_access_record.id }}
+	</td>
+	<td><button {% if work_order.status == 0%}disabled{% endif %} class="btn btn-success" onclick="ajax_post('{% url 'add_work_order_transaction' work_order.id area_access_record_projects_cid a.id  %}',{},reload_page);">+</button>
 	<td>Area Access Record</td>
 	<td>{{ a.area_access_record.area }}</td>
 	<td>{{ a.project }}</td>
 	<td>{{ a.area_access_record.start }} - {{ a.area_access_record.end }}</td>
+	<td>{{ a.project_percent }}</td>
 </tr>
 {% endfor %}
 
 {% for c in consumable_withdraws %}
 <tr>
+	<td>
+		R: {{ c.id }}
+	</td>
 	<td><button {% if work_order.status == 0%}disabled{% endif %} class="btn btn-success" onclick="ajax_post('{% url 'add_work_order_transaction' work_order.id consumable_withdraws_cid c.id  %}',{},reload_page);">+</button>
 	<td>Consumable Withdraw</td>
-	<td>{{ c.consumable }}</td>
+	<td>
+		{{ c.consumable }}<br/>
+		{{ c.quantity }} {{ c.consumable.unit }}
+	</td>
 	<td>{{ c.project }}</td>
 	<td>{{ c.date }}</td>
+	<td>{{ c.project_percent }}</td>
 </tr>
 {% endfor %}
 </tbody>
@@ -121,17 +150,6 @@ $("input[name='status']").on("click", function() {
 	var url = "{% url 'update_work_order_status' work_order.id 0  %}";
 	url = url.substring(0, url.length-2) + val + "/";
 	ajax_post(url,{},reload_page);
-/*
-	if (val) {
-		$("button").each(function () {
-			$(this).removeAttr("disabled");
-		});
-	} else {
-		$("button").each(function () {
-			$(this).attr("disabled", "disabled");
-		});
-	}
-*/
 });
 
 $("#filter_available").keyup(function () {

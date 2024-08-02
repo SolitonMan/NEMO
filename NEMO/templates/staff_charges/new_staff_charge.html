@@ -37,7 +37,7 @@
 			{% endfor %}
 		</select>
 
-		<select id="credit_cost_collector_select" name="credit_cost_collector_select" class="form-control" style="display: none;">
+		<select id="credit_cost_collector_select" name="credit_cost_collector_select" class="form-control" style="display: none; width: 100%;">
 			<option value="0">You may select a credit cost collector to receive funds for this work</option>
 		{% for c in request.user.core_ids.all %}
 	
@@ -50,7 +50,7 @@
 		{% endfor %}
 		</select>
 		{% else %}
-		<select id="credit_cost_collector_select" name="credit_cost_collector_select" class="form-control">
+		<select id="credit_cost_collector_select" name="credit_cost_collector_select" class="form-control" style="width: 100%;">
 			<option value="0">You may select a credit cost collector to receive funds for this work</option>
 		{% for c in request.user.core_ids.all %}
 			{% for ccc in c.creditcostcollector_set.all %}
@@ -62,6 +62,7 @@
 		</select>
 		{% endif %}
 
+		{% if request.device != 'mobile' %}
 		<table id="staff_charge_entries" class="table">
 			<tr>
 				<th>&nbsp;</th>
@@ -75,6 +76,15 @@
 				<td colspan="4" style="text-align:center"><a href="javascript:void(0)" onclick="add_customer()">Add another customer</a></td>
 			</tr>
 		</table>
+		{% else %}
+		<table id="staff_charge_entries" class="table">
+			{% include 'staff_charges/staff_charge_entry_mobile.html' with entry_number=2 %}
+			<tr>
+				<td><a href="javascript:void(0)" onclick="add_customer()">Add another customer</a></td>
+			</tr>
+		</table>
+		{% endif %}
+
 		<input type="submit" class="btn btn-default" id="begin_staff_time_charges" value="Begin charging staff time">
 	</form>
 	</div>
@@ -86,6 +96,9 @@
 	<form action="{% url 'end_staff_charge' 0 %}" class="form-horizontal" method="post">
 		{% csrf_token %}
 		<p>You are currently charging staff time to the following customer(s):</p>
+
+		{% if request.device != 'mobile' %}
+
 		<table class="table">
 		<tr>
 			<th>Customer</th>
@@ -123,6 +136,51 @@
 			</td>
 		</tr>
 		</table>
+
+		{% else %}
+
+		<table class="table">
+
+		{% for s in scp %}
+
+		<tbody style="border: 3px solid black;">
+			<tr><td>{{ s.customer }}</td></tr>
+			<tr><td>{{ s.project }}</td></tr>
+			<tr>
+				<td>
+					<table>
+					{% if s.sample_detail.all is not None %}
+					{% for smp in s.staffchargeprojectsample_set.all %}
+					{% if smp.active_flag %}
+					<tbody style="border: 3px solid black;">
+						<tr><td>Sample:<br/>{{ smp.sample }}</td></tr>
+						<tr><td><textarea rows="2" cols="5" class="form-control" name="smpc__{{s.id}}__{{smp.sample.id}}" id=="smpc__{{s.id}}__{{smp.sample.id}}" onblur="save_sample_comment(this);">{% if smp.notes is not None %}{{ smp.notes }}{% endif %}</textarea></td></tr>
+						<tr><td><input type="button" class="btn btn-danger" value="Remove Sample" onclick="remove_sample({{s.id}},{{smp.sample.id}});" /></td></tr>
+					</tbody>
+					{% endif %}
+					{% endfor %}
+					{% endif %}
+					<tr><td>
+						<input type="button" class="btn btn-success" value="+New Sample" onclick="add_run_sample({{s.project.id}},{{s.id}});" title="Add a new sample" />
+						<input type="button" class="btn" value="+Existing Sample" onclick="add_run_existing_sample({{s.project.id}},{{s.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff" {% if s.project.sample_set.all.count == 0 %}disabled {% endif %}/>
+					</td></tr>
+					</table>
+				</td>
+			</tr>
+			
+		</tbody>
+
+		{% endfor %}
+
+			<tr><td>
+				<label for="staff_member_comment">Comment / Purpose of Charge</label>
+				<textarea name="staff_member_comment" id="staff_member_comment" onblur="save_staff_comment()" class="form-control" rows="3" cols="10" placeholder="Please enter a description of the work done or reason the charge is being made">{% if staff_charge.staff_member_comment is not None %}{{ staff_charge.staff_member_comment }}{% endif %}</textarea>
+			</td></tr>
+
+		</table>
+
+		{% endif %}
+
 		<br/>
 		
 		<input type="submit" class="btn btn-primary" value="I have finished working on this project">
@@ -809,6 +867,7 @@
 		{
 			$("#user_button__" + row).hide();
 			$("#project__" + row).html("");
+			$("#sample__" + row).html("");
 			$("#user_textbox__" + row).typeahead('val', '').show().focus();
 		}
 
@@ -816,6 +875,7 @@
                 {
                         $("#ad_hoc_user_button__" + row).hide();
                         $("#ad_hoc_project__" + row).html("");
+			$("#ad_hoc_sample__" + row).html("");
                         $("#ad_hoc_user_textbox__" + row).typeahead('val', '').css("display","inline").focus();
                 }
 

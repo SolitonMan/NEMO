@@ -754,6 +754,7 @@ class StaffChargeProject(models.Model):
 	active_flag = models.BooleanField(default=True)
 	#sample = models.ManyToManyField('Sample', blank=True, related_name='scp_sample')
 	sample_detail = models.ManyToManyField('Sample', blank=True, through='StaffChargeProjectSample', related_name='scp_sample_detail')
+	work_order_transaction = GenericRelation('WorkOrderTransaction', related_query_name='staff_charge_project_transaction')
 
 
 class StaffChargeProjectSample(models.Model):
@@ -852,6 +853,7 @@ class AreaAccessRecordProject(models.Model):
 	comment = models.TextField(null=True, blank=True)
 	#sample = models.ManyToManyField('Sample', blank=True, related_name='aarp_sample')
 	sample_detail = models.ManyToManyField('Sample', blank=True, through='AreaAccessRecordProjectSample', related_name='aarp_sample_detail')
+	work_order_transaction = GenericRelation('WorkOrderTransaction', related_query_name='area_access_record_project_transaction')
 
 
 class AreaAccessRecordProjectSample(models.Model):
@@ -1147,6 +1149,7 @@ class UsageEventProject(models.Model):
 	cost_per_sample = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 	#sample = models.ManyToManyField('Sample', blank=True, related_name='uep_sample')
 	sample_detail = models.ManyToManyField('Sample', blank=True, through='UsageEventProjectSample', related_name='uep_sample_detail')
+	work_order_transaction = GenericRelation('WorkOrderTransaction', related_query_name='usage_event_project_transaction')
 
 class UsageEventProjectSample(models.Model):
 	sample = models.ForeignKey('Sample', on_delete=models.SET_NULL, null=True)

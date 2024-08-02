@@ -286,7 +286,11 @@ def get_billing_date_range():
 @require_GET
 def staff_charge_entry(request):
 	entry_number = int(request.GET['entry_number'])
-	return render(request, 'staff_charges/staff_charge_entry.html', {'entry_number': entry_number})
+	if request.device != 'mobile':
+		url = 'staff_charges/staff_charge_entry.html'
+	else:
+		url = 'staff_charges/staff_charge_entry_mobile.html'
+	return render(request, url, {'entry_number': entry_number})
 
 
 

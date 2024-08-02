@@ -69,6 +69,8 @@ my_reservation_projects = {{ my_reservation_projects }}
 						{% if current_usage_event.operator.id != current_usage_event.customers.all.0.id %}
 							{% if current_usage_event.customers.all|length > 0 %}
 								for the customer(s):
+
+								{% if device != 'mobile' %}
 								<table class="table">
 									<thead>
 									<tr>
@@ -107,6 +109,32 @@ my_reservation_projects = {{ my_reservation_projects }}
 								{% endfor %}
 									</tbody>
 								</table>
+								{% else %}
+
+								<table class="table">
+								{% for uep in current_usage_event.usageeventproject_set.all %}
+									<tbody style="border: 5px solid rgb(66, 139, 202);">
+									<tr id="tr_{{ uep.id }}" onclick="toggle_following(this);"><td><b>{{ uep.customer }}</b></td></tr>
+									<tr style="display: none;"><td>Project: {{ uep.project }}</td></tr>
+									<tr style="display: none;" class="samples_header"><td><u>Samples</u></td></tr>
+										{% if uep.sample_detail.all is not None %}
+										{% for s in uep.usageeventprojectsample_set.all %}
+										{% if s.active_flag %}
+									<tr id="tr_{{ s.id }}" style="display: none;" class="sample_item"><td>Sample: {{ s.sample.identifier }}</td></tr>
+									<tr style="display: none;" class="sample_item"><td>Details: <br/>
+										{{ s.sample }}<br/>
+										Description: {{ s.sample.description }}</td></tr>
+									<tr style="display: none;" class="sample_item"><td>Sample {{ s.sample.identifier }} Comment: <br/><textarea rows="2" cols="4" class="form-control" name="smpc__{{uep.id}}__{{s.sample.id}}" id=="smpc__{{uep.id}}__{{s.sample.id}}" onblur="save_sample_comment(this);">{% if s.notes is not None %}{{ s.notes }}{% endif %}</textarea></td></tr>
+									<tr style="display: none;" class="samples_end"><td><input type="button" class="btn btn-danger" value="Remove Sample" onclick="remove_sample({{uep.id}},{{s.sample.id}});" title="Remove this sample from the run" /></td></tr>
+										{% endif %}
+										{% endfor %}
+									<tr style="display: none;" class="samples_end"><td><input type="button" class="btn btn-success" value="Add New Sample" onclick="add_run_sample({{uep.project.id}},{{uep.id}});" title="Add a new sample" /><input type="button" class="btn" value="Add Existing Sample" onclick="add_run_existing_sample({{uep.project.id}},{{uep.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff" {% if uep.project.sample_set.all.count == 0 %}disabled {% endif %}/></td></tr>
+										{% endif %}
+									<tr style="display: none;"><td>General Customer Comment:<br/><textarea rows="3" cols="4" class="form-control" name="cc__{{ uep.id }}" id="cc__{{ uep.id }}" value="{{ uep.comment }}" onblur="save_comment(this);">{% if uep.comment is not None %}{{ uep.comment }}{% endif %}</textarea></td></tr>
+									</tbody>
+								{% endfor %}
+								</table>
+								{% endif %}
 							{% else %}
 								for the customer {{ current_usage_event.customers.all.0 }} charging the project {{ current_usage_event.projects.all.0 }}
 							{% endif %}
@@ -114,6 +142,8 @@ my_reservation_projects = {{ my_reservation_projects }}
 							for the project named {{ current_usage_event.projects.all.0 }}
 
 							{% if current_usage_event.usageeventproject_set.all.0.sample_detail.all.count > 0 %}
+
+							{% if device != 'mobile' %}
 							<div>
 								<h5>Samples</h5>
 								<table class="table">
@@ -131,6 +161,22 @@ my_reservation_projects = {{ my_reservation_projects }}
 									<tr><td colspan="2"><input type="button" class="btn btn-success" value="+New" onclick="add_run_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add a new sample" /><input type="button" class="btn" value="+Existing" onclick="add_run_existing_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff;" {%if current_usage_event.usageeventproject_set.all.0.project.sample_set.all.count == 0 %} disabled{% endif %} /></td></tr>
 								</table>
 							</div>
+							{% else %}
+
+							<dl class="accordion">
+							
+							{% for s in current_usage_event.usageeventproject_set.all.0.usageeventprojectsample_set.all %}
+								{% if s.active_flag %}
+								<dt>{{ s.sample }}</dt>
+								<dd><textarea rows="2" cols="4" class="form-control" name="smpc__{{current_usage_event.usageeventproject_set.all.0.id}}__{{s.sample.id}}" id=="smpc__{{current_usage_event.usageeventproject_set.all.0.id}}__{{s.sample.id}}" onblur="save_sample_comment(this);">{% if s.notes is not None %}{{ s.notes }}{% endif %}</textarea>	
+								<br/>
+								<input type="button" class="btn btn-danger" value="Remove Sample" onclick="remove_sample({{current_usage_event.usageeventproject_set.all.0.id}},{{s.sample.id}});" title="Remove this sample from the run" /></dd>
+								{% endif %}
+							{% endfor %}
+								<dt><input type="button" class="btn btn-success" value="+New Sample" onclick="add_run_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add a new sample" /><input type="button" class="btn" value="+Existing Sample" onclick="add_run_existing_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff;" {%if current_usage_event.usageeventproject_set.all.0.project.sample_set.all.count == 0 %} disabled{% endif %} /></dt>
+							{% endif %}
+							</dl>
+
 							{% else %}
 							<p>No samples currently selected<br/>
 							<input type="button" class="btn btn-success" value="+New" onclick="add_run_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add a new sample" /><input type="button" class="btn" value="+Existing" onclick="add_run_existing_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff;" {%if current_usage_event.usageeventproject_set.all.0.project.sample_set.all.count == 0 %} disabled{% endif %} />
@@ -778,6 +824,19 @@ my_reservation_projects = {{ my_reservation_projects }}
 
 	window.onunload = save_operator_comment;
 	{% endif %}
+
+	function toggle_following(el)
+	{
+		var id = $(el).prop("id");
+		var sel = "#" + id + " ~ tr";
+		$(sel).each(function() {
+			if ($(this).css("display") == "none") {
+				$(this).show();
+			} else {
+				$(this).hide();
+			}
+		});
+	}
 
 	function toggleEndOutage(el)
 	{

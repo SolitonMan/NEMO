@@ -41,9 +41,9 @@ RUN rm --recursive --force /nemo/
 
 RUN mkdir /nemo
 WORKDIR /nemo
-ENV DJANGO_SETTINGS_MODULE "settings"
-ENV PYTHONPATH "/nemo/"
-ENV OAUTHLIB_RELAX_TOKEN_SCOPE "true"
+ENV DJANGO_SETTINGS_MODULE="settings"
+ENV PYTHONPATH="/nemo/"
+ENV OAUTHLIB_RELAX_TOKEN_SCOPE="true"
 COPY gunicorn_configuration.py /etc/
 
 EXPOSE 8000/tcp

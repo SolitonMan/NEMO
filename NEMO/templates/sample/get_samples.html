@@ -2,9 +2,9 @@
 	<span class="danger-highlight">No samples associated with the project</span>
 {% else %}
 	{% if entry_number == '0' %}
-	<select name="sample_id" class="form-control" id="sample_id"  multiple size="4" style="width:fit-content;">
+	<select name="sample_id" class="form-control" id="sample_id"  multiple size="4" style="width:{% if request.device != 'mobile' %}fit-content{% else %}100%{% endif %};">
 	{% else %}
-	<select name="chosen_sample__{{ entry_number }}" class="form-control" id="chosen_sample__{{ entry_number }}" multiple size="4" style="width:fit-content;">
+	<select name="chosen_sample__{{ entry_number }}" class="form-control" id="chosen_sample__{{ entry_number }}" multiple size="4" style="width:{% if request.device != 'mobile' %}fit-content{% else %}100%{% endif %};">
 	{% endif %}
 		{% for s in samples %}
 			<option value="{{ s.id }}">{{ s }}</option>
@@ -12,5 +12,5 @@
 	</select>
 {% endif %}
 <br/>
-<input type="button" value="Add Sample" class="btn btn-success" onclick="add_sample({{ project.id }},{{ entry_number }}{% if ad_hoc %},true{% endif %});" />
+<input type="button" value="Add Sample" class="btn btn-success" onclick="add_sample({{ project.id }},{{ entry_number }}{% if ad_hoc %},true{% endif %});" style="padding:3px 3px 3px 3px; margin: 3px 3px 3px 3px; width: 50%;" />
 <br/>

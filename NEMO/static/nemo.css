@@ -316,10 +316,34 @@ table {
 	min-width: 800px;
 }
 
+.modal-center-mobile {
+	width: fit-content;
+	left: 50%;
+	transform:translate(-50%, 0%);
+	max-width: 384px;
+}
 
 .nav-tweak {
 	overflow: hidden;
 	height: 50px!important;
+}
+
+
+.samples_header {
+	border-left:  3px solid black;
+	border-right: 3px solid black;
+	border-top: 3px solid black;
+}
+
+.sample_item {
+	border-left:  3px solid black;
+	border-right: 3px solid black;
+}
+
+.samples_end {
+	border-left:  3px solid black;
+	border-right: 3px solid black;
+	border-bottom: 3px solid black;
 }
 
 
