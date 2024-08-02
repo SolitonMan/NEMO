@@ -1,0 +1,17 @@
+<tr id="row_{{ entry_number }}">
+<td>
+	<table style="border: 3px solid black;">
+	<tr><td style="vertical-align: top">
+		<input type="text" class="form-control" id="user_textbox__{{ entry_number }}" name="chosen_user__{{ entry_number }}" data-row="{{ entry_number }}" style="display: inline; padding:3px 3px 3px 3px; margin: 3px 3px 3px 3px; width: 97%;" />
+		<input type="button" class="btn btn-default" id="user_button__{{ entry_number }}" onclick="purge_customer({{ entry_number }})" style="display: none; width: 97%;" />
+	</td></tr>
+	<tr><td id="project__{{ entry_number }}" style="vertical-align: top">
+
+	</td></tr>
+	<tr><td id="sample__{{ entry_number }}" style="vertical-align: top">
+
+	</td></tr>
+	<tr><td><span onclick="remove_row({{ entry_number }})" style="display: inline-block; padding:3px 3px 3px 3px; margin: 3px 3px 3px 3px;"><button class="btn btn-danger">Remove Customer</button></span></td></tr>
+	</table>
+</td>
+</tr>
