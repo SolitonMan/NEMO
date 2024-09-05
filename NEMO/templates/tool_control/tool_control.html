@@ -521,6 +521,9 @@
 
 						for (s in scp) {
 							// for each record add a row to the table
+
+							{% if request.device != 'mobile' %}
+
 							table_row = "<tr id=\"row_" + current_entry_number + "\"><td style=\"vertical-align: middle\"><span class=\"glyphicon glyphicon-remove-circle grey pointer\" onclick=\"remove_row(" + current_entry_number + ");{% if staff_charge_projects %}update_override(true);{% endif %}\"></span></td><td>" + scp[s]["customer"] + "<input type=\"hidden\" value=\"" + scp[s]["user_id"] + "\" id=\"user_textbox__" + current_entry_number + "\" name=\"chosen_user__" + current_entry_number + "\" data-row=\"" + current_entry_number + "\"></td><td id=\"project__" + current_entry_number + "\" style=\"vertical-align: middle\">" + scp[s]["project"] + "<input type=\"hidden\" value=\"" + scp[s]["project_id"] + "\" name=\"chosen_project__" + current_entry_number + "\" id=\"chosen_project__" + current_entry_number + "\"></td><td>";
 							
 							for (smp in scp[s]["samples"]) {
@@ -528,6 +531,100 @@
 							}
 
 							table_row += "</td></tr>";
+
+							{% else %}
+
+							table_row = $("<tr>");
+							var id = "row_" + current_entry_number;
+							table_row.prop("id",id);
+
+							var td = $("<td>");
+
+							var table = $("<table>");
+							table.css("border","3px solid black");
+
+							var tr1 = $("<tr>");
+
+							var td1 = $("<td>");
+							td1.css("vertical-align","middle");
+
+							//var btn = $("<button>");
+							//btn.append("Remove Customer");
+							//btn.addClass("btn btn-danger");
+							var onclick = "remove_row(" + current_entry_number + ");";
+							{% if staff_charge_projects %}
+								onclick += "update_override(true);";
+							{% endif %}
+							//btn.prop("onclick",onclick);
+
+							var btn = "<button onclick=\"" + onclick + "\" class=\"btn btn-danger\">Remove Customer</button>";
+
+							var input1 = $("<input>");
+							input1.prop("type","hidden");
+							input1.val(scp[s]["user_id"]);
+							var id1 = "user_textbox__" + current_entry_number;
+							input1.prop("id",id1);
+							var name1 = "chosen_user__" + current_entry_number;
+							input1.prop("name",name1);
+							input1.prop("data-row",current_entry_number);
+
+							td1.append(scp[s]["customer"]);
+							td1.append(input1);
+							tr1.append(td1);
+							table.append(tr1);
+
+							var tr2 = $("<tr>");
+
+							var td2 = $("<td>");
+							var id2 = "project__" + current_entry_number;
+							td2.prop("id",id2);
+							td2.css("vertical-align","middle");
+
+							var input2 = $("<input>");
+							input2.prop("type","hidden");
+							input2.val(scp[s]["project_id"]);
+							var name2 = "chosen_project__" + current_entry_number;
+							input2.prop("id",name2);
+							input2.prop("name",name2);
+
+							td2.append(scp[s]["project"]);
+							td2.append(input2);
+							tr2.append(td2);
+							table.append(tr2);
+
+							var tr3 = $("<tr>");
+
+							var td3 = $("<td>");
+							td3.append("<b>Samples</b><br/>");
+
+							for (smp in scp[s]["samples"]) {
+								var inp = $("<input>");
+								inp.prop("type","hidden");
+								inp.val(scp[s]["samples"][smp]["sample_id"]);
+								var sid = "chosen_sample__" + current_entry_number;
+								inp.prop("name",sid);
+								inp.prop("id",sid);
+								td3.append(inp);
+								td3.append("->");
+								td3.append(scp[s]["samples"][smp]["sample"]);
+								td3.append("<br>");
+							}
+
+							tr3.append(td3);
+							table.append(tr3);
+
+							var tr4 = $("<tr>");
+
+							var td4 = $("<td>");
+
+							td4.append(btn);
+							tr4.append(td4);
+							table.append(tr4);
+
+							td.append(table);
+							table_row.append(td);
+
+							{% endif %}
 
 							$("#usage_event_entries tr:last").before(table_row);
 							current_entry_number++;

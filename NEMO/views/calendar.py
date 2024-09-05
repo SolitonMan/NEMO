@@ -1210,6 +1210,19 @@ def do_cancel_unused_reservations():
 				r.save()
 				missed_reservations.append(r)
 
+			else:
+				# is the UsageEvent related to the current user?
+				if (UsageEvent.objects.filter(tool=tool, start__gte=threshold, active_flag=True).exists() or UsageEvent.objects.filter(tool=tool, end__gte=threshold, active_flag=True).exists()):
+					usage_events = UsageEvent.objects.filter(Q(tool=tool), Q(operator=r.user), Q(active_flag=True), Q(start__gte=threshold) | Q(end__gte=threshold))
+					if usage_events.count() > 0:
+						continue
+					else:
+						r.missed = True
+						r.updated = timezone.now()
+						r.save()
+						missed_reservations.append(r)
+
+
 	for r in missed_reservations:
 		send_missed_reservation_notification(r)
 

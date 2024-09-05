@@ -503,7 +503,7 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge, billing_mod
 
 		if tool.requires_area_access and AreaAccessRecord.objects.filter(area=tool.requires_area_access,user=operator,end=None, active_flag=True).count() == 0:
 			if AreaAccessRecord.objects.filter(user=operator,end=None, active_flag=True).count() > 0:
-				areas = AreaAccessRecord.objects.filter(customer=operator,end=None, active_flag=True)
+				areas = AreaAccessRecord.objects.filter(user=operator,end=None, active_flag=True)
 				for a in areas:
 					a.end = timezone.now()
 					a.updated = timezone.now()
@@ -542,6 +542,63 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge, billing_mod
 			aarp.created = timezone.now()
 			aarp.updated = timezone.now()
 			aarp.save()
+
+
+		elif tool.requires_area_access and AreaAccessRecord.objects.filter(area=tool.requires_area_access,user=operator,end=None, active_flag=True).count() > 0:
+			if AreaAccessRecord.objects.filter(area=tool.requires_area_access,user=operator,end=None, active_flag=True).count() == 1:
+				aar = AreaAccessRecord.objects.filter(area=tool.requires_area_access,user=operator,end=None, active_flag=True)[0]
+
+				aarp = AreaAccessRecordProject.objects.filter(area_aaccess_record=aar)
+
+				bNewRecord = True
+
+				for a in aarp:
+					if a.customer == uep.customer and a.project == uep.project:
+						bNewRecord = False
+
+				if bNewRecord:
+
+					if AreaAccessRecord.objects.filter(user=request.user, end=None, active_flag=True).count() > 0:
+						areas = AreaAccessRecord.objects.filter(user=request.user, end=None, active_flag=True)
+						for a in areas:
+							a.end = timezone.now()
+							a.updated = timezone.now()
+							a.save()
+
+							tmp_aarp = AreaAccessRecordProject.objects.filter(area_access_record=a)
+							tmp_count = tmp_aarp.count()
+
+							for taarp in tmp_aarp:
+								taarp.project_percent = round((100/tmp_count),2)
+								taarp.updated = timezone.now()
+								taarp.save()
+
+
+					aarnew = AreaAccessRecord()
+					aarnew.area = tool.requires_area_access
+					aarnew.customer = uep.customer
+					aarnew.user = request.user
+					aarnew.start = timezone.now()
+					aarnew.project = project
+					aarnew.created = timezone.now()
+					aarnew.updated = timezone.now()
+
+					if staff_charge:
+						aarnew.staff_charge = staff_charge
+					if billing_mode:
+						aarnew.cost_per_sample_run = True
+
+					aarnew.save()
+
+					aarnewp = AreaAccessRecordProject()
+					aarnewp.area_access_record = aarnew
+					aarnewp.project = project
+					aarnewp.customer = uep.customer
+					aarnewp.created = timezone.now()
+					aarnewp.updated = timezone.now()
+					aarnewp.save()
+					
+
 
 		# check for samples and save if any
 		samples = request.POST['selected_sample']
@@ -787,7 +844,7 @@ def enable_tool_multi(request):
 		 
 		if tool.requires_area_access and AreaAccessRecord.objects.filter(area=tool.requires_area_access,user=operator,end=None, active_flag=True).count() == 0:
 			if AreaAccessRecord.objects.filter(user=operator,end=None, active_flag=True).count() > 0:
-				areas = AreaAccessRecord.objects.filter(customer=operator,end=None, active_flag=True)
+				areas = AreaAccessRecord.objects.filter(user=operator,end=None, active_flag=True)
 				for a in areas:
 					a.end = timezone.now()
 					a.updated = timezone.now()
@@ -830,8 +887,67 @@ def enable_tool_multi(request):
 
 					# copy samples from staff charge project record
 					for smp in s.sample_detail.all():
-						#aarp.sample.add(smp)
 						aarp.sample_detail.add(smp)
+
+		elif tool.requires_area_access and AreaAccessRecord.objects.filter(area=tool.requires_area_access,user=operator,end=None, active_flag=True).count() > 0:
+			bNewRecord = True
+
+			aar = AreaAccessRecord.objects.filter(area=tool.requires_area_access,user=operator,end=None, active_flag=True)[0]
+			aarp = AreaAccessRecordProject.objects.filter(area_access_record=aar)
+
+			for a in aarp:
+				new_usage_event_projects = UsageEventProject.objects.filter(usage_event=new_usage_event)
+
+				for uep in new_usage_event_projects:
+					if a.customer == uep.customer and a.project == uep.project:
+						bNewRecord = False
+
+			if bNewRecord:
+				if AreaAccessRecord.objects.filter(user=operator,end=None, active_flag=True).count() > 0:
+					areas = AreaAccessRecord.objects.filter(user=operator,end=None, active_flag=True)
+					for a in areas:
+						a.end = timezone.now()
+						a.updated = timezone.now()
+						a.save()
+
+						tmp_aarp = AreaAccessRecordProject.objects.filter(area_access_record=a)
+						tmp_count = tmp_aarp.count()
+
+						for taarp in tmp_aarp:
+							taarp.project_percent = round((100/tmp_count),2)
+							taarp.updated = timezone.now()
+							taarp.save()
+
+				aarnew = AreaAccessRecord()
+				aarnew.area = tool.requires_area_access
+				aarnew.user = request.user
+				aarnew.start = timezone.now()
+				aarnew.related_usage_event = new_usage_event
+				aarnew.created = timezone.now()
+				aarnew.updated = timezone.now()
+
+				if new_staff_charge:
+					aarnew.staff_charge = new_staff_charge
+				if billing_mode:
+					aarnew.cost_per_sample_run = True
+
+				aarnew.save()
+
+				if new_staff_charge:
+					scp = StaffChargeProject.objects.filter(staff_charge=new_staff_charge, active_flag=True)
+
+					for s in scp:
+						aarpnew = AreaAccessRecordProject()
+						aarpnew.area_access_record = aarnew
+						aarpnew.project = s.project
+						aarpnew.customer = s.customer
+						aarpnew.created = timezone.now()
+						aarpnew.updated = timezone.now()
+						aarpnew.save()
+
+						for smp in s.sample_detail.all():
+							aarpnew.sample_detail.add(smp)
+
 
 	return response
 
@@ -863,7 +979,6 @@ def disable_tool(request, tool_id):
 	if response.status_code != HTTPStatus.OK:
 		return response
 	try:
-		#current_reservation = Reservation.objects.get(start__lt=timezone.now(), end__gt=timezone.now(), cancelled=False, missed=False, shortened=False, user=request.user, tool=tool)
 		current_reservation = request.user.current_reservation_for_tool(tool)
 
 		if request.user.is_staff:
@@ -897,7 +1012,6 @@ def disable_tool(request, tool_id):
 	if tool.interlock and not tool.interlock.lock():
 		error_message = f"The interlock command for the {tool} failed. The error message returned: {tool.interlock.most_recent_reply}"
 		logger.error(error_message)
-		#return HttpResponseServerError(error_message)
 
 	# End the current usage event for the tool
 	current_usage_event = tool.get_current_usage_event()
@@ -986,20 +1100,8 @@ def disable_tool(request, tool_id):
 
 
 	if request.user.charging_staff_time():
+	#if StaffCharge.objects.filter(related_usage_event=current_usage_event).exists():
 		existing_staff_charge = request.user.get_staff_charge()
-		#if existing_staff_charge.customer == current_usage_event.user and existing_staff_charge.project == current_usage_event.project:
-
-		#if existing_staff_charge.customers == current_usage_event.customers and existing_staff_charge.projects == current_usage_event.projects:
-
-		#b_current = True
-
-		#for scp in existing_staff_charge.staffchargeproject_set.all():
-		#	if not current_usage_event.usageeventproject_set.filter(project=scp.project, customer=scp.customer).exists():
-		#		b_current = False
-
-		#for uep in current_usage_event.usageeventproject_set.all():
-		#	if not existing_staff_charge.staffchargeproject_set.filter(project=uep.project, customer=uep.customer).exists():
-		#		b_current = False
 
 		if current_usage_event == existing_staff_charge.related_usage_event:
 			return render(request, 'staff_charges/reminder.html', {'tool': tool, 'staff_charge': existing_staff_charge})
@@ -1066,7 +1168,6 @@ def disable_tool_multi(request, tool_id, usage_event, dynamic_form):
 					user_project_info[index]["cost_per_sample"] = value
 
 		for key in user_project_info:
-			#cuep = UsageEventProject.objects.get(usage_event=current_usage_event,customer=user_project_info[key]["customer"], project=user_project_info[key]["project"])
 			cuep = UsageEventProject.objects.get(id=key)
 			cuep.sample_num = int(user_project_info[key]["sample_num"])
 			cuep.cost_per_sample = float(user_project_info[key]["cost_per_sample"])
@@ -1077,7 +1178,7 @@ def disable_tool_multi(request, tool_id, usage_event, dynamic_form):
 
 	try:
 		if uep.count() == 1:
-			uep = UsageEventProject.objects.get(usage_event=usage_event)
+			uep = UsageEventProject.objects.get(usage_event=current_usage_event)
 
 			# set project_percent to 100
 			uep.project_percent=100.0
@@ -1085,32 +1186,15 @@ def disable_tool_multi(request, tool_id, usage_event, dynamic_form):
 			uep.save()
 
 			# run dynamic form processing
-			dynamic_form.charge_for_consumable(uep.customer, uep.usage_event.operator, uep.project, uep.usage_event.run_data, usage_event, 100.0, usage_event.cost_per_sample_run)
+			dynamic_form.charge_for_consumable(uep.customer, uep.usage_event.operator, uep.project, uep.usage_event.run_data, current_usage_event, 100.0, current_usage_event.cost_per_sample_run)
 
 			if request.user.charging_staff_time():
 				existing_staff_charge = request.user.get_staff_charge()
-				#if existing_staff_charge.customers.all()[0] == usage_event.user and existing_staff_charge.projects.all()[0] == usage_event.project:
-				# set a flag to show that the reminder should be shown
-				#b_current = True
-
-				# check that each staff charge project record for the current staff charge has a matching record for the current usage event project records
-				#for scp in existing_staff_charge.staffchargeproject_set.all():
-				#	if not usage_event.usageeventproject_set.filter(project=scp.project, customer=scp.customer).exists():
-				#		b_current = False
-
-				# also check the reverse to ensure there are no extraneous usage event project records missed in the previous loop
-				#for uep in usage_event.usageeventproject_set.all():
-				#	if not existing_staff_charge.staffchargeproject_set.filter(project=uep.project, customer=uep.customer).exists():
-				#		b_current = False
-
-				
-
-				#if b_current:
-				#	response = render(request, 'staff_charges/reminder.html', {'tool': tool, 'staff_charge': existing_staff_charge })
 				if existing_staff_charge.related_usage_event == usage_event:
 					response = render(request, 'staff_charges/general_reminder.html', { 'staff_charge': existing_staff_charge})
 				else:
 					response = render(request, 'tool_control/disable_confirmation.html', {'tool': tool})
+
 				return response
 
 			else:
@@ -1122,6 +1206,12 @@ def disable_tool_multi(request, tool_id, usage_event, dynamic_form):
 					cuep.project_percent = 100.0
 					cuep.updated = timezone.now()
 					cuep.save()
+
+				if request.user.charging_staff_time():
+					existing_staff_charge = request.user.get_staff_charge()
+					if existing_staff_charge.related_usage_event == current_usage_event:
+						return render(request, 'staff_charges/general_reminder.html', { 'staff_charge': existing_staff_charge})	
+
 				return render(request, 'tool_control/disable_confirmation.html', {'tool': tool})
 			else:
 				# gather records and send to form for editing
@@ -1140,9 +1230,11 @@ def disable_tool_multi(request, tool_id, usage_event, dynamic_form):
 				}
 				return render(request, 'tool_control/multiple_projects_finish.html', params)
 
+
 	except StaffChargeProject.DoesNotExist:
 		existing_staff_charge = request.user.get_staff_charge()
 		return render(request, 'staff_charges/general_reminder.html', { 'staff_charge': existing_staff_charge})
+
 	
 @staff_member_required(login_url=None)
 @require_POST
@@ -1215,7 +1307,6 @@ def usage_event_projects_save(request):
 			existing_staff_charge = request.user.get_staff_charge()
 
 			if existing_staff_charge.related_usage_event == event:
-
 				response = render(request, 'staff_charges/general_reminder.html', {'staff_charge': existing_staff_charge})
 				return response
 
@@ -1226,6 +1317,7 @@ def usage_event_projects_save(request):
 			return HttpResponseBadRequest(inst)
 		else:
 			return HttpResponseBadRequest(msg)
+
 
 	return redirect(reverse('tool_control'))
 

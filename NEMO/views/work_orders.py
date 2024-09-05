@@ -34,10 +34,11 @@ def add_work_order(request):
 	notes = request.POST.get('notes',None)
 	status = 1
 	customer_id = int(request.POST.get('customer', None))
+	work_order_type = int(request.POST.get('work_order_type', None))
 
 	customer = User.objects.get(id=customer_id)
 
-	work_order = WorkOrder.objects.create(work_order_number=work_order_number, notes=notes, status=status, customer=customer, created=timezone.now(), updated=timezone.now())
+	work_order = WorkOrder.objects.create(work_order_number=work_order_number, notes=notes, status=status, customer=customer, work_order_type=work_order_type, created=timezone.now(), updated=timezone.now())
 
 	return render(request, 'work_orders/work_order_confirmation.html', {'work_order':work_order})
 
@@ -52,61 +53,76 @@ def create_work_order(request):
 @staff_member_required(login_url=None)
 @require_GET
 def work_order_transactions(request, work_order_id):
-	work_order = WorkOrder.objects.get(id=int(work_order_id))
 
+	# define type ids for reference
+	usage_event_tid = ContentType.objects.get_for_model(UsageEvent)
+	usage_event_project_tid = ContentType.objects.get_for_model(UsageEventProject)
+	staff_charge_tid = ContentType.objects.get_for_model(StaffCharge)
+	staff_charge_project_tid = ContentType.objects.get_for_model(StaffChargeProject)
+	area_access_record_tid = ContentType.objects.get_for_model(AreaAccessRecord)
+	area_access_record_project_tid = ContentType.objects.get_for_model(AreaAccessRecordProject)
+	consumable_withdraw_tid = ContentType.objects.get_for_model(ConsumableWithdraw)
+
+	work_order = WorkOrder.objects.get(id=int(work_order_id))
+	cost_per_sample_run = work_order.work_order_type == 2
 	work_order_transactions = WorkOrderTransaction.objects.filter(work_order=work_order)
 
 	dictionary = {}
 
 	se_dates = get_billing_date_range()
 
-	#dstart = se_dates['start']
-
-	#dc = dstart.split("/")
-
-	#dy = dc[2]
-	#dm = dc[0]
-	#dd = dc[1]
-
-	#if len(dm) == 1:
-	#	dm = "0" + dm
-
-	#if len(dd) == 1:
-	#	dd = "0" + dd
-
-	#dstart = dy + "-" + dm + "-" + dd
-
 	dstart = datetime.strptime(se_dates['start'], '%m/%d/%Y') - timedelta(days=92)
 
 	# get tool transactions
-	usage_events = UsageEvent.objects.filter(end__gte=dstart, customers__id=work_order.customer.id, active_flag=True)
+	usage_events = UsageEvent.objects.filter(end__gte=dstart, customers__id=work_order.customer.id, active_flag=True, validated=True, cost_per_sample_run=cost_per_sample_run)
 	uep = UsageEventProject.objects.filter(usage_event__in=usage_events, customer=work_order.customer, work_order_transaction=None)
 
+	# filter by tool transactions already in a work order
+	uep = uep.exclude(id__in=WorkOrderTransaction.objects.filter(content_type=usage_event_project_tid)).order_by('-usage_event__start')
+
 	# get staff charges
-	staff_charges = StaffCharge.objects.filter(end__gte=dstart, customers__id=work_order.customer.id, active_flag=True)
+	if cost_per_sample_run:
+		staff_charges = StaffCharge.objects.filter(end__gte=dstart, customers__id=work_order.customer.id, active_flag=True, validated=True)
+	else:
+		staff_charges = StaffCharge.objects.filter(end__gte=dstart, customers__id=work_order.customer.id, active_flag=True, validated=True, cost_per_sample_run=False)
 	scp = StaffChargeProject.objects.filter(staff_charge__in=staff_charges, customer=work_order.customer, work_order_transaction=None)
 
+	# filter by staff charge transactions already in a work order
+	scp = scp.exclude(id__in=WorkOrderTransaction.objects.filter(content_type=staff_charge_project_tid)).order_by('-staff_charge__start')
+
 	# get area access records
-	area_access_records = AreaAccessRecord.objects.filter(end__gte=dstart, customers__id=work_order.customer.id, active_flag=True)
+	if cost_per_sample_run:
+		area_access_records = AreaAccessRecord.objects.filter(end__gte=dstart, customers__id=work_order.customer.id, active_flag=True, validated=True)
+	else:
+		area_access_records = AreaAccessRecord.objects.filter(end__gte=dstart, customers__id=work_order.customer.id, active_flag=True, validated=True, cost_per_sample_run=False)
 	aarp = AreaAccessRecordProject.objects.filter(area_access_record__in=area_access_records, customer=work_order.customer, work_order_transaction=None)
 
+	# filter by area access record transactions already in a work order
+	aarp = aarp.exclude(id__in=WorkOrderTransaction.objects.filter(content_type=area_access_record_project_tid)).order_by('area_access_record__start')
+
 	# get consumable withdraws
-	consumable_withdraws = ConsumableWithdraw.objects.filter(date__gte=dstart, customer=work_order.customer, active_flag=True, work_order_transaction=None)
+	if cost_per_sample_run:
+		consumable_withdraws = ConsumableWithdraw.objects.filter(date__gte=dstart, customer=work_order.customer, active_flag=True, work_order_transaction=None, validated=True)
+	else:
+		consumable_withdraws = ConsumableWithdraw.objects.filter(date__gte=dstart, customer=work_order.customer, active_flag=True, work_order_transaction=None, validated=True, cost_per_sample_run=False)
+
+	# filter by consumable withdraw transactions already in a work order
+	consumable_withdraws = consumable_withdraws.exclude(id__in=WorkOrderTransaction.objects.filter(content_type=consumable_withdraw_tid)).order_by('-date')
 
 	dictionary["usage_events"] = usage_events
-	dictionary["usage_events_cid"] = ContentType.objects.get_for_model(UsageEvent).id
+	dictionary["usage_events_cid"] = usage_event_tid.id
 	dictionary["uep"] = uep
-	dictionary["usage_event_projects_cid"] = ContentType.objects.get_for_model(UsageEventProject).id
+	dictionary["usage_event_projects_cid"] = usage_event_project_tid.id
 	dictionary["staff_charges"] = staff_charges
-	dictionary["staff_charges_cid"] = ContentType.objects.get_for_model(StaffCharge).id
+	dictionary["staff_charges_cid"] = staff_charge_tid.id
 	dictionary["scp"] = scp
-	dictionary["staff_charge_projects_cid"] = ContentType.objects.get_for_model(StaffChargeProject).id
+	dictionary["staff_charge_projects_cid"] = staff_charge_project_tid.id
 	dictionary["area_access_records"] = area_access_records
-	dictionary["area_access_records_cid"] = ContentType.objects.get_for_model(AreaAccessRecord).id
+	dictionary["area_access_records_cid"] = area_access_record_tid.id
 	dictionary["aarp"] = aarp
-	dictionary["area_access_record_projects_cid"] = ContentType.objects.get_for_model(AreaAccessRecordProject).id
+	dictionary["area_access_record_projects_cid"] = area_access_record_project_tid.id
 	dictionary["consumable_withdraws"] = consumable_withdraws
-	dictionary["consumable_withdraws_cid"] = ContentType.objects.get_for_model(ConsumableWithdraw).id
+	dictionary["consumable_withdraws_cid"] = consumable_withdraw_tid.id
 	dictionary["work_order"] = work_order
 	dictionary["work_order_transactions"] = work_order_transactions
 

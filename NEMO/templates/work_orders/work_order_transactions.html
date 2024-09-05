@@ -17,6 +17,19 @@
 		<td>{{ work_order.customer }}</td>
 	</tr>
 	<tr>
+		<th>Type</th>
+		<td>
+		{% if work_order.work_order_type == 1 %}
+		Standard
+		{% else %}
+		Cost per sample<br/>
+		<span style="font-size: 10pt;">
+		The transactions shown with a blue background are those that were run as part of a cost per sample run.  Those with a white background were run as standard transactions, but are included in case the intent was for the work to be part of a cost per sample effort.  If you have questions please reach out to your manager or the LEO Team at LEOHelp@psu.edu.
+		</span>
+		{% endif %}
+		</td>
+	</tr>
+	<tr>
 		<th>Status</th>
 		<td>
 			<input type="radio" name="status" value=1 {% if work_order.status == 1 %}checked{% endif %}/> Open<br/>
@@ -30,7 +43,7 @@
 <div id="included">
 <h1>Included</h1>
 <input type="text" name="filter_included" id="filter_included" class="form-control" style="position:relative; display: inline; float: left; width: 25%;" value="" placeholder="Filter included transactions" />
-<table class="table">
+<table class="table" id="tbl_included">
 <thead>
 	<tr>
 		<td></td>
@@ -63,7 +76,7 @@
 <div id="available">
 <h1>Available</h1>
 <input type="text" name="filter_available" id="filter_available" class="form-control" style="position:relative; display: inline; float: left; width: 25%;" value="" placeholder="Filter available transactions" />
-<table class="table">
+<table class="table" id="tbl_available">
 <thead>
 <tr>
 	<td></td>
@@ -71,13 +84,15 @@
 	<th>Type</th>
 	<th>Item</th>
 	<th>Project</th>
+	<th>General Notes</th>
+	<th>Customer Notes</th>
 	<th>Dates</th>
 	<th>Percent</th>
 </tr>
 </thead>
 <tbody id="transactions">
 {% for u in uep %}
-<tr>
+<tr style="background-color: {% if u.usage_event.cost_per_sample_run %}#b6d8ff{% else %}#ffffff{% endif %};">
 	<td>
 		R: {{ u.id }}<br/>
 		P: {{ u.usage_event.id }}
@@ -86,45 +101,63 @@
 	<td>Tool Use</td>
 	<td>{{ u.usage_event.tool }}</td>
 	<td>{{ u.project }}</td>
+	<td>{% if u.usage_event.operator_comment is not None %}{{ u.usage_event.operator_comment }}{% endif %}</td>
+	<td>{% if u.comment is not None %}{{ u.comment }}{% endif %}</td>
 	<td>{{ u.usage_event.start }} - {{ u.usage_event.end }}</td>
 	<td>{{ u.project_percent }}</td>
 </tr>
 {% endfor %}
 
 {% for s in scp %}
-<tr>
+<tr style="background-color: {% if s.staff_charge.cost_per_sample_run %}#b6d8ff{% else %}#ffffff{% endif %};">
 	<td>
 		R: {{ s.id }}<br/>
 		P: {{ s.staff_charge.id }}
+		{% if s.related_usage_event is not None %}
+		<br/>
+		U: {{ s.related_usage_event.id }}
+		{% endif %}
 	</td>
 	<td><button {% if work_order.status == 0%}disabled{% endif %} class="btn btn-success" onclick="ajax_post('{% url 'add_work_order_transaction' work_order.id staff_charge_projects_cid s.id  %}',{},reload_page);">+</button>
 	<td>Staff Charge</td>
 	<td>{{ s.staff_charge.staff_member }}</td>
 	<td>{{ s.project }}</td>
+	<td>{% if s.staff_charge.staff_member_comment is not None %}{{ s.staff_charge.staff_member_comment }}{% endif %}</td>
+	<td>{% if s.comment is not None %}{{ s.comment }}{% endif %}</td>
 	<td>{{ s.staff_charge.start }} - {{ s.staff_charge.end }}</td>
 	<td>{{ s.project_percent }}</td>
 </tr>
 {% endfor %}
 
 {% for a in aarp %}
-<tr>
+<tr style="background-color: {% if a.area_access_record.cost_per_sample_run %}#b6d8ff{% else %}#ffffff{% endif %};">
 	<td>
 		R: {{ a.id }}<br/>
 		P: {{ a.area_access_record.id }}
+		{% if a.related_usage_event is not None %}
+		<br/>
+		U: {{ a.related_usage_event.id }}
+		{% endif %}
 	</td>
 	<td><button {% if work_order.status == 0%}disabled{% endif %} class="btn btn-success" onclick="ajax_post('{% url 'add_work_order_transaction' work_order.id area_access_record_projects_cid a.id  %}',{},reload_page);">+</button>
 	<td>Area Access Record</td>
 	<td>{{ a.area_access_record.area }}</td>
 	<td>{{ a.project }}</td>
+	<td>{% if a.area_access_record.comment is not None %}{{ a.area_access_record.comment }}{% endif %}</td>
+	<td>{% if a.comment is not None %}{{ a.comment }}{% endif %}</td>
 	<td>{{ a.area_access_record.start }} - {{ a.area_access_record.end }}</td>
 	<td>{{ a.project_percent }}</td>
 </tr>
 {% endfor %}
 
 {% for c in consumable_withdraws %}
-<tr>
+<tr style="background-color: {% if c.cost_per_sample_run %}#b6d8ff{% else %}#ffffff{% endif %};">
 	<td>
 		R: {{ c.id }}
+		{% if c.usage_event is not None %}
+		<br/>
+		U: {{ c.usage_event.id }}
+		{% endif %}
 	</td>
 	<td><button {% if work_order.status == 0%}disabled{% endif %} class="btn btn-success" onclick="ajax_post('{% url 'add_work_order_transaction' work_order.id consumable_withdraws_cid c.id  %}',{},reload_page);">+</button>
 	<td>Consumable Withdraw</td>
@@ -133,6 +166,8 @@
 		{{ c.quantity }} {{ c.consumable.unit }}
 	</td>
 	<td>{{ c.project }}</td>
+	<td>{% if c.notes is not None %}{{ c.notes }}{% endif %}</td>
+	<td></td>
 	<td>{{ c.date }}</td>
 	<td>{{ c.project_percent }}</td>
 </tr>
@@ -142,6 +177,11 @@
 </div>
 
 <script type="text/javascript">
+$(function() {
+
+$("#tbl_included").tablesorter();
+$("#tbl_available").tablesorter();
+
 $("input[name='status']").on("click", function() {
 	var selected = $(this).is(":checked");
 	var val = parseInt($(this).val());
@@ -196,6 +236,8 @@ $("#filter_included").keyup(function () {
 		}
 	})
 	.show();
+});
+
 });
 </script>
 

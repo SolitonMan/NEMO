@@ -224,11 +224,15 @@ class User(models.Model):
 		return self.projects
 
 	def charging_staff_time(self):
-		return StaffCharge.objects.filter(staff_member=self.id, end=None, active_flag=True).exists()
+		return StaffCharge.objects.filter(staff_member=self, end=None, active_flag=True).exists()
 
 	def get_staff_charge(self):
+#		try:
+#			return StaffCharge.objects.filter(staff_member=self, end=None, active_flag=True)[0]
+#		except:
+#			return None
 		try:
-			sc = StaffCharge.objects.filter(staff_member=self.id, end=None)
+			sc = StaffCharge.objects.filter(staff_member=self, end=None, active_flag=True)
 
 			if sc is not None:
 				if sc[0].core_id_override is not None:
@@ -236,7 +240,9 @@ class User(models.Model):
 				if sc[0].credit_cost_collector_override is not None:
 					sc = sc.annotate(credit_cost_collector_override_name=Subquery(CreditCostCollector.objects.filter(id=sc[0].credit_cost_collector_override).values('name')))
 
-			return sc[0]
+				return sc[0]
+			else:
+				return None
 		except:
 			return None
 
@@ -2068,6 +2074,7 @@ class WorkOrder(models.Model):
 	work_order_number = models.CharField(null=True,blank=True,max_length=500)
 	status = models.PositiveIntegerField()
 	customer = models.ForeignKey('User',on_delete=models.SET_NULL, null=True)
+	work_order_type = models.PositiveIntegerField(default=1)
 	notes = models.TextField(null=True,blank=True)
 	created = models.DateTimeField(null=True, blank=True, default=timezone.now)
 	updated = models.DateTimeField(null=True, blank=True, default=timezone.now)

@@ -18,6 +18,16 @@
 		<td>{{ work_order.customer }}</td>
 	</tr>
 	<tr>
+		<th>Type</th>
+		<td>
+		{% if work_order.work_order_type == 1 %}
+		Standard
+		{% else %}
+		Cost per sample
+		{% endif %}
+		</td>
+	</tr>
+	<tr>
 		<th>Status</th>
 		{% if work_order.status == 1 %}
 		<td>Open</td>
@@ -31,5 +41,6 @@
 	</tr>
 	</table>
 
-	<button class="btn btn-success" onclick="location.href='{% url 'work_orders' %}';">Return to Work Orders</button>
+	<button class="btn btn-success" onclick="location.href='{% url 'work_orders' %}';">Return to Work Orders</button>&nbsp;
+	<button class="btn btn-success" onclick="location.href='{% url 'work_order_transactions' work_order.id %}';">Edit New Work Order</button>
 {% endblock %} 

@@ -165,7 +165,7 @@
 				{% if user.is_staff and user.charging_staff_time %}
 				{% with user.get_staff_charge as staff_charge %}
 					<li class="hidden-sm">
-						<p class="navbar-text">
+						<p class="navbar-text" style="font-weight: normal;">
 							<a id="staff_charge_link" href="{% url 'staff_charges' %}" style="color:red; text-decoration: none" data-toggle="tooltip" data-placement="bottom" title="You are charging staff time to {{ staff_charge.customers.all.0 }} {% if staff_charge.customers.all.count > 1 %}and others{% endif %} on the project {{ staff_charge.projects.all.0.project_number }} since {{ staff_charge.start }}. {% if staff_charge.core_id_override is not None and staff_charge.core_id_override != 0 %} These charges are being made for {{ staff_charge.core_id_override_name }} {% if staff_charge.credit_cost_collector_override is not None and staff_charge.credit_cost_collector_override != 0%} and being credited to {{ staff_charge.credit_cost_collector_override_name }}.{% endif %}{% endif %}">
 								Staff time ({{ staff_charge.projects.all.0.project_number }}{% if staff_charge.core_id_override is not None and staff_charge.core_id_override != 0 %} for {{ staff_charge.core_id_override_name }}{% elif staff_charge.credit_cost_collector_override is not None and staff_charge.credit_cost_collector_override != 0%} for {{ staff_charge.credit_cost_collector_override_name }}{% else %} for {{ user.credit_cost_collector.core.name }}{% endif %}) 
 							</a>

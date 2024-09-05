@@ -13,6 +13,7 @@
 			<tr>
 			<th>Work Order Number</th>
 			<th>Customer</th>
+			<th>Type</th>
 			<th>Status</th>
 			<th>Notes</th>
 			<th>Created</th>
@@ -23,6 +24,7 @@
 			<tr>
 			<td><a href="{% url 'work_order_transactions' w.id %}">{{ w.work_order_number }}</a></td>
 			<td>{{ w.customer }}</td>
+			<td>{% if w.work_order_type == 1 %}STANDARD{% else %}COST PER SAMPLE{% endif %}</td>
 			<td>{% if w.status == 1 %}OPEN{% else %}CLOSED{% endif %}</td>
 			<td>{{ w.notes }}</td>
 			<td>{{ w.created }}</td>

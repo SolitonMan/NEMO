@@ -454,6 +454,8 @@ my_reservation_projects = {{ my_reservation_projects }}
 					{% endif %}
 
 					<table id="usage_event_entries" class="table">
+
+					{% if request.device != 'mobile' %}
 					<tr>
 						<th>&nbsp;</th>
 						<th style="min-width:200px">Customer</th>
@@ -487,7 +489,51 @@ my_reservation_projects = {{ my_reservation_projects }}
 					<tr>
 						<td colspan="4" style="text-align:center"><a href="javascript:void(0)" onclick="add_customer()">Add another customer</a></td>
 					</tr>
+
+					{% else %}
+
+					{% for r in my_reservation_projects %}
+
+					<tr id="row_{{ forloop.counter }}">
+
+						<td>
+							<table style="border: 3px solid black;">
+							<tr>
+								<td style="vertical-align: top">
+									{{ r.customer }}<input type="hidden" value="{{ r.customer.id }}" id="user_textbox__{{ forloop.counter }}" name="chosen_user__{{ forloop.counter }}" data-row="{{ forloop.counter }}">
+								</td>
+							</tr>
+							<tr>
+								<td id="project__{{ forloop.counter }}" style="vertical-align: top">
+									{{ r.project }}
+									<input type="hidden" value="{{ r.project.id }}" name="chosen_project__{{ forloop.counter }}" id="chosen_project__{{ forloop.counter }}">
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<select name="chosen_sample__{{ forloop.counter }}" class="form-control" id="chosen_sample__{{ forloop.counter }}" multiple size="4" style="width:fit-content">
+									{% for s in r.project.sample_project.all %}
+										<option value="{{ s.id }}"{% if s in r.sample.all %} selected{% endif %}>{{ s }}</option>
+									{% endfor %}
+									</select>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<button class="btn btn-danger" onclick="remove_row({{ forloop.counter }});">Remove Customer</button>
+								</td>
+							</tr>
+							</table>
+						</td>
+
+					</tr>
+
+					{% endfor %}
+
+					{% endif %}
+
 					</table>
+
 					{% endif %}
 					</div>
 				{% elif tool.operational and not tool.required_resource_is_unavailable and not tool.delayed_logoff_in_progress and not tool.scheduled_outage_in_progress %}
@@ -761,15 +807,17 @@ my_reservation_projects = {{ my_reservation_projects }}
 	{% endif %}
 
 	<table id="usage_event_entries" class="table">
+		{% if request.device != 'mobile' %}
 		<tr>
 			<th>&nbsp;</th>
 			<th style="min-width:200px">Customer</th>
 			<th style="min-width:200px">Project</th>
 			<th style="min-width:300px">Samples</th>
 		</tr>
+		{% endif %}
 		{# Rows are inserted here on load and when "Add another customer" is clicked. #}
 		<tr>
-			<td colspan="4" style="text-align:center"><a href="javascript:void(0)" onclick="add_customer()">Add another customer</a></td>
+			<td {% if request.device != 'mobile' %}colspan="4" {% endif %}style="text-align:center"><a href="javascript:void(0)" onclick="add_customer()">Add another customer</a></td>
 		</tr>
 	</table>
 	<br>

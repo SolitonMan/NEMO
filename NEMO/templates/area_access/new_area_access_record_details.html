@@ -13,7 +13,7 @@
 {% if customer.in_area %}
 	<h1>Currently Signed In</h1>
 	<p>
-	You are currently signed in to the {{ customer.area_access_record.area.name }} on the project {{ customer.area_access_record.project }}
+	You are currently signed in to the {{ customer.area_access_record.area.name }} on the project {{ customer.area_access_record.areaaccessrecordproject_set.all.0.project }}
 	<table class="table">
 	<tr>
 		<th>Customer</th>
