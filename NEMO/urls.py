@@ -300,6 +300,7 @@ if settings.ALLOW_CONDITIONAL_URLS:
 		re_path(r'^work_orders/$', work_orders.work_orders, name='work_orders'),
 		re_path(r'^save_work_order/$', work_orders.add_work_order, name='save_work_order'),
 		re_path(r'^create_work_order/$', work_orders.create_work_order, name='create_work_order'),
+		re_path(r'^delete_work_order/(?P<work_order_id>\d+)/$', work_orders.delete_work_order, name='delete_work_order'),
 		re_path(r'^work_order_transactions/(?P<work_order_id>\d+)/$', work_orders.work_order_transactions, name='work_order_transactions'),
 		re_path(r'^add_work_order_transaction/(?P<work_order_id>\d+)/(?P<content_type_id>\d+)/(?P<object_id>\d+)/$', work_orders.add_work_order_transaction, name='add_work_order_transaction'),
 		re_path(r'^remove_work_order_transaction/(?P<work_order_transaction_id>\d+)/$', work_orders.remove_work_order_transaction, name='remove_work_order_transaction'),

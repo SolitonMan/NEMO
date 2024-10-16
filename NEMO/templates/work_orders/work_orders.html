@@ -5,6 +5,13 @@
 {% block content %}
 	<h1>Work Orders</h1>
 
+{% if error_msg %}
+<div class="alert alert-danger">
+{{ error_msg }}
+</div>
+{% endif %}
+
+
 	<p>On this page you can view existing work orders or create a new one.</p>
 	<input type="text" value="" id="filter" name="filter" placeholder="Filter work orders" class="form-control" style="position:relative; display: inline; float: left; width: 25%;" />
 	<button class="btn btn-success" id="create" style="position:relative; display: inline; float: right;" onclick="location.href='{% url 'create_work_order' %}'">Add Work Order</button>
@@ -17,17 +24,29 @@
 			<th>Status</th>
 			<th>Notes</th>
 			<th>Created</th>
+			<th>Creator</th>
+			<th>DELETE</th>
 			</tr>
 		</thead>
 		<tbody id="work_orders">
 	{% for w in work_orders %}
 			<tr>
-			<td><a href="{% url 'work_order_transactions' w.id %}">{{ w.work_order_number }}</a></td>
+			<td>
+				<a href="{% url 'work_order_transactions' w.id %}">{{ w.work_order_number }}</a>
+			</td>
 			<td>{{ w.customer }}</td>
 			<td>{% if w.work_order_type == 1 %}STANDARD{% else %}COST PER SAMPLE{% endif %}</td>
-			<td>{% if w.status == 1 %}OPEN{% else %}CLOSED{% endif %}</td>
+			<td>{% if w.status == 1 %}OPEN{% elif w.status == 0 %}CLOSED{% else %}PROCESSED{% endif %}</td>
 			<td>{{ w.notes }}</td>
 			<td>{{ w.created }}</td>
+			<td>
+				{% if w.created_by %}{{ w.created_by }}{% endif %}
+			</td>
+			<td>
+				{% if request.user == w.created_by or request.user.is_superuser %}
+				<button {% if w.status == 2%}disabled{% endif %} class="btn btn-danger" onclick="if (confirm('Are you sure you wish to delete this work order?  This action cannot be undone.  Note that the transactions themselves will not be deleted, but the link to the work order will be removed.  You can add the transactions to a different work order when this action is completed.')) {ajax_post('{% url 'delete_work_order' w.id %}',{},reload_page);}">Delete</button>
+				{% endif %}
+			</td>
 			</tr>
 	{% endfor %}
 		</tbody>

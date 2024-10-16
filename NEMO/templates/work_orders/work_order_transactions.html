@@ -32,8 +32,12 @@
 	<tr>
 		<th>Status</th>
 		<td>
+			{% if work_order.status != 2 %}
 			<input type="radio" name="status" value=1 {% if work_order.status == 1 %}checked{% endif %}/> Open<br/>
 			<input type="radio" name="status" value=0 {% if work_order.status == 0 %}checked{% endif %}/> Closed
+			{% else %}
+			Processed
+			{% endif %}
 			<input type="hidden" name="work_order_id" value="{{ work_order.id }}" id="work_order_id" />
 		</td>
 	</tr>
@@ -46,11 +50,14 @@
 <table class="table" id="tbl_included">
 <thead>
 	<tr>
-		<td></td>
-		<td></td>
+		<td style="display: none;"></td>
+		{% if work_order.status != 2 %}<td></td>{% endif %}
 		<th>Item</th>
+		<th>Type</th>
 		<th>Merchant</th>
 		<th>Project</th>
+		<th>General Notes</th>
+		<th>Customer Notes</th>
 		<th>Date(s)</th>
 	</tr>
 </thead>
@@ -58,14 +65,38 @@
 {% for w in work_order_transactions %}
 {% get_content_data w as cd %}
 <tr>
-	<td>
+	<td style="display: none;">
 		R: {{ cd.record_id }}<br/>
 		P: {{ cd.parent_record_id }}
 	</td>
+	{% if work_order.status != 2 %}
 	<td><button {% if work_order.status == 0%}disabled{% endif %} class="btn btn-danger" onclick="ajax_post('{% url 'remove_work_order_transaction' w.id %}',{},reload_page);">-</button>
-	<td>{{ cd.item }} ({{ cd.type }}){% if cd.type == "consumablewithdraw" %}<br/>{{ w.content_object.quantity }} {{ w.content_object.consumable.unit }}{% endif %}</td>
+	{% endif %}
+	<td>{{ cd.item }} {% if cd.type == "consumablewithdraw" %}<br/>{{ w.content_object.quantity }} {{ w.content_object.consumable.unit }}{% endif %}</td>
+	<td>
+	{% if cd.type == "usageeventproject" %}
+	Tool Use
+	{% elif cd.type == "staffchargeproject" %}
+	Staff Charge
+	{% elif cd.type == "areaaccessrecordproject" %}
+	Area Access Record
+	{% else %}
+	Consumable Withdraw
+	{% endif %}
+	</td>
 	<td>{{ cd.staff_member }}</td>
 	<td>{{ cd.project }}</td>
+	<td>
+		{% if cd.type == "consumablewithdraw" %}{% if w.content_object.notes is not None %}{{ w.content_object.notes }}{% endif %}{% endif %}
+		{% if cd.type == "areaaccessrecordproject" %}{% if w.content_object.area_access_record.comment is not None %}{{ w.content_object.area_access_record.comment }}{% endif %}{% endif %}
+		{% if cd.type == "staffchargeproject" %}{% if w.content_object.staff_charge.staff_member_comment is not None %}{{ w.content_object.staff_charge.staff_member_comment }}{% endif %}{% endif %}
+		{% if cd.type == "usageeventproject" %}{% if w.content_object.usage_event.operator_comment is not None %}{{ w.content_object.usage_event.operator_comment }}{% endif %}{% endif %}
+	</td>
+	<td>
+		{% if cd.type == "areaaccessrecordproject" %}{% if w.content_object.comment is not None %}{{ w.content_object.comment }}{% endif %}{% endif %}
+		{% if cd.type == "staffchargeproject" %}{% if w.content_object.comment is not None%}{{ w.content_object.comment }}{% endif %}{% endif %}
+		{% if cd.type == "usageeventproject" %}{% if w.content_object.comment is not None %}{{ w.content_object.comment }}{% endif %}{% endif %}
+	</td>
 	<td>{{ cd.date_range }}</td>
 </tr>
 {% endfor %}
@@ -73,13 +104,15 @@
 </table>
 </div>
 
+
+{% if work_order.status != 2 %}
 <div id="available">
 <h1>Available</h1>
 <input type="text" name="filter_available" id="filter_available" class="form-control" style="position:relative; display: inline; float: left; width: 25%;" value="" placeholder="Filter available transactions" />
 <table class="table" id="tbl_available">
 <thead>
 <tr>
-	<td></td>
+	<td style="display: none;"></td>
 	<td></td>
 	<th>Type</th>
 	<th>Item</th>
@@ -93,7 +126,7 @@
 <tbody id="transactions">
 {% for u in uep %}
 <tr style="background-color: {% if u.usage_event.cost_per_sample_run %}#b6d8ff{% else %}#ffffff{% endif %};">
-	<td>
+	<td style="display: none;">
 		R: {{ u.id }}<br/>
 		P: {{ u.usage_event.id }}
 	</td>
@@ -110,7 +143,7 @@
 
 {% for s in scp %}
 <tr style="background-color: {% if s.staff_charge.cost_per_sample_run %}#b6d8ff{% else %}#ffffff{% endif %};">
-	<td>
+	<td style="display: none;">
 		R: {{ s.id }}<br/>
 		P: {{ s.staff_charge.id }}
 		{% if s.related_usage_event is not None %}
@@ -131,7 +164,7 @@
 
 {% for a in aarp %}
 <tr style="background-color: {% if a.area_access_record.cost_per_sample_run %}#b6d8ff{% else %}#ffffff{% endif %};">
-	<td>
+	<td style="display: none;">
 		R: {{ a.id }}<br/>
 		P: {{ a.area_access_record.id }}
 		{% if a.related_usage_event is not None %}
@@ -152,7 +185,7 @@
 
 {% for c in consumable_withdraws %}
 <tr style="background-color: {% if c.cost_per_sample_run %}#b6d8ff{% else %}#ffffff{% endif %};">
-	<td>
+	<td style="display: none;">
 		R: {{ c.id }}
 		{% if c.usage_event is not None %}
 		<br/>
@@ -175,6 +208,8 @@
 </tbody>
 </table>
 </div>
+{% endif %}
+
 
 <script type="text/javascript">
 $(function() {

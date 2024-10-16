@@ -2071,14 +2071,15 @@ class Sample(models.Model):
 
 
 class WorkOrder(models.Model):
-	work_order_number = models.CharField(null=True,blank=True,max_length=500)
+	work_order_number = models.CharField(null=True,blank=True,unique=True,max_length=500)
 	status = models.PositiveIntegerField()
-	customer = models.ForeignKey('User',on_delete=models.SET_NULL, null=True)
+	customer = models.ForeignKey('User',on_delete=models.SET_NULL, null=True, related_name='customer')
 	work_order_type = models.PositiveIntegerField(default=1)
 	notes = models.TextField(null=True,blank=True)
 	created = models.DateTimeField(null=True, blank=True, default=timezone.now)
 	updated = models.DateTimeField(null=True, blank=True, default=timezone.now)
 	closed = models.DateTimeField(null=True, blank=True, default=timezone.now)
+	created_by = models.ForeignKey('User',on_delete=models.SET_NULL, null=True, related_name='created_by')
 
 	def __str__(self):
 		return "Work Order " + str(self.work_order_number) + " for " + str(self.customer.first_name) + " " + str(self.customer.last_name)

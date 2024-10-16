@@ -7,6 +7,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
+from django.db import IntegrityError
 from django.db.models import F, Q
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
@@ -23,7 +24,7 @@ from NEMO.views.staff_charges import month_is_locked, month_is_closed, get_billi
 @staff_member_required(login_url=None)
 @require_GET
 def work_orders(request):
-	work_orders = WorkOrder.objects.all()
+	work_orders = WorkOrder.objects.all().order_by('work_order_number')
 
 	return render(request, 'work_orders/work_orders.html', {'work_orders': work_orders})
 
@@ -36,17 +37,36 @@ def add_work_order(request):
 	customer_id = int(request.POST.get('customer', None))
 	work_order_type = int(request.POST.get('work_order_type', None))
 
-	customer = User.objects.get(id=customer_id)
+	try:
+		customer = User.objects.get(id=customer_id)
 
-	work_order = WorkOrder.objects.create(work_order_number=work_order_number, notes=notes, status=status, customer=customer, work_order_type=work_order_type, created=timezone.now(), updated=timezone.now())
+		work_order = WorkOrder.objects.create(work_order_number=work_order_number, notes=notes, status=status, customer=customer, work_order_type=work_order_type, created=timezone.now(), updated=timezone.now(), created_by=request.user)
 
-	return render(request, 'work_orders/work_order_confirmation.html', {'work_order':work_order})
+		return render(request, 'work_orders/work_order_confirmation.html', {'work_order':work_order})
+
+	except IntegrityError:
+		msg = 'The work order number ' + str(work_order_number) + ' you submitted already exists.  Please choose a new value.'
+		dictionary = {
+			"work_order_number": work_order_number,
+			"notes": notes,
+			"customer_id": customer_id,
+			"work_order_type": work_order_type,
+			"error_msg": msg
+		}
+
+		projects = Project.objects.filter(active=True, end_date__gt=timezone.now())
+		customers = User.objects.filter(is_active=True, projects__in=projects).distinct()
+
+		dictionary["customers"] = customers
+
+		return render(request, 'work_orders/create_work_order.html', dictionary)
+
 
 @staff_member_required(login_url=None)
 @require_GET
 def create_work_order(request):
 	projects = Project.objects.filter(active=True, end_date__gt=timezone.now())
-	customers = User.objects.filter(is_active=True, projects__in=projects)
+	customers = User.objects.filter(is_active=True, projects__in=projects).distinct()
 
 	return render(request, 'work_orders/create_work_order.html', {'customers':customers})
 
@@ -74,7 +94,10 @@ def work_order_transactions(request, work_order_id):
 	dstart = datetime.strptime(se_dates['start'], '%m/%d/%Y') - timedelta(days=92)
 
 	# get tool transactions
-	usage_events = UsageEvent.objects.filter(end__gte=dstart, customers__id=work_order.customer.id, active_flag=True, validated=True, cost_per_sample_run=cost_per_sample_run)
+	if cost_per_sample_run:
+		usage_events = UsageEvent.objects.filter(end__gte=dstart, customers__id=work_order.customer.id, active_flag=True, validated=True)
+	else:
+		usage_events = UsageEvent.objects.filter(end__gte=dstart, customers__id=work_order.customer.id, active_flag=True, validated=True, cost_per_sample_run=False)
 	uep = UsageEventProject.objects.filter(usage_event__in=usage_events, customer=work_order.customer, work_order_transaction=None)
 
 	# filter by tool transactions already in a work order
@@ -169,3 +192,24 @@ def update_work_order_status(request, work_order_id, status_id):
 	return render(request, 'work_orders/work_order_confirmation.html', {'work_order':work_order})
 
 
+@login_required
+@require_POST
+def delete_work_order(request, work_order_id):
+	work_orders = None
+	work_order = WorkOrder.objects.get(id=int(work_order_id))
+	error_msg = None
+
+	try:
+		if work_order.status != 2:
+			work_order_transactions = WorkOrderTransaction.objects.filter(work_order=work_order)
+
+			work_order_transactions.delete()
+			work_order.delete()
+		else:
+			error_msg = "Could not delete work order number " + str(work_order.work_order_number) + " because it has already been processed.  Processed work orders cannot be deleted."
+	except:
+		error_msg = "Could not delete work order number " + str(work_order.work_order_number) + ".  Please try again, and reach out to LEOHelp@psu.edu if the problem persists."
+	
+	work_orders = WorkOrder.objects.all().order_by('work_order_number')
+
+	return render(request, 'work_orders/work_orders.html', {'work_orders': work_orders, 'error_msg': error_msg})	

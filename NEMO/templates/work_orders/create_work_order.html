@@ -8,12 +8,25 @@
 
 <p>Use this form to create a new Work Order for a chosen customer.  Once created you can add transactions.</p>
 
+<div style="display:none;">
+error_msg = {{ error_msg }}<br/>
+work_order_type = {{ work_order_type }}<br/>
+customer_id = {{ customer_id }}<br/>
+work_order_number = {{ work_order_number }}<br/>
+notes = {{ notes }}
+</div>
+
+{% if error_msg %}
+<div class="alert alert-danger">{{ error_msg }}</div>
+{% endif %}
+
+
 <form id="create_work_order" onsubmit="return on_submit()" method="POST" action="{% url 'save_work_order' %}">
 	{% csrf_token %}
 	<table class="table">
 		<tr>
 			<th>Work Order Number</th>
-			<td><input type=text class="form-control" name="work_order_number" value="" id="work_order_number" /></td>
+			<td><input type=text class="form-control" name="work_order_number" value="{% if work_order_number %}{{ work_order_number }}{% endif %}" id="work_order_number" maxlength="500"/></td>
 		</tr>
 		<tr>
 			<th>Customer</th>
@@ -25,13 +38,13 @@
 		<tr>
 			<th>Charge Type</th>
 			<td>
-				<input type="radio" value="1" name="work_order_type" checked />Standard<br/>
-				<input type="radio" value="2" name="work_order_type" />Cost per sample
+				<input type="radio" value="1" name="work_order_type" {% if work_order_type is None or work_order_type == 1 %}checked{% endif %} />Standard<br/>
+				<input type="radio" value="2" name="work_order_type" {% if work_order_type == 2 %}checked{% endif %} />Cost per sample
 			</td>
 		</tr>
 		<tr>
 			<th>Notes</th>
-			<td><textarea class="form-control" name="notes" id="notes" cols=60 rows=10></textarea></td>
+			<td><textarea class="form-control" name="notes" id="notes" cols=60 rows=10>{% if notes %}{{ notes }}{% endif %}</textarea></td>
 		</tr>
 	</table>
 
@@ -39,13 +52,22 @@
 </form>
 
 <script type="text/javascript">
+var sourceData = {{ customers|json_search_base }};
 $("#work_order_number").limitInputCharacters(LETTERS_AND_NUMBERS + "-_");
 function enable_customer()
 {
 	var id = "#customer";
-	$(id).autocomplete('customer', on_customer_selection, {{ customers|json_search_base }}).focus();
+	$(id).autocomplete('customer', on_customer_selection, sourceData).focus();
 }
 enable_customer();
+
+{% if customer_id %}
+var selectedItem = sourceData.find(item => item.id === {{ customer_id }});
+$("#customer").typeahead('val', selectedItem.id).hide();
+$("#customer_button").val(selectedItem.name).show();
+{% endif %}
+
+
 
 function on_customer_selection(jquery_event, search_selection, dataset_name)
 {
