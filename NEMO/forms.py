@@ -235,11 +235,14 @@ class ReservationAbuseForm(Form):
 
 	def clean_start(self):
 		start = self.cleaned_data['start']
-		return timezone.make_aware(datetime(year=start.year, month=start.month, day=start.day, hour=0, minute=0, second=0, microsecond=0), timezone.get_current_timezone())
+		dt_start = datetime(year=start.year, month=start.month, day=start.day, hour=0, minute=0, second=0, microsecond=0)
+		return dt_start.astimezone(timezone.get_current_timezone())
+
 
 	def clean_end(self):
 		end = self.cleaned_data['end']
-		return timezone.make_aware(datetime(year=end.year, month=end.month, day=end.day, hour=23, minute=59, second=59, microsecond=999999), timezone.get_current_timezone())
+		dt_end = datetime(year=end.year, month=end.month, day=end.day, hour=23, minute=59, second=59, microsecond=999999)
+		return dt_end.astimezone(timezone.get_current_timezone())
 
 
 class EmailBroadcastForm(Form):

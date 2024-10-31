@@ -7,6 +7,7 @@ from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedire
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 from django.utils.http import urlencode
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
@@ -637,8 +638,10 @@ def ad_hoc_area_access_record(request):
 	else:
 		aar.customer = User.objects.get(id=request.user.id)
 		aar.user = User.objects.get(id=request.user.id)
-	aar.start = request.POST.get("ad_hoc_start")
-	aar.end = request.POST.get("ad_hoc_end")
+	start = parse_datetime(request.POST.get("ad_hoc_start"))
+	aar.start = start.astimezone(timezone.get_current_timezone())
+	end = parse_datetime(request.POST.get("ad_hoc_end"))
+	aar.end = end.astimezone(timezone.get_current_timezone())
 	aar.ad_hoc_created = True
 	aar.created = timezone.now()
 	aar.updated = timezone.now()

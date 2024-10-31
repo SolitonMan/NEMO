@@ -1,22 +1,25 @@
-FROM python:3.10
+FROM python:3.11
 
 # Install LDAP support
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update --fix-missing
 RUN apt-get -y upgrade
-#RUN apt-get install -y libsasl2-dev libldap2-dev
-#RUN apt-get install -y slapd ldap-utils
-#RUN pip install python-ldap
-#RUN pip install django-auth-ldap
+RUN apt-get install -y memcached telnet
+
+RUN pip install --upgrade pip
 
 # memcached seems to be needed for the microsoft auth or other supporting software
 RUN pip install python-memcached
+
+# include pytz
+RUN pip install pytz
 
 # Install django_microsoft_auth
 RUN pip install django_microsoft_auth
 
 # Install PostgreSQL support
-RUN pip install psycopg2-binary
+#RUN pip install psycopg2-binary
+RUN pip install "psycopg[binary]"
 
 # Install easyaudit from https://github.com/soynatan/django-easy-audit
 RUN pip install django-easy-audit
@@ -32,6 +35,10 @@ RUN pip install xmltodict
 #RUN pip install django-debug-toolbar-request-history
 #RUN pip install django-debug-panel
 RUN pip install django-developer-panel
+
+# install replacement for Memcache
+RUN pip install pymemcache
+RUN pip install django-pymemcache 
 
 # Intall NEMO (in the current directory) and Gunicorn
 COPY . /nemo/

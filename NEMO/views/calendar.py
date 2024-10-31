@@ -1,5 +1,4 @@
 import io
-import pytz
 from datetime import timedelta, datetime
 from http import HTTPStatus
 from logging import getLogger
@@ -1362,8 +1361,8 @@ def create_ics_for_reservation(request, reservation, cancelled=False):
 	sequence = 'SEQUENCE:2\n' if cancelled else 'SEQUENCE:0\n'
 	priority = 'PRIORITY:5\n' if cancelled else 'PRIORITY:0\n'
 	now = datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')
-	start = reservation.start.astimezone(pytz.utc).strftime('%Y%m%dT%H%M%SZ')
-	end = reservation.end.astimezone(pytz.utc).strftime('%Y%m%dT%H%M%SZ')
+	start = reservation.start.strftime('%Y%m%dT%H%M%SZ')
+	end = reservation.end.strftime('%Y%m%dT%H%M%SZ')
 
 	if reservation.title is not None and reservation.title != '':
 		reservation_name = reservation.title

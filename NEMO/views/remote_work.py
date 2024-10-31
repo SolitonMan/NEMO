@@ -1,7 +1,10 @@
+#import datetime
 import json
+#import pytz
 
-from datetime import datetime
+from datetime import datetime #, timezone
 from logging import getLogger
+#from pytz import timezone
 from re import search
 
 from django.conf import settings
@@ -428,13 +431,27 @@ def show_override(staff_charge):
 
 	return ret
 
+def make_aware(date_obj, tz=None):
+	if not date_obj:
+		return date_obj
+
+	if not tz:
+		tz = pytz.timezone('America/New_York')
+
+	aware_date = tz.localize(date_obj)
+
+	return aware_date
+
+
 @staff_member_required(login_url=None)
 @require_POST
 def validate_staff_charge(request, staff_charge_id):
 	staff_charge = get_object_or_404(StaffCharge, id=staff_charge_id)
+	date_obj = timezone.now()
+
 	staff_charge.validated = True
-	staff_charge.updated = timezone.now()
-	staff_charge.validated_date = timezone.now()
+	staff_charge.updated = date_obj
+	staff_charge.validated_date = date_obj
 	staff_charge.save()
 	return HttpResponse()
 
@@ -444,9 +461,11 @@ def validate_staff_charge(request, staff_charge_id):
 @require_POST
 def validate_usage_event(request, usage_event_id):
 	usage_event = get_object_or_404(UsageEvent, id=usage_event_id)
+	date_obj = timezone.now()
+
 	usage_event.validated = True
-	usage_event.updated = timezone.now()
-	usage_event.validated_date = timezone.now()
+	usage_event.updated = date_obj
+	usage_event.validated_date = date_obj
 	usage_event.save()
 	return HttpResponse()
 
@@ -456,9 +475,11 @@ def validate_usage_event(request, usage_event_id):
 @require_POST
 def validate_area_access_record(request, area_access_record_id):
 	area_access_record = get_object_or_404(AreaAccessRecord, id=area_access_record_id)
+	date_obj = timezone.now()
+
 	area_access_record.validated = True
-	area_access_record.updated = timezone.now()
-	area_access_record.validated_date = timezone.now()
+	area_access_record.updated = date_obj
+	area_access_record.validated_date = date_obj
 	area_access_record.save()
 	return HttpResponse()
 
@@ -468,9 +489,11 @@ def validate_area_access_record(request, area_access_record_id):
 @require_POST
 def validate_consumable_withdraw(request, consumable_withdraw_id):
 	consumable_withdraw = get_object_or_404(ConsumableWithdraw, id=consumable_withdraw_id)
+	date_obj = timezone.now()
+
 	consumable_withdraw.validated = True
-	consumable_withdraw.updated = timezone.now()
-	consumable_withdraw.validated_date = timezone.now()
+	consumable_withdraw.updated = date_obj
+	consumable_withdraw.validated_date = date_obj
 	consumable_withdraw.save()
 	return HttpResponse()
 
@@ -881,9 +904,9 @@ def resolve_staff_charge_contest(request):
 	contest_transaction = ContestTransaction.objects.get(content_type__pk=staff_charge_type.id, object_id=staff_charge.id, contest_resolved=False)
 	dictionary['contest_transaction'] = contest_transaction
 	df = DateFormat(staff_charge.start)
-	dictionary['event_start_date'] = df.format('Y-m-d h:i A')
+	dictionary['event_start_date'] = staff_charge.start  #df.format('Y-m-d h:i A')
 	df = DateFormat(staff_charge.end)
-	dictionary['event_end_date'] = df.format('Y-m-d h:i A')
+	dictionary['event_end_date'] = staff_charge.end  #df.format('Y-m-d h:i A')
 	if ContestTransactionData.objects.filter(content_type__pk=staff_charge_type.id, object_id=staff_charge.id, contest_transaction=contest_transaction, field_name="start").exists():
 		date_obj = datetime.strptime(ContestTransactionData.objects.filter(content_type__pk=staff_charge_type.id, object_id=staff_charge.id, contest_transaction=contest_transaction, field_name="start")[0].proposed_value, '%Y-%m-%d %H:%M:%S')
 		df = DateFormat(date_obj)
@@ -995,9 +1018,9 @@ def resolve_usage_event_contest(request):
 	contest_transaction = ContestTransaction.objects.get(content_type__pk=usage_event_type.id, object_id=usage_event.id, contest_resolved=False)
 	dictionary['contest_transaction'] = contest_transaction
 	df = DateFormat(usage_event.start)
-	dictionary['event_start_date'] = df.format('Y-m-d h:i A')
+	dictionary['event_start_date'] = usage_event.start  #df.format('Y-m-d h:i A')
 	df = DateFormat(usage_event.end)
-	dictionary['event_end_date'] = df.format('Y-m-d h:i A')
+	dictionary['event_end_date'] = usage_event.end  #df.format('Y-m-d h:i A')
 	if ContestTransactionData.objects.filter(content_type__pk=usage_event_type.id, object_id=usage_event.id, contest_transaction=contest_transaction, field_name="start").exists():
 		date_obj = datetime.strptime(ContestTransactionData.objects.filter(content_type__pk=usage_event_type.id, object_id=usage_event.id, contest_transaction=contest_transaction, field_name="start")[0].proposed_value, '%Y-%m-%d %H:%M:%S')
 		df = DateFormat(date_obj)
@@ -1116,9 +1139,9 @@ def resolve_area_access_record_contest(request):
 	contest_transaction = ContestTransaction.objects.get(content_type__pk=aar_type.id, object_id=area_access_record.id, contest_resolved=False)
 	dictionary['contest_transaction'] = contest_transaction
 	df = DateFormat(area_access_record.start)
-	dictionary['event_start_date'] = df.format('Y-m-d h:i A')
+	dictionary['event_start_date'] = area_access_record.start  #df.format('Y-m-d h:i A')
 	df = DateFormat(area_access_record.end)
-	dictionary['event_end_date'] = df.format('Y-m-d h:i A')
+	dictionary['event_end_date'] = area_access_record.end  #df.format('Y-m-d h:i A')
 	if ContestTransactionData.objects.filter(content_type__pk=aar_type.id, object_id=area_access_record.id, contest_transaction=contest_transaction, field_name="area").exists():
 		dictionary['proposed_area'] = Area.objects.get(id=int(ContestTransactionData.objects.filter(content_type__pk=aar_type.id, object_id=area_access_record.id, contest_transaction=contest_transaction, field_name="area")[0].proposed_value))
 	if ContestTransactionData.objects.filter(content_type__pk=aar_type.id, object_id=area_access_record.id, contest_transaction=contest_transaction, field_name="start").exists():

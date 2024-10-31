@@ -328,7 +328,9 @@ def ad_hoc_staff_charge(request):
 			raise Exception(msg)
 
 		ad_hoc_start = parse_datetime(ad_hoc_start)
+		ad_hoc_start = ad_hoc_start.astimezone(timezone.get_current_timezone())
 		ad_hoc_end = parse_datetime(ad_hoc_end)
+		ad_hoc_end = ad_hoc_end.astimezone(timezone.get_current_timezone())
 
 		if ad_hoc_start > ad_hoc_end:
 			msg = 'The start date must be before the end date.'

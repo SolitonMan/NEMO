@@ -1,5 +1,6 @@
 import csv
 import os
+import zoneinfo
 from calendar import monthrange
 from datetime import timedelta, datetime
 from email import encoders
@@ -11,7 +12,6 @@ from PIL import Image
 from dateutil import parser
 from dateutil.parser import parse
 from dateutil.rrule import MONTHLY, rrule
-from django.utils.timezone import localtime
 from django.core import mail
 from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import InMemoryUploadedFile
@@ -70,8 +70,10 @@ class SettingType(object):
 
 
 def parse_start_and_end_date(start, end):
-	start = timezone.make_aware(parser.parse(start), timezone.get_current_timezone())
-	end = timezone.make_aware(parser.parse(end), timezone.get_current_timezone())
+	start = parser.parse(start)
+	start = start.astimezone(timezone.get_current_timezone())
+	end = parser.parse(end)
+	end = end.astimezone(timezone.get_current_timezone())
 	end += timedelta(days=1, seconds=-1)  # Set the end date to be midnight by adding a day.
 	return start, end
 
@@ -220,9 +222,9 @@ def format_datetime(universal_time):
 def localize(dt, tz=None):
 	tz = tz or timezone.get_current_timezone()
 	if isinstance(dt, list):
-		return [tz.localize(d) for d in dt]
+		return [timezone.localtime(d.astimezone(timezone.get_current_timezone())) for d in dt]
 	else:
-		return tz.localize(dt)
+		return timezone.localtime(dt.astimezone(timezone.get_current_timezone()))
 
 
 def naive_local_current_datetime():
@@ -288,3 +290,4 @@ def create_email_attachment(stream, filename=None, maintype="application", subty
 	if filename:
 		attachment.add_header("Content-Disposition", f'attachment; filename="{filename}"')
 	return attachment
+

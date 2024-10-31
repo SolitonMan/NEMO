@@ -9,5 +9,8 @@ django-admin migrate
 # Collect static files
 django-admin collectstatic --no-input --clear
 
+# Start Memcached service
+service memcached start 
+
 # Run NEMO
 gunicorn --config=/etc/gunicorn_configuration.py NEMO.wsgi:application
