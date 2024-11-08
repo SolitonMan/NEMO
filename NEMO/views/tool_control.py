@@ -461,7 +461,8 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge, billing_mod
 			new_usage_event.cost_per_sample_run = True
 		if set_for_autologout:
 			new_usage_event.set_for_autologout = True
-			new_usage_event.end_time = autologout_endtime
+			autologout_endtime = parse_datetime(autologout_endtime)
+			new_usage_event.end_time = autologout_endtime.astimezone(timezone.get_current_timezone())
 		if end_scheduled_outage:
 			new_usage_event.end_scheduled_outage = True
 		new_usage_event.save()
@@ -664,7 +665,8 @@ def enable_tool_multi(request):
 				new_usage_event.cost_per_sample_run = True
 			if set_for_autologout:
 				new_usage_event.set_for_autologout = True
-				new_usage_event.end_time = autologout_endtime
+				autologout_endtime = parse_datetime(autologout_endtime)
+				new_usage_event.end_time = autologout_endtime.astimezone(timezone.get_current_timezone())
 			if end_scheduled_outage:
 				new_usage_event.end_scheduled_outage = True
 			new_usage_event.save()	

@@ -97,7 +97,7 @@ class User(models.Model):
 	training_required = models.BooleanField(default=False, help_text='When selected, the user is blocked from all reservation and tool usage capabilities.')
 	groups = models.ManyToManyField(Group, blank=True, help_text='The groups this user belongs to. A user will get all permissions granted to each of his/her group.')
 	user_permissions = models.ManyToManyField(Permission, blank=True, help_text='Specific permissions for this user.')
-	pi_delegates = models.ManyToManyField('self', blank=True, help_text='Users that a PI gives permission to manage accounts and their users on behalf of that PI', related_name='delegates')
+	pi_delegates = models.ManyToManyField('self', blank=True, help_text='Users that a PI gives permission to manage accounts and their users on behalf of that PI')
 
 	# Important dates
 	date_joined = models.DateTimeField(default=timezone.now)

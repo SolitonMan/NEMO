@@ -1,5 +1,5 @@
 from django.contrib.admin.views.decorators import staff_member_required
-from django.core.files.storage import get_storage_class
+from django.core.files.storage import DefaultStorage
 from django.core.validators import validate_email
 from django.http import HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import redirect, render
@@ -10,7 +10,7 @@ from NEMO.models import Customization
 
 def get_media_file_contents(file_name):
 	""" Get the contents of a media file if it exists. Return a blank string if it does not exist. """
-	storage = get_storage_class()()
+	storage = DefaultStorage()
 	if not storage.exists(file_name):
 		return ''
 	f = storage.open(file_name)
@@ -19,7 +19,7 @@ def get_media_file_contents(file_name):
 
 def store_media_file(content, file_name):
 	""" Delete any existing media file with the same name and save the new content into file_name in the media directory. If content is blank then no new file is created. """
-	storage = get_storage_class()()
+	storage = DefaultStorage()
 	storage.delete(file_name)
 	if content:
 		storage.save(file_name, content)

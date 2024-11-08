@@ -18,6 +18,7 @@ from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.dateformat import DateFormat
+from django.utils.dateparse import parse_time, parse_date, parse_datetime
 from django.views.decorators.http import require_GET, require_POST
 
 from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, AreaAccessRecordProjectSample, Consumable, ConsumableWithdraw, ContestTransaction, ContestTransactionData, ContestTransactionNewData, Core, CreditCostCollector, LockBilling, Project, UsageEvent, UsageEventProject, UsageEventProjectSample, StaffCharge, StaffChargeProject, StaffChargeProjectSample, Tool, User
@@ -569,10 +570,8 @@ def contest_consumable_withdraw(request, consumable_withdraw_id):
 	}
 	consumable_withdraw = get_object_or_404(ConsumableWithdraw, id=consumable_withdraw_id)
 	dictionary['consumable_withdraw'] = consumable_withdraw
-	if request.user.is_superuser:
-		consumables = Consumable.objects.all()
-	else:
-		consumables = Consumable.objects.filter(core_id__in=request.user.core_ids.all())
+
+	consumables = Consumable.objects.all()
 	dictionary['consumables'] = consumables
 	return render(request, 'remote_work_contest.html', dictionary)
 
@@ -1385,10 +1384,12 @@ def save_contest_resolution(request):
 					c.content_object.active_flag = False
 
 				if field_name == "start":
-					c.content_object.start = c.proposed_value
+					pv = parse_datetime(c.proposed_value)
+					c.content_object.start = pv.astimezone(timezone.get_current_timezone())
 
 				if field_name == "end":
-					c.content_object.end = c.proposed_value
+					pv = parse_datetime(c.proposed_value)
+					c.content_object.end = pv.astimezone(timezone.get_current_timezone())
 
 				if field_name == "area":
 					c.content_object.area = Area.objects.get(id=int(c.proposed_value))
@@ -1456,10 +1457,12 @@ def save_contest_resolution(request):
 					field_name = fld
 
 					if field_name == "start":
-						content_object.start = value
+						pv = parse_datetime(value)
+						content_object.start = pv.astimezone(timezone.get_current_timezone())
 	
 					if field_name == "end":
-						content_object.end = value
+						pv = parse_datetime(value)
+						content_object.end = pv.astimezone(timezone.get_current_timezone())
 	
 					if field_name == "area":
 						content_object.area = Area.objects.get(id=int(value))
