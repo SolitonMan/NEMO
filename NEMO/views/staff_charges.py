@@ -393,8 +393,8 @@ def ad_hoc_staff_charge(request):
 				'staff_charges_end': staff_charges_end,
 				'staff_charges_middle': staff_charges_middle,
 				'staff_charges_over': staff_charges_over,
-				'ad_hoc_start': request.POST.get('ad_hoc_start'),
-				'ad_hoc_end': request.POST.get('ad_hoc_end'),
+				'ad_hoc_start': ad_hoc_start,
+				'ad_hoc_end': ad_hoc_end,
 				'staff_charges_overlap': staff_charges_overlap,
 			}
 
@@ -782,8 +782,12 @@ def ad_hoc_overlap_resolution(request):
 
 		# create initial ad hoc staff charge
 		ahc = StaffCharge()
-		ahc.start = request.POST.get("ad_hoc_start")
-		ahc.end = request.POST.get("ad_hoc_end")
+		ahc_start = parse_datetime(request.POST.get("ad_hoc_start"))
+		ahc_start = ahc_start.astimezone(timezone.get_current_timezone())
+		ahc.start = ahc_start
+		ahc_end = parse_datetime(request.POST.get("ad_hoc_end"))
+		ahc_end = ahc_end.astimezome(timezone.get_current_timezone())
+		ahc.end = ahc_end
 		ahc.ad_hoc_created = True
 		ahc.staff_member = request.user
 		if request.POST.get('ad_hoc_core_select', None) != None and request.POST.get('ad_hoc_core_select') != '0':
@@ -797,8 +801,8 @@ def ad_hoc_overlap_resolution(request):
 		if include_area_access is not None and area_id is not None:
 			ahaar = AreaAccessRecord()
 			ahaar.area = Area.objects.get(id=area_id)
-			ahaar.start = request.POST.get("ad_hoc_start")
-			ahaar.end = request.POST.get("ad_hoc_end")
+			ahaar.start = ahc_start
+			ahaar.end = ahc_end
 			ahaar.ad_hoc_created = True
 			ahaar.user = request.user
 			ahaar.created = timezone.now()

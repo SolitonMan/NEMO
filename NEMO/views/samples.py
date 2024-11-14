@@ -47,6 +47,7 @@ def samples(request):
 		else:
 			sample_list = Sample.objects.filter(Q(identifier__icontains=search_string) | Q(nickname__icontains=search_string) | Q(created_by__last_name__icontains=search_string) | Q(created_by__first_name__icontains=search_string) | Q(created_by__username__icontains=search_string))
 
+		sample_list = sample_list.order_by('identifier')
 		paginator = Paginator(sample_list, 50)
 		page_number = request.GET.get('page')
 		if page_number is None:
