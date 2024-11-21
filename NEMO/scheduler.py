@@ -22,6 +22,15 @@ def update_probationary_users():
 		if not pq.user.is_staff and pq.user.is_active:
 			bSendMail = False
 			d2 = None
+			if pq.tool.qualification_duration is not None:
+				qd = int(pq.tool.qualification_duration)
+			else:
+				qd = 182
+			qd_send = qd - 30
+
+			if qd < 1:
+				continue
+
 			if pq.qualification_date is not None and pq.tool_last_used is not None:
 				if pq.qualification_date > pq.tool_last_used:
 					d2 = pq.qualification_date
@@ -31,10 +40,10 @@ def update_probationary_users():
 				d2 = pq.qualification_date
 
 			if d2 is not None:
-				if abs((date_now-d2).days) > 182:
+				if abs((date_now-d2).days) > qd:
 					pq.probationary_user = True
 					pq.save()
-				elif abs((date_now-d2).days) == 152:
+				elif abs((date_now-d2).days) == qd_send:
 					bSendMail = True
 			else:
 				pq.probationary_user = True

@@ -1,12 +1,17 @@
+from logging import getLogger
+
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
+from django.utils.dateparse import parse_time, parse_date, parse_datetime
 from django.views.decorators.http import require_POST, require_http_methods
 
 from NEMO.forms import AlertForm
 from NEMO.models import Alert
+
+logger = getLogger(__name__)
 
 @staff_member_required(login_url=None)
 @require_http_methods(['GET', 'POST'])
@@ -19,13 +24,45 @@ def alerts(request):
 	if request.method == 'GET':
 		form = AlertForm(instance=alert)
 	elif request.method == 'POST':
-		form = AlertForm(data=request.POST, instance=alert)
-		if form.is_valid():
-			alert = form.save()
-			if not alert.creator:
-				alert.creator = request.user
-			alert.save()
-			form = AlertForm()
+#		form = AlertForm(data=request.POST, instance=alert)
+
+#		logger.error(str(form))
+
+		title = request.POST.get('title')
+		contents = request.POST.get('contents')
+		debut_time = request.POST.get('debut_time')
+		expiration_time = request.POST.get('expiration_time')
+
+		logger.error(str(title))
+		logger.error(str(contents))
+		logger.error(str(debut_time))
+		logger.error(str(expiration_time))
+
+		if debut_time == '' or debut_time is None:
+			debut_time = timezone.now()
+		else:
+			debut_time = parse_datetime(str(debut_time))
+			debut_time = debut_time.astimezone(timezone.get_current_timezone())
+
+		if expiration_time is not None and expiration_time != '':
+			expiration_time = parse_datetime(str(expiration_time))
+			expiration_time = expiration_time.astimezone(timezone.get_current_timezone())
+		else:
+			expiration_time = None
+
+		if not alert:
+			alert = Alert()
+
+		alert.title = title
+		alert.contents = contents
+		alert.debut_time = debut_time
+		if expiration_time:	
+			alert.expiration_time = expiration_time
+
+		alert.save()
+
+		form = AlertForm()
+
 	else:
 		form = AlertForm()
 	dictionary = {
@@ -33,7 +70,7 @@ def alerts(request):
 		'editing': True if form.instance.id else False,
 		'alerts': Alert.objects.filter(user=None)
 	}
-	delete_expired_alerts()
+	#delete_expired_alerts()
 	return render(request, 'alerts.html', dictionary)
 
 

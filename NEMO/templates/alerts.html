@@ -16,7 +16,7 @@
 	<p>
 		You can create and edit alerts that will be visible to everyone. The alert will only be visible after the debut time and will be deleted after the expiration time.
 	</p>
-	<form action="{% url 'alerts' %}" method="post" class="well">
+	<form action="{% url 'alerts' %}" method="post" class="well" onsubmit="return on_submit();">
 		<h4>{% if editing %}Edit this alert{% else %}Create a new alert{% endif %}</h4>
 		{% csrf_token %}
 		{% if form.instance.id %}<input type="hidden" name="alert_id" value="{{ form.instance.id }}">{% endif %}
@@ -32,11 +32,13 @@
 			<div class="row">
 				<div class="col-sm-6">
 					<label for="debut_time">Debut time</label>{% if form.debut_time.errors %} - <span style="color:red">{{ form.debut_time.errors|striptags }}</span>{% endif %}
-					<input type="text" class="form-control" name="debut_time" id="debut_time" value="{% if form.debut_time.value %}{% if form.debut_time.value|class_name == "datetime" %}{{ form.debut_time.value|date:"m/d/Y g:i A" }}{% else %}{{ form.debut_time.value }}{% endif %}{% else %}{% now "m/d/Y g:i A" %}{% endif %}">
+					<input type="text" class="form-control" name="debut_time" id="debut_time" value="{{ form.debut_time.value }}" />
+					<!--input type="text" class="form-control" name="debut_time" id="debut_time" value="{% if form.debut_time.value %}{% if form.debut_time.value|class_name == "datetime" %}{{ form.debut_time.value|date:"m/d/Y g:i A" }}{% else %}{{ form.debut_time.value }}{% endif %}{% else %}{% now "m/d/Y g:i A" %}{% endif %}"-->
 				</div>
 				<div class="col-sm-6">
 					<label for="expiration_time">Expiration time</label>{% if form.expiration_time.errors %} - <span style="color:red">{{ form.expiration_time.errors|striptags }}</span>{% endif %}
-					<input type="text" class="form-control" name="expiration_time" id="expiration_time" value="{% if form.expiration_time.value|class_name == "datetime" %}{{ form.expiration_time.value|date:"m/d/Y g:i A" }}{% else %}{{ form.expiration_time.value }}{% endif %}">
+					<input type="text" class="form-control" name="expiration_time" id="expiration_time" value="{{ form.expiration_time.value }}" />
+					<!--input type="text" class="form-control" name="expiration_time" id="expiration_time" value="{% if form.expiration_time.value|class_name == "datetime" %}{{ form.expiration_time.value|date:"m/d/Y g:i A" }}{% else %}{{ form.expiration_time.value }}{% endif %}"-->
 				</div>
 			</div>
 		</div>
@@ -71,10 +73,40 @@
 	</div>
 	<script>
 		var timepicker_properties = {
+			useCurrent: false,
+			format: 'YYYY-MM-DD hh:mm A',
 			sideBySide: true
 		};
 		$('#debut_time').datetimepicker(timepicker_properties);
 		$('#expiration_time').datetimepicker(timepicker_properties);
 		$('.glyphicon').tooltip({container: 'body'});
+
+		function on_submit() {
+			if ($("#title").val() == "") {
+				alert("Please enter a title");
+				$("#title").focus();
+				return false;
+			}
+
+			if ($("#contents").val() == "") {
+				alert("Please enter content for the alert");
+				$("#contents").focus();
+				return false;
+			}
+
+			if ($("#debut_time").val() == "") {
+				alert("Please select a start time for the display of your alert");
+				$("#debut_time").focus();
+				return false;
+			} else {
+				$("#debut_time").val(convert_12_to_24($("#debut_time").val()));
+			}
+
+			if ($("#expiration_time").val() != "") {
+				$("#expiration_time").val(convert_12_to_24($("#expiration_time").val()));
+			}
+	
+			return true;
+		}
 	</script>
 {% endblock %}
