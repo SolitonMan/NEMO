@@ -185,6 +185,11 @@ def update_work_order_status(request, work_order_id, status_id):
 	try:
 		work_order = WorkOrder.objects.get(id=int(work_order_id))
 		work_order.status = int(status_id)
+		work_order.updated = timezone.now()
+		if int(status_id) == 0:
+			work_order.closed = timezone.now()
+		else:
+			work_order.closed = None
 		work_order.save()
 	except:
 		pass

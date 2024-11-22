@@ -25,6 +25,7 @@
 			<th>Notes</th>
 			<th>Created</th>
 			<th>Creator</th>
+			<th>Closed</th>
 			<th>DELETE</th>
 			</tr>
 		</thead>
@@ -42,6 +43,7 @@
 			<td>
 				{% if w.created_by %}{{ w.created_by }}{% endif %}
 			</td>
+			<td>{% if w.closed %}{{ w.closed }}{% endif %}</td>
 			<td>
 				{% if request.user == w.created_by or request.user.is_superuser %}
 				<button {% if w.status == 2%}disabled{% endif %} class="btn btn-danger" onclick="if (confirm('Are you sure you wish to delete this work order?  This action cannot be undone.  Note that the transactions themselves will not be deleted, but the link to the work order will be removed.  You can add the transactions to a different work order when this action is completed.')) {ajax_post('{% url 'delete_work_order' w.id %}',{},reload_page);}">Delete</button>

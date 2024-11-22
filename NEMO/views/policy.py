@@ -1,15 +1,18 @@
 from datetime import timedelta, datetime, date, time
+from logging import getLogger
 
 from django.core.mail import send_mail
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.template import Template, Context
 from django.utils import timezone
+from django.utils.dateparse import parse_time, parse_date, parse_datetime
 
 from NEMO.models import Reservation, AreaAccessRecord, ScheduledOutage, PhysicalAccessLevel, Project, User, Tool, ProbationaryQualifications
 from NEMO.utilities import format_datetime
 from NEMO.views.customization import get_customization, get_media_file_contents
 
+logger = getLogger(__name__)
 
 def check_policy_to_enable_tool(tool, operator, user, project, staff_charge, request):
 	"""
@@ -70,9 +73,13 @@ def check_policy_to_enable_tool(tool, operator, user, project, staff_charge, req
 		# check if user is limited, and if they are running the tool within business hours
 		if ProbationaryQualifications.objects.filter(tool=tool, user=operator, probationary_user=True).exists():
 			business_start = time(8,0,0)
+			#logger.error(str(business_start))
 			business_end = time(17,0,0)
+			#logger.error(str(business_end))
 			current_time = timezone.now().time()
+			#logger.error(str(current_time))
 			intDay = timezone.now().weekday()
+			#logger.error(str(intDay))
 			if (intDay == 5 or intDay == 6 or current_time < business_start or current_time > business_end) and not operator.is_staff:
 				td=timedelta(minutes=15)
 				if not Reservation.objects.filter(start__lt=timezone.now()+td, end__gt=timezone.now(), cancelled=False, missed=False, shortened=False, user=operator, tool=tool).exists():
@@ -204,9 +211,14 @@ def check_policy_to_save_reservation(request, cancelled_reservation, new_reserva
 	policy_problems = []
 	overridable = False
 
+	new_reservation_start = parse_datetime(str(new_reservation.start))
+	new_reservation_start = new_reservation_start.astimezone(timezone.get_current_timezone())
+	new_reservation_end = parse_datetime(str(new_reservation.end))
+	new_reservation_end = new_reservation_end.astimezone(timezone.get_current_timezone())
+
 	# Reservations may not have a start time that is earlier than the end time.
-	if new_reservation.start >= new_reservation.end:
-		policy_problems.append("Reservation start time (" + format_datetime(new_reservation.start) + ") must be before the end time (" + format_datetime(new_reservation.end) + ").")
+	if new_reservation_start >= new_reservation_end:
+		policy_problems.append("Reservation start time (" + str(new_reservation_start) + ") must be before the end time (" + str(new_reservation_end) + ").")
 
 	# The user may not create, move, or resize a reservation to coincide with another user's reservation.
 	coincident_events = Reservation.objects.filter(tool=new_reservation.tool, cancelled=False, missed=False, shortened=False)
@@ -216,8 +228,8 @@ def check_policy_to_save_reservation(request, cancelled_reservation, new_reserva
 	# Exclude events for which the following is true:
 	# The event starts and ends before the time-window, and...
 	# The event starts and ends after the time-window.
-	coincident_events = coincident_events.exclude(start__lt=new_reservation.start, end__lte=new_reservation.start)
-	coincident_events = coincident_events.exclude(start__gte=new_reservation.end, end__gt=new_reservation.end)
+	coincident_events = coincident_events.exclude(start__lt=new_reservation_start, end__lte=new_reservation_start)
+	coincident_events = coincident_events.exclude(start__gte=new_reservation_end, end__gt=new_reservation_end)
 
 	# since the creation process an be recursive we should check if our new reservation is really an update, and exclude it if it has an id, since an actual new_reservation should have a null id
 	if new_reservation.id is not None:
@@ -231,8 +243,8 @@ def check_policy_to_save_reservation(request, cancelled_reservation, new_reserva
 	# Exclude events for which the following is true:
 	# The event starts and ends before the time-window, and...
 	# The event starts and ends after the time-window.
-	coincident_events = coincident_events.exclude(start__lt=new_reservation.start, end__lte=new_reservation.start)
-	coincident_events = coincident_events.exclude(start__gte=new_reservation.end, end__gt=new_reservation.end)
+	coincident_events = coincident_events.exclude(start__lt=new_reservation_start, end__lte=new_reservation_start)
+	coincident_events = coincident_events.exclude(start__gte=new_reservation_end, end__gt=new_reservation_end)
 	if coincident_events.count() > 0:
 		policy_problems.append("Your reservation coincides with a scheduled outage. Please choose a different time.")
 
@@ -287,14 +299,14 @@ def check_policy_to_save_reservation(request, cancelled_reservation, new_reserva
 	# The user may not create or move a reservation to have a start time that is earlier than the current time.
 	# Staff may break this rule.
 	# An explicit policy override allows this rule to be broken.
-	if new_reservation.start.replace(tzinfo=None) < timezone.now().replace(tzinfo=None):
-		policy_problems.append("Reservation start time (" + format_datetime(new_reservation.start) + ") is earlier than the current time (" + format_datetime(timezone.now()) + ").")
+	if new_reservation_start < timezone.now():
+		policy_problems.append("Reservation start time (" + str(new_reservation_start) + ") is earlier than the current time (" + format_datetime(timezone.now()) + ").")
 
 	# The user may not move or resize a reservation to have an end time that is earlier than the current time.
 	# Staff may break this rule.
 	# An explicit policy override allows this rule to be broken.
-	if new_reservation.end.replace(tzinfo=None) < timezone.now().replace(tzinfo=None):
-		policy_problems.append("Reservation end time (" + format_datetime(new_reservation.end) + ") is earlier than the current time (" + format_datetime(timezone.now()) + ").")
+	if new_reservation_end < timezone.now():
+		policy_problems.append("Reservation end time (" + str(new_reservation_end) + ") is earlier than the current time (" + format_datetime(timezone.now()) + ").")
 
 	# The user must be qualified on the tool in question in order to create, move, or resize a reservation.
 	# Staff may break this rule.
@@ -307,11 +319,12 @@ def check_policy_to_save_reservation(request, cancelled_reservation, new_reserva
 		# check if user is probationary, and if they are running the tool within business hours
 		if ProbationaryQualifications.objects.filter(tool=new_reservation.tool, user=user, probationary_user=True).exists():
 			business_start = time(8,0,0)
+			#logger.error(str(business_start))
 			business_end = time(17,0,0)
-			intDay = new_reservation.start.weekday()
-			reservation_start = new_reservation.start.time()
-			reservation_end = new_reservation.end.time()
-			if (intDay == 5 or intDay == 6 or reservation_start < business_start or reservation_start > business_end or reservation_end < business_start or reservation_end > business_end) and not user.is_staff:
+			#logger.error(str(business_end))
+			intDay = new_reservation_start.weekday()
+			#logger.error(str(intDay))
+			if (intDay == 5 or intDay == 6 or new_reservation_start.time() < business_start or new_reservation_start.time() > business_end or new_reservation_end.time() < business_start or new_reservation_end.time() > business_end) and not user.is_staff:
 				policy_problems.append("You are a limited user of the {}.  You may only reserve the tool for times during normal business hours of 8 am to 5 pm Monday - Friday.".format(new_reservation.tool.name))
 
 	# The reservation start time may not exceed the tool's reservation horizon.
@@ -319,11 +332,11 @@ def check_policy_to_save_reservation(request, cancelled_reservation, new_reserva
 	# An explicit policy override allows this rule to be broken.
 	if new_reservation.tool.reservation_horizon is not None:
 		reservation_horizon = timedelta(days=new_reservation.tool.reservation_horizon)
-		if new_reservation.start.replace(tzinfo=None) > timezone.now().replace(tzinfo=None) + reservation_horizon:
+		if new_reservation_start > timezone.now() + reservation_horizon:
 			policy_problems.append("You may not create reservations further than " + str(reservation_horizon.days) + " days from now for this tool.")
 
 	# Calculate the duration of the reservation:
-	duration = new_reservation.end - new_reservation.start
+	duration = new_reservation_end - new_reservation_start
 
 	# The reservation must be at least as long as the minimum block time for this tool.
 	# Staff may break this rule.
@@ -345,9 +358,12 @@ def check_policy_to_save_reservation(request, cancelled_reservation, new_reserva
 	# Staff may break this rule.
 	# An explicit policy override allows this rule to be broken.
 	if new_reservation.tool.maximum_reservations_per_day:
-		start_of_day = new_reservation.start
+		start_of_day = new_reservation_start
+		#logger.error(str(start_of_day))
 		start_of_day = start_of_day.replace(hour=0, minute=0, second=0, microsecond=0)
+		#logger.error(str(start_of_day))
 		end_of_day = start_of_day + timedelta(days=1)
+		#logger.error(str(end_of_day))
 		reservations_for_that_day = Reservation.objects.filter(cancelled=False, shortened=False, start__gte=start_of_day, end__lte=end_of_day, user=user, tool=new_reservation.tool)
 		# Exclude any reservation that is being cancelled.
 		if cancelled_reservation and cancelled_reservation.id:
@@ -360,14 +376,16 @@ def check_policy_to_save_reservation(request, cancelled_reservation, new_reserva
 	# An explicit policy override allows this rule to be broken.
 	if new_reservation.tool.minimum_time_between_reservations:
 		buffer_time = timedelta(minutes=new_reservation.tool.minimum_time_between_reservations)
-		must_end_before = new_reservation.start - buffer_time
-		too_close = Reservation.objects.filter(cancelled=False, missed=False, shortened=False, user=user, end__gt=must_end_before, start__lt=new_reservation.start, tool=new_reservation.tool)
+		must_end_before = new_reservation_start - buffer_time
+		#logger.error(str(must_end_before))
+		too_close = Reservation.objects.filter(cancelled=False, missed=False, shortened=False, user=user, end__gt=must_end_before, start__lt=new_reservation_start, tool=new_reservation.tool)
 		if cancelled_reservation and cancelled_reservation.id:
 			too_close = too_close.exclude(id=cancelled_reservation.id)
 		if too_close.exists():
 			policy_problems.append("Separate reservations for this tool that belong to you must be at least " + str(new_reservation.tool.minimum_time_between_reservations) + " minutes apart from each other. The proposed reservation ends too close to another reservation.")
 		must_start_after = new_reservation.end + buffer_time
-		too_close = Reservation.objects.filter(cancelled=False, missed=False, shortened=False, user=user, start__lt=must_start_after, end__gt=new_reservation.start, tool=new_reservation.tool)
+		#logger.error(str(must_start_after))
+		too_close = Reservation.objects.filter(cancelled=False, missed=False, shortened=False, user=user, start__lt=must_start_after, end__gt=new_reservation_start, tool=new_reservation.tool)
 		if cancelled_reservation and cancelled_reservation.id:
 			too_close = too_close.exclude(id=cancelled_reservation.id)
 		if too_close.exists():
@@ -404,7 +422,7 @@ def check_policy_to_cancel_reservation(reservation, user, request):
 
 	# Users may not cancel reservations that have already ended.
 	# Staff may break this rule.
-	if reservation.end.replace(tzinfo=None) < timezone.now().replace(tzinfo=None) and not user.is_staff:
+	if reservation.end < timezone.now() and not user.is_staff:
 		return HttpResponseBadRequest("You may not cancel reservations that have already ended.")
 
 	if reservation.cancelled:

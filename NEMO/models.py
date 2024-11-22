@@ -1029,7 +1029,7 @@ class Reservation(CalendarDisplay):
 		return self.end - self.start
 
 	def has_not_ended(self):
-		return False if self.end < timezone.now().replace(tzinfo=None) else True
+		return False if self.end < timezone.now() else True
 
 	@property
 	def description(self):
@@ -2077,8 +2077,9 @@ class WorkOrder(models.Model):
 	work_order_type = models.PositiveIntegerField(default=1)
 	notes = models.TextField(null=True,blank=True)
 	created = models.DateTimeField(null=True, blank=True, default=timezone.now)
-	updated = models.DateTimeField(null=True, blank=True, default=timezone.now)
-	closed = models.DateTimeField(null=True, blank=True, default=timezone.now)
+	updated = models.DateTimeField(null=True, blank=True)
+	closed = models.DateTimeField(null=True, blank=True)
+	processed = models.DateTimeField(null=True, blank=True)
 	created_by = models.ForeignKey('User',on_delete=models.SET_NULL, null=True, related_name='created_by')
 
 	def __str__(self):
