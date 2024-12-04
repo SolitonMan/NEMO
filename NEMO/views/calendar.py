@@ -545,7 +545,11 @@ def create_reservation(request):
 					if rp.count() > 1:
 						subject += ' and others'
 			msg = 'You have created a reservation for the ' + str(tool.name) + ' starting ' + str(new_reservation.start) + '.'
-			attachment = create_ics_for_reservation(request, new_reservation, False)
+
+			# attempted fix for timezone offset error in calendar invite
+			res_info = Reservation.objects.get(id=int(new_reservation.id))
+
+			attachment = create_ics_for_reservation(request, res_info, False)
 			#send_mail(subject='Reservation Created', content=msg, from_email='LEOHelp@psu.edu', to=[str(new_reservation.user.email)], attachments=[attachment])
 			email = EmailMessage('Reservation Created',msg,'LEOHelp@psu.edu',[str(new_reservation.user.email)],reply_to=['LEOHelp@psu.edu'])
 			email.attach(attachment)
@@ -654,7 +658,10 @@ def create_reservation(request):
 						subject += ' and others'
 				
 			msg = 'You have created a reservation for the ' + str(tool.name) + ' starting ' + str(new_reservation.start) + '.'
-			attachment = create_ics_for_reservation(request, new_reservation, False)
+
+			# attempted fix for timezone offset error
+			res_info = Reservation.objects.get(id=int(new_reservation.id))
+			attachment = create_ics_for_reservation(request, res_info, False)
 			email = EmailMessage(subject,msg,'LEOHelp@psu.edu',[str(new_reservation.user.email)],reply_to=['LEOHelp@psu.edu'])
 			email.attach(attachment)
 			create_email_log(email, EmailCategory.GENERAL)
@@ -894,7 +901,10 @@ def modify_reservation(request, start_delta, end_delta):
 
 	if b_send_mail:
 		msg = 'You have created a reservation for the ' + str(tool.name) + ' starting ' + str(new_reservation.start) + '.'
-		attachment = create_ics_for_reservation(request, new_reservation, False)
+
+		# attempted fix for timezone offset error
+		res_info = Reservation.objects.get(id=int(new_reservation.id))
+		attachment = create_ics_for_reservation(request, res_info, False)
 		email = EmailMessage('Reservation Created',msg,'LEOHelp@psu.edu',[str(new_reservation.user.email)],reply_to=['LEOHelp@psu.edu'])
 		email.attach(attachment)
 		create_email_log(email, EmailCategory.GENERAL)
@@ -1363,6 +1373,9 @@ def create_ics_for_reservation(request, reservation, cancelled=False):
 	now = datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')
 	start = reservation.start.strftime('%Y%m%dT%H%M%SZ')
 	end = reservation.end.strftime('%Y%m%dT%H%M%SZ')
+	#now = timezone.now()
+	#start = reservation.start
+	#end = reservation.end
 
 	if reservation.title is not None and reservation.title != '':
 		reservation_name = reservation.title

@@ -677,7 +677,7 @@ my_reservation_projects = {{ my_reservation_projects }}
 	</div>
 
 	<div class="tab-pane" id="problem">
-		<form action="{% url 'create_task' %}" method="post">
+		<form action="{% url 'create_task' %}" method="post" onsubmit="return submit_report_problem();">
 			{% csrf_token %}
 			<input type="hidden" name="action" value="create">
 			<input type="hidden" name="tool" value="{{ tool.id }}">
@@ -719,6 +719,8 @@ my_reservation_projects = {{ my_reservation_projects }}
 						<script>
 							var timepicker_properties =
 							{
+								useCurrent: false, 
+								format: 'YYYY-MM-DD hh:mm A',
 								sideBySide: true
 							};
 							$('#estimated_resolution_time').datetimepicker(timepicker_properties);
@@ -734,6 +736,17 @@ my_reservation_projects = {{ my_reservation_projects }}
 				<button type="submit" class="btn btn-danger">Report problem</button>
 			</div>
 		</form>
+		<script type="text/javascript">
+		function submit_report_problem()
+		{
+			if ($('#estimated_resolution_time').val() != "") {
+				$('#estimated_resolution_time').val(convert_12_to_24($('#estimated_resolution_time').val()));
+			}
+
+			return true;
+		}
+		</script>
+
 		<div style="height:150px">{# Spacer #}</div>
 	</div>
 

@@ -1694,8 +1694,8 @@ def save_usage_event(request):
 			new_aar = AreaAccessRecord()
 			new_aar.ad_hoc_created = True
 			new_aar.area = Area.objects.get(id=request.POST.get("ad_hoc_area"))
-			new_aar.start = new_usage_event.start
-			new_aar.end = new_usage_event.end
+			new_aar.start = ad_hoc_start  #new_usage_event.start
+			new_aar.end = ad_hoc_end  #new_usage_event.end
 			if staff_charge:
 				new_aar.staff_charge = new_staff_charge
 			new_aar.comment = new_usage_event.operator_comment

@@ -58,6 +58,11 @@ def new_reservation(request, tool_id, date=None):
 	tool = get_object_or_404(Tool, id=tool_id)
 	start_value = ''
 	end_value = ''
+
+	#if date:
+	#	date = parse_datetime(str(date))
+	#	date = date.astimezone(timezone.get_current_timezone())
+
 	dictionary = tool.get_configuration_information(user=request.user, start=None)
 	dictionary['tool'] = tool
 	dictionary['date'] = date
@@ -86,16 +91,18 @@ def make_reservation(request):
 		return render(request, 'mobile/error.html', {'message': 'Please enter a valid start time and end time for the reservation.'})
 
 	mode = ""
-	start_value = parse_datetime(start)
-	end_value = parse_datetime(end)
+	start_value = parse_datetime(str(start))
+	#start_value = start_value.astimezone(timezone.get_current_timezone())
+	end_value = parse_datetime(str(end))
+	#end_value = end_value.astimezone(timezone.get_current_timezone())
 	tool = get_object_or_404(Tool, id=request.POST.get('tool_id'))
 	# Create the new reservation:
 	reservation = Reservation()
 	reservation.user = request.user
 	reservation.creator = request.user
 	reservation.tool = tool
-	reservation.start = start_value
-	reservation.end = end_value
+	reservation.start = start_value.astimezone(timezone.get_current_timezone())
+	reservation.end = end_value.astimezone(timezone.get_current_timezone())
 	reservation.short_notice = determine_insufficient_notice(tool, start_value)
 	policy_problems, overridable = check_policy_to_save_reservation(request, None, reservation, request.user, False)
 

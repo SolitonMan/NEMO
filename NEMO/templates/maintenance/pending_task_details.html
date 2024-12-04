@@ -43,7 +43,7 @@
 
 <p>
 
-<form class="form-horizontal" action="{% url 'update_task' task.id %}" method="post">
+<form class="form-horizontal" action="{% url 'update_task' task.id %}" method="post" onsubmit="return submit_task_update();">
 	{% csrf_token %}
 	<input type="hidden" name="next_page" value="maintenance">
 	<input type="hidden" name="tool" value="{{ task.tool.id }}">
@@ -86,14 +86,19 @@
 	<div class="form-group">
 		<label for="estimated_resolution_time" class="control-label col-lg-3">Estimated resolution</label>
 		<div class="col-lg-3">
-			<input id="estimated_resolution_time" name="estimated_resolution_time" type="text" class="form-control" autocomplete="off" value="{{ task.estimated_resolution_time|date:"m/d/Y g:i A" }}">
+			<input id="estimated_resolution_time" name="estimated_resolution_time" type="text" class="form-control" autocomplete="off" />
 		</div>
 		<script>
 			var timepicker_properties =
 			{
+				useCurrent: false,
+				format: 'YYYY-MM-DD hh:mm A',
 				sideBySide: true
 			};
 			$('#estimated_resolution_time').datetimepicker(timepicker_properties);
+			{% if task.estimated_resolution_time %}
+			$('#estimated_resolution_time').val('{{ task.estimated_resolution_time }}');
+			{% endif %}
 		</script>
 	</div>
 	<div class="form-group">
@@ -134,6 +139,17 @@
 		</div>
 	</div>
 </form>
+
+<script type="text/javascript">
+function submit_task_update() 
+{
+	if ($('#estimated_resolution_time').val() != "") {
+		$('#estimated_resolution_time').val(convert_12_to_24($('#estimated_resolution_time').val()));
+	}
+
+	return true;
+}
+</script>
 
 <p>
 	<h4>Problem description</h4>
