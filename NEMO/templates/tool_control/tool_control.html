@@ -696,10 +696,22 @@
 				ajax_post("{% url 'modify_qualifications' %}", data, reload_qualified_users, failure_dialog);
 			}
 
+			function requalify_user(user_id, tool_id)
+			{
+				var failure_dialog = ajax_failure_callback("Failed to requalify user", "There was a problem restoring this user's tool qualification.");
+				var data = {
+					'action': 'qualify',
+					'chosen_tools_full[]': tool_id,
+					'chosen_user[]': user_id
+				};
+				ajax_post("{% url 'modify_qualifications' %}", data, reload_qualified_users, failure_dialog);
+			}
+
 			function reload_qualified_users()
 			{
-				var url = "{% url 'get_qualified_users' %}?tool_id=" + {% if device == 'mobile' %}{{ selected_tool }}{% else %}get_selected_item(){% endif %};
-				$("#qualified_users_container").load(url);
+				//var url = "{% url 'get_qualified_users' %}?tool_id=" + {% if device == 'mobile' %}{{ selected_tool }}{% else %}get_selected_item(){% endif %};
+				//$("#qualified_users_container").load(url);
+				window.location.reload();
 			}
 
 			function promote_user(user_id, tool_id)

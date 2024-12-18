@@ -36,6 +36,17 @@
 		ajax_post("{% url 'modify_qualifications' %}", data, reload_qualified_users, failure_dialog);
 	}
 
+	function requalify_user(user_id, tool_id)
+	{
+		var failure_dialog = ajax_failure_callback("Failed to requalify user", "There was a problem restoring this user's tool qualification.");
+		var data = {
+			'action': 'qualify',
+			'chosen_tool[]': tool_id,
+			'chosen_user[]': user_id
+		};
+		ajax_post("{% url 'modify_qualifications' %}", data, reload_qualified_users, failure_dialog);
+	}
+
 	function disqualify_all_users()
 	{
 		if (confirm("Taking this action will remove all qualified users (both limited and full) from this tool.  This cannot be undone.  Are you sure you wish to proceed?")) {
@@ -51,6 +62,30 @@
 				'chosen_user[]': {{ u.id }},
 			}
 			ajax_post("{% url 'modify_qualifications' %}", data, null, null);
+			{% endfor %}
+			{% endif %}
+			{% endwith %}
+			setTimeout(reload_qualified_users,2000);
+		}
+	}
+
+	function requalify_disqualified_users()
+	{
+		if (confirm("Taking this action will requalify all of the disqualified users ((both limited and full) for this tool.  This cannot be undone.  Are you sure you wish to proceed?")) {
+			$("#add_qualified_user_search_box").prop("placeholder","Requalifying users, please wait...");
+			$("#add_probationary_user_search_box").prop("placeholder","Requalifying users, please wait...");
+			var data = {};
+			{% with form.instance.probationaryqualifications_set.all as qualified_users %}
+			{% if qualified_users %}
+			{% for u in qualified_users %}
+			{% if u.disabled %}
+			data = {
+				'action': 'qualify',
+				'chosen_tool[]': {{ form.instance.id }},
+				'chosen_user[]': {{ u.user_id }},
+			}
+			ajax_post("{% url 'modify_qualifications' %}", data, null, null);
+			{% endif %}
 			{% endfor %}
 			{% endif %}
 			{% endwith %}
@@ -136,6 +171,7 @@
 		<input type="button" value="Promote all users to full" class="btn btn-success" onclick="promote_all_users();" />
 		<input type="button" value="Demote all users to limited" class="btn btn-danger" onclick="demote_all_users();" />
 		<input type="button" value="Disqualify all users from tool" class="btn btn-danger" onclick="disqualify_all_users();" />
+		<input type="button" value="Re-qualify all users to tool" class="btn btn-success" onclick="requalify_disqualified_users();" />
 	</div>
 
 	<script>

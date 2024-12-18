@@ -7,6 +7,11 @@
 <div class="media-body">
 	<h4 class="media-heading">Qualified users</h4>
 
+<div style="display: none;">
+{{ probationary_qualifications }}
+{{ pqd }}
+</div>
+
 	<div id="qualified_users" class="collapse {% if expanded %}in{% endif %}">
 		<p id="btn_target">Only qualified users are able to operate the {{ tool.name }}.</p>
 		{% if tool.grant_physical_access_level_upon_qualification %}<p class="danger-highlight">Qualifying a user for this tool automatically grants them the physical access level &quot;{{ tool.grant_physical_access_level_upon_qualification }}&quot;.</p>{% endif %}
@@ -33,8 +38,7 @@
 			<input type="hidden" name="action" value="qualify">
 		</form>
 		{% endif %}
-		{% with tool.user_set.all as qualified_users %}
-			{% if qualified_users %}
+			{% if pqd %}
 				{% if user.is_staff %}
 				<p> 
 				<form action="{% url 'compose_email' %}" method="POST" style="display: inline;">
@@ -47,44 +51,48 @@
 				{% endif %}
 				<p>
 					Current qualified users are listed below. Inactive qualified users are marked in <span class="light-grey">light grey</span>.<br>
-					{% for u in qualified_users %}
-						{% if u.is_active %}
-							<span>
-							{% if user.is_staff %}
-							<a href="javascript:remove_qualified_user('{{ u.id }}', '{{ tool.id }}')" class="grey hover-black" title="Disqualify {{ u.first_name }}"><span class="glyphicon glyphicon-remove-circle"></span></a> 
-							{% if probationary_qualifications is not None %}
-							{% if probationary_qualifications|get_item:u.id %}
-							<a href="javascript:promote_user('{{ u.id }}', '{{ tool.id }}')" class="grey hover-black" title="Promote {{ u.first_name }}"><span class="glyphicon glyphicon-arrow-up"></span></a>
-							{% else %}
-							<a href="javascript:demote_user('{{ u.id }}', '{{ tool.id }}')" class="grey hover-black" title="Demote {{ u.first_name }}"><span class="glyphicon glyphicon-arrow-down"></span></a>
-							{% endif %}
-							{% endif %}
-							{% endif %}
-							<a href="mailto:{{ u.email }}">{{ u }}</a>
-							{% if probationary_qualifications is not None %}{% if probationary_qualifications|get_item:u.id %} - limited{% else %} - full{% endif %}{% endif %}
-							</span>
-						{% else %}
-							<span class="light-grey">
-							{% if user.is_staff %}
-							<a href="javascript:remove_qualified_user('{{ u.id }}', '{{ tool.id }}')" class="light-grey hover-black" title="Disqualify {{ u.first_name }}"><span class="glyphicon glyphicon-remove-circle"></span></a>
-							{% if probationary_qualifications is not None %}
-							{% if probationary_qualifications|get_item:u.id %}
-							<a href="javascript:promote_user('{{ u.id }}', '{{ tool.id }}')" class="grey hover-black" title="Promote {{ u.first_name }}"><span class="glyphicon glyphicon-arrow-up"></span></a>
-							{% else %}
-							<a href="javascript:demote_user('{{ u.id }}', '{{ tool.id }}')" class="grey hover-black" title="Demote {{ u.first_name }}"><span class="glyphicon glyphicon-arrow-down"></span></a>
-							{% endif %}
-							{% endif %}
-							{% endif %}
-							<a href="mailto:{{ u.email }}">{{ u }}</a>
-							{% if probationary_qualifications is not None %}{% if probationary_qualifications|get_item:u.id %} - limited{% else %} - full{% endif %}{% endif %}
-							</span>
-						{% endif %}
+					{% for k, u in pqd.items %}
+						<span {% if not u.is_active %} class="light-grey"{% endif %}>
+						{% if request.user.is_staff %}
+						{% if probationary_qualifications is not None %}
+						{% if probationary_qualifications|get_item:u.id %}
 
+							{% with probationary_qualifications|get_item:u.id as qd %}
+								{% if qd.disabled %}
+								<span class="light-red">
+								<a href="javascript:requalify_user('{{ u.id }}', '{{ tool.id }}')" class="grey hover-black" title="Re-qualify {{ pq.user.first_name }}"><span class="glyphicon glyphicon-plus"></span></a>
+								{% else %}
+								<span>
+								<a href="javascript:remove_qualified_user('{{ u.id }}', '{{ tool.id }}')" class="grey hover-black" title="Disqualify {{ pq.user.first_name }}"><span class="glyphicon glyphicon-remove-circle"></span></a>
+								{% endif %}
+								{% if qd.probationary_user %}
+								<a href="javascript:promote_user('{{ u.id }}', '{{ tool.id }}')" class="grey hover-black" title="Promote {{ u.first_name }}"><span class="glyphicon glyphicon-arrow-up"></span></a>
+								{% else %}
+								<a href="javascript:demote_user('{{ u.id }}', '{{ tool.id }}')" class="grey hover-black" title="Demote {{ u.first_name }}"><span class="glyphicon glyphicon-arrow-down"></span></a>
+								{% endif %}
+							{% endwith %}
+
+						{% endif %}
+						{% endif %}
+						{% endif %}
+						<a href="mailto:{{ u.email }}">{{ u }}</a>
+						{% if probationary_qualifications is not None %}
+							{% if probationary_qualifications|get_item:u.id %}
+								{% with probationary_qualifications|get_item:u.id as qd %}
+									{% if qd.probationary_user %}
+									 - limited
+									{% else %}
+									 - full
+									{% endif %}
+								{% endwith %}
+							{% endif %}
+						{% endif %}
+						</span>
+						</span>
 						<br>
 					{% endfor %}
 				</p>
 			{% endif %}
-		{% endwith %}
 	</div>
 </div>
 {% if user.is_staff %}

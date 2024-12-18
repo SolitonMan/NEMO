@@ -106,10 +106,20 @@ def create_or_modify_tool(request, tool_id):
 	if request.method == 'GET':
 		dictionary['form'] = ToolForm(instance=tool)
 		pqd = {}
-		probationary_qualifications = ProbationaryQualifications.objects.filter(tool=tool)
-		for pq in probationary_qualifications:
-			pqd[pq.user.id] = pq.probationary_user
-		dictionary['probationary_qualifications'] = pqd
+		tmp = {}
+
+		if tool is not None:
+			probationary_qualifications = ProbationaryQualifications.objects.filter(tool=tool)
+			for pq in probationary_qualifications:
+				tmp[pq.user.id] = pq
+				pqd[pq.user.id] = pq.user
+		else:
+			probationary_qualifications = None
+			tmp =None
+			pqd = None
+
+		dictionary['probationary_qualifications'] = tmp
+		dictionary['pqd'] = pqd
 		dictionary['users'] = User.objects.filter(is_active=True, projects__active=True).distinct()
 		dictionary['tool'] = tool
 		return render(request, 'tool_control/create_or_modify_tool.html', dictionary)
@@ -316,10 +326,13 @@ def tool_status(request, tool_id):
 	# Staff need the user list to be able to qualify users for the tool.
 	if request.user.is_staff or request.user in tool.user_set.all():
 		pqd = {}
+		tmp = {}
 		probationary_qualifications = ProbationaryQualifications.objects.filter(tool=tool)
 		for pq in probationary_qualifications:
-			pqd[pq.user.id] = pq.probationary_user
-		dictionary['probationary_qualifications'] = pqd
+			pqd[pq.user.id] = pq.user
+			tmp[pq.user.id] = pq
+		dictionary['probationary_qualifications'] = tmp
+		dictionary['pqd'] = pqd
 		dictionary['users'] = User.objects.filter(is_active=True, projects__active=True).distinct()
 	return render(request, 'tool_control/tool_status.html', dictionary)
 

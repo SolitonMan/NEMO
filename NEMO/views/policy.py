@@ -69,7 +69,7 @@ def check_policy_to_enable_tool(tool, operator, user, project, staff_charge, req
 	if operator.training_required:
 		return HttpResponseBadRequest("You are blocked from using all tools in the laboratory. Please complete the laboratory rules tutorial in order to use tools.")
 
-	if ProbationaryQualifications.objects.filter(tool=tool, user=operator).exists():
+	if ProbationaryQualifications.objects.filter(tool=tool, user=operator, disabled=False).exists():
 		# check if user is limited, and if they are running the tool within business hours
 		if ProbationaryQualifications.objects.filter(tool=tool, user=operator, probationary_user=True).exists():
 			business_start = time(8,0,0)
