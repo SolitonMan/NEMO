@@ -50,7 +50,7 @@
 				</form>
 				{% endif %}
 				<p>
-					Current qualified users are listed below. Inactive qualified users are marked in <span class="light-grey">light grey</span>.<br>
+					Current qualified users are listed below. Inactive qualified users are marked in <span class="light-grey">light grey</span>.  Disqualified users are marked in <span class="light-red">light red</span>.  Use the up/down arrows to change that user's qualification scope to full/limited.<br>
 					{% for k, u in pqd.items %}
 						<span {% if not u.is_active %} class="light-grey"{% endif %}>
 						{% if request.user.is_staff %}
