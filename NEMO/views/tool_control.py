@@ -454,9 +454,11 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge, billing_mod
 		return response
 
 	# All policy checks passed so enable the tool for the user.
-	if tool.interlock and not tool.interlock.unlock():
-		logger.error("The interlock command for this tool failed. The error message returned: " + str(tool.interlock.most_recent_reply))
-		#raise Exception("The interlock command for this tool failed. The error message returned: " + str(tool.interlock.most_recent_reply))
+	if tool.interlocks:
+		for i in tool.interlocks.all():
+			if not i.unlock():
+				logger.error("The interlock command for this tool failed. The error message returned: " + str(i.most_recent_reply))
+				#raise Exception("The interlock command for this tool failed. The error message returned: " + str(tool.interlock.most_recent_reply))
 
 	# check for an existing usage event
 	if UsageEvent.objects.filter(operator=operator, start__lt=timezone.now(), tool=tool, end=None).exists():
@@ -815,9 +817,11 @@ def enable_tool_multi(request):
 			return HttpResponse(inst)
 
 		# All policy checks passed so enable the tool for the user.
-		if tool.interlock and not tool.interlock.unlock():
-			logger.error("The interlock command for this tool failed. The error message returned: " + str(tool.interlock.most_recent_reply))
-			#raise Exception("The interlock command for this tool failed. The error message returned: " + str(tool.interlock.most_recent_reply))
+		if tool.interlocks:
+			for i in tool.interlocks.all():
+				if not i.unlock():
+					logger.error("The interlock command for this tool failed. The error message returned: " + str(i.most_recent_reply))
+					#raise Exception("The interlock command for this tool failed. The error message returned: " + str(tool.interlock.most_recent_reply))
 
 		# record staff charges
 		if request.user.charging_staff_time():
@@ -1065,9 +1069,11 @@ def disable_tool(request, tool_id):
 		pass
 
 	# All policy checks passed so disable the tool for the user.
-	if tool.interlock and not tool.interlock.lock():
-		error_message = f"The interlock command for the {tool} failed. The error message returned: {tool.interlock.most_recent_reply}"
-		logger.error(error_message)
+	if tool.interlocks:
+		for i in tool.interlocks.all():
+			if not i.lock():
+				error_message = f"The interlock command for the {tool} failed. The error message returned: {i.most_recent_reply}"
+				logger.error(error_message)
 
 	# End the current usage event for the tool
 	current_usage_event = tool.get_current_usage_event()

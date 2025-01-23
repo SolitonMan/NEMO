@@ -9,7 +9,7 @@ from microsoft_auth.models import MicrosoftAccount
 from microsoft_auth.admin import MicrosoftAccountAdmin
 
 from NEMO.actions import lock_selected_interlocks, synchronize_with_tool_usage, unlock_selected_interlocks
-from NEMO.models import Account, ActivityHistory, Alert, Area, AreaAccessRecord, AreaAccessRecordProject, BillingType, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableUnit, ConsumableCategory, ConsumableType, ConsumableWithdraw, ContactInformation, ContactInformationCategory, ContestTransaction, ContestTransactionData, ContestTransactionNewData, Core, CreditCostCollector, Customization, Door, EmailLog, GlobalFlag, Interlock, InterlockCard, LandingPageChoice, LockBilling, MembershipHistory, News, Notification, NsfCategory, Organization, OrganizationType, PhysicalAccessLevel, PhysicalAccessLog, Project, Project2DCC, Reservation, ReservationConfiguration, ReservationProject, Resource, ResourceCategory, SafetyIssue, Sample, ScheduledOutage, ScheduledOutageCategory, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskHistory, TaskStatus, Tool, TrainingSession, UsageEvent, UsageEventProject, User, UserType, UserProfile, UserProfileSetting
+from NEMO.models import Account, ActivityHistory, Alert, Area, AreaAccessRecord, AreaAccessRecordProject, BillingType, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableUnit, ConsumableCategory, ConsumableType, ConsumableWithdraw, ContactInformation, ContactInformationCategory, ContestTransaction, ContestTransactionData, ContestTransactionNewData, Core, CreditCostCollector, Customization, Door, EmailLog, GlobalFlag, Interlock, InterlockCard, InterlockType, LandingPageChoice, LockBilling, MembershipHistory, News, Notification, NsfCategory, Organization, OrganizationType, PhysicalAccessLevel, PhysicalAccessLog, Project, Project2DCC, Reservation, ReservationConfiguration, ReservationProject, Resource, ResourceCategory, SafetyIssue, Sample, ScheduledOutage, ScheduledOutageCategory, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskHistory, TaskStatus, Tool, TrainingSession, UsageEvent, UsageEventProject, User, UserType, UserProfile, UserProfileSetting
 from NEMO.utilities import send_mail
 from NEMO.views.customization import get_customization, get_media_file_contents
 
@@ -133,6 +133,15 @@ class ToolAdminForm(forms.ModelForm):
 		)
 	)
 
+	interlocks = forms.ModelMultipleChoiceField(
+		queryset=Interlock.objects.all(),
+		required=False,
+		widget=FilteredSelectMultiple(
+			verbose_name='Interlocks',
+			is_stacked=False
+		)
+	)
+
 	required_resources = forms.ModelMultipleChoiceField(
 		queryset=Resource.objects.all(),
 		required=False,
@@ -161,7 +170,7 @@ class ToolAdminForm(forms.ModelForm):
 
 @register(Tool)
 class ToolAdmin(admin.ModelAdmin):
-	list_display = ('name', 'category', 'core_id', 'visible', 'operational', 'is_configurable', 'interlock')
+	list_display = ('name', 'category', 'core_id', 'visible', 'operational', 'primary_owner')
 	list_filter = ('visible', 'operational', 'core_id')
 	form = ToolAdminForm
 
@@ -174,7 +183,7 @@ class ToolAdmin(admin.ModelAdmin):
 				(None, {'fields': ('name', 'category', 'core_id', 'credit_cost_collector'),}),
 				('Current state', {'fields': ('post_usage_questions', 'visible', 'operational'),}),
 				('Contact information', {'fields': ('primary_owner', 'backup_owners', 'notification_email_address', 'location', 'phone_number'),}),
-				('Usage policy', {'fields': ('qualification_duration', 'reservation_horizon', 'minimum_usage_block_time', 'maximum_usage_block_time', 'maximum_reservations_per_day', 'minimum_time_between_reservations', 'maximum_future_reservation_time', 'missed_reservation_threshold', 'requires_area_access', 'grant_physical_access_level_upon_qualification', 'grant_badge_reader_access_upon_qualification', 'interlock', 'allow_delayed_logoff', 'reservation_required', 'allow_autologout'),}),
+				('Usage policy', {'fields': ('qualification_duration', 'reservation_horizon', 'minimum_usage_block_time', 'maximum_usage_block_time', 'maximum_reservations_per_day', 'minimum_time_between_reservations', 'maximum_future_reservation_time', 'missed_reservation_threshold', 'requires_area_access', 'grant_physical_access_level_upon_qualification', 'grant_badge_reader_access_upon_qualification', 'interlocks', 'allow_delayed_logoff', 'reservation_required', 'allow_autologout'),}),
 				('Dependencies', {'fields': ('required_resources', 'nonrequired_resources'),}),
 			)
 		else:
@@ -182,7 +191,7 @@ class ToolAdmin(admin.ModelAdmin):
 				(None, {'fields': ('name', 'category', 'core_id'),}),
 				('Current state', {'fields': ('visible', 'operational'),}),
 				('Contact information', {'fields': ('primary_owner', 'backup_owners', 'notification_email_address', 'location', 'phone_number'),}),
-				('Usage policy', {'fields': ('reservation_horizon', 'minimum_usage_block_time', 'maximum_usage_block_time', 'maximum_reservations_per_day', 'minimum_time_between_reservations', 'maximum_future_reservation_time', 'missed_reservation_threshold', 'requires_area_access', 'grant_physical_access_level_upon_qualification', 'grant_badge_reader_access_upon_qualification', 'interlock', 'allow_delayed_logoff', 'reservation_required', 'allow_autologout'),}),
+				('Usage policy', {'fields': ('reservation_horizon', 'minimum_usage_block_time', 'maximum_usage_block_time', 'maximum_reservations_per_day', 'minimum_time_between_reservations', 'maximum_future_reservation_time', 'missed_reservation_threshold', 'requires_area_access', 'grant_physical_access_level_upon_qualification', 'grant_badge_reader_access_upon_qualification', 'interlocks', 'allow_delayed_logoff', 'reservation_required', 'allow_autologout'),}),
 				('Dependencies', {'fields': ('required_resources', 'nonrequired_resources'),}),
 			)
 		return super().change_view(request, object_id, form_url, extra_context)
@@ -674,6 +683,16 @@ class InterlockAdmin(admin.ModelAdmin):
 
 	def has_delete_permission(self, request, obj=None):
 		return False
+
+
+@register(InterlockType)
+class InterlockTypeAdmin(admin.ModelAdmin):
+	list_display = ('id', 'name', 'power_on_value', 'power_off_value', 'relay_prefix', 'relay_suffix')
+	search_fields = ('name',)
+
+	def has_delete_permission(self, request, obj=None):
+		return False
+
 
 @register(Task)
 class TaskAdmin(admin.ModelAdmin):

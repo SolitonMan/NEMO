@@ -59,8 +59,9 @@ def pulse_interlocks():
 	tools = Tool.objects.all()
 	for t in tools:
 		if not t.in_use():
-			if t.interlock is not None:
-				t.interlock.pulse()
+			if t.interlocks is not None:
+				for i in t.interlocks.all():
+					i.pulse()
 
 
 def update_autologout():

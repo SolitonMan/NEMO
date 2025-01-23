@@ -27,7 +27,7 @@
 			{{ form.non_field_errors }}
 		</div>
 	{% endif %}
-	<form action="{% url 'schedule_resource_outage' %}" method="post" class="well">
+	<form action="{% url 'schedule_resource_outage' %}" method="post" class="well" onsubmit="return on_submit();">
 		<h4>{% if editing %}Edit this outage{% else %}Create a new outage{% endif %}</h4>
 		{% csrf_token %}
 		{% if form.instance.id %}<input type="hidden" name="outage_id" value="{{ form.instance.id }}">{% endif %}
@@ -109,5 +109,13 @@
 		$('#start').datetimepicker(timepicker_properties);
 		$('#end').datetimepicker(timepicker_properties);
 		$('.glyphicon').tooltip({container: 'body'});
+
+		function on_submit()
+		{
+			$('#start').val(convert_12_to_24($('#start').val()));
+			$('#end').val(convert_12_to_24($('#end').val()));
+
+			return true;
+		}
 	</script>
 {% endblock %}

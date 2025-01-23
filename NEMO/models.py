@@ -382,7 +382,7 @@ class Tool(models.Model):
 
 	# adding new field to create many to many relationship with the Interlock table.  This will allow each tool
 	# to be configured to use as many interlocks as needed.  Each item will be assigned to the tool individually
-	#interlocks = models.ManyToManyField('Interlock', blank=True, null=True, on_delete=models.CASCADE, related_name="interlocks")
+	interlocks = models.ManyToManyField('Interlock', blank=True, related_name="interlocks")
 	interlock = models.OneToOneField('Interlock', blank=True, null=True, on_delete=models.SET_NULL)
 	reservation_horizon = models.PositiveIntegerField(default=14, null=True, blank=True, help_text="Users may create reservations this many days in advance. Leave this field blank to indicate that no reservation horizon exists for this tool.")
 	minimum_usage_block_time = models.PositiveIntegerField(null=True, blank=True, help_text="The minimum amount of time (in minutes) that a user must reserve this tool for a single reservation. Leave this field blank to indicate that no minimum usage block time exists for this tool.")
@@ -1313,8 +1313,10 @@ class ContestTransactionNewData(models.Model):
 
 class InterlockType(models.Model):
 	name = models.CharField(max_length=100)
-	#relay_prefix = models.CharField(max_length=100, null=True, blank=True)
-	#relay_suffix = models.CharField(max_length=100, null=True, blank=True)
+	relay_prefix = models.CharField(max_length=100, null=True, blank=True)
+	relay_suffix = models.CharField(max_length=100, null=True, blank=True)
+	power_on_value = models.IntegerField(null=True, blank=True)
+	power_off_value = models.IntegerField(null=True, blank=True)
 
 	class Meta:
 		ordering = ['name']
@@ -1363,98 +1365,59 @@ class Interlock(models.Model):
 		return self.__issue_command(self.State.LOCKED)
 
 	def __issue_command(self, command_type):
-#		if settings.DEBUG:
-#			# use a temp variable to account for the need to use 0 as the LOCKED command
-#			cmdst = command_type
-#			if cmdst == 2:
-#				cmdst = 0
-#
-#			uri = 'http://' + str(self.card.server) + '/state.xml?relay' + str(self.card.number) + 'State=' + str(cmdst)
-#			#print(uri)
-#			req = requests.get(uri)
-#
-#			self.most_recent_reply = "Interlock interface mocked out because settings.DEBUG = True. Interlock last set on " + format_datetime(timezone.now()) + "."
-#			self.state = command_type
-#			self.save()
-#			return True
 
 		interlocks_logger = getLogger("NEMO.interlocks")
 
 		try:
+			# get command type value for card
+			cmd_int = 0
+
+			if command_type == self.State.LOCKED:
+				cmd_int = self.card.type.power_off_value
+			if command_type == self.State.UNLOCKED:
+				cmd_int = self.card.type.power_on_value
+
 			# build uri to toggle relay then call requests.get()
-	
-			# use a temp variable to account for the need to use 0 as the LOCKED command
-			cmdst = command_type
-			if cmdst == 2:
-				cmdst = 0
+			uri = 'http://' + str(self.card.server) + '/state.xml?'
+			if self.card.type.relay_prefix is not None:
+				uri = uri + str(self.card.type.relay_prefix)
+			uri = uri + str(self.channel)
+			if self.card.type.relay_suffix is not None:
+				uri = uri + str(self.card.type.relay_suffix)
+			uri = uri + '=' + str(cmd_int)
+			req = requests.get(uri, timeout=3.0)
 
-			# check if interlock is WebRelay (X-301) or WebSwitch
-			if self.card.type.name == "X-301":
-				if command_type == 1:
-					cmdst = 0
-				else:
-					cmdst = 1
-
-			#uri = 'http://' + str(self.card.server) + '/state.xml?relay' + str(self.card.number) + 'State=' + str(cmdst)
-			if self.card.type.name == "Web Switch Plus" or self.card.type.name == "X-401":
-				uri = 'http://' + str(self.card.server) + '/state.xml?relay1=' + str(cmdst)
-				req = requests.get(uri, timeout=3.0)
-
-				uri2 = 'http://' + str(self.card.server) + '/state.xml?relay2=' + str(cmdst)
-				req2 = requests.get(uri2, timeout=3.0)
-			else:
-				uri = 'http://' + str(self.card.server) + '/state.xml?relay1State=' + str(cmdst)
-				req = requests.get(uri, timeout=3.0)
-
-				uri2 = 'http://' + str(self.card.server) + '/state.xml?relay2State=' + str(cmdst)
-				req2 = requests.get(uri2, timeout=3.0)
-
-			self.most_recent_reply = "Executed " + uri + " successfully at " + str(timezone.now())
+			self.most_recent_reply = "Executed " + uri + " successfully at " + str(timezone.localtime(timezone.now()))
 			self.state = command_type
 			self.save()
 			return self.state == command_type
 		except requests.ConnectionError as e:
-			self.most_recent_reply = "The request failed with the following message: " + str(e)
+			self.most_recent_reply = "The request failed at " + str(timezone.localtime(timezone.now())) + " with the following message: " + str(e)
 			self.save()
 			return False
 		except requests.Timeout as e:
-			self.most_recent_reply = "The request failed with the following message: " + str(e)
+			self.most_recent_reply = "The request failed at " + str(timezone.localtime(timezone.now())) + " with the following message: " + str(e)
 			self.save()
 			return False
 		except requests.RequestException as e:
-			self.most_recent_reply = "The request failed with the following message: " + str(e)
+			self.most_recent_reply = "The request failed at " + str(timezone.localtime(timezone.now())) + " with the following message: " + str(e)
 			self.save()
 			return False
 		except Exception as e:
-			self.most_recent_reply = "The request failed with the following message: " + str(e)
+			self.most_recent_reply = "The request failed at " + str(timezone.localtime(timezone.now())) + "with the following message: " + str(e)
 			self.save()
 			return False
 
 
 	def pulse(self):
-		uri1 = 'http://' + str(self.card.server) + '/state.xml?relay1State=2'
-		uri2 = 'http://' + str(self.card.server) + '/state.xml?relay2State=2'
-
-		if self.card.type.name == "Web Switch Plus" or self.card.type.name == "X-401":
-			uri1 = 'http://' + str(self.card.server) + '/state.xml?relay1=0'
-			uri2 = 'http://' + str(self.card.server) + '/state.xml?relay2=0'
-
 		try:
-			req1 = requests.get(uri1, timeout=3.0)
-			req2 = requests.get(uri2, timeout=3.0)
-
-			self.most_recent_reply = "Pulsed " + uri1 + " successfully at " + str(timezone.now()) 
-			# print(self.most_recent_reply)
-			self.state = 2
-			self.save()
+			return self.__issue_command(self.State.LOCKED)
 
 		except requests.exceptions.RequestException as e:
 			#print(e)
-			self.most_recent_reply = str(e)
+			self.most_recent_reply = "The request failed at " + str(timezone.localtime(timezone.now())) + " with the message: " + str(e)
 			self.save()
 			return False
-			
-		return self.state == 2
 
 	def remote_state(self):
 		uri = 'http://' + str(self.card.server) + '/state.xml'
@@ -1463,14 +1426,14 @@ class Interlock(models.Model):
 		try:
 			req = requests.get(uri, timeout=0.01)
 			data = xmltodict.parse(req.text)
-			if self.card.type.name == "Web Switch Plus" or self.card.type.name == "X-401":
-				s = 'relay' + str(self.card.number)
-			else:
-				s = 'relay' + str(self.card.number) + 'state'
+			s = str(self.card.type.relay_prefix) + str(self.channel)
+			if self.card.type.relay_suffix is not None:
+				s = s + str(self.card.type.relay_suffix)
+
 			req = data['datavalues'][s]
 
 		except requests.exceptions.RequestException as e:
-			return e
+			return "The request failed at " + str(timezone.localtime(timezone.now())) + " with the message: " + str(e)
 
 		return str(req)
 
