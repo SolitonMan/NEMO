@@ -70,6 +70,7 @@
 								{% else %}
 								<a href="javascript:demote_user('{{ u.id }}', '{{ tool.id }}')" class="grey hover-black" title="Demote {{ u.first_name }}"><span class="glyphicon glyphicon-arrow-down"></span></a>
 								{% endif %}
+								<span style="font-family: Courier">QD: {{ qd.qualification_date }} </span>
 							{% endwith %}
 
 						{% endif %}
