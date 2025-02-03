@@ -40,6 +40,9 @@ RUN pip install django-developer-panel
 RUN pip install pymemcache
 RUN pip install django-pymemcache 
 
+# install bootstrap support
+RUN pip install django-widget-tweaks
+
 # Intall NEMO (in the current directory) and Gunicorn
 COPY . /nemo/
 #RUN pip install /nemo/ gunicorn==20.0.4
