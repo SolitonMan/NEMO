@@ -67,46 +67,46 @@ def save_withdraw_notes(request):
 
 @login_required
 def create_order(request):
-    if request.method == 'POST':
-        order_form = ConsumableOrderForm(request.POST, user=request.user)
-        formset = ConsumableOrderItemFormSet(request.POST)
-        if order_form.is_valid() and formset.is_valid():
-            order = order_form.save(commit=False)
-            order.user = request.user
-            order.save()
-            formset.instance = order
-            formset.save()
-            return redirect('order_list')
-    else:
-        order_form = ConsumableOrderForm(user=request.user)
-        formset = ConsumableOrderItemFormSet()
+	if request.method == 'POST':
+		order_form = ConsumableOrderForm(request.POST, user=request.user)
+		formset = ConsumableOrderItemFormSet(request.POST)
+		if order_form.is_valid() and formset.is_valid():
+			order = order_form.save(commit=False)
+			order.user = request.user
+			order.updated = timezone.now()
+			order.save()
+			formset.instance = order
+			formset.save()
+			return redirect('order_list')
+	else:
+		order_form = ConsumableOrderForm(user=request.user)
+		formset = ConsumableOrderItemFormSet()
 
-    return render(request, 'create_order.html', {'order_form': order_form, 'formset': formset})
+	return render(request, 'create_order.html', {'order_form': order_form, 'formset': formset})
 
 @login_required
 def order_list(request):
-    orders = ConsumableOrder.objects.filter(fulfilled=False)
-    return render(request, 'order_list.html', {'orders': orders})
+	orders = ConsumableOrder.objects.filter(fulfilled=False)
+	return render(request, 'order_list.html', {'orders': orders})
 
 @login_required
 def order_detail(request, order_id):
-    order = get_object_or_404(ConsumableOrder, id=order_id)
-    if request.method == 'POST':
-        order.fulfilled = True
-        order.save()
-        for item in order.items.all():
-            ConsumableWithdraw.objects.create(
-                customer=order.user,
-                merchant=request.user,
-                consumable=item.consumable,
-                quantity=item.quantity,
-                project=order.project,
-                date=timezone.now(),
-                validated=True,
-                auto_validated=True,
-                active_flag=True
-            )
-        return redirect('order_list')
-    return render(request, 'order_detail.html', {'order': order})
-
-
+	order = get_object_or_404(ConsumableOrder, id=order_id)
+	if request.method == 'POST':
+		order.fulfilled = True
+		order.updated = timezone.now()
+		order.save()
+		for item in order.items.all():
+			ConsumableWithdraw.objects.create(
+				customer=order.user,
+				merchant=request.user,
+				consumable=item.consumable,
+				quantity=item.quantity,
+				project=order.project,
+				date=timezone.now(),
+				validated=True,
+				auto_validated=True,
+				active_flag=True
+			)
+		return redirect('order_list')
+	return render(request, 'order_detail.html', {'order': order})

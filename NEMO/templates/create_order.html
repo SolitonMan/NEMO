@@ -1,40 +1,115 @@
 {% extends "base.html" %}
+{% load widget_tweaks %}
 {% block content %}
 <h2>Create Order</h2>
-<form method="post">
+<form method="post" id="order-form">
     {% csrf_token %}
-    {{ order_form.as_p }}
-    {{ formset.management_form }}
-    {% for form in formset %}
-    <div class="order-item">
-        {{ form.search }}
-        {{ form.consumable }}
-        {{ form.quantity }}
+    <div class="form-group">
+        Project: {{ order_form.project|add_class:"form-control" }}
     </div>
-    {% endfor %}
-    <button type="submit">Submit Order</button>
+    <div id="formset-container">
+        {{ formset.management_form }}
+        {% for form in formset %}
+        <div class="order-item form-row">
+            <div class="form-group col-md-4">
+                {{ form.search|add_class:"form-control" }}
+            </div>
+            <div class="form-group col-md-4">
+                {{ form.consumable|add_class:"form-control" }}
+            </div>
+            <div class="form-group col-md-2">
+                {{ form.quantity|add_class:"form-control" }}
+            </div>
+            <div class="form-group col-md-2">
+                <button type="button" class="btn btn-danger remove-item">Remove</button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <button type="button" class="btn btn-primary" id="add-item">Add Item</button>
+    <button type="submit" class="btn btn-success">Submit Order</button>
 </form>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-      const formset = document.querySelectorAll('.order-item');
-      formset.forEach(function(item) {
-        const searchInput = item.querySelector('input[name$="search"]');
-        const consumableSelect = item.querySelector('select[name$="consumable"]');
+        const formsetContainer = document.getElementById('formset-container');
+        const addItemButton = document.getElementById('add-item');
+        let formCount = {{ formset.total_form_count }};
 
-        searchInput.addEventListener('input', function() {
-          const searchTerm = searchInput.value.toLowerCase();
-          const options = consumableSelect.querySelectorAll('option');
+        addItemButton.addEventListener('click', function() {
+            const newItem = document.createElement('div');
+            newItem.classList.add('order-item', 'form-row');
+            newItem.innerHTML = `
+                <div class="form-group col-md-4">
+                    <input type="text" name="form-${formCount}-search" class="form-control" placeholder="Search consumables...">
+                </div>
+                <div class="form-group col-md-4">
+                    <select name="form-${formCount}-consumable" class="form-control">
+                        {% for consumable in consumables %}
+                        <option value="{{ consumable.id }}">{{ consumable.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group col-md-2">
+                    <input type="number" name="form-${formCount}-quantity" class="form-control">
+                </div>
+                <div class="form-group col-md-2">
+                    <button type="button" class="btn btn-danger remove-item">Remove</button>
+                </div>
+            `;
+            formsetContainer.appendChild(newItem);
+            formCount++;
 
-          options.forEach(function(option) {
-            if (option.text.toLowerCase().includes(searchTerm)) {
-              option.style.display = '';
-            } else {
-              option.style.display = 'none';
-            }
-          });
+            // Update the total form count
+            document.getElementById('id_form-TOTAL_FORMS').value = formCount;
+
+            // Add event listener for the new search input
+            const searchInput = newItem.querySelector('input[name$="search"]');
+            const consumableSelect = newItem.querySelector('select[name$="consumable"]');
+            searchInput.addEventListener('input', function() {
+                const searchTerm = searchInput.value.toLowerCase();
+                const options = consumableSelect.querySelectorAll('option');
+                options.forEach(function(option) {
+                    if (option.text.toLowerCase().includes(searchTerm)) {
+                        option.style.display = '';
+                    } else {
+                        option.style.display = 'none';
+                    }
+                });
+            });
+
+            // Add event listener for the remove button
+            newItem.querySelector('.remove-item').addEventListener('click', function() {
+                newItem.remove();
+                formCount--;
+                document.getElementById('id_form-TOTAL_FORMS').value = formCount;
+            });
         });
-      });
+
+        // Add event listeners for existing remove buttons
+        document.querySelectorAll('.remove-item').forEach(function(button) {
+            button.addEventListener('click', function() {
+                button.closest('.order-item').remove();
+                formCount--;
+                document.getElementById('id_form-TOTAL_FORMS').value = formCount;
+            });
+        });
+
+        // Add event listeners for existing search inputs
+        document.querySelectorAll('input[name$="search"]').forEach(function(searchInput) {
+            const consumableSelect = searchInput.closest('.order-item').querySelector('select[name$="consumable"]');
+            searchInput.addEventListener('input', function() {
+                const searchTerm = searchInput.value.toLowerCase();
+                const options = consumableSelect.querySelectorAll('option');
+                options.forEach(function(option) {
+                    if (option.text.toLowerCase().includes(searchTerm)) {
+                        option.style.display = '';
+                    } else {
+                        option.style.display = 'none';
+                    }
+                });
+            });
+        });
     });
 </script>
 {% endblock %}
