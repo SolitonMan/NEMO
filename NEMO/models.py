@@ -1259,6 +1259,28 @@ class ConsumableWithdraw(models.Model):
 		return str(self.id)
 
 
+class ConsumableOrder(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+    order_date = models.DateTimeField(auto_now_add=True)
+    fulfilled = models.BooleanField(default=False)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField()
+
+    def __str__(self):
+        return f"Order {self.id} by {self.user.get_full_name()}"
+
+
+class ConsumableOrderItem(models.Model):
+    order = models.ForeignKey(ConsumableOrder, related_name='items', on_delete=models.CASCADE)
+    consumable = models.ForeignKey(Consumable, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField()
+
+    def __str__(self):
+        return f"{self.quantity} of {self.consumable.name}"
+
+
+
 class ContestTransaction(models.Model):
 	content_type = models.ForeignKey(ContentType, on_delete=models.SET_NULL, null=True)
 	object_id = models.PositiveIntegerField()

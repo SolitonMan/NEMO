@@ -172,6 +172,9 @@ urlpatterns = [
 	re_path(r'^consumables/$', consumables.consumables, name='consumables'),
 	re_path(r'^get_consumables/$', consumables.get_consumables, name='get_consumables'),
 	re_path(r'^save_withdraw_notes/$', consumables.save_withdraw_notes, name='save_withdraw_notes'),
+    re_path(r'^create_order/$', consumables.create_order, name='create_order'),
+    re_path(r'^order_list/$', consumables.order_list, name='order_list'),
+    re_path(r'^order_detail/(?P<order_id>\d+)/$', consumables.order_detail, name='order_detail'),
 
 	# Training:
 	#re_path(r'^training/$', training.training, name='training'),

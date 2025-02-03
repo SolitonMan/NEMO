@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Create Order</h2>
+<form method="post">
+    {% csrf_token %}
+    {{ order_form.as_p }}
+    {{ formset.management_form }}
+    {% for form in formset %}
+    <div class="order-item">
+        {{ form.search }}
+        {{ form.consumable }}
+        {{ form.quantity }}
+    </div>
+    {% endfor %}
+    <button type="submit">Submit Order</button>
+</form>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const formset = document.querySelectorAll('.order-item');
+      formset.forEach(function(item) {
+        const searchInput = item.querySelector('input[name$="search"]');
+        const consumableSelect = item.querySelector('select[name$="consumable"]');
+
+        searchInput.addEventListener('input', function() {
+          const searchTerm = searchInput.value.toLowerCase();
+          const options = consumableSelect.querySelectorAll('option');
+
+          options.forEach(function(option) {
+            if (option.text.toLowerCase().includes(searchTerm)) {
+              option.style.display = '';
+            } else {
+              option.style.display = 'none';
+            }
+          });
+        });
+      });
+    });
+</script>
+{% endblock %}

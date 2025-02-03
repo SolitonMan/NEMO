@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Open Orders</h2>
+<ul>
+    {% for order in orders %}
+    <li><a href="{% url 'order_detail' order.id %}">Order {{ order.id }} by {{ order.user.get_full_name }}</a></li>
+    {% endfor %}
+</ul>
+{% endblock %}

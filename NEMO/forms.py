@@ -9,7 +9,7 @@ from django.forms.utils import ErrorDict
 from django.utils import timezone
 from django.utils.dateparse import parse_time, parse_date, parse_datetime
 
-from NEMO.models import Account, Alert, Comment, Consumable, ConsumableWithdraw, Project, SafetyIssue, Sample, ScheduledOutage, Task, TaskCategory, Tool, User
+from NEMO.models import Account, Alert, Comment, Consumable, ConsumableWithdraw, Project, SafetyIssue, Sample, ScheduledOutage, Task, TaskCategory, Tool, User, ConsumableOrder, ConsumableOrderItem
 from NEMO.utilities import bootstrap_primary_color, format_datetime
 
 logger = getLogger(__name__)
@@ -224,6 +224,29 @@ class ConsumableWithdrawForm(ModelForm):
 		if project not in customer.active_projects():
 			raise ValidationError('{} is not a member of the project {}. Users can only bill to projects they belong to.'.format(customer, project))
 
+class ConsumableOrderForm(forms.ModelForm):
+    project = forms.ModelChoiceField(queryset=Project.objects.none(), required=True)
+
+    class Meta:
+        model = ConsumableOrder
+        fields = ['project']
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        if user:
+            self.fields['project'].queryset = user.projects.filter(active=True)
+
+class ConsumableOrderItemForm(forms.ModelForm):
+    search = forms.CharField(required=False, widget=forms.TextInput(attrs={'placeholder': 'Search consumables...'}))
+
+    class Meta:
+        model = ConsumableOrderItem
+        fields = ['search', 'consumable', 'quantity']
+
+ConsumableOrderItemFormSet = forms.inlineformset_factory(
+    ConsumableOrder, ConsumableOrderItem, form=ConsumableOrderItemForm, extra=1, can_delete=True
+)
 
 class ReservationAbuseForm(Form):
 	cancellation_horizon = IntegerField(initial=6, min_value=1)

@@ -1,12 +1,12 @@
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
+from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods, require_GET
 from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
 
-from NEMO.forms import ConsumableWithdrawForm
-from NEMO.models import Consumable, ConsumableWithdraw, Core, User
+from NEMO.forms import ConsumableWithdrawForm, ConsumableOrderForm, ConsumableOrderItemFormSet
+from NEMO.models import Consumable, ConsumableWithdraw, Core, User, ConsumableOrder, ConsumableOrderItem
 
 
 @staff_member_required(login_url=None)
@@ -64,5 +64,49 @@ def save_withdraw_notes(request):
 	cw.notes = request.GET.get('withdraw_comment')
 	cw.save()
 	return HttpResponse()
+
+@login_required
+def create_order(request):
+    if request.method == 'POST':
+        order_form = ConsumableOrderForm(request.POST, user=request.user)
+        formset = ConsumableOrderItemFormSet(request.POST)
+        if order_form.is_valid() and formset.is_valid():
+            order = order_form.save(commit=False)
+            order.user = request.user
+            order.save()
+            formset.instance = order
+            formset.save()
+            return redirect('order_list')
+    else:
+        order_form = ConsumableOrderForm(user=request.user)
+        formset = ConsumableOrderItemFormSet()
+
+    return render(request, 'create_order.html', {'order_form': order_form, 'formset': formset})
+
+@login_required
+def order_list(request):
+    orders = ConsumableOrder.objects.filter(fulfilled=False)
+    return render(request, 'order_list.html', {'orders': orders})
+
+@login_required
+def order_detail(request, order_id):
+    order = get_object_or_404(ConsumableOrder, id=order_id)
+    if request.method == 'POST':
+        order.fulfilled = True
+        order.save()
+        for item in order.items.all():
+            ConsumableWithdraw.objects.create(
+                customer=order.user,
+                merchant=request.user,
+                consumable=item.consumable,
+                quantity=item.quantity,
+                project=order.project,
+                date=timezone.now(),
+                validated=True,
+                auto_validated=True,
+                active_flag=True
+            )
+        return redirect('order_list')
+    return render(request, 'order_detail.html', {'order': order})
 
 
