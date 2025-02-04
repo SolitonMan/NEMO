@@ -77,14 +77,11 @@ def create_order(request):
 			order.save()
 			formset.instance = order
 			formset.save()
-			if request.user.is_staff:
-				return redirect('order_list')
-			else:
-				return render(request, 'order_confirmation.html', {'order':order})
+			return render(request, 'order_confirmation.html', {'order':order})
 	else:
 		order_form = ConsumableOrderForm(user=request.user)
 		formset = ConsumableOrderItemFormSet()
-		consumables = Consumable.objects.filter(visible=True).order_by('category', 'name')
+		consumables = Consumable.objects.filter(visible=True).order_by('name')
 
 	return render(request, 'create_order.html', {'order_form': order_form, 'formset': formset, 'consumables': consumables})
 
@@ -108,7 +105,7 @@ def order_detail(request, order_id):
 				quantity=item.quantity,
 				project=order.project,
 				date=timezone.now(),
-				validated=True,
+				validated=False,
 				auto_validated=True,
 				active_flag=True
 			)
