@@ -5,28 +5,42 @@
 <form method="post" id="order-form">
     {% csrf_token %}
     <div class="form-group">
-        Project: {{ order_form.project|add_class:"form-control" }}
+            <span style="width:35%;">Project: {{ order_form.project|add_class:"form-control" }}</span>
     </div>
     <div id="formset-container">
-        {{ formset.management_form }}
-        {% for form in formset %}
-        <div class="order-item form-row">
-            <div class="form-group col-md-4">
-                {{ form.search|add_class:"form-control" }}
+            {{ formset.management_form }}
+            <div class="order-item form-row">
+                    <div class="form-group col-md-4" style="font-weight:bold;">
+                            Search
+                    </div>
+                    <div class="form-group col-md-4" style="font-weight:bold;">
+                            Item
+                    </div>
+                    <div class="form-group col-md-2" style="font-weight:bold;">
+                            Quantity
+                    </div>
+                    <div class="form-group col-md-2">
+                            $nbsp;
+                    </div>
             </div>
-            <div class="form-group col-md-4">
-                {{ form.consumable|add_class:"form-control" }}
+            {% for form in formset %}
+            <div class="order-item form-row">
+                    <div class="form-group col-md-4">
+                            {{ form.search|add_class:"form-control" }}
+                    </div>
+                    <div class="form-group col-md-4">
+                            {{ form.consumable|add_class:"form-control" }}
+                    </div>
+                    <div class="form-group col-md-2">
+                            {{ form.quantity|add_class:"form-control" }}
+                    </div>
+                    <div class="form-group col-md-2">
+                            <button type="button" class="btn btn-danger remove-item">Remove</button>
+                    </div>
             </div>
-            <div class="form-group col-md-2">
-                {{ form.quantity|add_class:"form-control" }}
-            </div>
-            <div class="form-group col-md-2">
-                <button type="button" class="btn btn-danger remove-item">Remove</button>
-            </div>
-        </div>
-        {% endfor %}
+            {% endfor %}
     </div>
-    <button type="button" class="btn btn-primary" id="add-item">Add Item</button>
+    <button type="button" class="btn btn-primary" id="add-item">Add Item</button><br/><br/>
     <button type="submit" class="btn btn-success">Submit Order</button>
 </form>
 

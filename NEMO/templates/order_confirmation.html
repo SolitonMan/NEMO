@@ -3,10 +3,13 @@
 <h2>Order Confirmation</h2>
 <p>Thank you for your order {{order.user.first_name}}!  The item(s) included in this order are:</p>
 <ul>
-    {% for item in order.items.all %}
-    <li>{{ item.consumable.name }} - {{ item.quantity }}</li>
-    {% endfor %}
+        {% for item in order.items.all %}
+        <li>{{ item.consumable.name }} - {{ item.quantity }}</li>
+        {% endfor %}
 </ul>
 
 <a href="{% url 'create_order' %}">Create another order</a>
+{% if request.user.is_staff %}
+<a href="{% url 'order_list' %}">View all orders</a>
+{% endif %}
 {% endblock %}
