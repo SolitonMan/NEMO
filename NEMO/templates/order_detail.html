@@ -4,7 +4,7 @@
 <p>The following items were included in this order:</p>
 <ul>
     {% for item in order.items.all %}
-    <li>{{ item.quantity }} of {{ item.consumable.name }}</li>
+    <li>{{ item.quantity }} {{ item.consumable.unit.abbreviation }} of {{ item.consumable.name }}</li>
     {% endfor %}
 </ul>
 <form method="post">
