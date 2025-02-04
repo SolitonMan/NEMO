@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Order {{ order.id }}</h2>
+<h2>Order {{ order.id }} by {{ order.user.get_full_name }}</h2>
+<p>The following items were included in this order:</p>
 <ul>
     {% for item in order.items.all %}
     <li>{{ item.quantity }} of {{ item.consumable.name }}</li>
@@ -8,6 +9,7 @@
 </ul>
 <form method="post">
     {% csrf_token %}
-    <button type="submit">Mark as Fulfilled</button>
+    <input type="hidden" name="order_id" value="{{ order.id }}">
+    <button type="submit" class="btn btn-success">Mark as Fulfilled</button>
 </form>
 {% endblock %}

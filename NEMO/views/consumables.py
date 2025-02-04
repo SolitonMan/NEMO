@@ -77,7 +77,10 @@ def create_order(request):
 			order.save()
 			formset.instance = order
 			formset.save()
-			return redirect('order_list')
+			if request.user.is_staff:
+				return redirect('order_list')
+			else:
+				return render(request, 'order_confirmation.html', {'order':order})
 	else:
 		order_form = ConsumableOrderForm(user=request.user)
 		formset = ConsumableOrderItemFormSet()
