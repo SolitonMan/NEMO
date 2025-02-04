@@ -4,12 +4,13 @@
 <p>Thank you for your order {{order.user.first_name}}!  The item(s) included in this order are:</p>
 <ul>
         {% for item in order.items.all %}
-        <li>{{ item.consumable.name }} - {{ item.quantity }}</li>
+        <li>{{ item.consumable.name }} - {{ item.quantity }} {{ item.consumable.unit.abbreviation }}</li>
         {% endfor %}
 </ul>
 
 <a href="{% url 'create_order' %}">Create another order</a>
 {% if request.user.is_staff %}
+<br/>
 <a href="{% url 'order_list' %}">View all orders</a>
 {% endif %}
 {% endblock %}
