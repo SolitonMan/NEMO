@@ -60,7 +60,7 @@
             formCount++;
 
             // Update the total form count
-            $('#id_form-TOTAL_FORMS').val(formCount);
+            $('#id_items-TOTAL_FORMS').val(formCount);
 
             // Add event listener for the new search input
             newItem.find('input[name$="search"]').on('input', function() {
@@ -79,7 +79,7 @@
             newItem.find('.remove-item').click(function() {
                 newItem.remove();
                 formCount--;
-                $('#id_form-TOTAL_FORMS').val(formCount);
+                $('#id_items-TOTAL_FORMS').val(formCount);
             });
         });
 
@@ -87,7 +87,7 @@
         $('.remove-item').click(function() {
             $(this).closest('.order-item').remove();
             formCount--;
-            $('#id_form-TOTAL_FORMS').val(formCount);
+            $('#id_items-TOTAL_FORMS').val(formCount);
         });
 
         // Add event listeners for existing search inputs
