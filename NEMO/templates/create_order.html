@@ -123,16 +123,18 @@
                         return false;
                 }
 
-                $(':regex(id, ^id_items-\\d+-consumable)').each(function () {
+                $('select').attr('id').match(/^id_items-\\d+-consumable/).each(function () {
                         if ($(this).val() === '') {
                                 alert('Please select a consumable for each item.');
+                                $(this).focus();
                                 return false;
                         }
                 });
 
-                $(':regex(id, ^id_items-\\d+-quantity)').each(function () {
+                $('select').attr('id').match(/id, ^id_items-\\d+-quantity/).each(function () {
                         if ($(this).val() === '') {
                                 alert('Please enter a quantity for each item.');
+                                $(this).focus();
                                 return false;
                         }
                 });
