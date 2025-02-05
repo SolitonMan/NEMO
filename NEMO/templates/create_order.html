@@ -123,21 +123,31 @@
                         return false;
                 }
 
-                $('select').attr('id').match(/^id_items-\\d+-consumable/).each(function () {
+                var valid = true;
+
+                $('select[id^="id_items-"][id$="-consumable"]').each(function () {
                         if ($(this).val() === '') {
                                 alert('Please select a consumable for each item.');
                                 $(this).focus();
+                                valid = false;
                                 return false;
                         }
                 });
 
-                $('select').attr('id').match(/id, ^id_items-\\d+-quantity/).each(function () {
+                if (!valid) {
+                        return false;
+                }
+
+                $('input[id^="id_items-"][id$="-quantity"]').each(function () {
                         if ($(this).val() === '') {
                                 alert('Please enter a quantity for each item.');
                                 $(this).focus();
+                                valid = false;
                                 return false;
                         }
                 });
+
+                return valid;
         });
     });
 </script>
