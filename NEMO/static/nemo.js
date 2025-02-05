@@ -410,12 +410,10 @@ var GENERAL_EDITING = LETTERS_AND_NUMBERS + ".'-_+=?,!@#$%^&*();:" + '"';
 
 // This function allows for the use of a regular expression when using a
 // jquery selector to find elements
-(function ($) {
-    $.fn.expr[':'].regex = function (elem, index, match) {
-        var regex = new RegExp(match[3]);
-        return regex.test($(elem).attr('id'));
-    };
-}(jQuery));
+$.expr[':'].regex = function (elem, index, match) {
+    var regex = new RegExp(match[3]);
+    return regex.test($(elem).attr('id'));
+};
 
 // HTTP error 403 (unauthorized) is returned when the user's session
 // has timed out and the web page makes an AJAX request. This 403 response
