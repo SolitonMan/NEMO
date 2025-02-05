@@ -116,6 +116,27 @@
                 }
             });
         });
+
+        $('#order-form').on('submit', function () {
+                if (formCount === 0) {
+                        alert('Please add at least one item to the order.');
+                        return false;
+                }
+
+                $(':regex(id, ^id_items-\\d+-consumable)').each(function () {
+                        if ($(this).val() === '') {
+                                alert('Please select a consumable for each item.');
+                                return false;
+                        }
+                });
+
+                $(':regex(id, ^id_items-\\d+-quantity)').each(function () {
+                        if ($(this).val() === '') {
+                                alert('Please enter a quantity for each item.');
+                                return false;
+                        }
+                });
+        });
     });
 </script>
 {% endblock %}
