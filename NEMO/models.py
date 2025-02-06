@@ -1266,9 +1266,11 @@ class ConsumableOrder(models.Model):
     fulfilled = models.BooleanField(default=False)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField()
+    name = models.CharField(max_length=100, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
 
     def __str__(self):
-        return f"Order {self.id} by {self.user.get_full_name()}"
+        return f"Order {self.id} - {self.name) - by {self.user.get_full_name()}"
 
 
 class ConsumableOrderItem(models.Model):

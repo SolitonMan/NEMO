@@ -1,7 +1,13 @@
 {% extends "base.html" %}
 {% block content %}
 <h2>Order Confirmation</h2>
-<p>Thank you for your order {{order.user.first_name}}!  The item(s) included in this order are:</p>
+<p>
+	Thank you for your order {{order.user.first_name}}!  The details of this order are:<br />
+	<b>Project:</b> {{ order.project }}<br />
+	<b>Name:</b> {{ order.name }}<br />
+	<b>Description:</b> {{ order.description }}
+</p>
+<p>The item(s) included in this order are:</p>
 <ul>
         {% for item in order.items.all %}
         <li>{{ item.consumable.name }} - {{ item.quantity }} {{ item.consumable.unit.abbreviation }}</li>
