@@ -81,7 +81,7 @@ def create_order(request):
 	else:
 		order_form = ConsumableOrderForm(user=request.user)
 		formset = ConsumableOrderItemFormSet()
-		consumables = Consumable.objects.filter(visible=True).order_by('name')
+		consumables = Consumable.objects.filter(category__id=1, visible=True).order_by('name')
 
 	return render(request, 'create_order.html', {'order_form': order_form, 'formset': formset, 'consumables': consumables})
 
