@@ -244,6 +244,10 @@ class ConsumableOrderItemForm(forms.ModelForm):
         model = ConsumableOrderItem
         fields = ['search', 'consumable', 'quantity']
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['consumable'].queryset = Consumable.objects.filter(category__id=1, visible=True).order_by('name')
+
 ConsumableOrderItemFormSet = forms.inlineformset_factory(
     ConsumableOrder, ConsumableOrderItem, form=ConsumableOrderItemForm, extra=1, can_delete=True
 )
