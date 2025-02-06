@@ -1270,7 +1270,7 @@ class ConsumableOrder(models.Model):
     description = models.TextField(null=True, blank=True)
 
     def __str__(self):
-        return f"Order {self.id} - {self.name) - by {self.user.get_full_name()}"
+        return f"Order {self.id} - {self.name} - by {self.user.get_full_name()}"
 
 
 class ConsumableOrderItem(models.Model):
