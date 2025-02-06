@@ -1,6 +1,12 @@
 {% extends "base.html" %}
 {% block content %}
 <h2>Order {{ order.id }} by {{ order.user.get_full_name }}</h2>
+<p>
+	The details of this order are:<br />
+	<b>Project:</b> {{ order.project }}<br />
+	<b>Name:</b> {{ order.name }}<br />
+	<b>Description:</b> {{ order.description }}
+</p>
 <p>The following items were included in this order:</p>
 <ul>
     {% for item in order.items.all %}

@@ -14,6 +14,20 @@
 		</tr>
 		<tr>
 			<td>
+				<div class="form-group">
+					<span style="width:35%;">Name: {{ order_form.name|add_class:"form-control" }}</span>
+				</div>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<div class="form-group">
+					<span style="width:35%;">Description: {{ order_form.description|add_class:"form-control" }}</span>
+				</div>
+			</td>
+		</tr>
+		<tr>
+			<td>
 				<div id="formset-container">
 					{{ formset.management_form }}
 					<div class="order-item form-row">

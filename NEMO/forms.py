@@ -229,7 +229,7 @@ class ConsumableOrderForm(forms.ModelForm):
 
     class Meta:
         model = ConsumableOrder
-        fields = ['project']
+        fields = ['project', 'name', 'description']
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
