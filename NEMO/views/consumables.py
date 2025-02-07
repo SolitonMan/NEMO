@@ -105,9 +105,8 @@ def order_detail(request, order_id):
 				quantity=item.quantity,
 				project=order.project,
 				date=timezone.now(),
-				validated=False,
-				auto_validated=True,
-				active_flag=True
+				updated=timezone.now(),
+				project_percent=100.0
 			)
 		return redirect('order_list')
 	return render(request, 'order_detail.html', {'order': order})
