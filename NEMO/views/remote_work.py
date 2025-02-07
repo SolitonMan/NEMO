@@ -66,7 +66,7 @@ def remote_work(request):
 		#area_access_records = area_access_records.exclude(~Q(staff_charge__staff_member_id=operator.id) & ~(Q(staff_charge__staff_member_id__isnull=True) & Q(customer_id=operator.id)))
 		#area_access_records = area_access_records.exclude((~Q(customer_id=operator.id) & Q(customer_id__isnull=False)) | (~Q(user_id=operator.id)) | ~Q(customers__id=operator.id))
 		area_access_records = area_access_records.exclude(~Q(user_id=operator.id))
-		consumable_withdraws = consumable_withdraws.exclude(~Q(merchant_id=operator.id))
+		consumable_withdraws = consumable_withdraws.exclude(~Q(customer_id=operator.id))
 
 		#if operator == request.user:
 			#usage_events = usage_events.exclude(projects__in=get_dummy_projects()).exclude(project__in=get_dummy_projects())
@@ -403,7 +403,7 @@ def remote_work(request):
 		'usage': usage_events,
 		'staff_charges': staff_charges if request.user.is_staff else None,
 		'area_access_records': area_access_records,
-		'consumable_withdraws': consumable_withdraws if request.user.is_staff else None,
+		'consumable_withdraws': consumable_withdraws,
 		'staff_list': staff_list,
 		'month_list': month_list(),
 		'selected_staff': operator.id if operator else "all staff",
