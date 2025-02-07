@@ -51,7 +51,7 @@ def landing(request):
 	ue_count = UsageEvent.objects.filter(operator=request.user, validated=False, active_flag=True, end__isnull=False).count()
 	sc_count = StaffCharge.objects.filter(staff_member=request.user, validated=False, active_flag=True, end__isnull=False).count()
 	ar_count = AreaAccessRecord.objects.filter(user=request.user, validated=False, active_flag=True, end__isnull=False).count()
-	cw_count = ConsumableWithdraw.objects.filter(validated=False, merchant=request.user, active_flag=True).count()
+	cw_count = ConsumableWithdraw.objects.filter(validated=False, customer=request.user, active_flag=True).count()
 
 	validation_needed = False
 	#if UsageEvent.objects.filter(operator=request.user, validated=False, active_flag=True).exists() or StaffCharge.objects.filter(staff_member=request.user, validated=False, active_flag=True).exists() or AreaAccessRecord.objects.filter(user=request.user, validated=False, active_flag=True).exists() or ConsumableWithdraw.objects.filter(validated=False, merchant=request.user, active_flag=True).exists():
