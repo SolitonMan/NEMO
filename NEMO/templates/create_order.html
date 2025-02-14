@@ -2,6 +2,7 @@
 {% load widget_tweaks %}
 {% block content %}
 <h2>Create Order</h2>
+<p>You can use this form to order supplies for your project.  For each row you can select the desired item from the dropdown list.  Use the Search field to the left of the list to filter the items in that list.  Add additional rows to the form to select more items.  NOTE:  All items will be charged to the selected project when the order is fulfilled.</p>
 <form method="post" id="order-form">
     {% csrf_token %}
 	<table>
@@ -77,7 +78,7 @@
         var formsetContainer = $('#formset-container');
         var addItemButton = $('#add-item');
         var formCount = {{ formset.total_form_count }};
-        var consumablesOptions = `{% for consumable in consumables %}<option value="{{ consumable.id }}">{{ consumable.name }}</option>{% endfor %}`;
+	var consumablesOptions = `<option>---------</option>{% for consumable in consumables %}<option value="{{ consumable.id }}">{{ consumable.name }}</option>{% endfor %}`;
 
         addItemButton.click(function() {
             var newItem = $(`
