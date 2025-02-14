@@ -1,9 +1,25 @@
 {% extends "base.html" %}
 {% block content %}
 <h2>Open Orders</h2>
-<ul>
-    {% for order in orders %}
-    <li><a href="{% url 'order_detail' order.id %}">Order {{ order.id }} - {{ order.name }} - by {{ order.user.get_full_name }}</a></li>
-    {% endfor %}
-</ul>
-{% endblock %}
+<p>You can select an order from the list below to view its details.  On the details screen you can manage the order, marking off items for fulfillment or removing them if they're not currently available or the other otherwise can't be fulfilled.</p>
+<table class="table table-striped">
+	<thead>
+		<tr>
+			<th>Order</th>
+			<th>Name</th>
+			<th>User</th>
+			<th>Project</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for order in orders %}
+		<tr>
+			<td><a href="{% url 'order_detail' order.id %}">Order {{ order.id }}</a></td>
+			<td>{{ order.name }}</td>
+			<td>{{ order.user.get_full_name }}</td>
+			<td>{{ order.project }}</td>
+		</tr>
+		{% endfor %}
+	</tbody>
+</table>
+	{% endblock %}
