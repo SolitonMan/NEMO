@@ -8,14 +8,17 @@
 	<b>Description:</b> {{ order.description }}
 </p>
 <p>The following items were included in this order:</p>
-<ul>
-    {% for item in order.items.all %}
-    <li>{{ item.quantity }} {{ item.consumable.unit.abbreviation }} of {{ item.consumable.name }}</li>
-    {% endfor %}
-</ul>
+<table class="table table-striped">
+{% for item in order.items.all %}
+<tr>
+	<td>{{ item.quantity }} {{ item.consumable.unit.abbreviation }}</td>
+	<td>{{ item.consumable.name }}</td>
+</tr>
+{% endfor %}
+</table>
 <form method="post">
-    {% csrf_token %}
-    <input type="hidden" name="order_id" value="{{ order.id }}">
-    <button type="submit" class="btn btn-success">Mark as Fulfilled</button>
+	{% csrf_token %}
+	<input type="hidden" name="order_id" value="{{ order.id }}">
+	<button type="submit" class="btn btn-success">Mark as Fulfilled</button>
 </form>
 {% endblock %}
