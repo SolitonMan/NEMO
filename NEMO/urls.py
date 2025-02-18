@@ -3,6 +3,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.auth.decorators import login_required
+from django.views.static import serve
 from rest_framework import routers
 
 from NEMO.models import GlobalFlag
@@ -227,15 +228,6 @@ urlpatterns = [
     # Media
     path('media/<path:path>/', serve, {'document_root': settings.MEDIA_ROOT}, name='media'),
 ]
-
-from django.urls import path, include
-from django.conf import settings
-from django.views.static import serve
-from rest_framework import routers
-
-from NEMO.views import (
-    abuse, accounts_and_projects, area_access, customization, interlock, kiosk, remote_work, samples, status_dashboard, work_orders
-)
 
 if settings.ALLOW_CONDITIONAL_URLS:
     urlpatterns += [
