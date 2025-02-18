@@ -1,17 +1,18 @@
-from django.urls import path, re_path
+from django.urls import path, include
 from django.conf import settings
-from django.conf.urls import include
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.auth.decorators import login_required
-from django.views.static import serve
 from rest_framework import routers
 
 from NEMO.models import GlobalFlag
 from NEMO.scheduler import start_scheduler
-from NEMO.views import abuse, accounts_and_projects, alerts, api, area_access, authentication, calendar, configuration_agenda, consumables, contact_staff, customization, email, feedback, get_projects, history, interlock, jumbotron, kiosk, landing, maintenance, mobile, notifications, usage, news, qualifications, remote_work, resources, safety, samples, sidebar, staff_charges, status_dashboard, tasks, tool_control, training, tutorials, users, work_orders
-
-# Use our custom login page instead of Django's built-in one.
-#admin.site.login = login_required(admin.site.login)
+from NEMO.views import (
+    abuse, accounts_and_projects, alerts, api, area_access, authentication, calendar, configuration_agenda, consumables,
+    contact_staff, customization, email, feedback, get_projects, history, interlock, jumbotron, kiosk, landing,
+    maintenance, mobile, notifications, usage, news, qualifications, remote_work, resources, safety, samples, sidebar,
+    staff_charges, status_dashboard, tasks, tool_control, training, tutorials, users, work_orders
+)
 
 # REST API URLs
 router = routers.DefaultRouter()
@@ -26,336 +27,344 @@ router.register(r'tasks', api.TaskViewSet)
 router.register(r'scheduled_outages', api.ScheduledOutageViewSet)
 
 urlpatterns = [
-	re_path(r'^admin/', admin.site.urls),
-	# Authentication & error pages:
-	re_path(r'^valid/', include('microsoft_auth.urls', namespace='microsoft')),
-	re_path(r'^login/$', authentication.login_user, name='login'),
-	re_path(r'^logout/$', authentication.logout_user, name='logout'),
-	re_path(r'^choose_core/$', authentication.choose_core, name='choose_core'),
+    path('admin/', admin.site.urls),
+    # Authentication & error pages:
+    path('valid/', include('microsoft_auth.urls', namespace='microsoft')),
+    path('login/', authentication.login_user, name='login'),
+    path('logout/', authentication.logout_user, name='logout'),
+    path('choose_core/', authentication.choose_core, name='choose_core'),
 
-	# create a notification scheme
-	re_path(r'^create_notification_scheme/$', notifications.notification_scheme_tool_action, name='create_notification_scheme'),
-	re_path(r'^save_notification_scheme/$', notifications.save_notification_scheme_tool_action, name='save_notification_scheme'),
-	re_path(r'^delete_notification_scheme/$', notifications.delete_notification_scheme, name='delete_notification_scheme'),
+    # Create a notification scheme
+    path('create_notification_scheme/', notifications.notification_scheme_tool_action, name='create_notification_scheme'),
+    path('save_notification_scheme/', notifications.save_notification_scheme_tool_action, name='save_notification_scheme'),
+    path('delete_notification_scheme/', notifications.delete_notification_scheme, name='delete_notification_scheme'),
 
-	# Root URL defaults to the calendar page on desktop systems, and the mobile homepage for mobile devices:
-	re_path(r'^$', landing.landing, name='landing'),
-	re_path(r'^check_url/$', landing.check_url, name='check_url'),
+    # Root URL defaults to the calendar page on desktop systems, and the mobile homepage for mobile devices:
+    path('', landing.landing, name='landing'),
+    path('check_url/', landing.check_url, name='check_url'),
 
-	# Get a list of projects for a user:
-	re_path(r'^get_projects/$', get_projects.get_projects, name='get_projects'),
-	re_path(r'^get_projects_for_tool_control/$', get_projects.get_projects_for_tool_control, name='get_projects_for_tool_control'),
-	re_path(r'^get_projects_for_self/(?P<tool_id>\d+)/$', get_projects.get_projects_for_self, name='get_projects_for_self'),
-	re_path(r'^get_areas/$', get_projects.get_areas, name='get_areas'),
+    # Get a list of projects for a user:
+    path('get_projects/', get_projects.get_projects, name='get_projects'),
+    path('get_projects_for_tool_control/', get_projects.get_projects_for_tool_control, name='get_projects_for_tool_control'),
+    path('get_projects_for_self/<int:tool_id>/', get_projects.get_projects_for_self, name='get_projects_for_self'),
+    path('get_areas/', get_projects.get_areas, name='get_areas'),
 
-	# Tool control:
-	re_path(r'^tools/$', tool_control.tools, name='tools'),
-	re_path(r'^create_or_modify_tool/(?P<tool_id>\d+)/$', tool_control.create_or_modify_tool, name='create_or_modify_tool'),
-	re_path(r'^tool_control/(?P<tool_id>\d+)/$', tool_control.tool_control, name='tool_control'),
-	re_path(r'^tool_control/(?P<tool_id>\d+)/(?P<qualified_only>\d+)/(?P<core_only>\d+)/$', tool_control.tool_control, name='tool_control'),
-	re_path(r'^tool_control/$', tool_control.tool_control, name='tool_control'),
-	re_path(r'^tool_status/(?P<tool_id>\d+)/$', tool_control.tool_status, name='tool_status'),
-	re_path(r'^use_tool_for_other/$', tool_control.use_tool_for_other, name='use_tool_for_other'),
-	re_path(r'^tool_configuration/$', tool_control.tool_configuration, name='tool_configuration'),
-	re_path(r'^create_comment/$', tool_control.create_comment, name='create_comment'),
-	re_path(r'^hide_comment/(?P<comment_id>\d+)/$', tool_control.hide_comment, name='hide_comment'),
-	re_path(r'^enable_tool/(?P<tool_id>\d+)/user/(?P<user_id>\d+)/project/(?P<project_id>\d+)/staff_charge/(?P<staff_charge>(true|false))/billing_mode/(?P<billing_mode>(true|false))/$', tool_control.enable_tool, name='enable_tool'),
-	re_path(r'^enable_tool_multi/$', tool_control.enable_tool_multi, name='enable_tool_multi'),
-	re_path(r'^disable_tool/(?P<tool_id>\d+)/$', tool_control.disable_tool, name='disable_tool'),
-	re_path(r'^past_comments_and_tasks/$', tool_control.past_comments_and_tasks, name='past_comments_and_tasks'),
-	re_path(r'^ten_most_recent_past_comments_and_tasks/(?P<tool_id>\d+)/$', tool_control.ten_most_recent_past_comments_and_tasks, name='ten_most_recent_past_comments_and_tasks'),
-	re_path(r'^usage_event_projects_save/$', tool_control.usage_event_projects_save, name='usage_event_projects_save'),
-	re_path(r'^create_usage_event/$', tool_control.create_usage_event, name='create_usage_event'),
-	re_path(r'^save_usage_event/$', tool_control.save_usage_event, name='save_usage_event'),
-	re_path(r'^save_operator_comment/$', tool_control.save_operator_comment, name='save_operator_comment'),
-	re_path(r'^save_tool_comment/$', tool_control.save_tool_comment, name='save_tool_comment'),
-	re_path(r'^save_fixed_comment/$', tool_control.save_fixed_comment, name='save_fixed_comment'),
-	re_path(r'^toggle_tool_watching/$', tool_control.toggle_tool_watching, name='toggle_tool_watching'),
+    # Tool control:
+    path('tools/', tool_control.tools, name='tools'),
+    path('create_or_modify_tool/<int:tool_id>/', tool_control.create_or_modify_tool, name='create_or_modify_tool'),
+    path('tool_control/<int:tool_id>/', tool_control.tool_control, name='tool_control'),
+    path('tool_control/<int:tool_id>/<int:qualified_only>/<int:core_only>/', tool_control.tool_control, name='tool_control'),
+    path('tool_control/', tool_control.tool_control, name='tool_control'),
+    path('tool_status/<int:tool_id>/', tool_control.tool_status, name='tool_status'),
+    path('use_tool_for_other/', tool_control.use_tool_for_other, name='use_tool_for_other'),
+    path('tool_configuration/', tool_control.tool_configuration, name='tool_configuration'),
+    path('create_comment/', tool_control.create_comment, name='create_comment'),
+    path('hide_comment/<int:comment_id>/', tool_control.hide_comment, name='hide_comment'),
+    path('enable_tool/<int:tool_id>/user/<int:user_id>/project/<int:project_id>/staff_charge/<str:staff_charge>/billing_mode/<str:billing_mode>/', tool_control.enable_tool, name='enable_tool'),
+    path('enable_tool_multi/', tool_control.enable_tool_multi, name='enable_tool_multi'),
+    path('disable_tool/<int:tool_id>/', tool_control.disable_tool, name='disable_tool'),
+    path('past_comments_and_tasks/', tool_control.past_comments_and_tasks, name='past_comments_and_tasks'),
+    path('ten_most_recent_past_comments_and_tasks/<int:tool_id>/', tool_control.ten_most_recent_past_comments_and_tasks, name='ten_most_recent_past_comments_and_tasks'),
+    path('usage_event_projects_save/', tool_control.usage_event_projects_save, name='usage_event_projects_save'),
+    path('create_usage_event/', tool_control.create_usage_event, name='create_usage_event'),
+    path('save_usage_event/', tool_control.save_usage_event, name='save_usage_event'),
+    path('save_operator_comment/', tool_control.save_operator_comment, name='save_operator_comment'),
+    path('save_tool_comment/', tool_control.save_tool_comment, name='save_tool_comment'),
+    path('save_fixed_comment/', tool_control.save_fixed_comment, name='save_fixed_comment'),
+    path('toggle_tool_watching/', tool_control.toggle_tool_watching, name='toggle_tool_watching'),
 
-	# Tasks:
-	re_path(r'^create_task/$', tasks.create, name='create_task'),
-	re_path(r'^cancel_task/(?P<task_id>\d+)/$', tasks.cancel, name='cancel_task'),
-	re_path(r'^update_task/(?P<task_id>\d+)/$', tasks.update, name='update_task'),
-	re_path(r'^task_update_form/(?P<task_id>\d+)/$', tasks.task_update_form, name='task_update_form'),
-	re_path(r'^task_resolution_form/(?P<task_id>\d+)/$', tasks.task_resolution_form, name='task_resolution_form'),
+    # Tasks:
+    path('create_task/', tasks.create, name='create_task'),
+    path('cancel_task/<int:task_id>/', tasks.cancel, name='cancel_task'),
+    path('update_task/<int:task_id>/', tasks.update, name='update_task'),
+    path('task_update_form/<int:task_id>/', tasks.task_update_form, name='task_update_form'),
+    path('task_resolution_form/<int:task_id>/', tasks.task_resolution_form, name='task_resolution_form'),
 
-	# Calendar:
-	#re_path(r'^calendar/(?P<tool_id>\d+)/$', calendar.calendar, name='calendar'),
-	re_path(r'^calendar/(?P<tool_id>\d+)/(?P<qualified_only>\d+)/(?P<core_only>\d+)/$', calendar.calendar, name='calendar'),
-	re_path(r'^calendar/$', calendar.calendar, name='calendar'),
-	re_path(r'^event_feed/$', calendar.event_feed, name='event_feed'),
-	re_path(r'^create_reservation/$', calendar.create_reservation, name='create_reservation'),
-	re_path(r'^create_outage/$', calendar.create_outage, name='create_outage'),
-	re_path(r'^resize_reservation/$', calendar.resize_reservation, name='resize_reservation'),
-	re_path(r'^resize_outage/$', calendar.resize_outage, name='resize_outage'),
-	re_path(r'^move_reservation/$', calendar.move_reservation, name='move_reservation'),
-	re_path(r'^move_outage/$', calendar.move_outage, name='move_outage'),
-	re_path(r'^cancel_reservation/(?P<reservation_id>\d+)/$', calendar.cancel_reservation, name='cancel_reservation'),
-	re_path(r'^cancel_outage/(?P<outage_id>\d+)/$', calendar.cancel_outage, name='cancel_outage'),
-	re_path(r'^set_reservation_title/(?P<reservation_id>\d+)/$', calendar.set_reservation_title, name='set_reservation_title'),
-	re_path(r'^event_details/reservation/(?P<reservation_id>\d+)/$', calendar.reservation_details, name='reservation_details'),
-	re_path(r'^event_details/outage/(?P<outage_id>\d+)/$', calendar.outage_details, name='outage_details'),
-	re_path(r'^event_details/usage/(?P<event_id>\d+)/$', calendar.usage_details, name='usage_details'),
-	re_path(r'^event_details/area_access/(?P<event_id>\d+)/$', calendar.area_access_details, name='area_access_details'),
-	re_path(r'^proxy_reservation/$', calendar.proxy_reservation, name='proxy_reservation'),
-	re_path(r'^create_notification/$', calendar.create_notification, name='create_notification'),
-	re_path(r'^delete_notification/$', calendar.delete_notification, name='delete_notification'),
-	re_path(r'^save_notifications/$', calendar.save_notifications, name='save_notifications'),
-	re_path(r'^create_reservation_calendar_invite/(?P<reservation_id>\d+)/$', calendar.create_reservation_calendar_invite, name='create_reservation_calendar_invite'),
-	re_path(r'^create_reservation_customer_calendar_invite/(?P<reservation_id>\d+)/$', calendar.create_reservation_customer_calendar_invite, name='create_reservation_customer_calendar_invite'),
+    # Calendar:
+    path('calendar/<int:tool_id>/<int:qualified_only>/<int:core_only>/', calendar.calendar, name='calendar'),
+    path('calendar/', calendar.calendar, name='calendar'),
+    path('event_feed/', calendar.event_feed, name='event_feed'),
+    path('create_reservation/', calendar.create_reservation, name='create_reservation'),
+    path('create_outage/', calendar.create_outage, name='create_outage'),
+    path('resize_reservation/', calendar.resize_reservation, name='resize_reservation'),
+    path('resize_outage/', calendar.resize_outage, name='resize_outage'),
+    path('move_reservation/', calendar.move_reservation, name='move_reservation'),
+    path('move_outage/', calendar.move_outage, name='move_outage'),
+    path('cancel_reservation/<int:reservation_id>/', calendar.cancel_reservation, name='cancel_reservation'),
+    path('cancel_outage/<int:outage_id>/', calendar.cancel_outage, name='cancel_outage'),
+    path('set_reservation_title/<int:reservation_id>/', calendar.set_reservation_title, name='set_reservation_title'),
+    path('event_details/reservation/<int:reservation_id>/', calendar.reservation_details, name='reservation_details'),
+    path('event_details/outage/<int:outage_id>/', calendar.outage_details, name='outage_details'),
+    path('event_details/usage/<int:event_id>/', calendar.usage_details, name='usage_details'),
+    path('event_details/area_access/<int:event_id>/', calendar.area_access_details, name='area_access_details'),
+    path('proxy_reservation/', calendar.proxy_reservation, name='proxy_reservation'),
+    path('create_notification/', calendar.create_notification, name='create_notification'),
+    path('delete_notification/', calendar.delete_notification, name='delete_notification'),
+    path('save_notifications/', calendar.save_notifications, name='save_notifications'),
+    path('create_reservation_calendar_invite/<int:reservation_id>/', calendar.create_reservation_calendar_invite, name='create_reservation_calendar_invite'),
+    path('create_reservation_customer_calendar_invite/<int:reservation_id>/', calendar.create_reservation_customer_calendar_invite, name='create_reservation_customer_calendar_invite'),
 
-	# Qualifications:
-	re_path(r'^qualifications/$', qualifications.qualifications, name='qualifications'),
-	re_path(r'^modify_qualifications/$', qualifications.modify_qualifications, name='modify_qualifications'),
-	re_path(r'^get_qualified_users/$', qualifications.get_qualified_users, name='get_qualified_users'),
-	re_path(r'^promote_user/(?P<user_id>\d+)/(?P<tool_id>\d+)/$', qualifications.promote_user, name='promote_user'),
-	re_path(r'^demote_user/(?P<user_id>\d+)/(?P<tool_id>\d+)/$', qualifications.demote_user, name='demote_user'),
+    # Qualifications:
+    path('qualifications/', qualifications.qualifications, name='qualifications'),
+    path('modify_qualifications/', qualifications.modify_qualifications, name='modify_qualifications'),
+    path('get_qualified_users/', qualifications.get_qualified_users, name='get_qualified_users'),
+    path('promote_user/<int:user_id>/<int:tool_id>/', qualifications.promote_user, name='promote_user'),
+    path('demote_user/<int:user_id>/<int:tool_id>/', qualifications.demote_user, name='demote_user'),
 
+    # Staff charges:
+    path('staff_charges/', staff_charges.staff_charges, name='staff_charges'),
+    path('ad_hoc_staff_charge/', staff_charges.ad_hoc_staff_charge, name='ad_hoc_staff_charge'),
+    path('ad_hoc_overlap_resolution/', staff_charges.ad_hoc_overlap_resolution, name='ad_hoc_overlap_resolution'),
+    path('staff_charge_entry/', staff_charges.staff_charge_entry, name='staff_charge_entry'),
+    path('ad_hoc_staff_charge_entry/', staff_charges.ad_hoc_staff_charge_entry, name='ad_hoc_staff_charge_entry'),
+    path('begin_staff_charge/', staff_charges.begin_staff_charge, name='begin_staff_charge'),
+    path('end_staff_charge/<int:modal_flag>/', staff_charges.end_staff_charge, name='end_staff_charge'),
+    path('begin_staff_area_charge/', staff_charges.begin_staff_area_charge, name='begin_staff_area_charge'),
+    path('end_staff_area_charge/', staff_charges.end_staff_area_charge, name='end_staff_area_charge'),
+    path('staff_charge_projects_save/<int:modal_flag>/', staff_charges.staff_charge_projects_save, name='staff_charge_projects_save'),
+    path('continue_staff_charge/<int:staff_charge_id>/', staff_charges.continue_staff_charge, name='continue_staff_charge'),
+    path('save_staff_comment/', staff_charges.save_staff_comment, name='save_staff_comment'),
+    path('save_sc_customer_comment/', staff_charges.save_sc_customer_comment, name='save_sc_customer_comment'),
 
-	# Staff charges:
-	re_path(r'^staff_charges/$', staff_charges.staff_charges, name='staff_charges'),
-	re_path(r'^ad_hoc_staff_charge/$', staff_charges.ad_hoc_staff_charge, name='ad_hoc_staff_charge'),
-	re_path(r'^ad_hoc_overlap_resolution/$', staff_charges.ad_hoc_overlap_resolution, name='ad_hoc_overlap_resolution'),
-	re_path(r'^staff_charge_entry/$', staff_charges.staff_charge_entry, name='staff_charge_entry'),
-	re_path(r'^ad_hoc_staff_charge_entry/$', staff_charges.ad_hoc_staff_charge_entry, name='ad_hoc_staff_charge_entry'),
-	re_path(r'^begin_staff_charge/$', staff_charges.begin_staff_charge, name='begin_staff_charge'),
-	re_path(r'^end_staff_charge/(?P<modal_flag>\d+)/$', staff_charges.end_staff_charge, name='end_staff_charge'),
-	re_path(r'^begin_staff_area_charge/$', staff_charges.begin_staff_area_charge, name='begin_staff_area_charge'),
-	re_path(r'^end_staff_area_charge/$', staff_charges.end_staff_area_charge, name='end_staff_area_charge'),
-	re_path(r'^staff_charge_projects_save/(?P<modal_flag>\d+)/$', staff_charges.staff_charge_projects_save, name='staff_charge_projects_save'),
-	re_path(r'^continue_staff_charge/(?P<staff_charge_id>\d+)/$', staff_charges.continue_staff_charge, name='continue_staff_charge'),
-	re_path(r'^save_staff_comment/$', staff_charges.save_staff_comment, name='save_staff_comment'),
-	re_path(r'^save_sc_customer_comment/$', staff_charges.save_sc_customer_comment, name='save_sc_customer_comment'),
+    # Status dashboard:
+    path('status_dashboard/', status_dashboard.status_dashboard, name='status_dashboard'),
 
-	# Status dashboard:
-	re_path(r'^status_dashboard/$', status_dashboard.status_dashboard, name='status_dashboard'),
+    # Jumbotron:
+    path('jumbotron/', jumbotron.jumbotron, name='jumbotron'),
+    path('jumbotron_content/', jumbotron.jumbotron_content, name='jumbotron_content'),
 
-	# Jumbotron:
-	re_path(r'^jumbotron/$', jumbotron.jumbotron, name='jumbotron'),
-	re_path(r'^jumbotron_content/$', jumbotron.jumbotron_content, name='jumbotron_content'),
+    # Utility functions:
+    path('refresh_sidebar_icons/', sidebar.refresh_sidebar_icons, name='refresh_sidebar_icons'),
 
-	# Utility functions:
-	re_path(r'^refresh_sidebar_icons/$', sidebar.refresh_sidebar_icons, name='refresh_sidebar_icons'),
+    # Laboratory feedback
+    path('feedback/', feedback.feedback, name='feedback'),
 
-	# Laboratory feedback
-	re_path(r'^feedback/$', feedback.feedback, name='feedback'),
+    # Laboratory rules tutorial
+    # TODO: this should be removed, since this is really a job for a Learning Management System...
+    path('nanofab_rules_tutorial/', tutorials.nanofab_rules, name='nanofab_rules'),
 
-	# Laboratory rules tutorial
-	# TODO: this should be removed, since this is really a job for a Learning Management System...
-	re_path(r'^nanofab_rules_tutorial/$', tutorials.nanofab_rules, name='nanofab_rules'),
+    # Configuration agenda for staff:
+    path('configuration_agenda/', configuration_agenda.configuration_agenda, name='configuration_agenda'),
+    path('configuration_agenda/near_future/', configuration_agenda.configuration_agenda, {'time_period': 'near_future'}, name='configuration_agenda_near_future'),
 
-	# Configuration agenda for staff:
-	re_path(r'^configuration_agenda/$', configuration_agenda.configuration_agenda, name='configuration_agenda'),
-	re_path(r'^configuration_agenda/near_future/$', configuration_agenda.configuration_agenda, {'time_period': 'near_future'}, name='configuration_agenda_near_future'),
+    # Email broadcasts:
+    path('get_email_form/', email.get_email_form, name='get_email_form'),
+    path('get_email_form_for_user/<int:user_id>/', email.get_email_form_for_user, name='get_email_form_for_user'),
+    path('send_email/', email.send_email, name='send_email'),
+    path('email_broadcast/', email.email_broadcast, name='email_broadcast'),
+    path('email_broadcast/<str:audience>/', email.email_broadcast, name='email_broadcast'),
+    path('compose_email/', email.compose_email, name='compose_email'),
+    path('send_broadcast_email/', email.send_broadcast_email, name='send_broadcast_email'),
 
-	# Email broadcasts:
-	re_path(r'^get_email_form/$', email.get_email_form, name='get_email_form'),
-	re_path(r'^get_email_form_for_user/(?P<user_id>\d+)/$', email.get_email_form_for_user, name='get_email_form_for_user'),
-	re_path(r'^send_email/$', email.send_email, name='send_email'),
-	re_path(r'^email_broadcast/$', email.email_broadcast, name='email_broadcast'),
-	re_path(r'^email_broadcast/(?P<audience>tool|account|project|user|group|tool_date|project_date|active_users|active_users_date|postback)/$', email.email_broadcast, name='email_broadcast'),
-	re_path(r'^compose_email/$', email.compose_email, name='compose_email'),
-	re_path(r'^send_broadcast_email/$', email.send_broadcast_email, name='send_broadcast_email'),
+    # Maintenance:
+    path('maintenance/<str:sort_by>/', maintenance.maintenance, name='maintenance'),
+    path('maintenance/', maintenance.maintenance, name='maintenance'),
+    path('task_details/<int:task_id>/', maintenance.task_details, name='task_details'),
 
-	# Maintenance:
-	re_path(r'^maintenance/(?P<sort_by>urgency|force_shutdown|tool|problem_category|last_updated|creation_time)/$', maintenance.maintenance, name='maintenance'),
-	re_path(r'^maintenance/$', maintenance.maintenance, name='maintenance'),
-	re_path(r'^task_details/(?P<task_id>\d+)/$', maintenance.task_details, name='task_details'),
+    # Resources:
+    path('resources/', resources.resources, name='resources'),
+    path('resources/modify/<int:resource_id>/', resources.modify_resource, name='modify_resource'),
+    path('resources/schedule_outage/', resources.schedule_outage, name='schedule_resource_outage'),
+    path('resources/delete_scheduled_outage/<int:outage_id>/', resources.delete_scheduled_outage, name='delete_scheduled_resource_outage'),
 
-	# Resources:
-	re_path(r'^resources/$', resources.resources, name='resources'),
-	re_path(r'^resources/modify/(?P<resource_id>\d+)/$', resources.modify_resource, name='modify_resource'),
-	re_path(r'^resources/schedule_outage/$', resources.schedule_outage, name='schedule_resource_outage'),
-	re_path(r'^resources/delete_scheduled_outage/(?P<outage_id>\d+)/$', resources.delete_scheduled_outage, name='delete_scheduled_resource_outage'),
+    # Consumables:
+    path('consumables/', consumables.consumables, name='consumables'),
+    path('get_consumables/', consumables.get_consumables, name='get_consumables'),
+    path('save_withdraw_notes/', consumables.save_withdraw_notes, name='save_withdraw_notes'),
+    path('create_order/', consumables.create_order, name='create_order'),
+    path('order_list/', consumables.order_list, name='order_list'),
+    path('order_detail/<int:order_id>/', consumables.order_detail, name='order_detail'),
 
-	# Consumables:
-	re_path(r'^consumables/$', consumables.consumables, name='consumables'),
-	re_path(r'^get_consumables/$', consumables.get_consumables, name='get_consumables'),
-	re_path(r'^save_withdraw_notes/$', consumables.save_withdraw_notes, name='save_withdraw_notes'),
-	re_path(r'^create_order/$', consumables.create_order, name='create_order'),
-	re_path(r'^order_list/$', consumables.order_list, name='order_list'),
-	re_path(r'^order_detail/(?P<order_id>\d+)/$', consumables.order_detail, name='order_detail'),
+    # Training:
+    # path('training/', training.training, name='training'),
+    # path('training_entry/', training.training_entry, name='training_entry'),
+    # path('charge_training/', training.charge_training, name='charge_training'),
 
-	# Training:
-	#re_path(r'^training/$', training.training, name='training'),
-	#re_path(r'^training_entry/$', training.training_entry, name='training_entry'),
-	#re_path(r'^charge_training/$', training.charge_training, name='charge_training'),
+    # Safety:
+    path('safety/', safety.safety, name='safety'),
+    path('safety/resolved', safety.resolved_safety_issues, name='resolved_safety_issues'),
+    path('safety/update/<int:ticket_id>/', safety.update_safety_issue, name='update_safety_issue'),
 
-	# Safety:
-	re_path(r'^safety/$', safety.safety, name='safety'),
-	re_path(r'^safety/resolved$', safety.resolved_safety_issues, name='resolved_safety_issues'),
-	re_path(r'^safety/update/(?P<ticket_id>\d+)/$', safety.update_safety_issue, name='update_safety_issue'),
+    # Mobile:
+    path('choose_tool/then/<str:next_page>/', mobile.choose_tool, name='choose_tool'),
+    path('new_reservation/<int:tool_id>/', mobile.new_reservation, name='new_reservation'),
+    path('new_reservation/<int:tool_id>/<str:date>/', mobile.new_reservation, name='new_reservation'),
+    path('make_reservation/', mobile.make_reservation, name='make_reservation'),
+    path('view_calendar/<int:tool_id>/', mobile.view_calendar, name='view_calendar'),
+    path('view_calendar/<int:tool_id>/<str:date>/', mobile.view_calendar, name='view_calendar'),
 
-	# Mobile:
-	re_path(r'^choose_tool/then/(?P<next_page>view_calendar|tool_control)/$', mobile.choose_tool, name='choose_tool'),
-	re_path(r'^new_reservation/(?P<tool_id>\d+)/$', mobile.new_reservation, name='new_reservation'),
-	re_path(r'^new_reservation/(?P<tool_id>\d+)/(?P<date>20\d\d-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01]))/$', mobile.new_reservation, name='new_reservation'),
-	re_path(r'^make_reservation/$', mobile.make_reservation, name='make_reservation'),
-	re_path(r'^view_calendar/(?P<tool_id>\d+)/$', mobile.view_calendar, name='view_calendar'),
-	re_path(r'^view_calendar/(?P<tool_id>\d+)/(?P<date>20\d\d-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01]))/$', mobile.view_calendar, name='view_calendar'),
+    # Contact staff:
+    path('contact_staff/', contact_staff.contact_staff, name='contact_staff'),
 
-	# Contact staff:
-	re_path(r'^contact_staff/$', contact_staff.contact_staff, name='contact_staff'),
+    # Area access:
+    path('change_project/', area_access.change_project, name='change_project'),
+    path('change_project/<int:new_project>/', area_access.change_project, name='change_project'),
+    path('force_area_logout/<int:user_id>/', area_access.force_area_logout, name='force_area_logout'),
+    path('self_log_in/', area_access.self_log_in, name='self_log_in'),
+    path('save_area_access_comment/', area_access.save_area_access_comment, name='save_area_access_comment'),
+    path('ad_hoc_area_access_record/', area_access.ad_hoc_area_access_record, name='ad_hoc_area_access_record'),
+    path('save_aa_customer_comment/', area_access.save_aa_customer_comment, name='save_aa_customer_comment'),
+    path('end_area_access_charge/', area_access.end_area_access_charge, name='end_area_access_charge'),
 
-	# Area access:
-	re_path(r'^change_project/$', area_access.change_project, name='change_project'),
-	re_path(r'^change_project/(?P<new_project>\d+)/$', area_access.change_project, name='change_project'),
-	re_path(r'^force_area_logout/(?P<user_id>\d+)/$', area_access.force_area_logout, name='force_area_logout'),
-	re_path(r'^self_log_in/$', area_access.self_log_in, name='self_log_in'),
-	re_path(r'^save_area_access_comment/$', area_access.save_area_access_comment, name='save_area_access_comment'),
-	re_path(r'^ad_hoc_area_access_record/$', area_access.ad_hoc_area_access_record, name='ad_hoc_area_access_record'),
-	re_path(r'^save_aa_customer_comment/$', area_access.save_aa_customer_comment, name='save_aa_customer_comment'),
-	re_path(r'^end_area_access_charge/$', area_access.end_area_access_charge, name='end_area_access_charge'),
+    # Laboratory usage:
+    path('usage/', usage.usage, name='usage'),
+    path('billing_information/<str:timeframe>/', usage.billing_information, name='billing_information'),
 
-	# Laboratory usage:
-	re_path(r'^usage/$', usage.usage, name='usage'),
-	re_path(r'^billing_information/(?P<timeframe>((January|February|March|April|May|June|July|August|September|October|November|December), 20\d\d))/$', usage.billing_information, name='billing_information'),
+    # Alerts:
+    path('alerts/', alerts.alerts, name='alerts'),
+    path('delete_alert/<int:alert_id>/', alerts.delete_alert, name='delete_alert'),
 
-	# Alerts:
-	re_path(r'^alerts/$', alerts.alerts, name='alerts'),
-	re_path(r'^delete_alert/(?P<alert_id>\d+)/$', alerts.delete_alert, name='delete_alert'),
+    # News:
+    path('news/', news.view_recent_news, name='view_recent_news'),
+    path('news/archive/', news.view_archived_news, name='view_archived_news'),
+    path('news/archive/<int:page>/', news.view_archived_news, name='view_archived_news'),
+    path('news/archive_story/<int:story_id>/', news.archive_story, name='archive_story'),
+    path('news/new/', news.new_news_form, name='new_news_form'),
+    path('news/update/<int:story_id>/', news.news_update_form, name='news_update_form'),
+    path('news/publish/', news.publish, name='publish_new_news'),
+    path('news/publish/<int:story_id>/', news.publish, name='publish_news_update'),
 
-	# News:
-	re_path(r'^news/$', news.view_recent_news, name='view_recent_news'),
-	re_path(r'^news/archive/$', news.view_archived_news, name='view_archived_news'),
-	re_path(r'^news/archive/(?P<page>\d+)/$', news.view_archived_news, name='view_archived_news'),
-	re_path(r'^news/archive_story/(?P<story_id>\d+)/$', news.archive_story, name='archive_story'),
-	re_path(r'^news/new/$', news.new_news_form, name='new_news_form'),
-	re_path(r'^news/update/(?P<story_id>\d+)/$', news.news_update_form, name='news_update_form'),
-	re_path(r'^news/publish/$', news.publish, name='publish_new_news'),
-	re_path(r'^news/publish/(?P<story_id>\d+)/$', news.publish, name='publish_news_update'),
-
-	# Media
-	re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}, name='media'),
+    # Media
+    path('media/<path:path>/', serve, {'document_root': settings.MEDIA_ROOT}, name='media'),
 ]
 
+from django.urls import path, include
+from django.conf import settings
+from django.views.static import serve
+from rest_framework import routers
+
+from NEMO.views import (
+    abuse, accounts_and_projects, area_access, customization, interlock, kiosk, remote_work, samples, status_dashboard, work_orders
+)
+
 if settings.ALLOW_CONDITIONAL_URLS:
-	urlpatterns += [
-		#re_path(r'^admin/', admin.site.urls),
-		re_path(r'^api/', include(router.urls)),
+    urlpatterns += [
+        # API
+        path('api/', include(router.urls)),
 
-		# Tablet area access
-		re_path(r'^welcome_screen/(?P<door_id>\d+)/$', area_access.welcome_screen, name='welcome_screen'),
-		re_path(r'^farewell_screen/(?P<door_id>\d+)/$', area_access.farewell_screen, name='farewell_screen'),
-		re_path(r'^login_to_area/(?P<door_id>\d+)/(?P<area_id>\d+)/$', area_access.login_to_area, name='login_to_area'),
-		re_path(r'^logout_of_area/(?P<door_id>\d+)/(?P<area_id>\d+)/$', area_access.logout_of_area, name='logout_of_area'),
-		re_path(r'^logout_of_area/$', area_access.logout_of_area, name='logout_of_area_form'),
-		re_path(r'^open_door/(?P<door_id>\d+)/$', area_access.open_door, name='open_door'),
+        # Tablet area access
+        path('welcome_screen/<int:door_id>/', area_access.welcome_screen, name='welcome_screen'),
+        path('farewell_screen/<int:door_id>/', area_access.farewell_screen, name='farewell_screen'),
+        path('login_to_area/<int:door_id>/<int:area_id>/', area_access.login_to_area, name='login_to_area'),
+        path('logout_of_area/<int:door_id>/<int:area_id>/', area_access.logout_of_area, name='logout_of_area'),
+        path('logout_of_area/', area_access.logout_of_area, name='logout_of_area_form'),
+        path('open_door/<int:door_id>/', area_access.open_door, name='open_door'),
 
-		# Tablet kiosk
-		re_path(r'^kiosk/enable_tool/$', kiosk.enable_tool, name='enable_tool_from_kiosk'),
-		re_path(r'^kiosk/disable_tool/$', kiosk.disable_tool, name='disable_tool_from_kiosk'),
-		re_path(r'^kiosk/choices/$', kiosk.choices, name='kiosk_choices'),
-		re_path(r'^kiosk/category_choices/(?P<category>.+)/(?P<user_id>\d+)/$', kiosk.category_choices, name='kiosk_category_choices'),
-		re_path(r'^kiosk/tool_information/(?P<tool_id>\d+)/(?P<user_id>\d+)/(?P<back>back_to_start|back_to_category)/$', kiosk.tool_information, name='kiosk_tool_information'),
-		re_path(r'^kiosk/(?P<location>.+)/$', kiosk.kiosk, name='kiosk'),
-		re_path(r'^kiosk/$', kiosk.kiosk, name='kiosk'),
+        # Tablet kiosk
+        path('kiosk/enable_tool/', kiosk.enable_tool, name='enable_tool_from_kiosk'),
+        path('kiosk/disable_tool/', kiosk.disable_tool, name='disable_tool_from_kiosk'),
+        path('kiosk/choices/', kiosk.choices, name='kiosk_choices'),
+        path('kiosk/category_choices/<str:category>/<int:user_id>/', kiosk.category_choices, name='kiosk_category_choices'),
+        path('kiosk/tool_information/<int:tool_id>/<int:user_id>/<str:back>/', kiosk.tool_information, name='kiosk_tool_information'),
+        path('kiosk/<str:location>/', kiosk.kiosk, name='kiosk'),
+        path('kiosk/', kiosk.kiosk, name='kiosk'),
 
-		# Area access
-		re_path(r'^area_access/$', area_access.area_access, name='area_access'),
-		re_path(r'^new_area_access_record/$', area_access.new_area_access_record, name='new_area_access_record'),
-		re_path(r'^new_area_access_record/(?P<customer>\d+)/$', area_access.new_area_access_record, name='new_area_access_customer'),
+        # Area access
+        path('area_access/', area_access.area_access, name='area_access'),
+        path('new_area_access_record/', area_access.new_area_access_record, name='new_area_access_record'),
+        path('new_area_access_record/<int:customer>/', area_access.new_area_access_record, name='new_area_access_customer'),
 
-		# General area occupancy table, for use with Kiosk and Area Access tablets
-		re_path(r'^occupancy/$', status_dashboard.occupancy, name='occupancy'),
+        # General area occupancy table, for use with Kiosk and Area Access tablets
+        path('occupancy/', status_dashboard.occupancy, name='occupancy'),
 
-		# Reminders and periodic events
-		re_path(r'^email_reservation_reminders/$', calendar.email_reservation_reminders, name='email_reservation_reminders'),
-		re_path(r'^email_usage_reminders/$', calendar.email_usage_reminders, name='email_usage_reminders'),
-		re_path(r'^cancel_unused_reservations/$', calendar.cancel_unused_reservations, name='cancel_unused_reservations'),
+        # Reminders and periodic events
+        path('email_reservation_reminders/', calendar.email_reservation_reminders, name='email_reservation_reminders'),
+        path('email_usage_reminders/', calendar.email_usage_reminders, name='email_usage_reminders'),
+        path('cancel_unused_reservations/', calendar.cancel_unused_reservations, name='cancel_unused_reservations'),
 
-		# Abuse:
-		re_path(r'^abuse/$', abuse.abuse, name='abuse'),
-		re_path(r'^abuse/user_drill_down/$', abuse.user_drill_down, name='user_drill_down'),
+        # Abuse
+        path('abuse/', abuse.abuse, name='abuse'),
+        path('abuse/user_drill_down/', abuse.user_drill_down, name='user_drill_down'),
 
-		# Interlock Control:
-		re_path(r'^interlocks/$', interlock.interlocks, name='interlocks'),
-		re_path(r'^pulse_interlock/(?P<interlock_id>\d+)/$', interlock.pulse_interlock, name='pulse_interlock'),
-		re_path(r'^pulse_all/$', interlock.pulse_all, name='pulse_all_interlocks'),
-		re_path(r'^open_interlock/(?P<interlock_id>\d+)/$', interlock.open_interlock, name='open_interlock'),
+        # Interlock Control
+        path('interlocks/', interlock.interlocks, name='interlocks'),
+        path('pulse_interlock/<int:interlock_id>/', interlock.pulse_interlock, name='pulse_interlock'),
+        path('pulse_all/', interlock.pulse_all, name='pulse_all_interlocks'),
+        path('open_interlock/<int:interlock_id>/', interlock.open_interlock, name='open_interlock'),
 
-		# User management:
-		re_path(r'^users/$', users.users, name='users'),
-		re_path(r'^user/(?P<user_id>\d+|new)/', users.create_or_modify_user, name='create_or_modify_user'),
-		re_path(r'^deactivate_user/(?P<user_id>\d+)/', users.deactivate, name='deactivate_user'),
-		re_path(r'^reset_password/(?P<user_id>\d+)/$', users.reset_password, name='reset_password'),
-		re_path(r'^unlock_account/(?P<user_id>\d+)/$', users.unlock_account, name='unlock_account'),
-		re_path(r'^delegates/$', users.delegates, name='delegates'),
-		re_path(r'^delete_delegate/(?P<pi_id>\d+)/(?P<delegate_id>\d+)/$', users.delete_delegate, name='delete_delegate'),
-		re_path(r'^add_delegate/(?P<pi_id>\d+)/(?P<delegate_id>\d+)/$', users.add_delegate, name='add_delegate'),
-		re_path(r'^user_profile/(?P<user_id>\d+)/$', users.user_profile, name='user_profile'),
-		re_path(r'^save_user_profile/$', users.save_user_profile, name='save_user_profile'),
+        # User management
+        path('users/', users.users, name='users'),
+        path('user/<int:user_id>/', users.create_or_modify_user, name='create_or_modify_user'),
+        path('user/new/', users.create_or_modify_user, name='create_or_modify_user'),
+        path('deactivate_user/<int:user_id>/', users.deactivate, name='deactivate_user'),
+        path('reset_password/<int:user_id>/', users.reset_password, name='reset_password'),
+        path('unlock_account/<int:user_id>/', users.unlock_account, name='unlock_account'),
+        path('delegates/', users.delegates, name='delegates'),
+        path('delete_delegate/<int:pi_id>/<int:delegate_id>/', users.delete_delegate, name='delete_delegate'),
+        path('add_delegate/<int:pi_id>/<int:delegate_id>/', users.add_delegate, name='add_delegate'),
+        path('user_profile/<int:user_id>/', users.user_profile, name='user_profile'),
+        path('save_user_profile/', users.save_user_profile, name='save_user_profile'),
 
-		# Account & project management:
-		re_path(r'^accounts_and_projects/$', accounts_and_projects.accounts_and_projects, name='accounts_and_projects'),
-		re_path(r'^project/(?P<identifier>\d+)/$', accounts_and_projects.accounts_and_projects, kwargs={'kind': 'project'}, name='project'),
-		re_path(r'^account/(?P<identifier>\d+)/$', accounts_and_projects.accounts_and_projects, kwargs={'kind': 'account'}, name='account'),
-		re_path(r'^toggle_active/(?P<kind>account|project)/(?P<identifier>\d+)/$', accounts_and_projects.toggle_active, name='toggle_active'),
-		re_path(r'^create_project/$', accounts_and_projects.create_project, name='create_project'),
-		re_path(r'^create_account/$', accounts_and_projects.create_account, name='create_account'),
-		re_path(r'^remove_user/(?P<user_id>\d+)/from_project/(?P<project_id>\d+)/$', accounts_and_projects.remove_user_from_project, name='remove_user_from_project'),
-		re_path(r'^add_user/(?P<user_id>\d+)/to_project/(?P<project_id>\d+)/$', accounts_and_projects.add_user_to_project, name='add_user_to_project'),
+        # Account & project management
+        path('accounts_and_projects/', accounts_and_projects.accounts_and_projects, name='accounts_and_projects'),
+        path('project/<int:identifier>/', accounts_and_projects.accounts_and_projects, kwargs={'kind': 'project'}, name='project'),
+        path('account/<int:identifier>/', accounts_and_projects.accounts_and_projects, kwargs={'kind': 'account'}, name='account'),
+        path('toggle_active/<str:kind>/<int:identifier>/', accounts_and_projects.toggle_active, name='toggle_active'),
+        path('create_project/', accounts_and_projects.create_project, name='create_project'),
+        path('create_account/', accounts_and_projects.create_account, name='create_account'),
+        path('remove_user/<int:user_id>/from_project/<int:project_id>/', accounts_and_projects.remove_user_from_project, name='remove_user_from_project'),
+        path('add_user/<int:user_id>/to_project/<int:project_id>/', accounts_and_projects.add_user_to_project, name='add_user_to_project'),
 
-		# Account, project, and user history
-		re_path(r'^history/(?P<item_type>account|project|user)/(?P<item_id>\d+)/$', history.history, name='history'),
+        # Account, project, and user history
+        path('history/<str:item_type>/<int:item_id>/', history.history, name='history'),
 
-		# Work Orders
-		re_path(r'^work_orders/$', work_orders.work_orders, name='work_orders'),
-		re_path(r'^save_work_order/$', work_orders.add_work_order, name='save_work_order'),
-		re_path(r'^create_work_order/$', work_orders.create_work_order, name='create_work_order'),
-		re_path(r'^delete_work_order/(?P<work_order_id>\d+)/$', work_orders.delete_work_order, name='delete_work_order'),
-		re_path(r'^work_order_transactions/(?P<work_order_id>\d+)/$', work_orders.work_order_transactions, name='work_order_transactions'),
-		re_path(r'^add_work_order_transaction/(?P<work_order_id>\d+)/(?P<content_type_id>\d+)/(?P<object_id>\d+)/$', work_orders.add_work_order_transaction, name='add_work_order_transaction'),
-		re_path(r'^remove_work_order_transaction/(?P<work_order_transaction_id>\d+)/$', work_orders.remove_work_order_transaction, name='remove_work_order_transaction'),
-		re_path(r'^update_work_order_status/(?P<work_order_id>\d+)/(?P<status_id>\d+)/$', work_orders.update_work_order_status, name='update_work_order_status'),
+        # Work Orders
+        path('work_orders/', work_orders.work_orders, name='work_orders'),
+        path('save_work_order/', work_orders.add_work_order, name='save_work_order'),
+        path('create_work_order/', work_orders.create_work_order, name='create_work_order'),
+        path('delete_work_order/<int:work_order_id>/', work_orders.delete_work_order, name='delete_work_order'),
+        path('work_order_transactions/<int:work_order_id>/', work_orders.work_order_transactions, name='work_order_transactions'),
+        path('add_work_order_transaction/<int:work_order_id>/<int:content_type_id>/<int:object_id>/', work_orders.add_work_order_transaction, name='add_work_order_transaction'),
+        path('remove_work_order_transaction/<int:work_order_transaction_id>/', work_orders.remove_work_order_transaction, name='remove_work_order_transaction'),
+        path('update_work_order_status/<int:work_order_id>/<int:status_id>/', work_orders.update_work_order_status, name='update_work_order_status'),
 
-		# Remote work:
-		re_path(r'^remote_work/$', remote_work.remote_work, name='remote_work'),
-		re_path(r'^validate_staff_charge/(?P<staff_charge_id>\d+)/$', remote_work.validate_staff_charge, name='validate_staff_charge'),
-		re_path(r'^validate_usage_event/(?P<usage_event_id>\d+)/$', remote_work.validate_usage_event, name='validate_usage_event'),
-		re_path(r'^validate_area_access_record/(?P<area_access_record_id>\d+)/$', remote_work.validate_area_access_record, name='validate_area_access_record'),
-		re_path(r'^validate_consumable_withdraw/(?P<consumable_withdraw_id>\d+)/$', remote_work.validate_consumable_withdraw, name='validate_consumable_withdraw'),
-		re_path(r'^contest_staff_charge/(?P<staff_charge_id>\d+)/$', remote_work.contest_staff_charge, name='contest_staff_charge'),
-		re_path(r'^contest_usage_event/(?P<usage_event_id>\d+)/$', remote_work.contest_usage_event, name='contest_usage_event'),
-		re_path(r'^contest_area_access_record/(?P<area_access_record_id>\d+)/$', remote_work.contest_area_access_record, name='contest_area_access_record'),
-		re_path(r'^contest_consumable_withdraw/(?P<consumable_withdraw_id>\d+)/$', remote_work.contest_consumable_withdraw, name='contest_consumable_withdraw'),
-		re_path(r'^save_contest/$', remote_work.save_contest, name='save_contest'),
-		re_path(r'^review_contested_items/$', remote_work.review_contested_items, name='review_contested_items'),
-		re_path(r'^resolve_staff_charge_contest/$', remote_work.resolve_staff_charge_contest, name='resolve_staff_charge_contest'),
-		re_path(r'^resolve_usage_event_contest/$', remote_work.resolve_usage_event_contest, name='resolve_usage_event_contest'),
-		re_path(r'^resolve_area_access_record_contest/$', remote_work.resolve_area_access_record_contest, name='resolve_area_access_record_contest'),
-		re_path(r'^resolve_consumable_withdraw_contest/$', remote_work.resolve_consumable_withdraw_contest, name='resolve_consumable_withdraw_contest'),
-		re_path(r'^save_contest_resolution/$', remote_work.save_contest_resolution, name='save_contest_resolution'),
-		re_path(r'^contest_transaction_entry/$', remote_work.contest_transaction_entry, name='contest_transaction_entry'),
+        # Remote work
+        path('remote_work/', remote_work.remote_work, name='remote_work'),
+        path('validate_staff_charge/<int:staff_charge_id>/', remote_work.validate_staff_charge, name='validate_staff_charge'),
+        path('validate_usage_event/<int:usage_event_id>/', remote_work.validate_usage_event, name='validate_usage_event'),
+        path('validate_area_access_record/<int:area_access_record_id>/', remote_work.validate_area_access_record, name='validate_area_access_record'),
+        path('validate_consumable_withdraw/<int:consumable_withdraw_id>/', remote_work.validate_consumable_withdraw, name='validate_consumable_withdraw'),
+        path('contest_staff_charge/<int:staff_charge_id>/', remote_work.contest_staff_charge, name='contest_staff_charge'),
+        path('contest_usage_event/<int:usage_event_id>/', remote_work.contest_usage_event, name='contest_usage_event'),
+        path('contest_area_access_record/<int:area_access_record_id>/', remote_work.contest_area_access_record, name='contest_area_access_record'),
+        path('contest_consumable_withdraw/<int:consumable_withdraw_id>/', remote_work.contest_consumable_withdraw, name='contest_consumable_withdraw'),
+        path('save_contest/', remote_work.save_contest, name='save_contest'),
+        path('review_contested_items/', remote_work.review_contested_items, name='review_contested_items'),
+        path('resolve_staff_charge_contest/', remote_work.resolve_staff_charge_contest, name='resolve_staff_charge_contest'),
+        path('resolve_usage_event_contest/', remote_work.resolve_usage_event_contest, name='resolve_usage_event_contest'),
+        path('resolve_area_access_record_contest/', remote_work.resolve_area_access_record_contest, name='resolve_area_access_record_contest'),
+        path('resolve_consumable_withdraw_contest/', remote_work.resolve_consumable_withdraw_contest, name='resolve_consumable_withdraw_contest'),
+        path('save_contest_resolution/', remote_work.save_contest_resolution, name='save_contest_resolution'),
+        path('contest_transaction_entry/', remote_work.contest_transaction_entry, name='contest_transaction_entry'),
 
-		# Site customization:
-		re_path(r'^customization/$', customization.customization, name='customization'),
-		re_path(r'^customize/(?P<element>.+)/$', customization.customize, name='customize'),
+        # Site customization
+        path('customization/', customization.customization, name='customization'),
+        path('customize/<str:element>/', customization.customize, name='customize'),
 
-		# Samples
-		re_path(r'^samples/$', samples.samples, name='samples'),
-		re_path(r'^create_or_modify_sample/(?P<sample_id>\d+)/$', samples.create_or_modify_sample, name='create_or_modify_sample'),
-		re_path(r'^get_samples/$', samples.get_samples, name='get_samples'),
-		re_path(r'^modal_create_sample/(?P<project_id>\d+)/$', samples.modal_create_sample, name='modal_create_sample'),
-		re_path(r'^sample_history/(?P<sample_id>\d+)/$', samples.sample_history, name='sample_history'),
-		re_path(r'^sample_history/$', samples.sample_history, name='sample_history_user'),
-		re_path(r'^save_sample_comment/$', samples.save_sample_comment, name='save_sample_comment'),
-		re_path(r'^remove_sample/$', samples.remove_sample, name='remove_sample'),
-		re_path(r'^add_run_existing_sample/$', samples.add_run_existing_sample, name='add_run_existing_sample'),
-		#re_path(r'^add_run_existing_sample/(?P<uep_id>\d+)/(?P<sample_id>\d+)/$', samples.add_run_existing_sample, name='add_run_existing_sample'),
-		re_path(r'^modal_select_sample/(?P<project_id>\d+)/$', samples.modal_select_sample, name='modal_select_sample'),
-	]
+        # Samples
+        path('samples/', samples.samples, name='samples'),
+        path('create_or_modify_sample/<int:sample_id>/', samples.create_or_modify_sample, name='create_or_modify_sample'),
+        path('get_samples/', samples.get_samples, name='get_samples'),
+        path('modal_create_sample/<int:project_id>/', samples.modal_create_sample, name='modal_create_sample'),
+        path('sample_history/<int:sample_id>/', samples.sample_history, name='sample_history'),
+        path('sample_history/', samples.sample_history, name='sample_history_user'),
+        path('save_sample_comment/', samples.save_sample_comment, name='save_sample_comment'),
+        path('remove_sample/', samples.remove_sample, name='remove_sample'),
+        path('add_run_existing_sample/', samples.add_run_existing_sample, name='add_run_existing_sample'),
+        path('modal_select_sample/<int:project_id>/', samples.modal_select_sample, name='modal_select_sample'),
+    ]
 
 if settings.DEBUG:
-	# Static files
-	re_path(r'^static/(?P<path>.*$)', serve, {'document_root': settings.STATIC_ROOT}, name='static'),
+    # Static files
+    urlpatterns += [
+        path('static/<path:path>/', serve, {'document_root': settings.STATIC_ROOT}, name='static'),
+    ]
 
-	try:
-		# Django debug toolbar
-		import debug_toolbar
-		urlpatterns += [
-			re_path(r'^__debug__/', include(debug_toolbar.urls)),
-		]
-	except ImportError:
-		pass
-
+    try:
+        # Django debug toolbar
+        import debug_toolbar
+        urlpatterns += [
+            path('__debug__/', include(debug_toolbar.urls)),
+        ]
+    except ImportError:
+        pass
