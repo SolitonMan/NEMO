@@ -8,11 +8,14 @@
 	<b>Description:</b> {{ order.description }}
 </p>
 <p>The item(s) included in this order are:</p>
-<ul>
-        {% for item in order.items.all %}
-        <li>{{ item.consumable.name }} - {{ item.quantity }} {{ item.consumable.unit.abbreviation }}</li>
-        {% endfor %}
-</ul>
+<table class="table table-striped">
+	{% for item in order.items.all %}
+	<tr>
+		<td>{{ item.quantity }} {{ item.consumable.unit.abbreviation }}</td>
+		<td>{{ item.consumable.name }}</td>
+	</tr>
+	{% endfor %}
+</table>
 
 <a href="{% url 'create_order' %}">Create another order</a>
 {% if request.user.is_staff %}
