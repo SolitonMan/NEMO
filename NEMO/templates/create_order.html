@@ -32,7 +32,7 @@
 				<div class="form-group">
 					<label for="tool_select">Select Tool</label>
 					<select id="tool_select" class="form-control">
-						<option value="">All Tools</option>
+						<option value="" selected>All Tools</option>
 						{% for tool in tools %}
 						<option value="{{ tool.id }}">{{ tool.name }}</option>
 						{% endfor %}
@@ -170,19 +170,21 @@
 	filterConsumables($('#tool_select').val());
 
 	function filterConsumables(toolId) {
-		var availableConsumables = allConsumables[toolId] || [];
+		var availableConsumables = allConsumables[toolId] || consumablesOptions;
 
 		$('#formset-container select[name$="consumable"]').each(function () {
 			var currentConsumable = $(this).val();
-			$(this).empty();
-			$(this).append('<option value="">---------</option>');
-			availableConsumables.forEach(function (consumable) {
-				var option = new Option(consumable.name, consumable.id);
-				if (consumable.id == currentConsumable) {
-					option.selected = true;
-				}
-				$(this).append(option);
-			}.bind(this));
+			if (currentConsumable == '') {
+				$(this).empty();
+				$(this).append('<option value="">---------</option>');
+				availableConsumables.forEach(function (consumable) {
+					var option = new Option(consumable.name, consumable.id);
+					if (consumable.id == currentConsumable) {
+						option.selected = true;
+					}
+					$(this).append(option);
+				}.bind(this));
+			}
 		});
 	}
 
