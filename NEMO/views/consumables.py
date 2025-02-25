@@ -6,7 +6,7 @@ from django.views.decorators.http import require_http_methods, require_GET
 from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
 
 from NEMO.forms import ConsumableWithdrawForm, ConsumableOrderForm, ConsumableOrderItemFormSet
-from NEMO.models import Consumable, ConsumableWithdraw, Core, User, ConsumableOrder, ConsumableOrderItem
+from NEMO.models import Consumable, ConsumableWithdraw, Core, User, ConsumableOrder, ConsumableOrderItem, Tool
 
 
 @staff_member_required(login_url=None)
@@ -68,6 +68,7 @@ def save_withdraw_notes(request):
 @login_required
 def create_order(request):
 	if request.method == 'POST':
+		consumables = Consumable.objects.filter(category__id=1, visible=True).order_by('name')
 		order_form = ConsumableOrderForm(request.POST, user=request.user)
 		formset = ConsumableOrderItemFormSet(request.POST)
 		if order_form.is_valid() and formset.is_valid():
@@ -82,8 +83,12 @@ def create_order(request):
 		order_form = ConsumableOrderForm(user=request.user)
 		formset = ConsumableOrderItemFormSet()
 		consumables = Consumable.objects.filter(category__id=1, visible=True).order_by('name')
+	tools = Tool.objects.all()
+	all_consumables = {}
+	for tool in tools:
+		all_consumables[tool.id] = list(tool.consumables.values('id', 'name').order_by('name'))
 
-	return render(request, 'create_order.html', {'order_form': order_form, 'formset': formset, 'consumables': consumables})
+	return render(request, 'create_order.html', {'order_form': order_form, 'formset': formset, 'consumables': consumables, 'tools': tools, 'all_consumables': json.dumps(all_consumables),})
 
 @login_required
 def order_list(request):
