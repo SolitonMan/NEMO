@@ -93,6 +93,7 @@
         var formCount = {{ formset.total_form_count }};
 	var consumablesOptions = `<option value>---------</option>{% for consumable in consumables %}<option value="{{ consumable.id }}">{{ consumable.name }}</option>{% endfor %}`;
 	var allConsumables = {{ all_consumables| safe }};
+	var consumablesFullList = {{ consumables_full_list | safe }};
 
         addItemButton.click(function() {
             var newItem = $(`
@@ -170,7 +171,7 @@
 	filterConsumables($('#tool_select').val());
 
 	function filterConsumables(toolId) {
-		var availableConsumables = allConsumables[toolId] || consumablesOptions;
+		var availableConsumables = allConsumables[toolId] || consumablesFullList;
 
 		$('#formset-container select[name$="consumable"]').each(function () {
 			var currentConsumable = $(this).val();
