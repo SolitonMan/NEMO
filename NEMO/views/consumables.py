@@ -85,7 +85,8 @@ def create_order(request):
 		order_form = ConsumableOrderForm(user=request.user)
 		formset = ConsumableOrderItemFormSet()
 		consumables = Consumable.objects.filter(category__id=1, visible=True).order_by('name')
-	tools = Tool.objects.all()
+
+	tools = Tool.objects.filter(consumables__isnull=False).order_by('name')
 	all_consumables = {}
 	for tool in tools:
 		all_consumables[tool.id] = list(tool.consumables.values('id', 'name').order_by('name'))
