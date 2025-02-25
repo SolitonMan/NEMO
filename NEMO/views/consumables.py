@@ -86,12 +86,12 @@ def create_order(request):
 		formset = ConsumableOrderItemFormSet()
 		consumables = Consumable.objects.filter(category__id=1, visible=True).order_by('name')
 
-	tools = Tool.objects.filter(consumables__isnull=False).order_by('name')
+	tools = Tool.objects.filter(consumables__isnull=False).order_by('name').distinct()
 	all_consumables = {}
 	for tool in tools:
 		all_consumables[tool.id] = list(tool.consumables.values('id', 'name').order_by('name'))
 
-	return render(request, 'create_order.html', {'order_form': order_form, 'formset': formset, 'consumables': consumables, 'tools': tools, 'all_consumables': json.dumps(all_consumables),})
+	return render(request, 'create_order.html', {'order_form': order_form, 'formset': formset, 'consumables': consumables, 'tools': tools, 'all_consumables': json.dumps(all_consumables), 'consumables_full_list': json.dumps(list(consumables.values('id', 'name').order_by('name'))), })
 
 @login_required
 def order_list(request):
