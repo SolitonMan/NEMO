@@ -155,6 +155,36 @@
 			setTimeout(reload_qualified_users,2000);
 		}
 	}
+
+	function moveItems(origin, dest) {
+		$(origin).find(':selected').appendTo(dest);
+	}
+
+	function moveAllItems(origin, dest) {
+		$(origin).children().appendTo(dest);
+	}
+
+	$(document).ready(function () {
+		$('#add').click(function () {
+			moveItems('#available_consumables', '#selected_consumables');
+		});
+
+		$('#remove').click(function () {
+			moveItems('#selected_consumables', '#available_consumables');
+		});
+
+		$('#add_all').click(function () {
+			moveAllItems('#available_consumables', '#selected_consumables');
+		});
+
+		$('#remove_all').click(function () {
+			moveAllItems('#selected_consumables', '#available_consumables');
+		});
+
+		$('form').submit(function () {
+			$('#selected_consumables option').prop('selected', true);
+		});
+	});
 	</script>
 	<h1>Modify Tool: {{ form.instance.name }}</h1>
 	<div id="qualified_users_container" class="media" style="padding: 5px; margin: 5px;">
@@ -163,8 +193,32 @@
 	<form action="{% url 'create_or_modify_tool' tool_id %}" method="post">
 		{% csrf_token %}
 		<table class="table">
-		{{ form.as_table }}
+			{{ form.as_table }}
 		</table>
+		<div class="row">
+			<div class="col-md-5">
+				<label for="available_consumables">Available Consumables</label>
+				<select id="available_consumables" class="form-control" size="10" multiple>
+					{% for consumable in available_consumables %}
+					<option value="{{ consumable.id }}">{{ consumable.name }}</option>
+					{% endfor %}
+				</select>
+			</div>
+			<div class="col-md-2 text-center">
+				<button type="button" id="add" class="btn btn-primary btn-block">Add &gt;&gt;</button>
+				<button type="button" id="remove" class="btn btn-primary btn-block">&lt;&lt; Remove</button>
+				<button type="button" id="add_all" class="btn btn-primary btn-block">Add All &gt;&gt;</button>
+				<button type="button" id="remove_all" class="btn btn-primary btn-block">&lt;&lt; Remove All</button>
+			</div>
+			<div class="col-md-5">
+				<label for="selected_consumables">Selected Consumables</label>
+				<select id="selected_consumables" name="selected_consumables" class="form-control" size="10" multiple>
+					{% for consumable in selected_consumables %}
+					<option value="{{ consumable.id }}">{{ consumable.name }}</option>
+					{% endfor %}
+				</select>
+			</div>
+		</div>
 		<input type="submit" value="Submit" class="btn btn-success" />
 	</form>
 	<div id="bulk_buttons">
@@ -184,5 +238,3 @@
 	$(on_load);
 	</script>
 {% endblock %}
-
-$("#bulk_buttons").clone().prop("id","").insertAfter("#qualified_users_container #qualified_users #btn_target");

@@ -397,6 +397,9 @@ class Tool(models.Model):
 	allow_autologout = models.BooleanField(default=False, help_text='Allow users to set an end time for the tool run.')
 	qualification_duration = models.PositiveIntegerField(default=182, null=True, blank=True, help_text="The tool may indicate the number of days without use a user will be considered qualified.  The default is 182 days (6 months).  Each night a script will run to check a user's last date of use for a tool against this time period.  If the date of last use is greater than the qualification_duration value the user will be set to limited status.  This change can be reversed in LEO.")
 
+	# add a many to many relationship with the consumable table.  This will allow each tool
+	consumables = models.ManyToManyField('Consumable', blank=True, help_text="Select the consumables that are required for this tool. Consumables are used to track the amount of consumable used during a tool run.  This is not a required field.", related_name='tool_consumables')
+
 	# Core info
 	core_id = models.ForeignKey('Core', related_name="tool_core", on_delete=models.SET_NULL, help_text="The core facility of which this tool is part.", null=True)
 	credit_cost_collector = models.ForeignKey('CreditCostCollector', related_name='tool_credit_account', on_delete=models.SET_NULL, null=True, blank=True)

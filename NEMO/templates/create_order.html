@@ -29,6 +29,19 @@
 		</tr>
 		<tr>
 			<td>
+				<div class="form-group">
+					<label for="tool_select">Select Tool</label>
+					<select id="tool_select" class="form-control">
+						<option value="">All Tools</option>
+						{% for tool in tools %}
+						<option value="{{ tool.id }}">{{ tool.name }}</option>
+						{% endfor %}
+					</select>
+				</div>
+			</td>
+		</tr>
+		<tr>
+			<td>
 				<div id="formset-container">
 					{{ formset.management_form }}
 					<div class="order-item form-row">
@@ -79,6 +92,7 @@
         var addItemButton = $('#add-item');
         var formCount = {{ formset.total_form_count }};
 	var consumablesOptions = `<option value>---------</option>{% for consumable in consumables %}<option value="{{ consumable.id }}">{{ consumable.name }}</option>{% endfor %}`;
+	var allConsumables = {{ all_consumables| safe }};
 
         addItemButton.click(function() {
             var newItem = $(`
@@ -144,7 +158,33 @@
                     $(this).hide();
                 }
             });
-        });
+	});
+
+	// Tool selection change event
+	$('#tool_select').change(function () {
+		var toolId = $(this).val();
+		filterConsumables(toolId);
+	});
+
+	// Initial load
+	filterConsumables($('#tool_select').val());
+
+	function filterConsumables(toolId) {
+		var availableConsumables = allConsumables[toolId] || [];
+
+		$('#formset-container select[name$="consumable"]').each(function () {
+			var currentConsumable = $(this).val();
+			$(this).empty();
+			$(this).append('<option value="">---------</option>');
+			availableConsumables.forEach(function (consumable) {
+				var option = new Option(consumable.name, consumable.id);
+				if (consumable.id == currentConsumable) {
+					option.selected = true;
+				}
+				$(this).append(option);
+			}.bind(this));
+		});
+	}
 
         $('#order-form').on('submit', function () {
                 if (formCount === 0) {
