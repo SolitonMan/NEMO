@@ -138,7 +138,10 @@
                 newItem.remove();
                 formCount--;
                 $('#id_items-TOTAL_FORMS').val(formCount);
-            });
+	    });
+
+	    // update select list of consumables
+	    filterConsumables($('#tool_select').val());
         });
 
         // Add event listeners for existing remove buttons
