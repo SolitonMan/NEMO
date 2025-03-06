@@ -50,6 +50,7 @@
 				</form>
 				{% endif %}
 				<p>
+					<input type="text" id="user_filter" placeholder="Filter users by name or username" class="form-control" style="margin-bottom: 10px;">
 					Current qualified users are listed below. Inactive qualified users are marked in <span class="light-grey">light grey</span>.  Disqualified users are marked in <span class="light-red">light red</span>.  Use the up/down arrows to change that user's qualification scope to full/limited.<br>
 					{% for k, u in pqd.items %}
 						<span {% if not u.is_active %} class="light-grey"{% endif %}>
@@ -99,6 +100,15 @@
 {% if user.is_staff %}
 <script>
 	$('#add_qualified_user_search_box').autocomplete('users', add_qualified_user, {{ users|json_search_base }}).focus();
-	$('#add_probationary_user_search_box').autocomplete('users', add_probationary_user, {{ users|json_search_base }}).focus();
+	$('#add_probationary_user_search_box').autocomplete('users', add_probationary_user, {{ users| json_search_base }}).focus();
+
+	$(document).ready(function () {
+		$("#user_filter").on("keyup", function () {
+			var value = $(this).val().toLowerCase();
+			$("#qualified_users p span").filter(function () {
+				$(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+			});
+		});
+	});
 </script>
 {% endif %}
