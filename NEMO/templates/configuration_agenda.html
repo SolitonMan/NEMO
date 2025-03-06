@@ -88,7 +88,7 @@
 		<script>
 			function enable_tool(tool_id, user_id, project_id)
 			{
-				var url = "/enable_tool/" + tool_id + "/user/" + user_id + "/project/" + project_id + "/staff_charge/false/billing_mode/false/";
+				var url = "/enable_tool/" + tool_id + "/user/" + user_id + "/project/" + project_id + "/staff_charge/false/billing_mode/false/end_scheduled_outage/0/";
 				var failure_dialog = ajax_failure_callback("Unable to enable tool");
 				ajax_post(url, undefined, reload_page, failure_dialog);
 			}
