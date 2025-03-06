@@ -43,11 +43,6 @@
 										{{ reservation.end }}<br>
 										{{ reservation.additional_information|linebreaksbr }}
 									</p>
-									{% if not reservation.tool.in_use and reservation.project %}
-										<button class="btn btn-info" onclick="enable_tool({{ reservation.tool.id }}, {{ reservation.user.id }}, {{ reservation.project.id }})">
-											Enable the tool on behalf of {{ reservation.user.first_name }}
-										</button>
-									{% endif %}
 								</td>
 								{% if forloop.first %}
 									<td style="width:50%;border:2px solid black" rowspan="100">
@@ -56,27 +51,6 @@
 												{{ widget }}
 											{% endif %}
 										{% endfor %}
-										{% if reservation.tool.in_use %}
-											{% if reservation.tool.get_current_usage_event.operator.id == user.id %}
-												<button id="interlock" type="button" class="btn btn-default" onclick="disable_tool('{% url 'disable_tool' reservation.tool.id %}')">Disable tool</button>
-											{% else %}
-												<button type="button" class="btn btn-default disabled"><span class="glyphicon glyphicon-ban-circle"></span> Tool in use</button>
-											{% endif %}
-										{% else %}
-											{% if user.active_project_count == 1 %}
-												<button id="interlock" type="button" class="btn btn-default" onclick="enable_tool({{ reservation.tool.id }}, {{ user.id }}, {{ user.active_projects.0.id }})">Enable the tool for myself</button>
-											{% elif user.active_project_count > 1 %}
-												<div class="btn-group">
-													<button id="interlock" type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">Enable the tool for myself <span class="caret"></span></button>
-													<ul class="dropdown-menu">
-														<li class="dropdown-header">Using which project?</li>
-														{% for project in user.active_projects %}
-															<li><a href="javascript:void(0)" onclick="enable_tool({{ reservation.tool.id }}, {{ user.id }}, {{ project.id }})">{{ project.name }}</a></li>
-														{% endfor %}
-													</ul>
-												</div>
-											{% endif %}
-										{% endif %}
 									</td>
 								{% endif %}
 							</tr>
