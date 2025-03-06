@@ -106,7 +106,17 @@
 		$("#user_filter").on("keyup", function () {
 			var value = $(this).val().toLowerCase();
 			$("#qualified_users p .qualified-user").filter(function () {
-				$(this).css('display', $(this).text().toLowerCase().indexOf(value) > -1 ? 'block' : 'none');
+				if ($(this).text().toLowerCase().indexOf(value) > -1) {
+					$(this).css({
+						'visibility': 'visible',
+						'position': 'relative'
+					});
+				} else {
+					$(this).css({
+						'visibility': 'hidden',
+						'position': 'absolute'
+					});
+				}
 			});
 		});
 	});
