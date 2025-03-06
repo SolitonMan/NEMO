@@ -431,7 +431,10 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge, billing_mod
 	project = get_object_or_404(Project, id=project_id)
 	staff_charge = staff_charge == 'true'
 	billing_mode = billing_mode == 'true'
-	end_scheduled_outage = int(request.POST.get('end_scheduled_outage')) == 1
+	if request.POST.get('end_scheduled_outage') is not None:
+		end_scheduled_outage = int(request.POST.get('end_scheduled_outage')) == 1
+	else:
+		end_scheduled_outage = False
 
 	# initialize some variables
 	new_usage_event = None
