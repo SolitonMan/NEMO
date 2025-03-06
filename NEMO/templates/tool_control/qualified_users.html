@@ -106,7 +106,7 @@
 		$("#user_filter").on("keyup", function () {
 			var value = $(this).val().toLowerCase();
 			$("#qualified_users p .qualified-user").filter(function () {
-				$(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+				$(this).css('display', $(this).text().toLowerCase().indexOf(value) > -1 ? 'block' : 'none');
 			});
 		});
 	});
