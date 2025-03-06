@@ -7,10 +7,10 @@
 <div class="media-body">
 	<h4 class="media-heading">Qualified users</h4>
 
-<div style="display: none;">
-{{ probationary_qualifications }}
-{{ pqd }}
-</div>
+	<div style="display: none;">
+		{{ probationary_qualifications }}
+		{{ pqd }}
+	</div>
 
 	<div id="qualified_users" class="collapse {% if expanded %}in{% endif %}">
 		<p id="btn_target">Only qualified users are able to operate the {{ tool.name }}.</p>
@@ -22,12 +22,12 @@
 				<div class="row" style="width: 570px;">
 					<div class="col-md-6">
 						<div class="form-group">
-						<label class="control-label">Add a fully qualified user <input type="text" id="add_qualified_user_search_box" placeholder="Search for a user" class="form-control"></label>
+							<label class="control-label">Add a fully qualified user <input type="text" id="add_qualified_user_search_box" placeholder="Search for a user" class="form-control"></label>
 						</div>
 					</div>
 					<div class="col-md-6">
 						<div class="form-group">
-						<label class="control-label">Add a limited user <input type="text" id="add_probationary_user_search_box" placeholder="Search for a user" class="form-control"></label>
+							<label class="control-label">Add a limited user <input type="text" id="add_probationary_user_search_box" placeholder="Search for a user" class="form-control"></label>
 						</div>
 					</div>
 				</div>
@@ -38,85 +38,88 @@
 			<input type="hidden" name="action" value="qualify">
 		</form>
 		{% endif %}
-			{% if pqd %}
-				{% if user.is_staff %}
-				<p> 
-				<form action="{% url 'compose_email' %}" method="POST" style="display: inline;">
-					{% csrf_token %}
-					<input name="tools_selected" type="hidden" value="{{ tool.id }}" />
-					<input name="audience" type="hidden" value="tool" />
-					<input name="selection" type="hidden" value="{{ tool.id }}" />
-					<input type="submit" value="You can email all qualified users" class="btn btn-success" />
-				</form>
-				{% endif %}
-				<p>
-					<input type="text" id="user_filter" placeholder="Filter users by name or username" class="form-control" style="margin-bottom: 10px;">
-					Current qualified users are listed below. Inactive qualified users are marked in <span class="light-grey">light grey</span>.  Disqualified users are marked in <span class="light-red">light red</span>.  Use the up/down arrows to change that user's qualification scope to full/limited.<br>
+		{% if pqd %}
+		{% if user.is_staff %}
+		<p>
+			<form action="{% url 'compose_email' %}" method="POST" style="display: inline;">
+				{% csrf_token %}
+				<input name="tools_selected" type="hidden" value="{{ tool.id }}" />
+				<input name="audience" type="hidden" value="tool" />
+				<input name="selection" type="hidden" value="{{ tool.id }}" />
+				<input type="submit" value="You can email all qualified users" class="btn btn-success" />
+			</form>
+			{% endif %}
+		<p>
+			<input type="text" id="user_filter" placeholder="Filter users by name or username" class="form-control" style="margin-bottom: 10px;">
+			Current qualified users are listed below. Inactive qualified users are marked in <span class="light-grey">light grey</span>. Disqualified users are marked in <span class="light-red">light red</span>. Use the up/down arrows to change that user's qualification scope to full/limited.<br>
+			<table class="table table-striped">
+				<thead>
+					<tr>
+						<th>Name</th>
+						<th>Email</th>
+						<th>Status</th>
+						<th>Actions</th>
+					</tr>
+				</thead>
+				<tbody>
 					{% for k, u in pqd.items %}
-						<span class="qualified-user {% if not u.is_active %}light-grey{% endif %}">
-						{% if request.user.is_staff %}
-						{% if probationary_qualifications is not None %}
-						{% if probationary_qualifications|get_item:u.id %}
-
+					<tr class="qualified-user {% if not u.is_active %}light-grey{% endif %}">
+						<td>{{ u }}</td>
+						<td><a href="mailto:{{ u.email }}">{{ u.email }}</a></td>
+						<td>
+							{% if probationary_qualifications is not None %}
+							{% if probationary_qualifications|get_item:u.id %}
 							{% with probationary_qualifications|get_item:u.id as qd %}
-								{% if qd.disabled %}
-								<span class="light-red">
+							{% if qd.probationary_user %}
+							limited
+							{% else %}
+							full
+							{% endif %}
+							{% endwith %}
+							{% endif %}
+							{% endif %}
+						</td>
+						<td>
+							{% if request.user.is_staff %}
+							{% if probationary_qualifications is not None %}
+							{% if probationary_qualifications|get_item:u.id %}
+							{% with probationary_qualifications|get_item:u.id as qd %}
+							{% if qd.disabled %}
+							<span class="light-red">
 								<a href="javascript:requalify_user('{{ u.id }}', '{{ tool.id }}')" class="grey hover-black" title="Re-qualify {{ pq.user.first_name }}"><span class="glyphicon glyphicon-plus"></span></a>
 								{% else %}
 								<span>
-								<a href="javascript:remove_qualified_user('{{ u.id }}', '{{ tool.id }}')" class="grey hover-black" title="Disqualify {{ pq.user.first_name }}"><span class="glyphicon glyphicon-remove-circle"></span></a>
-								{% endif %}
-								{% if qd.probationary_user %}
-								<a href="javascript:promote_user('{{ u.id }}', '{{ tool.id }}')" class="grey hover-black" title="Promote {{ u.first_name }}"><span class="glyphicon glyphicon-arrow-up"></span></a>
-								{% else %}
-								<a href="javascript:demote_user('{{ u.id }}', '{{ tool.id }}')" class="grey hover-black" title="Demote {{ u.first_name }}"><span class="glyphicon glyphicon-arrow-down"></span></a>
-								{% endif %}
-								<span style="font-family: Courier">QD: {{ qd.qualification_date }} </span>
-							{% endwith %}
-
-						{% endif %}
-						{% endif %}
-						{% endif %}
-						<a href="mailto:{{ u.email }}">{{ u }}</a>
-						{% if probationary_qualifications is not None %}
-							{% if probationary_qualifications|get_item:u.id %}
-								{% with probationary_qualifications|get_item:u.id as qd %}
-									{% if qd.probationary_user %}
-									 - limited
-									{% else %}
-									 - full
+									<a href="javascript:remove_qualified_user('{{ u.id }}', '{{ tool.id }}')" class="grey hover-black" title="Disqualify {{ pq.user.first_name }}"><span class="glyphicon glyphicon-remove-circle"></span></a>
 									{% endif %}
-								{% endwith %}
-							{% endif %}
-						{% endif %}
-						</span>
-						</span>
-						<br>
+									{% if qd.probationary_user %}
+									<a href="javascript:promote_user('{{ u.id }}', '{{ tool.id }}')" class="grey hover-black" title="Promote {{ u.first_name }}"><span class="glyphicon glyphicon-arrow-up"></span></a>
+									{% else %}
+									<a href="javascript:demote_user('{{ u.id }}', '{{ tool.id }}')" class="grey hover-black" title="Demote {{ u.first_name }}"><span class="glyphicon glyphicon-arrow-down"></span></a>
+									{% endif %}
+									<span style="font-family: Courier">QD: {{ qd.qualification_date }} </span>
+									{% endwith %}
+									{% endif %}
+									{% endif %}
+									{% endif %}
+						</td>
+					</tr>
 					{% endfor %}
-				</p>
-			{% endif %}
+				</tbody>
+			</table>
+		</p>
+		{% endif %}
 	</div>
 </div>
 {% if user.is_staff %}
 <script>
 	$('#add_qualified_user_search_box').autocomplete('users', add_qualified_user, {{ users|json_search_base }}).focus();
-	$('#add_probationary_user_search_box').autocomplete('users', add_probationary_user, {{ users| json_search_base }}).focus();
+	$('#add_probationary_user_search_box').autocomplete('users', add_probationary_user, {{ users|json_search_base }}).focus();
 
 	$(document).ready(function () {
 		$("#user_filter").on("keyup", function () {
 			var value = $(this).val().toLowerCase();
-			$("#qualified_users p .qualified-user").filter(function () {
-				if ($(this).text().toLowerCase().indexOf(value) > -1) {
-					$(this).css({
-						'visibility': 'visible',
-						'position': 'relative'
-					});
-				} else {
-					$(this).css({
-						'visibility': 'hidden',
-						'position': 'absolute'
-					});
-				}
+			$("#qualified_users table tbody tr").filter(function () {
+				$(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
 			});
 		});
 	});
