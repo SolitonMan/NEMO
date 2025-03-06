@@ -63,7 +63,7 @@
 				</thead>
 				<tbody>
 					{% for k, u in pqd.items %}
-					<tr class="qualified-user {% if not u.is_active %}light-grey{% endif %}">
+					<tr class="qualified-user{% if qd.disabled %} light-red{% elif not u.is_active %} light-grey{% endif %}">
 						<td>{{ u }}</td>
 						<td><a href="mailto:{{ u.email }}">{{ u.email }}</a></td>
 						<td>
@@ -87,20 +87,20 @@
 							{% if qd.disabled %}
 							<span class="light-red">
 								<a href="javascript:requalify_user('{{ u.id }}', '{{ tool.id }}')" class="grey hover-black" title="Re-qualify {{ pq.user.first_name }}"><span class="glyphicon glyphicon-plus"></span></a>
-								{% else %}
-								<span>
-									<a href="javascript:remove_qualified_user('{{ u.id }}', '{{ tool.id }}')" class="grey hover-black" title="Disqualify {{ pq.user.first_name }}"><span class="glyphicon glyphicon-remove-circle"></span></a>
-									{% endif %}
-									{% if qd.probationary_user %}
-									<a href="javascript:promote_user('{{ u.id }}', '{{ tool.id }}')" class="grey hover-black" title="Promote {{ u.first_name }}"><span class="glyphicon glyphicon-arrow-up"></span></a>
-									{% else %}
-									<a href="javascript:demote_user('{{ u.id }}', '{{ tool.id }}')" class="grey hover-black" title="Demote {{ u.first_name }}"><span class="glyphicon glyphicon-arrow-down"></span></a>
-									{% endif %}
-									<span style="font-family: Courier">QD: {{ qd.qualification_date }} </span>
-									{% endwith %}
-									{% endif %}
-									{% endif %}
-									{% endif %}
+							{% else %}
+							<span>
+							<a href="javascript:remove_qualified_user('{{ u.id }}', '{{ tool.id }}')" class="grey hover-black" title="Disqualify {{ pq.user.first_name }}"><span class="glyphicon glyphicon-remove-circle"></span></a>
+							{% endif %}
+							{% if qd.probationary_user %}
+							<a href="javascript:promote_user('{{ u.id }}', '{{ tool.id }}')" class="grey hover-black" title="Promote {{ u.first_name }}"><span class="glyphicon glyphicon-arrow-up"></span></a>
+							{% else %}
+							<a href="javascript:demote_user('{{ u.id }}', '{{ tool.id }}')" class="grey hover-black" title="Demote {{ u.first_name }}"><span class="glyphicon glyphicon-arrow-down"></span></a>
+							{% endif %}
+							<span style="font-family: Courier">QD: {{ qd.qualification_date }} </span>
+							{% endwith %}
+							{% endif %}
+							{% endif %}
+							{% endif %}
 						</td>
 					</tr>
 					{% endfor %}
