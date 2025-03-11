@@ -1,4 +1,11 @@
 {% load custom_tags_and_filters %}
+<!-- Include jQuery UI CSS and JS -->
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+<!-- Include Bootstrap CSS and JS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
 
 <div id="django-debug" style="display: none;">
 	my_reservation = {{ my_reservation }}
@@ -59,7 +66,7 @@
     {% endif %}
 {% endif %}
 <br />
-<div class="tab-content" {% if device != 'mobile' %} style="width: 75%" {% endif %}>
+<div class="tab-content" {% if device !='mobile' %} style="width: 75%" {% endif %}>
 	<div class="tab-pane active" id="summary">
 		{# Display tool status... #}
 		{% if tool.in_use %}
@@ -108,7 +115,7 @@
 									</tr>
 									{% endif %}
 									{% endfor %}
-									<tr><td colspan="2"><input type="button" class="btn btn-success" value="+New" onclick="add_run_sample({{uep.project.id}},{{uep.id}});" title="Add a new sample" /><input type="button" class="btn" value="+Existing" onclick="add_run_existing_sample({{uep.project.id}},{{uep.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff" {% if uep.project.sample_set.all.count == 0 %}disabled {% endif %} /></td></tr>
+									<tr><td colspan="2"><input type="button" class="btn btn-success" value="+New" onclick="add_run_sample({{uep.project.id}},{{uep.id}});" title="Add a new sample" /><input type="button" class="btn" value="+Existing" onclick="add_run_existing_sample({{uep.project.id}},{{uep.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff" {% if uep.project.sample_set.all.count= =0 %}disabled {% endif %} /></td></tr>
 								</table>
 								{% else %}
 								{% endif %}
@@ -141,7 +148,7 @@
 						<tr style="display: none;" class="samples_end"><td><input type="button" class="btn btn-danger" value="Remove Sample" onclick="remove_sample({{uep.id}},{{s.sample.id}});" title="Remove this sample from the run" /></td></tr>
 						{% endif %}
 						{% endfor %}
-						<tr style="display: none;" class="samples_end"><td><input type="button" class="btn btn-success" value="Add New Sample" onclick="add_run_sample({{uep.project.id}},{{uep.id}});" title="Add a new sample" /><input type="button" class="btn" value="Add Existing Sample" onclick="add_run_existing_sample({{uep.project.id}},{{uep.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff" {% if uep.project.sample_set.all.count == 0 %}disabled {% endif %} /></td></tr>
+						<tr style="display: none;" class="samples_end"><td><input type="button" class="btn btn-success" value="Add New Sample" onclick="add_run_sample({{uep.project.id}},{{uep.id}});" title="Add a new sample" /><input type="button" class="btn" value="Add Existing Sample" onclick="add_run_existing_sample({{uep.project.id}},{{uep.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff" {% if uep.project.sample_set.all.count= =0 %}disabled {% endif %} /></td></tr>
 						{% endif %}
 						<tr style="display: none;"><td>General Customer Comment:<br /><textarea rows="3" cols="4" class="form-control" name="cc__{{ uep.id }}" id="cc__{{ uep.id }}" value="{{ uep.comment }}" onblur="save_comment(this);">{% if uep.comment is not None %}{{ uep.comment }}{% endif %}</textarea></td></tr>
 					</tbody>
@@ -171,7 +178,7 @@
 						</tr>
 						{% endif %}
 						{% endfor %}
-						<tr><td colspan="2"><input type="button" class="btn btn-success" value="+New" onclick="add_run_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add a new sample" /><input type="button" class="btn" value="+Existing" onclick="add_run_existing_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff;" {% if current_usage_event.usageeventproject_set.all.0.project.sample_set.all.count == 0 %} disabled{% endif %} /></td></tr>
+						<tr><td colspan="2"><input type="button" class="btn btn-success" value="+New" onclick="add_run_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add a new sample" /><input type="button" class="btn" value="+Existing" onclick="add_run_existing_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff;" {% if current_usage_event.usageeventproject_set.all.0.project.sample_set.all.count= =0 %} disabled{% endif %} /></td></tr>
 					</table>
 				</div>
 				{% else %}
@@ -188,14 +195,14 @@
 					</dd>
 					{% endif %}
 					{% endfor %}
-					<dt><input type="button" class="btn btn-success" value="+New Sample" onclick="add_run_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add a new sample" /><input type="button" class="btn" value="+Existing Sample" onclick="add_run_existing_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff;" {%if current_usage_event.usageeventproject_set.all.0.project.sample_set.all.count == 0 %} disabled{% endif %} /></dt>
+					<dt><input type="button" class="btn btn-success" value="+New Sample" onclick="add_run_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add a new sample" /><input type="button" class="btn" value="+Existing Sample" onclick="add_run_existing_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff;" {%if current_usage_event.usageeventproject_set.all.0.project.sample_set.all.count= =0 %} disabled{% endif %} /></dt>
 					{% endif %}
 				</dl>
 
 				{% else %}
 				<p>
 					No samples currently selected<br />
-					<input type="button" class="btn btn-success" value="+New" onclick="add_run_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add a new sample" /><input type="button" class="btn" value="+Existing" onclick="add_run_existing_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff;" {%if current_usage_event.usageeventproject_set.all.0.project.sample_set.all.count == 0 %} disabled{% endif %} />
+					<input type="button" class="btn btn-success" value="+New" onclick="add_run_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add a new sample" /><input type="button" class="btn" value="+Existing" onclick="add_run_existing_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff;" {%if current_usage_event.usageeventproject_set.all.0.project.sample_set.all.count= =0 %} disabled{% endif %} />
 				</p>
 				{% endif %}
 				{% endif %}
@@ -847,7 +854,7 @@
 		{% endif %}
 		{# Rows are inserted here on load and when "Add another customer" is clicked. #}
 		<tr>
-			<td {% if request.device != 'mobile' %}colspan="4" {% endif %}style="text-align:center"><a href="javascript:void(0)" onclick="add_customer()">Add another customer</a></td>
+			<td {% if request.device !='mobile' %}colspan="4" {% endif %}style="text-align:center"><a href="javascript:void(0)" onclick="add_customer()">Add another customer</a></td>
 		</tr>
 	</table>
 	<br>
