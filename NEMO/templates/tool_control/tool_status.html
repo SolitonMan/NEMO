@@ -108,7 +108,7 @@
 									</tr>
 									{% endif %}
 									{% endfor %}
-									<tr><td colspan="2"><input type="button" class="btn btn-success" value="+New" onclick="add_run_sample({{uep.project.id}},{{uep.id}});" title="Add a new sample" /><input type="button" class="btn" value="+Existing" onclick="add_run_existing_sample({{uep.project.id}},{{uep.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff" {% if uep.project.sample_set.all.count= =0 %}disabled {% endif %} /></td></tr>
+									<tr><td colspan="2"><input type="button" class="btn btn-success" value="+New" onclick="add_run_sample({{uep.project.id}},{{uep.id}});" title="Add a new sample" /><input type="button" class="btn" value="+Existing" onclick="add_run_existing_sample({{uep.project.id}},{{uep.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff" {% if uep.project.sample_set.all.count == 0 %}disabled {% endif %} /></td></tr>
 								</table>
 								{% else %}
 								{% endif %}
@@ -141,7 +141,7 @@
 						<tr style="display: none;" class="samples_end"><td><input type="button" class="btn btn-danger" value="Remove Sample" onclick="remove_sample({{uep.id}},{{s.sample.id}});" title="Remove this sample from the run" /></td></tr>
 						{% endif %}
 						{% endfor %}
-						<tr style="display: none;" class="samples_end"><td><input type="button" class="btn btn-success" value="Add New Sample" onclick="add_run_sample({{uep.project.id}},{{uep.id}});" title="Add a new sample" /><input type="button" class="btn" value="Add Existing Sample" onclick="add_run_existing_sample({{uep.project.id}},{{uep.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff" {% if uep.project.sample_set.all.count= =0 %}disabled {% endif %} /></td></tr>
+						<tr style="display: none;" class="samples_end"><td><input type="button" class="btn btn-success" value="Add New Sample" onclick="add_run_sample({{uep.project.id}},{{uep.id}});" title="Add a new sample" /><input type="button" class="btn" value="Add Existing Sample" onclick="add_run_existing_sample({{uep.project.id}},{{uep.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff" {% if uep.project.sample_set.all.count == 0 %}disabled {% endif %} /></td></tr>
 						{% endif %}
 						<tr style="display: none;"><td>General Customer Comment:<br /><textarea rows="3" cols="4" class="form-control" name="cc__{{ uep.id }}" id="cc__{{ uep.id }}" value="{{ uep.comment }}" onblur="save_comment(this);">{% if uep.comment is not None %}{{ uep.comment }}{% endif %}</textarea></td></tr>
 					</tbody>
