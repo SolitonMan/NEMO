@@ -4,28 +4,7 @@
 	Primary tool owner: {{ task.tool.primary_owner }}<br>
 	{% if task.tool.backup_owners.all.exists %}Backup tool owner{{ task.tool.backup_owners.all.count|pluralize }}: {% for x in task.tool.backup_owners.all %}{{ x }}{% if not forloop.last %}, {% else %}{% endif %}{% endfor %}{% endif %}
 </p>
-<div style="margin-bottom: 12px">
-	{% if task.tool.in_use %}
-		{% if task.tool.get_current_usage_event.operator.id == user.id %}
-			<button id="interlock" type="button" class="btn btn-default" onclick="disable_tool('{% url 'disable_tool' task.tool.id %}')">Disable tool</button>
-		{% else %}
-			<button type="button" class="btn btn-default disabled"><span class="glyphicon glyphicon-ban-circle"></span> Tool in use</button>
-		{% endif %}
-	{% else %}
-		{% if user.active_project_count == 1 %}
-			<button id="interlock" type="button" class="btn btn-default" onclick="enable_tool({{ task.tool.id }}, {{ user.active_projects.0.id }})">Enable tool</button>
-		{% elif user.active_project_count > 1 %}
-			<div class="btn-group">
-				<button id="interlock" type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">Enable tool <span class="caret"></span></button>
-				<ul class="dropdown-menu">
-					<li class="dropdown-header">Using which project?</li>
-					{% for project in user.active_projects %}
-						<li><a href="javascript:void(0)" onclick="enable_tool({{ task.tool.id }}, {{ project.id }})">{{ project.name }}</a></li>
-					{% endfor %}
-				</ul>
-			</div>
-		{% endif %}
-	{% endif %}
+<div style="margin-bottom: 12px">	
 	<a href="{% url 'calendar' task.tool.id 0 0 %}" class="btn btn-default" target="_blank">
 		<span class="glyphicon glyphicon-share-alt"></span>
 		Calendar
