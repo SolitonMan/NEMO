@@ -188,7 +188,7 @@
 					</dd>
 					{% endif %}
 					{% endfor %}
-					<dt><input type="button" class="btn btn-success" value="+New Sample" onclick="add_run_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add a new sample" /><input type="button" class="btn" value="+Existing Sample" onclick="add_run_existing_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff;" {%if current_usage_event.usageeventproject_set.all.0.project.sample_set.all.count==0 %} disabled{% endif %} /></dt>
+					<dt><input type="button" class="btn btn-success" value="+New Sample" onclick="add_run_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add a new sample" /><input type="button" class="btn" value="+Existing Sample" onclick="add_run_existing_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff;" {%if current_usage_event.usageeventproject_set.all.0.project.sample_set.all.count == 0 %} disabled{% endif %} /></dt>
 					{% endif %}
 				</dl>
 
