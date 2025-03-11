@@ -5,7 +5,7 @@
 <html lang="en">
 <head>
 	{# This meta-tag forcefully disables 'compatibility mode' in Internet Explorer because it causes rendering problems. #}
-	<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<meta charset="UTF-8">
 	<meta name="application-name" content="Laboratory Equipment Operations (LEO)">
 	<meta name="author" content="Center for Nanoscale Science and Technology">
@@ -15,14 +15,12 @@
 
 	{# Snippet to prevent clickjacking. Taken from https://www.codemagi.com/blog/post/194 #}
 	<style id="antiClickjack">
-		body
-		{
+		body {
 			display: none !important;
 		}
 	</style>
 	<script type="text/javascript">
-		if(self === top)
-		{
+		if (self === top) {
 			var antiClickjack = document.getElementById("antiClickjack");
 			antiClickjack.parentNode.removeChild(antiClickjack);
 		}
@@ -31,25 +29,34 @@
 	</script>
 
 	{# Moment #}
-	<script type="text/javascript" src="{% static "moment.js" %}"></script>
+	<script type="text/javascript" src="{% static " moment.js" %}"></script>
 
 	{# jQuery #}
-	<script type="text/javascript" src="{% static "jquery.js" %}"></script>
+	<script type="text/javascript" src="{% static " jquery.js" %}"></script>
 
 	{# Bootstrap #}
-	<script type="text/javascript" src="{% static "bootstrap/js/bootstrap.js" %}"></script>
-	<link rel="stylesheet" type="text/css" href="{% static "bootstrap/css/bootstrap.css" %}"/>
-	<link rel="stylesheet" type="text/css" href="{% static "bootstrap/css/bootstrap-theme.css" %}"/>
+	<script type="text/javascript" src="{% static " bootstrap /js/bootstrap.js" %}"></script>
+	<link rel="stylesheet" type="text/css" href="{% static " bootstrap /css/bootstrap.css" %}" />
+	<link rel="stylesheet" type="text/css" href="{% static " bootstrap /css/bootstrap-theme.css" %}" />
 
 	{# Typeahead #}
-	<script type="text/javascript" src="{% static "typeahead.jquery.js" %}"></script>
+	<script type="text/javascript" src="{% static " typeahead.jquery.js" %}"></script>
 
 	{# Tablesorter #}
-	<script type="text/javascript" src="{% static "jquery.tablesorter.js" %}"></script>
+	<script type="text/javascript" src="{% static " jquery.tablesorter.js" %}"></script>
 
 	{# NEMO #}
-	<script type="text/javascript" src="{% static "nemo.js" %}"></script>
-	<link rel="stylesheet" type="text/css" href="{% static "nemo.css" %}"/>
+	<script type="text/javascript" src="{% static " nemo.js" %}"></script>
+	<link rel="stylesheet" type="text/css" href="{% static " nemo.css" %}" />
+
+	{# Extra #}
+	<!-- Include jQuery UI CSS and JS -->
+	<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+	<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+	<!-- Include Bootstrap CSS and JS -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
 
 	{% block extrahead %}{% endblock %}
 
