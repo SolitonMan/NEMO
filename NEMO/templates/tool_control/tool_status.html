@@ -26,7 +26,7 @@
 </div>
 {% if device != 'mobile' %}
     {% if upcoming %}
-<div id="upcoming_reservations" class="panel panel-default" style="position: absolute; left:50%; width: 50%">
+<div id="upcoming_reservations" class="panel panel-default" style="position: absolute; left:60%; width: 30%">
 	<div class="panel-heading">
 		<h3 class="panel-title">Upcoming Reservations</h3>
 		<button type="button" class="close" data-toggle="collapse" data-target="#upcoming_reservations_body" aria-expanded="true" aria-controls="upcoming_reservations_body">
@@ -1073,7 +1073,27 @@
 	current_entry_number = parseInt({{ my_reservation_projects.count }}) + 1;
 	{% endif %}
 	$(document).ready(function() {
-	    $("#upcoming_reservations").draggable();
-	});
+        var $dragging = null;
+
+        $("#upcoming_reservations").on("mousedown", function(e) {
+            $dragging = $(this);
+            var offset = $dragging.offset();
+            var mouseX = e.pageX - offset.left;
+            var mouseY = e.pageY - offset.top;
+            $(document).on("mousemove", function(e) {
+                if ($dragging) {
+                    $dragging.offset({
+                        top: e.pageY - mouseY,
+                        left: e.pageX - mouseX
+                    });
+                }
+            });
+        });
+
+        $(document).on("mouseup", function(e) {
+            $dragging = null;
+            $(document).off("mousemove");
+        });
+});
 //# sourceURL=tool_control/tool_status.html
 </script>
