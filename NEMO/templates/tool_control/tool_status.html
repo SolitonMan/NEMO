@@ -847,7 +847,7 @@
 		{% endif %}
 		{# Rows are inserted here on load and when "Add another customer" is clicked. #}
 		<tr>
-			<td {% if request.device !='mobile' %}colspan="4" {% endif %}style="text-align:center"><a href="javascript:void(0)" onclick="add_customer()">Add another customer</a></td>
+			<td {% if request.device != 'mobile' %}colspan="4" {% endif %}style="text-align:center"><a href="javascript:void(0)" onclick="add_customer()">Add another customer</a></td>
 		</tr>
 	</table>
 	<br>
