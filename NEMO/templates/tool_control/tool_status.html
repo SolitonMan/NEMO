@@ -102,7 +102,7 @@
 									<tr>
 										<td style="width: 60%">{{ s.sample }}</td>
 										<td>
-											<textarea rows="2" cols="5" class="form-control" name="smpc__{{uep.id}}__{{s.sample.id}}" id= ="smpc__{{uep.id}}__{{s.sample.id}}" onblur="save_sample_comment(this);">{% if s.notes is not None %}{{ s.notes }}{% endif %}</textarea>
+											<textarea rows="2" cols="5" class="form-control" name="smpc__{{uep.id}}__{{s.sample.id}}" id="smpc__{{uep.id}}__{{s.sample.id}}" onblur="save_sample_comment(this);">{% if s.notes is not None %}{{ s.notes }}{% endif %}</textarea>
 										</td>
 										<td><input type="button" class="btn btn-danger" value="-" onclick="remove_sample({{uep.id}},{{s.sample.id}});" title="Remove this sample from the run" /></td>
 									</tr>
@@ -137,7 +137,7 @@
 								Description: {{ s.sample.description }}
 							</td>
 						</tr>
-						<tr style="display: none;" class="sample_item"><td>Sample {{ s.sample.identifier }} Comment: <br /><textarea rows="2" cols="4" class="form-control" name="smpc__{{uep.id}}__{{s.sample.id}}" id= ="smpc__{{uep.id}}__{{s.sample.id}}" onblur="save_sample_comment(this);">{% if s.notes is not None %}{{ s.notes }}{% endif %}</textarea></td></tr>
+						<tr style="display: none;" class="sample_item"><td>Sample {{ s.sample.identifier }} Comment: <br /><textarea rows="2" cols="4" class="form-control" name="smpc__{{uep.id}}__{{s.sample.id}}" id="smpc__{{uep.id}}__{{s.sample.id}}" onblur="save_sample_comment(this);">{% if s.notes is not None %}{{ s.notes }}{% endif %}</textarea></td></tr>
 						<tr style="display: none;" class="samples_end"><td><input type="button" class="btn btn-danger" value="Remove Sample" onclick="remove_sample({{uep.id}},{{s.sample.id}});" title="Remove this sample from the run" /></td></tr>
 						{% endif %}
 						{% endfor %}
@@ -165,13 +165,13 @@
 						<tr>
 							<td style="width: 50%">{{ s.sample }}</td>
 							<td style="width: 50%">
-								<textarea rows="2" cols="5" class="form-control" name="smpc__{{current_usage_event.usageeventproject_set.all.0.id}}__{{s.sample.id}}" id= ="smpc__{{current_usage_event.usageeventproject_set.all.0.id}}__{{s.sample.id}}" onblur="save_sample_comment(this);">{% if s.notes is not None %}{{ s.notes }}{% endif %}</textarea>
+								<textarea rows="2" cols="5" class="form-control" name="smpc__{{current_usage_event.usageeventproject_set.all.0.id}}__{{s.sample.id}}" id="smpc__{{current_usage_event.usageeventproject_set.all.0.id}}__{{s.sample.id}}" onblur="save_sample_comment(this);">{% if s.notes is not None %}{{ s.notes }}{% endif %}</textarea>
 							</td>
 							<td><input type="button" class="btn btn-danger" value="-" onclick="remove_sample({{current_usage_event.usageeventproject_set.all.0.id}},{{s.sample.id}});" title="Remove this sample from the run" /></td>
 						</tr>
 						{% endif %}
 						{% endfor %}
-						<tr><td colspan="2"><input type="button" class="btn btn-success" value="+New" onclick="add_run_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add a new sample" /><input type="button" class="btn" value="+Existing" onclick="add_run_existing_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff;" {%if current_usage_event.usageeventproject_set.all.0.project.sample_set.all.count= =0 %} disabled{% endif %} /></td></tr>
+						<tr><td colspan="2"><input type="button" class="btn btn-success" value="+New" onclick="add_run_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add a new sample" /><input type="button" class="btn" value="+Existing" onclick="add_run_existing_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff;" {% if current_usage_event.usageeventproject_set.all.0.project.sample_set.all.count == 0 %} disabled{% endif %} /></td></tr>
 					</table>
 				</div>
 				{% else %}
@@ -182,20 +182,20 @@
 					{% if s.active_flag %}
 					<dt>{{ s.sample }}</dt>
 					<dd>
-						<textarea rows="2" cols="4" class="form-control" name="smpc__{{current_usage_event.usageeventproject_set.all.0.id}}__{{s.sample.id}}" id= ="smpc__{{current_usage_event.usageeventproject_set.all.0.id}}__{{s.sample.id}}" onblur="save_sample_comment(this);">{% if s.notes is not None %}{{ s.notes }}{% endif %}</textarea>
+						<textarea rows="2" cols="4" class="form-control" name="smpc__{{current_usage_event.usageeventproject_set.all.0.id}}__{{s.sample.id}}" id="smpc__{{current_usage_event.usageeventproject_set.all.0.id}}__{{s.sample.id}}" onblur="save_sample_comment(this);">{% if s.notes is not None %}{{ s.notes }}{% endif %}</textarea>
 						<br />
 						<input type="button" class="btn btn-danger" value="Remove Sample" onclick="remove_sample({{current_usage_event.usageeventproject_set.all.0.id}},{{s.sample.id}});" title="Remove this sample from the run" />
 					</dd>
 					{% endif %}
 					{% endfor %}
-					<dt><input type="button" class="btn btn-success" value="+New Sample" onclick="add_run_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add a new sample" /><input type="button" class="btn" value="+Existing Sample" onclick="add_run_existing_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff;" {%if current_usage_event.usageeventproject_set.all.0.project.sample_set.all.count= =0 %} disabled{% endif %} /></dt>
+					<dt><input type="button" class="btn btn-success" value="+New Sample" onclick="add_run_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add a new sample" /><input type="button" class="btn" value="+Existing Sample" onclick="add_run_existing_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff;" {%if current_usage_event.usageeventproject_set.all.0.project.sample_set.all.count==0 %} disabled{% endif %} /></dt>
 					{% endif %}
 				</dl>
 
 				{% else %}
 				<p>
 					No samples currently selected<br />
-					<input type="button" class="btn btn-success" value="+New" onclick="add_run_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add a new sample" /><input type="button" class="btn" value="+Existing" onclick="add_run_existing_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff;" {%if current_usage_event.usageeventproject_set.all.0.project.sample_set.all.count= =0 %} disabled{% endif %} />
+					<input type="button" class="btn btn-success" value="+New" onclick="add_run_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add a new sample" /><input type="button" class="btn" value="+Existing" onclick="add_run_existing_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff;" {%if current_usage_event.usageeventproject_set.all.0.project.sample_set.all.count == 0 %} disabled{% endif %} />
 				</p>
 				{% endif %}
 				{% endif %}
