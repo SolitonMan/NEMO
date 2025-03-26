@@ -16,6 +16,7 @@ from NEMO.views import abuse, accounts_and_projects, alerts, api, area_access, a
 # REST API URLs
 router = routers.DefaultRouter()
 router.register(r'users', api.UserViewSet)
+router.register(r'usersfull', api.UserFullViewSet)
 router.register(r'projects', api.ProjectViewSet)
 router.register(r'accounts', api.AccountViewSet)
 router.register(r'tools', api.ToolViewSet)
