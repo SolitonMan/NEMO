@@ -40,7 +40,7 @@ class UsageEventSerializer(ModelSerializer):
 
 	class Meta:
 		model = UsageEvent
-		fields = ('id','start','end','user','tool','project','customers','projects','tool_details')
+		fields = ('id','start','end','user','tool','project','customers','projects')
 
 
 class AreaAccessRecordSerializer(ModelSerializer):
