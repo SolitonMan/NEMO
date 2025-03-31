@@ -29,12 +29,12 @@ class UsageEventFilter(FilterSet):
 		fields = []
 
 	def filter_recent_or_in_use(self, queryset, name, value):
-		logger.debug(f"Applying recent_or_in_use filter with value: {value}")
+		logger.debug("Applying recent_or_in_use filter with value: %s", value)
 		if value:
 			now = timezone.now()
 			five_minutes_ago = now - timezone.timedelta(minutes=5)
 			filtered_queryset = queryset.filter(Q(end__isnull=True) | Q(end__gte=five_minutes_ago))
-			logger.debug(f"Filtered queryset count: {filtered_queryset.count()}")
+			logger.debug("Filtered queryset count: %d", filtered_queryset.count())
 			return filtered_queryset
 		return queryset
 
