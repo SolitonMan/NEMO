@@ -34,13 +34,13 @@ class ReservationSerializer(ModelSerializer):
 
 
 class UsageEventSerializer(ModelSerializer):
-	project_details = ProjectSerializer(source='project', many=True, read_only=True)
-	customer_details = UserSerializer(source='user', many=True, read_only=True)
-	tool_details = ToolSerializer(source='tool', many=True, read_only=True)
+	projects = ProjectSerializer(many=True, read_only=True)
+	customers = UserSerializer(many=True, read_only=True)
+	tool_details = ToolSerializer(many=False, read_only=True)
 
 	class Meta:
 		model = UsageEvent
-		fields = ('id','start','end','user','tool','project','customers','projects','tool_details', 'project_details', 'customer_details')
+		fields = ('id','start','end','user','tool','project','customers','projects','tool_details')
 
 
 class AreaAccessRecordSerializer(ModelSerializer):
