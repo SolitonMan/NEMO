@@ -39,10 +39,11 @@ class UsageEventSerializer(ModelSerializer):
 	projects = ProjectSerializer(many=True, read_only=True)
 	customers = UserSerializer(many=True, read_only=True)
 	tool = ToolSerializer(read_only=True)
+	operator = UserSerializer(read_only=True)
 
 	class Meta:
 		model = UsageEvent
-		fields = ['id','start','end','user','tool','project','customers','projects']
+		fields = ['id','operator','start','end','user','tool','project','customers','projects']
 
 
 class AreaAccessRecordSerializer(ModelSerializer):

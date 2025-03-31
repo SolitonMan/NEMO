@@ -1,3 +1,4 @@
+from rest_framework.permissions import AllowAny
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from django_filters import rest_framework as filters
 import logging
@@ -36,6 +37,7 @@ class ReservationViewSet(ReadOnlyModelViewSet):
 
 
 class UsageEventViewSet(ReadOnlyModelViewSet):
+	permission_classes = [AllowAny]
 	queryset = UsageEvent.objects.all()
 	serializer_class = UsageEventSerializer
 	filter_class = UsageEventFilter
