@@ -1,4 +1,5 @@
 from rest_framework.viewsets import ReadOnlyModelViewSet
+from django_filters import rest_framework as filters
 
 from NEMO.filters import ReservationFilter, UsageEventFilter, AreaAccessRecordFilter, UserFilter
 from NEMO.models import User, Project, Account, Reservation, UsageEvent, AreaAccessRecord, Task, ScheduledOutage, Tool
@@ -36,6 +37,7 @@ class UsageEventViewSet(ReadOnlyModelViewSet):
 	queryset = UsageEvent.objects.all()
 	serializer_class = UsageEventSerializer
 	filter_class = UsageEventFilter
+	filter_backends = (filters.DjangoFilterBackend,)
 
 
 class AreaAccessRecordViewSet(ReadOnlyModelViewSet):
