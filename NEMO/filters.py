@@ -1,9 +1,12 @@
+import logging
 from django.db.models import Q
 from django.utils import timezone
 from django_filters import FilterSet, IsoDateTimeFilter, BooleanFilter
 from django_filters.widgets import BooleanWidget
 
 from NEMO.models import Reservation, UsageEvent, AreaAccessRecord, User
+
+logger = logging.getLogger(__name__)
 
 
 class ReservationFilter(FilterSet):
@@ -26,10 +29,13 @@ class UsageEventFilter(FilterSet):
 		fields = []
 
 	def filter_recent_or_in_use(self, queryset, name, value):
+		logger.debug(f"Applying recent_or_in_use filter with value: {value}")
 		if value:
 			now = timezone.now()
 			five_minutes_ago = now - timezone.timedelta(minutes=5)
-			return queryset.filter(Q(end__isnull=True) | Q(end__gte=five_minutes_ago))
+			filtered_queryset = queryset.filter(Q(end__isnull=True) | Q(end__gte=five_minutes_ago))
+			logger.debug(f"Filtered queryset count: {filtered_queryset.count()}")
+			return filtered_queryset
 		return queryset
 
 
