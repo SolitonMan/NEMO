@@ -22,9 +22,11 @@ class AccountSerializer(ModelSerializer):
 
 
 class ToolSerializer(ModelSerializer):
+	primary_owner = UserSerializer(read_only=True)
+
 	class Meta:
 		model = Tool
-		fields = ['id', 'name','primary_owner','location']
+		fields = ['id','name','primary_owner','location']
 
 
 class ReservationSerializer(ModelSerializer):
