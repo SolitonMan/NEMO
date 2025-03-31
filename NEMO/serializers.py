@@ -34,9 +34,9 @@ class ReservationSerializer(ModelSerializer):
 
 
 class UsageEventSerializer(ModelSerializer):
-	project_details = ProjectSerializer(many=True, read_only=True)
-	customer_details = UserSerializer(many=True, read_only=True)
-	tool_details = ToolSerializer(many=True, read_only=True)
+	project_details = ProjectSerializer(source='project', many=True, read_only=True)
+	customer_details = UserSerializer(source='user', many=True, read_only=True)
+	tool_details = ToolSerializer(source='tool', many=True, read_only=True)
 
 	class Meta:
 		model = UsageEvent
