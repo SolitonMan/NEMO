@@ -20,6 +20,7 @@ class ReservationFilter(FilterSet):
 
 
 class UsageEventFilter(FilterSet):
+	logger.debug("Entering the UsageEventFilter")
 	start_gte = IsoDateTimeFilter('start', lookup_expr='gte')
 	start_lt = IsoDateTimeFilter('start', lookup_expr='lt')
 	recent_or_in_use = BooleanFilter(method='filter_recent_or_in_use', widget=BooleanWidget())
