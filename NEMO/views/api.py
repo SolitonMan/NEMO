@@ -1,10 +1,12 @@
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from django_filters import rest_framework as filters
+import logging
 
 from NEMO.filters import ReservationFilter, UsageEventFilter, AreaAccessRecordFilter, UserFilter
 from NEMO.models import User, Project, Account, Reservation, UsageEvent, AreaAccessRecord, Task, ScheduledOutage, Tool
 from NEMO.serializers import UserSerializer, ProjectSerializer, AccountSerializer, ReservationSerializer, UsageEventSerializer, AreaAccessRecordSerializer, TaskSerializer, ScheduledOutageSerializer, ToolSerializer
 
+logger = logging.getLogger(__name__)
 
 class UserViewSet(ReadOnlyModelViewSet):
 	queryset = User.objects.all()
@@ -38,6 +40,12 @@ class UsageEventViewSet(ReadOnlyModelViewSet):
 	serializer_class = UsageEventSerializer
 	filter_class = UsageEventFilter
 	filter_backends = (filters.DjangoFilterBackend,)
+
+	def get_queryset(self):
+		logger.debug("UsageEventViewSet: get_queryset called")
+		queryset = super().get_queryset()
+		logger.debug("UsageEventViewSet: queryset count before filtering: %d", queryset.count())
+		return queryset
 
 
 class AreaAccessRecordViewSet(ReadOnlyModelViewSet):
