@@ -29,6 +29,11 @@ class UsageEventFilter(FilterSet):
 		model = UsageEvent
 		fields = []
 
+	def __init__(self, *args, **kwargs):
+		logger.debug("Initializing UsageEventFilter")
+		super().__init__(*args, **kwargs)
+
+
 	def filter_recent_or_in_use(self, queryset, name, value):
 		logger.debug("Applying recent_or_in_use filter with value: %s", value)
 		if value:
