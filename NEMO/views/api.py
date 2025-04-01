@@ -45,10 +45,10 @@ class UsageEventViewSet(ReadOnlyModelViewSet):
 	filter_backends = [filters.DjangoFilterBackend]
 	filter_class = UsageEventFilter
 
-	def get_queryset(self, request):
+	def get_queryset(self):
 		logger.debug("UsageEventViewSet: get_queryset called")
 		queryset = super().get_queryset()
-		recent_or_in_use = request.get.GET('recent_or_in_use', False)
+		recent_or_in_use = self.request.get.GET('recent_or_in_use', False)
 		if recent_or_in_use:
 			now = timezone.now()
 			five_minutes_ago = now - timezone.timedelta(minutes=5)
