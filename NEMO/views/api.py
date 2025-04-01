@@ -45,14 +45,16 @@ class UsageEventViewSet(ReadOnlyModelViewSet):
 	filter_backends = [filters.DjangoFilterBackend]
 	filter_class = UsageEventFilter
 
-	def get_queryset(self):
+	def get_queryset(self, request):
 		logger.debug("UsageEventViewSet: get_queryset called")
 		queryset = super().get_queryset()
-		now = timezone.now()
-		five_minutes_ago = now - timezone.timedelta(minutes=5)
-		filtered_queryset = queryset.filter(Q(end__isnull=True) | Q(end__gte=five_minutes_ago))
-		logger.debug("UsageEventViewSet: queryset count before filtering: %d", queryset.count())
-		return filtered_queryset
+		recent_or_in_use = request.get.GET('recent_or_in_use', False)
+		if recent_or_in_use:
+			now = timezone.now()
+			five_minutes_ago = now - timezone.timedelta(minutes=5)
+			queryset = queryset.filter(Q(end__isnull=True) | Q(end__gte=five_minutes_ago))
+			logger.debug("UsageEventViewSet: queryset count before filtering: %d", queryset.count())
+		return queryset
 
 
 class AreaAccessRecordViewSet(ReadOnlyModelViewSet):
