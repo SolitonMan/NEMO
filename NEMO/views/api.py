@@ -1,6 +1,7 @@
 from rest_framework.permissions import AllowAny
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from django_filters import rest_framework as filters
+from django.db.models import Q
 from django.utils import timezone
 import logging
 
