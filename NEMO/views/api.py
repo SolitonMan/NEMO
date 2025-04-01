@@ -1,6 +1,7 @@
 from rest_framework.permissions import AllowAny
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from django_filters import rest_framework as filters
+from django.utils import timezone
 import logging
 
 from NEMO.filters import ReservationFilter, UsageEventFilter, AreaAccessRecordFilter, UserFilter
@@ -38,16 +39,19 @@ class ReservationViewSet(ReadOnlyModelViewSet):
 
 class UsageEventViewSet(ReadOnlyModelViewSet):
 	permission_classes = [AllowAny]
-	queryset = UsageEvent.objects.all()
 	serializer_class = UsageEventSerializer
+	queryset = UsageEvent.objects.all()
 	filter_backends = [filters.DjangoFilterBackend]
 	filter_class = UsageEventFilter
 
 	def get_queryset(self):
 		logger.debug("UsageEventViewSet: get_queryset called")
 		queryset = super().get_queryset()
+		now = timezone.now()
+		five_minutes_ago = now - timezone.timedelta(minutes=5)
+		filtered_queryset = queryset.filter(Q(end__isnull=True) | Q(end__gte=five_minutes_ago))
 		logger.debug("UsageEventViewSet: queryset count before filtering: %d", queryset.count())
-		return queryset
+		return filtered_queryset
 
 
 class AreaAccessRecordViewSet(ReadOnlyModelViewSet):
