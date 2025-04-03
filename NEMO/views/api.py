@@ -45,19 +45,19 @@ class UsageEventViewSet(ReadOnlyModelViewSet):
 	serializer_class = UsageEventSerializer	
 	filter_class = UsageEventFilter
 
-	def get_queryset(self):
-		logger.debug("UsageEventViewSet: get_queryset called")
-		queryset = super().get_queryset()
-		now = timezone.now()
-		thirty_days_ago = now - timezone.timedelta(days=30)
-		queryset = queryset.filter(Q(end__isnull=True) | Q(end__gte=thirty_days_ago))
-		recent_or_in_use = self.request.query_params.get('recent_or_in_use', None)
-		if recent_or_in_use:
-			now = timezone.now()
-			five_minutes_ago = now - timezone.timedelta(minutes=5)
-			queryset = queryset.filter(Q(end__isnull=True) | Q(end__gte=five_minutes_ago))
-			logger.debug("UsageEventViewSet: queryset count before filtering: %d", queryset.count())
-		return queryset
+	#def get_queryset(self):
+	#	logger.debug("UsageEventViewSet: get_queryset called")
+	#	queryset = super().get_queryset()
+	#	now = timezone.now()
+	#	thirty_days_ago = now - timezone.timedelta(days=30)
+	#	queryset = queryset.filter(Q(end__isnull=True) | Q(end__gte=thirty_days_ago))
+	#	recent_or_in_use = self.request.query_params.get('recent_or_in_use', None)
+	#	if recent_or_in_use:
+	#		now = timezone.now()
+	#		five_minutes_ago = now - timezone.timedelta(minutes=5)
+	#		queryset = queryset.filter(Q(end__isnull=True) | Q(end__gte=five_minutes_ago))
+	#		logger.debug("UsageEventViewSet: queryset count before filtering: %d", queryset.count())
+	#	return queryset
 
 
 class AreaAccessRecordViewSet(ReadOnlyModelViewSet):
