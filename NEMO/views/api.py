@@ -40,11 +40,9 @@ class ReservationViewSet(ReadOnlyModelViewSet):
 
 
 class UsageEventViewSet(ReadOnlyModelViewSet):
-	queryset = UsageEvent.objects.all()[:1000]
+	queryset = UsageEvent.objects.all()
 	permission_classes = [AllowAny]
 	serializer_class = UsageEventSerializer	
-	pagination_class = CustomPageNumberPagination
-	filter_backends = [filters.DjangoFilterBackend]
 	filter_class = UsageEventFilter
 
 	def get_queryset(self):

@@ -20,29 +20,29 @@ class ReservationFilter(FilterSet):
 
 
 class UsageEventFilter(FilterSet):
-	logger.debug("Entering the UsageEventFilter")
+	#logger.debug("Entering the UsageEventFilter")
 	start_gte = IsoDateTimeFilter('start', lookup_expr='gte')
 	start_lt = IsoDateTimeFilter('start', lookup_expr='lt')
-	recent_or_in_use = BooleanFilter(method='filter_recent_or_in_use', widget=BooleanWidget())
+	#recent_or_in_use = BooleanFilter(method='filter_recent_or_in_use', widget=BooleanWidget())
 
 	class Meta:
 		model = UsageEvent
 		fields = []
 
-	def __init__(self, *args, **kwargs):
-		logger.debug("Initializing UsageEventFilter")
-		super().__init__(*args, **kwargs)
+	#def __init__(self, *args, **kwargs):
+	#	logger.debug("Initializing UsageEventFilter")
+	#	super().__init__(*args, **kwargs)
 
 
-	def filter_recent_or_in_use(self, queryset, name, value):
-		logger.debug("Applying recent_or_in_use filter with value: %s", value)
-		if value:
-			now = timezone.now()
-			five_minutes_ago = now - timezone.timedelta(minutes=5)
-			filtered_queryset = queryset.filter(Q(end__isnull=True) | Q(end__gte=five_minutes_ago))
-			logger.debug("Filtered queryset count: %d", filtered_queryset.count())
-			return filtered_queryset
-		return queryset
+	#def filter_recent_or_in_use(self, queryset, name, value):
+	#	logger.debug("Applying recent_or_in_use filter with value: %s", value)
+	#	if value:
+	#		now = timezone.now()
+	#		five_minutes_ago = now - timezone.timedelta(minutes=5)
+	#		filtered_queryset = queryset.filter(Q(end__isnull=True) | Q(end__gte=five_minutes_ago))
+	#		logger.debug("Filtered queryset count: %d", filtered_queryset.count())
+	#		return filtered_queryset
+	#	return queryset
 
 
 class AreaAccessRecordFilter(FilterSet):
