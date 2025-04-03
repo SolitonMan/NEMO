@@ -50,6 +50,7 @@ class UsageEventViewSet(ReadOnlyModelViewSet):
 	def get_queryset(self):
 		logger.debug("UsageEventViewSet: get_queryset called")
 		queryset = super().get_queryset()
+		now = timezone.now()
 		thirty_days_ago = now - timezone.timedelta(days=30)
 		queryset = queryset.filter(Q(end__isnull=True) | Q(end__gte=thirty_days_ago))
 		recent_or_in_use = self.request.query_params.get('recent_or_in_use', None)
