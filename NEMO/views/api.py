@@ -7,6 +7,7 @@ import logging
 
 from NEMO.filters import ReservationFilter, UsageEventFilter, AreaAccessRecordFilter, UserFilter
 from NEMO.models import User, Project, Account, Reservation, UsageEvent, AreaAccessRecord, Task, ScheduledOutage, Tool
+from NEMO.pagination import CustomPageNumberPagination
 from NEMO.serializers import UserSerializer, ProjectSerializer, AccountSerializer, ReservationSerializer, UsageEventSerializer, AreaAccessRecordSerializer, TaskSerializer, ScheduledOutageSerializer, ToolSerializer
 
 logger = logging.getLogger(__name__)
@@ -39,11 +40,10 @@ class ReservationViewSet(ReadOnlyModelViewSet):
 
 
 class UsageEventViewSet(ReadOnlyModelViewSet):
-	now = timezone.now()
+	queryset = UsageEvent.objects.all()[:1000]
 	permission_classes = [AllowAny]
 	serializer_class = UsageEventSerializer	
-	pagination_class = None
-	queryset = UsageEvent.objects.all()[:1000]
+	pagination_class = CustomPageNumberPagination
 	filter_backends = [filters.DjangoFilterBackend]
 	filter_class = UsageEventFilter
 
