@@ -44,8 +44,8 @@ class UsageEventViewSet(ReadOnlyModelViewSet):
 	serializer_class = UsageEventSerializer	
 	pagination_class = None
 	queryset = UsageEvent.objects.all()[:1000]
-	#filter_backends = [filters.DjangoFilterBackend]
-	#filter_class = UsageEventFilter
+	filter_backends = [filters.DjangoFilterBackend]
+	filter_class = UsageEventFilter
 
 	def get_queryset(self):
 		logger.debug("UsageEventViewSet: get_queryset called")
