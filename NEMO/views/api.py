@@ -41,7 +41,8 @@ class ReservationViewSet(ReadOnlyModelViewSet):
 class UsageEventViewSet(ReadOnlyModelViewSet):
 	now = timezone.now()
 	permission_classes = [AllowAny]
-	serializer_class = UsageEventSerializer
+	serializer_class = UsageEventSerializer	
+	pagination_class = None
 	thirty_days_ago = now - timezone.timedelta(days=30)
 	queryset = UsageEvent.objects.filter(Q(end__isnull=True) | Q(end__gte=thirty_days_ago))
 	#filter_backends = [filters.DjangoFilterBackend]
