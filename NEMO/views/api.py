@@ -44,8 +44,8 @@ class UsageEventViewSet(ReadOnlyModelViewSet):
 	serializer_class = UsageEventSerializer
 	thirty_days_ago = now - timezone.timedelta(days=30)
 	queryset = UsageEvent.objects.filter(Q(end__isnull=True) | Q(end__gte=thirty_days_ago))
-	filter_backends = [filters.DjangoFilterBackend]
-	filter_class = UsageEventFilter
+	#filter_backends = [filters.DjangoFilterBackend]
+	#filter_class = UsageEventFilter
 
 	def get_queryset(self):
 		logger.debug("UsageEventViewSet: get_queryset called")
