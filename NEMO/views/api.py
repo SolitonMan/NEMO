@@ -40,7 +40,7 @@ class ReservationViewSet(ReadOnlyModelViewSet):
 
 
 class UsageEventViewSet(ReadOnlyModelViewSet):
-	queryset = UsageEvent.objects.all()
+	queryset = UsageEvent.objects.all()[:100]
 	permission_classes = [AllowAny]
 	serializer_class = UsageEventSerializer	
 	filter_class = UsageEventFilter
