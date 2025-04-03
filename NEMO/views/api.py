@@ -39,6 +39,7 @@ class ReservationViewSet(ReadOnlyModelViewSet):
 
 
 class UsageEventViewSet(ReadOnlyModelViewSet):
+	now = timezone.now()
 	permission_classes = [AllowAny]
 	serializer_class = UsageEventSerializer
 	thirty_days_ago = now - timezone.timedelta(days=30)
