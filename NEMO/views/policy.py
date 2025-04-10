@@ -427,7 +427,7 @@ def check_policy_to_cancel_reservation(reservation, user, request):
 
 	# Users may not cancel reservations that have already ended.
 	# Staff may break this rule.
-	if reservation.end < timezone.now() and not user.is_staff:
+	if reservation.end < timezone.now(): # and not user.is_staff:
 		return HttpResponseBadRequest("You may not cancel reservations that have already ended.")
 
 	if reservation.cancelled:
