@@ -216,6 +216,11 @@ def check_policy_to_save_reservation(request, cancelled_reservation, new_reserva
 	new_reservation_end = parse_datetime(str(new_reservation.end))
 	new_reservation_end = new_reservation_end.astimezone(timezone.get_current_timezone())
 
+	# Reservations may not have a start time in the past
+	if new_reservation_start < timezone.now():
+		policy_problems.append("Reservation start time (" + str(new_reservation_start) +
+		                       ") is earlier than the current time (" + format_datetime(timezone.now()) + ").  A reservation must have a start time in the future.")
+
 	# Reservations may not have a start time that is earlier than the end time.
 	if new_reservation_start >= new_reservation_end:
 		policy_problems.append("Reservation start time (" + str(new_reservation_start) + ") must be before the end time (" + str(new_reservation_end) + ").")
@@ -422,7 +427,7 @@ def check_policy_to_cancel_reservation(reservation, user, request):
 
 	# Users may not cancel reservations that have already ended.
 	# Staff may break this rule.
-	if reservation.end < timezone.now() and not user.is_staff:
+	if reservation.end < timezone.now(): # and not user.is_staff:
 		return HttpResponseBadRequest("You may not cancel reservations that have already ended.")
 
 	if reservation.cancelled:

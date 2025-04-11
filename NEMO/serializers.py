@@ -6,25 +6,27 @@ from NEMO.models import User, Project, Account, Reservation, AreaAccessRecord, U
 class UserSerializer(ModelSerializer):
 	class Meta:
 		model = User
-		fields = ('id', 'first_name', 'last_name', 'username', 'email', 'date_joined')
+		fields = ['id','first_name','last_name','username','email']
 
 
 class ProjectSerializer(ModelSerializer):
 	class Meta:
 		model = Project
-		fields = ('id', 'name', 'application_identifier', 'active')
+		fields = ['id', 'name', 'application_identifier', 'active']
 
 
 class AccountSerializer(ModelSerializer):
 	class Meta:
 		model = Account
-		fields = ('id', 'name', 'active')
+		fields = ['id', 'name', 'active']
 
 
 class ToolSerializer(ModelSerializer):
+	primary_owner = UserSerializer(read_only=True)
+
 	class Meta:
 		model = Tool
-		fields = '__all__'
+		fields = ['id','name','primary_owner','location']
 
 
 class ReservationSerializer(ModelSerializer):
@@ -34,9 +36,14 @@ class ReservationSerializer(ModelSerializer):
 
 
 class UsageEventSerializer(ModelSerializer):
+	projects = ProjectSerializer(many=True, read_only=True)
+	customers = UserSerializer(many=True, read_only=True)
+	tool = ToolSerializer(read_only=True)
+	operator = UserSerializer(read_only=True)
+
 	class Meta:
 		model = UsageEvent
-		fields = '__all__'
+		fields = ['id','operator','start','end','user','tool','project','customers','projects']
 
 
 class AreaAccessRecordSerializer(ModelSerializer):

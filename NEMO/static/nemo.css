@@ -151,12 +151,12 @@ label
 
 .light-grey
 {
-	background-color: lightgrey;
+	background-color: lightgrey!important;
 }
 
 .light-red
 {
-	background-color: #ffcccc;
+	background-color: #ffcccc!important;
 }
 
 .hover-black:hover

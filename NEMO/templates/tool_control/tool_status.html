@@ -1,339 +1,358 @@
 {% load custom_tags_and_filters %}
 
 <div id="django-debug" style="display: none;">
-my_reservation = {{ my_reservation }}
-my_reservation_projects = {{ my_reservation_projects }}
+	my_reservation = {{ my_reservation }}
+	my_reservation_projects = {{ my_reservation_projects }}
 </div>
 
 <div>
 	{% if device == 'mobile' %}
-		<h1>{{ tool.name }}</h1>
-		<ul class="nav nav-pills" id="tabs" style="margin-bottom:10px">
-			<li style="width:48%; text-align:center" class="active"><a href="#summary" style="padding: 10px 5px">Summary</a></li>
-			<li style="width:48%; text-align:center"><a href="#details" style="padding: 10px 5px">Details</a></li>
-			<li style="width:48%; text-align:center"><a href="#problem" style="padding: 10px 5px">Report a problem</a></li>
-			<li style="width:48%; text-align:center"><a href="#comment" style="padding: 10px 5px">Post a comment</a></li>
-		</ul>
+	<h1>{{ tool.name }}</h1>
+	<ul class="nav nav-pills" id="tabs" style="margin-bottom:10px">
+		<li style="width:48%; text-align:center" class="active"><a href="#summary" style="padding: 10px 5px">Summary</a></li>
+		<li style="width:48%; text-align:center"><a href="#details" style="padding: 10px 5px">Details</a></li>
+		<li style="width:48%; text-align:center"><a href="#problem" style="padding: 10px 5px">Report a problem</a></li>
+		<li style="width:48%; text-align:center"><a href="#comment" style="padding: 10px 5px">Post a comment</a></li>
+	</ul>
 	{% else %}
-		<h1 style="margin-right:20px; margin-top:0; margin-bottom:10px">{{ tool.name }}</h1>
-		<ul class="nav nav-pills" id="tabs">
-			<li class="active"><a href="#summary">Summary</a></li>
-			<li><a href="#details">Details</a></li>
-			<li><a href="#problem">Report a problem</a></li>
-			<li><a href="#comment">Post a comment</a></li>
-		</ul>
+	<h1 style="margin-right:20px; margin-top:0; margin-bottom:10px">{{ tool.name }}</h1>
+	<ul class="nav nav-pills" id="tabs">
+		<li class="active"><a href="#summary">Summary</a></li>
+		<li><a href="#details">Details</a></li>
+		<li><a href="#problem">Report a problem</a></li>
+		<li><a href="#comment">Post a comment</a></li>
+	</ul>
 	{% endif %}
 </div>
 {% if device != 'mobile' %}
-	{% if upcoming %}
-<div style="position: absolute; left:50%; width: 50%">	
-	<h3>Upcoming Reservations</h3>
-	<table class="table" style="width:600px">
-	<thead>
-		<tr>
-			<th>User</th>
-			<th>Start</th>
-			<th>End</th>
-		</tr>
-	</thead>
-	<tbody>
-	{% for key, value in upcoming.items %}
-	<tr{% if value.style is not None %} style="{{ value.style }}"{% endif %} >
-		<td>{{ value.user }}</td>
-		<td>{{ value.start|date:"m-d-Y g:i A" }}</td>
-		<td>{{ value.end|date:"m-d-Y g:i A" }}</td>
-	</tr>
-	{% endfor %}
-	</tbody>
-	</table>
+    {% if upcoming %}
+<div id="upcoming_reservations" class="panel panel-default" style="position: absolute; left:60%; width: 30%">
+	<div class="panel-heading">
+        <h3 class="panel-title">
+            Upcoming Reservations
+            <button type="button" class="close" data-toggle="collapse" data-target="#upcoming_reservations_body" aria-expanded="true" aria-controls="upcoming_reservations_body">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </h3>
+	</div>
+	<div id="upcoming_reservations_body" class="panel-collapse collapse in">
+		<div class="panel-body">
+			<table class="table" style="width:600px">
+				<thead>
+					<tr>
+						<th>User</th>
+						<th>Start</th>
+						<th>End</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for key, value in upcoming.items %}
+					<tr{% if value.style is not None %} style="{{ value.style }}" {% endif %}>
+						<td>{{ value.user }}</td>
+						<td>{{ value.start|date:"m-d-Y g:i A" }}</td>
+						<td>{{ value.end|date:"m-d-Y g:i A" }}</td>
+						</tr>
+						{% endfor %}
+				</tbody>
+			</table>
+		</div>
+	</div>
 </div>
-	{% endif %}
+    {% endif %}
 {% endif %}
-<br/>
-<div class="tab-content"{% if device != 'mobile' %} style="width: 75%"{% endif %}>
+<br />
+<div class="tab-content" {% if device != 'mobile' %} style="width: 75%" {% endif %}>
 	<div class="tab-pane active" id="summary">
 		{# Display tool status... #}
 		{% if tool.in_use %}
-			<div class="primary-highlight">
-				<span class="glyphicon glyphicon-user pull-left status-icon"></span>
-				{% with tool.get_current_usage_event as current_usage_event %}
-					<h4>
-						{% if current_usage_event.operator.id == user.id %}
-							You are using this tool
-						{% else %}
-							{{ current_usage_event.operator }} is using this tool
-						{% endif %}
-					</h4>
-					{% if request.user == current_usage_event.operator %}
-					<div>	
-						{% if current_usage_event.operator.id != current_usage_event.customers.all.0.id %}
-							{% if current_usage_event.customers.all|length > 0 %}
-								for the customer(s):
+		<div class="primary-highlight">
+			<span class="glyphicon glyphicon-user pull-left status-icon"></span>
+			{% with tool.get_current_usage_event as current_usage_event %}
+			<h4>
+				{% if current_usage_event.operator.id == user.id %}
+				You are using this tool
+				{% else %}
+				{{ current_usage_event.operator }} is using this tool
+				{% endif %}
+			</h4>
+			{% if request.user == current_usage_event.operator %}
+			<div>
+				{% if current_usage_event.operator.id != current_usage_event.customers.all.0.id %}
+				{% if current_usage_event.customers.all|length > 0 %}
+				for the customer(s):
 
-								{% if device != 'mobile' %}
-								<table class="table">
-									<thead>
-									<tr>
-										<th>Customer</th>
-										<th>Project</th>
-										<th>Samples</th>
-										<th>Comment</th>
-									</tr>
-									</thead>
-									<tbody>
-								{% for uep in current_usage_event.usageeventproject_set.all %}
-									<tr>
-										<td>{{ uep.customer }}</td>
-										<td>{{ uep.project }}</td>
-										<td>
-										{% if uep.sample_detail.all is not None %}
-										<table>
-										{% for s in uep.usageeventprojectsample_set.all %}
-										{% if s.active_flag %}
-										<tr>
-										<td style="width: 60%">{{ s.sample }}</td>
-										<td>
-										<textarea rows="2" cols="5" class="form-control" name="smpc__{{uep.id}}__{{s.sample.id}}" id=="smpc__{{uep.id}}__{{s.sample.id}}" onblur="save_sample_comment(this);">{% if s.notes is not None %}{{ s.notes }}{% endif %}</textarea>
-										</td>
-										<td><input type="button" class="btn btn-danger" value="-" onclick="remove_sample({{uep.id}},{{s.sample.id}});" title="Remove this sample from the run" /></td>
-										</tr>
-										{% endif %}
-										{% endfor %}
-										<tr><td colspan="2"><input type="button" class="btn btn-success" value="+New" onclick="add_run_sample({{uep.project.id}},{{uep.id}});" title="Add a new sample" /><input type="button" class="btn" value="+Existing" onclick="add_run_existing_sample({{uep.project.id}},{{uep.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff" {% if uep.project.sample_set.all.count == 0 %}disabled {% endif %}/></td></tr>
-										</table>
-										{% else %}
-										{% endif %}
-										</td>
-										<td><textarea rows="3" cols="30" class="form-control" name="cc__{{ uep.id }}" id="cc__{{ uep.id }}" value="{{ uep.comment }}" onblur="save_comment(this);">{% if uep.comment is not None %}{{ uep.comment }}{% endif %}</textarea></td>
-									</tr>
-								{% endfor %}
-									</tbody>
-								</table>
-								{% else %}
-
-								<table class="table">
-								{% for uep in current_usage_event.usageeventproject_set.all %}
-									<tbody style="border: 5px solid rgb(66, 139, 202);">
-									<tr id="tr_{{ uep.id }}" onclick="toggle_following(this);"><td><b>{{ uep.customer }}</b></td></tr>
-									<tr style="display: none;"><td>Project: {{ uep.project }}</td></tr>
-									<tr style="display: none;" class="samples_header"><td><u>Samples</u></td></tr>
-										{% if uep.sample_detail.all is not None %}
-										{% for s in uep.usageeventprojectsample_set.all %}
-										{% if s.active_flag %}
-									<tr id="tr_{{ s.id }}" style="display: none;" class="sample_item"><td>Sample: {{ s.sample.identifier }}</td></tr>
-									<tr style="display: none;" class="sample_item"><td>Details: <br/>
-										{{ s.sample }}<br/>
-										Description: {{ s.sample.description }}</td></tr>
-									<tr style="display: none;" class="sample_item"><td>Sample {{ s.sample.identifier }} Comment: <br/><textarea rows="2" cols="4" class="form-control" name="smpc__{{uep.id}}__{{s.sample.id}}" id=="smpc__{{uep.id}}__{{s.sample.id}}" onblur="save_sample_comment(this);">{% if s.notes is not None %}{{ s.notes }}{% endif %}</textarea></td></tr>
-									<tr style="display: none;" class="samples_end"><td><input type="button" class="btn btn-danger" value="Remove Sample" onclick="remove_sample({{uep.id}},{{s.sample.id}});" title="Remove this sample from the run" /></td></tr>
-										{% endif %}
-										{% endfor %}
-									<tr style="display: none;" class="samples_end"><td><input type="button" class="btn btn-success" value="Add New Sample" onclick="add_run_sample({{uep.project.id}},{{uep.id}});" title="Add a new sample" /><input type="button" class="btn" value="Add Existing Sample" onclick="add_run_existing_sample({{uep.project.id}},{{uep.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff" {% if uep.project.sample_set.all.count == 0 %}disabled {% endif %}/></td></tr>
-										{% endif %}
-									<tr style="display: none;"><td>General Customer Comment:<br/><textarea rows="3" cols="4" class="form-control" name="cc__{{ uep.id }}" id="cc__{{ uep.id }}" value="{{ uep.comment }}" onblur="save_comment(this);">{% if uep.comment is not None %}{{ uep.comment }}{% endif %}</textarea></td></tr>
-									</tbody>
-								{% endfor %}
-								</table>
-								{% endif %}
-							{% else %}
-								for the customer {{ current_usage_event.customers.all.0 }} charging the project {{ current_usage_event.projects.all.0 }}
-							{% endif %}
-						{% else %}
-							for the project named {{ current_usage_event.projects.all.0 }}
-
-							{% if current_usage_event.usageeventproject_set.all.0.sample_detail.all.count > 0 %}
-
-							{% if device != 'mobile' %}
-							<div>
-								<h5>Samples</h5>
-								<table class="table">
-								{% for s in current_usage_event.usageeventproject_set.all.0.usageeventprojectsample_set.all %}
+				{% if device != 'mobile' %}
+				<table class="table">
+					<thead>
+						<tr>
+							<th>Customer</th>
+							<th>Project</th>
+							<th>Samples</th>
+							<th>Comment</th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for uep in current_usage_event.usageeventproject_set.all %}
+						<tr>
+							<td>{{ uep.customer }}</td>
+							<td>{{ uep.project }}</td>
+							<td>
+								{% if uep.sample_detail.all is not None %}
+								<table>
+									{% for s in uep.usageeventprojectsample_set.all %}
 									{% if s.active_flag %}
 									<tr>
-										<td style="width: 50%">{{ s.sample }}</td>
-										<td style="width: 50%">
-										<textarea rows="2" cols="5" class="form-control" name="smpc__{{current_usage_event.usageeventproject_set.all.0.id}}__{{s.sample.id}}" id=="smpc__{{current_usage_event.usageeventproject_set.all.0.id}}__{{s.sample.id}}" onblur="save_sample_comment(this);">{% if s.notes is not None %}{{ s.notes }}{% endif %}</textarea>
+										<td style="width: 60%">{{ s.sample }}</td>
+										<td>
+											<textarea rows="2" cols="5" class="form-control" name="smpc__{{uep.id}}__{{s.sample.id}}" id="smpc__{{uep.id}}__{{s.sample.id}}" onblur="save_sample_comment(this);">{% if s.notes is not None %}{{ s.notes }}{% endif %}</textarea>
 										</td>
-										<td><input type="button" class="btn btn-danger" value="-" onclick="remove_sample({{current_usage_event.usageeventproject_set.all.0.id}},{{s.sample.id}});" title="Remove this sample from the run" /></td>
+										<td><input type="button" class="btn btn-danger" value="-" onclick="remove_sample({{uep.id}},{{s.sample.id}});" title="Remove this sample from the run" /></td>
 									</tr>
 									{% endif %}
-								{% endfor %}
-									<tr><td colspan="2"><input type="button" class="btn btn-success" value="+New" onclick="add_run_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add a new sample" /><input type="button" class="btn" value="+Existing" onclick="add_run_existing_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff;" {%if current_usage_event.usageeventproject_set.all.0.project.sample_set.all.count == 0 %} disabled{% endif %} /></td></tr>
+									{% endfor %}
+									<tr><td colspan="2"><input type="button" class="btn btn-success" value="+New" onclick="add_run_sample({{uep.project.id}},{{uep.id}});" title="Add a new sample" /><input type="button" class="btn" value="+Existing" onclick="add_run_existing_sample({{uep.project.id}},{{uep.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff" {% if uep.project.sample_set.all.count == 0 %}disabled {% endif %} /></td></tr>
 								</table>
-							</div>
-							{% else %}
-
-							<dl class="accordion">
-							
-							{% for s in current_usage_event.usageeventproject_set.all.0.usageeventprojectsample_set.all %}
-								{% if s.active_flag %}
-								<dt>{{ s.sample }}</dt>
-								<dd><textarea rows="2" cols="4" class="form-control" name="smpc__{{current_usage_event.usageeventproject_set.all.0.id}}__{{s.sample.id}}" id=="smpc__{{current_usage_event.usageeventproject_set.all.0.id}}__{{s.sample.id}}" onblur="save_sample_comment(this);">{% if s.notes is not None %}{{ s.notes }}{% endif %}</textarea>	
-								<br/>
-								<input type="button" class="btn btn-danger" value="Remove Sample" onclick="remove_sample({{current_usage_event.usageeventproject_set.all.0.id}},{{s.sample.id}});" title="Remove this sample from the run" /></dd>
+								{% else %}
 								{% endif %}
-							{% endfor %}
-								<dt><input type="button" class="btn btn-success" value="+New Sample" onclick="add_run_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add a new sample" /><input type="button" class="btn" value="+Existing Sample" onclick="add_run_existing_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff;" {%if current_usage_event.usageeventproject_set.all.0.project.sample_set.all.count == 0 %} disabled{% endif %} /></dt>
-							{% endif %}
-							</dl>
+							</td>
+							<td><textarea rows="3" cols="30" class="form-control" name="cc__{{ uep.id }}" id="cc__{{ uep.id }}" value="{{ uep.comment }}" onblur="save_comment(this);">{% if uep.comment is not None %}{{ uep.comment }}{% endif %}</textarea></td>
+						</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+				{% else %}
 
-							{% else %}
-							<p>No samples currently selected<br/>
-							<input type="button" class="btn btn-success" value="+New" onclick="add_run_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add a new sample" /><input type="button" class="btn" value="+Existing" onclick="add_run_existing_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff;" {%if current_usage_event.usageeventproject_set.all.0.project.sample_set.all.count == 0 %} disabled{% endif %} />
-							</p>
-							{% endif %}
+				<table class="table">
+					{% for uep in current_usage_event.usageeventproject_set.all %}
+					<tbody style="border: 5px solid rgb(66, 139, 202);">
+						<tr id="tr_{{ uep.id }}" onclick="toggle_following(this);"><td><b>{{ uep.customer }}</b></td></tr>
+						<tr style="display: none;"><td>Project: {{ uep.project }}</td></tr>
+						<tr style="display: none;" class="samples_header"><td><u>Samples</u></td></tr>
+						{% if uep.sample_detail.all is not None %}
+						{% for s in uep.usageeventprojectsample_set.all %}
+						{% if s.active_flag %}
+						<tr id="tr_{{ s.id }}" style="display: none;" class="sample_item"><td>Sample: {{ s.sample.identifier }}</td></tr>
+						<tr style="display: none;" class="sample_item">
+							<td>
+								Details: <br />
+								{{ s.sample }}<br />
+								Description: {{ s.sample.description }}
+							</td>
+						</tr>
+						<tr style="display: none;" class="sample_item"><td>Sample {{ s.sample.identifier }} Comment: <br /><textarea rows="2" cols="4" class="form-control" name="smpc__{{uep.id}}__{{s.sample.id}}" id="smpc__{{uep.id}}__{{s.sample.id}}" onblur="save_sample_comment(this);">{% if s.notes is not None %}{{ s.notes }}{% endif %}</textarea></td></tr>
+						<tr style="display: none;" class="samples_end"><td><input type="button" class="btn btn-danger" value="Remove Sample" onclick="remove_sample({{uep.id}},{{s.sample.id}});" title="Remove this sample from the run" /></td></tr>
 						{% endif %}
-						since {{ current_usage_event.start|date:"l @ g:i A" }}.
-						{% if current_usage_event.set_for_autologout %}
-						<span style="font-weight: bold;"> You have scheduled an automatic logout for this run.  The run will complete at {{ current_usage_event.end_time|date:"l @ g:i A" }}
+						{% endfor %}
+						<tr style="display: none;" class="samples_end"><td><input type="button" class="btn btn-success" value="Add New Sample" onclick="add_run_sample({{uep.project.id}},{{uep.id}});" title="Add a new sample" /><input type="button" class="btn" value="Add Existing Sample" onclick="add_run_existing_sample({{uep.project.id}},{{uep.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff" {% if uep.project.sample_set.all.count == 0 %}disabled {% endif %} /></td></tr>
 						{% endif %}
-					</div>
-					{% endif %}
-				{% endwith %}
-			</div>
-			{% if time_left %}
+						<tr style="display: none;"><td>General Customer Comment:<br /><textarea rows="3" cols="4" class="form-control" name="cc__{{ uep.id }}" id="cc__{{ uep.id }}" value="{{ uep.comment }}" onblur="save_comment(this);">{% if uep.comment is not None %}{{ uep.comment }}{% endif %}</textarea></td></tr>
+					</tbody>
+					{% endfor %}
+				</table>
+				{% endif %}
+				{% else %}
+				for the customer {{ current_usage_event.customers.all.0 }} charging the project {{ current_usage_event.projects.all.0 }}
+				{% endif %}
+				{% else %}
+				for the project named {{ current_usage_event.projects.all.0 }}
+
+				{% if current_usage_event.usageeventproject_set.all.0.sample_detail.all.count > 0 %}
+
+				{% if device != 'mobile' %}
 				<div>
-					Your reservation for this tool will end at {{ time_left|date:"g:i A" }}. The remainder of your reservation will be relinquished when you stop using this tool.
+					<h5>Samples</h5>
+					<table class="table">
+						{% for s in current_usage_event.usageeventproject_set.all.0.usageeventprojectsample_set.all %}
+						{% if s.active_flag %}
+						<tr>
+							<td style="width: 50%">{{ s.sample }}</td>
+							<td style="width: 50%">
+								<textarea rows="2" cols="5" class="form-control" name="smpc__{{current_usage_event.usageeventproject_set.all.0.id}}__{{s.sample.id}}" id="smpc__{{current_usage_event.usageeventproject_set.all.0.id}}__{{s.sample.id}}" onblur="save_sample_comment(this);">{% if s.notes is not None %}{{ s.notes }}{% endif %}</textarea>
+							</td>
+							<td><input type="button" class="btn btn-danger" value="-" onclick="remove_sample({{current_usage_event.usageeventproject_set.all.0.id}},{{s.sample.id}});" title="Remove this sample from the run" /></td>
+						</tr>
+						{% endif %}
+						{% endfor %}
+						<tr><td colspan="2"><input type="button" class="btn btn-success" value="+New" onclick="add_run_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add a new sample" /><input type="button" class="btn" value="+Existing" onclick="add_run_existing_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff;" {% if current_usage_event.usageeventproject_set.all.0.project.sample_set.all.count == 0 %} disabled{% endif %} /></td></tr>
+					</table>
 				</div>
+				{% else %}
+
+				<dl class="accordion">
+
+					{% for s in current_usage_event.usageeventproject_set.all.0.usageeventprojectsample_set.all %}
+					{% if s.active_flag %}
+					<dt>{{ s.sample }}</dt>
+					<dd>
+						<textarea rows="2" cols="4" class="form-control" name="smpc__{{current_usage_event.usageeventproject_set.all.0.id}}__{{s.sample.id}}" id="smpc__{{current_usage_event.usageeventproject_set.all.0.id}}__{{s.sample.id}}" onblur="save_sample_comment(this);">{% if s.notes is not None %}{{ s.notes }}{% endif %}</textarea>
+						<br />
+						<input type="button" class="btn btn-danger" value="Remove Sample" onclick="remove_sample({{current_usage_event.usageeventproject_set.all.0.id}},{{s.sample.id}});" title="Remove this sample from the run" />
+					</dd>
+					{% endif %}
+					{% endfor %}
+					<dt><input type="button" class="btn btn-success" value="+New Sample" onclick="add_run_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add a new sample" /><input type="button" class="btn" value="+Existing Sample" onclick="add_run_existing_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff;" {%if current_usage_event.usageeventproject_set.all.0.project.sample_set.all.count == 0 %} disabled{% endif %} /></dt>
+					{% endif %}
+				</dl>
+
+				{% else %}
+				<p>
+					No samples currently selected<br />
+					<input type="button" class="btn btn-success" value="+New" onclick="add_run_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add a new sample" /><input type="button" class="btn" value="+Existing" onclick="add_run_existing_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff;" {%if current_usage_event.usageeventproject_set.all.0.project.sample_set.all.count == 0 %} disabled{% endif %} />
+				</p>
+				{% endif %}
+				{% endif %}
+				since {{ current_usage_event.start|date:"l @ g:i A" }}.
+				{% if current_usage_event.set_for_autologout %}
+				<span style="font-weight: bold;">
+					You have scheduled an automatic logout for this run.  The run will complete at {{ current_usage_event.end_time|date:"l @ g:i A" }}
+					{% endif %}
+			</div>
 			{% endif %}
+			{% endwith %}
+		</div>
+		{% if time_left %}
+		<div>
+			Your reservation for this tool will end at {{ time_left|date:"g:i A" }}. The remainder of your reservation will be relinquished when you stop using this tool.
+		</div>
+		{% endif %}
 		{% elif tool.delayed_logoff_in_progress %}
-			{% with tool.get_delayed_logoff_usage_event as delayed_logoff_event %}
-				<div class="primary-highlight">
-					<span class="glyphicon glyphicon-time pull-left status-icon"></span>
-					<h3>{{ delayed_logoff_event.operator }} has finished using the {{ tool }} but delayed logoff is in effect. The tool will be available at {{ delayed_logoff_event.end|time }}.</h3>
-				</div>
-			{% endwith %}
+		{% with tool.get_delayed_logoff_usage_event as delayed_logoff_event %}
+		<div class="primary-highlight">
+			<span class="glyphicon glyphicon-time pull-left status-icon"></span>
+			<h3>{{ delayed_logoff_event.operator }} has finished using the {{ tool }} but delayed logoff is in effect. The tool will be available at {{ delayed_logoff_event.end|time }}.</h3>
+		</div>
+		{% endwith %}
 		{% elif tool.scheduled_outages %}
-			{% if request.user == tool.primary_owner or request.user in tool.backup_owners.all %}
-			<input type="checkbox" onchange="toggleEndOutage(this)" /> <b>End the scheduled outage when the tool run is completed</b>
-			{% else %}
-			{% with tool.scheduled_outages as outages %}
-				{% for o in outages %}
-					<div class="danger-highlight">
-						<span class="glyphicon glyphicon-time pull-left status-icon"></span>
-						<h3>{{ o.title }}</h3>
-						{% if o.details %}<h4>{{ o.details }}</h4>{% endif %}
-						<h4>{{ o.creator }} scheduled this outage from {{ o.start }} until {{ o.end }}.</h4>
-					</div>
-				{% endfor %}
-			{% endwith %}
-			{% endif %}
-		{% elif not tool.operational or tool.required_resource_is_unavailable %}
-			<div class="danger-highlight">
-				<span class="glyphicon glyphicon-ban-circle pull-left status-icon"></span>
-				<h3>This tool is <strong>shut down</strong>.</h3>
-			</div>
-		{% elif tool.nonrequired_resource_is_unavailable %}
-			<div class="warning-highlight">
-				<span class="glyphicon glyphicon-exclamation-sign pull-left status-icon"></span>
-				<h3>This tool is <strong>operational</strong> but not all resources are available.</h3>
-			</div>
+		{% if request.user == tool.primary_owner or request.user in tool.backup_owners.all %}
+		<input type="checkbox" onchange="toggleEndOutage(this)" /> <b>End the scheduled outage when the tool run is completed</b>
 		{% else %}
-			<div class="success-highlight">
-				<span class="glyphicon glyphicon-ok pull-left status-icon"></span>
-				<h3>This tool is <strong>operational</strong> and <strong>idle</strong>.</h3>
-			</div>
+		{% with tool.scheduled_outages as outages %}
+		{% for o in outages %}
+		<div class="danger-highlight">
+			<span class="glyphicon glyphicon-time pull-left status-icon"></span>
+			<h3>{{ o.title }}</h3>
+			{% if o.details %}<h4>{{ o.details }}</h4>{% endif %}
+			<h4>{{ o.creator }} scheduled this outage from {{ o.start }} until {{ o.end }}.</h4>
+		</div>
+		{% endfor %}
+		{% endwith %}
+		{% endif %}
+		{% elif not tool.operational or tool.required_resource_is_unavailable %}
+		<div class="danger-highlight">
+			<span class="glyphicon glyphicon-ban-circle pull-left status-icon"></span>
+			<h3>This tool is <strong>shut down</strong>.</h3>
+		</div>
+		{% elif tool.nonrequired_resource_is_unavailable %}
+		<div class="warning-highlight">
+			<span class="glyphicon glyphicon-exclamation-sign pull-left status-icon"></span>
+			<h3>This tool is <strong>operational</strong> but not all resources are available.</h3>
+		</div>
+		{% else %}
+		<div class="success-highlight">
+			<span class="glyphicon glyphicon-ok pull-left status-icon"></span>
+			<h3>This tool is <strong>operational</strong> and <strong>idle</strong>.</h3>
+		</div>
 		{% endif %}
 
 		{# Display any unavailable required resources... #}
 		{% for r in tool.unavailable_required_resources %}
-			<div class="media">
-				<span class="glyphicon glyphicon-leaf pull-left notification-icon danger-highlight"></span>
-				<div class="media-body">
-					<h4 class="media-heading">A required resource is unavailable: {{ r.name }} <span class="light-grey">({{ r.category }})</span></h4>
-					{{ r.restriction_message }}
-				</div>
+		<div class="media">
+			<span class="glyphicon glyphicon-leaf pull-left notification-icon danger-highlight"></span>
+			<div class="media-body">
+				<h4 class="media-heading">A required resource is unavailable: {{ r.name }} <span class="light-grey">({{ r.category }})</span></h4>
+				{{ r.restriction_message }}
 			</div>
+		</div>
 		{% endfor %}
 
 		{# Display any unavailable non-required resources... #}
 		{% for r in tool.unavailable_nonrequired_resources %}
-			<div class="media">
-				<span class="glyphicon glyphicon-leaf pull-left notification-icon warning-highlight"></span>
-				<div class="media-body">
-					<h4 class="media-heading">An optional resource is unavailable: {{ r.name }} <span class="light-grey">({{ r.category }})</span></h4>
-					{{ r.restriction_message }}
-				</div>
+		<div class="media">
+			<span class="glyphicon glyphicon-leaf pull-left notification-icon warning-highlight"></span>
+			<div class="media-body">
+				<h4 class="media-heading">An optional resource is unavailable: {{ r.name }} <span class="light-grey">({{ r.category }})</span></h4>
+				{{ r.restriction_message }}
 			</div>
+		</div>
 		{% endfor %}
 
 		{# Display all problems and shutdowns... #}
 		{% for t in tool.problems %}
-			<div class="media">
-				<a onclick="toggle_details(this)" data-toggle="collapse" data-target="#task_{{ t.id }}_details" class="pointer">
-					{% if t.force_shutdown %}
-						<span class="glyphicon glyphicon-fire pull-left notification-icon danger-highlight" title="Click to toggle details about this task"></span>
-					{% else %}
-						<span class="glyphicon glyphicon-wrench pull-left notification-icon warning-highlight" title="Click to toggle details about this task"></span>
-					{% endif %}
-					<span class="glyphicon glyphicon-chevron-right pull-left chevron"></span>
-				</a>
-				<div class="media-body">
-					{% if t.problem_category %}<h4 class="media-heading">{{ t.problem_category }}</h4>{% endif %}
-					{{ t.problem_description }}
-					{% if t.estimated_resolution_time %}<br>Estimated resolution time is {{ t.estimated_resolution_time }}.{% endif %}
-					<div id="task_{{ t.id }}_details" class="collapse">
-						<span class="grey">
-							This task was created by {{ t.creator }} on {{ t.creation_time }}.
-							{% if user.is_staff %}
-								You can <a href="{% url 'task_update_form' t.id %}">update</a> or <a href="{% url 'task_resolution_form' t.id %}">resolve</a> this task.
-							{% endif %}
-							{% if t.force_shutdown %}
-								The tool will remain shut down until this task is resolved.
-							{% endif %}
-							{% if t.creator.id == user.id %}
-								You may <a href="javascript:$('#cancel_task_{{ t.id }}').submit()">cancel</a> this task if it was mistakenly created.<br>
-								<form id="cancel_task_{{ t.id }}" action="{% url 'cancel_task' t.id %}" method="POST">
-									{% csrf_token %}
-								</form>
-							{% endif %}
-						</span>
-						{% if t.progress_description %}
-							<div class="media">
-								<span class="glyphicon glyphicon-info-sign pull-left notification-icon primary-highlight"></span>
-								<div class="media-body">
-									<h4 class="media-heading">Progress updates</h4>
-									{{ t.progress_description|linebreaksbr }}
-								</div>
-							</div>
+		<div class="media">
+			<a onclick="toggle_details(this)" data-toggle="collapse" data-target="#task_{{ t.id }}_details" class="pointer">
+				{% if t.force_shutdown %}
+				<span class="glyphicon glyphicon-fire pull-left notification-icon danger-highlight" title="Click to toggle details about this task"></span>
+				{% else %}
+				<span class="glyphicon glyphicon-wrench pull-left notification-icon warning-highlight" title="Click to toggle details about this task"></span>
+				{% endif %}
+				<span class="glyphicon glyphicon-chevron-right pull-left chevron"></span>
+			</a>
+			<div class="media-body">
+				{% if t.problem_category %}<h4 class="media-heading">{{ t.problem_category }}</h4>{% endif %}
+				{{ t.problem_description }}
+				{% if t.estimated_resolution_time %}<br>Estimated resolution time is {{ t.estimated_resolution_time }}.{% endif %}
+				<div id="task_{{ t.id }}_details" class="collapse">
+					<span class="grey">
+						This task was created by {{ t.creator }} on {{ t.creation_time }}.
+						{% if user.is_staff %}
+						You can <a href="{% url 'task_update_form' t.id %}">update</a> or <a href="{% url 'task_resolution_form' t.id %}">resolve</a> this task.
 						{% endif %}
+						{% if t.force_shutdown %}
+						The tool will remain shut down until this task is resolved.
+						{% endif %}
+						{% if t.creator.id == user.id %}
+						You may <a href="javascript:$('#cancel_task_{{ t.id }}').submit()">cancel</a> this task if it was mistakenly created.<br>
+						<form id="cancel_task_{{ t.id }}" action="{% url 'cancel_task' t.id %}" method="POST">
+							{% csrf_token %}
+						</form>
+						{% endif %}
+					</span>
+					{% if t.progress_description %}
+					<div class="media">
+						<span class="glyphicon glyphicon-info-sign pull-left notification-icon primary-highlight"></span>
+						<div class="media-body">
+							<h4 class="media-heading">Progress updates</h4>
+							{{ t.progress_description|linebreaksbr }}
+						</div>
 					</div>
+					{% endif %}
 				</div>
 			</div>
+		</div>
 		{% endfor %}
 
 		{# Display all comments... #}
 		{% for c in tool.comments %}
-			<div class="media">
-				{% if user.id == c.author.id or user.is_staff %}
-					<a onclick="toggle_details(this)" data-toggle="collapse" data-target="#comment_{{ c.id }}_actions" class="pointer">
+		<div class="media">
+			{% if user.id == c.author.id or user.is_staff %}
+			<a onclick="toggle_details(this)" data-toggle="collapse" data-target="#comment_{{ c.id }}_actions" class="pointer">
 				{% endif %}
 				<span class="glyphicon glyphicon-comment pull-left notification-icon primary-highlight" title="{% if c.expiration_date %}This comment will expire and become hidden on {{ c.expiration_date }}{% else %}This comment will be displayed indefinitely.{% endif %}"></span>
 				{% if user.id == c.author.id or user.is_staff %}
-					<span class="glyphicon glyphicon-chevron-right pull-left chevron"></span>
-					</a>
-				{% endif %}
-				<div class="media-body">
-					{{ c.content }}<br>
-					<span style="font-size:x-small; color:grey; font-style:italic">{{ c.author }} wrote this comment on {{ c.creation_date }}</span>
-					{% if user.id == c.author.id or user.is_staff %}
-						<div id="comment_{{ c.id }}_actions" class="collapse grey">
-							<form action="{% url 'hide_comment' c.id %}" method="post">
-								{% csrf_token %}
-								<a href="javascript:void(0)" onclick="$(this).closest('form').submit()">Hide this comment</a>.
-							</form>
-						</div>
-					{% endif %}
+				<span class="glyphicon glyphicon-chevron-right pull-left chevron"></span>
+			</a>
+			{% endif %}
+			<div class="media-body">
+				{{ c.content }}<br>
+				<span style="font-size:x-small; color:grey; font-style:italic">{{ c.author }} wrote this comment on {{ c.creation_date }}</span>
+				{% if user.id == c.author.id or user.is_staff %}
+				<div id="comment_{{ c.id }}_actions" class="collapse grey">
+					<form action="{% url 'hide_comment' c.id %}" method="post">
+						{% csrf_token %}
+						<a href="javascript:void(0)" onclick="$(this).closest('form').submit()">Hide this comment</a>.
+					</form>
 				</div>
+				{% endif %}
 			</div>
+		</div>
 		{% endfor %}
 
 		<div style="margin-top:10px">
 			{% if my_reservation is not None %}
 			You are accessing the {{ my_reservation.tool.name }} during a scheduled reservation.  If you set configuration options during the reservation process, those options should be selected below.  If they are not, it could be that there was insufficient time to configure the {{ my_reservation.tool.name }} before the start of your reservation.
-				{% if reservation_configurations is not None %}
-				{{ reservation_configurations|safe }}
-				{% endif %}
+			{% if reservation_configurations is not None %}
+			{{ reservation_configurations|safe }}
+			{% endif %}
 			{% endif %}
 			{{ rendered_configuration_html }}
 		</div>
@@ -344,80 +363,80 @@ my_reservation_projects = {{ my_reservation_projects }}
 			<input type="hidden" id="end_scheduled_outage" name="end_scheduled_outage" value="0" />
 			{% csrf_token %}
 			{% if tool.in_use %}
-				{% if tool.get_current_usage_event.operator.id == user.id or tool.get_current_usage_event.customer.all.0.id == user.id %}
-					{{ post_usage_questions }}
-					{% if tool.allow_delayed_logoff and not tool.delayed_logoff_in_progress %}
-						<div class="form-group">
-							Prevent others from using the tool for <input type="number" name="downtime" class="form-control" style="display:inline; width:auto" min="1" max="120" inputmode="numeric" pattern="[0-9]*" placeholder="0"> minutes after disabling the tool.
-							<a id="delayed_logoff_help" class="pointer" tabindex="0" data-toggle="popover" data-placement="bottom" data-trigger="focus" data-content="Some tools may require downtime after you finish using them. (For example, to perform automated cleaning or pump-down). Once you click &quot;Stop using the {{ tool }}&quot; the tool interlock will immediately disable the tool and it will remain unusable for the specified duration. Leave the duration blank to indicate that no post-usage downtime is required.">What's this?</a>
-						</div>
-					{% endif %}
+			{% if tool.get_current_usage_event.operator.id == user.id or tool.get_current_usage_event.customer.all.0.id == user.id %}
+			{{ post_usage_questions }}
+			{% if tool.allow_delayed_logoff and not tool.delayed_logoff_in_progress %}
+			<div class="form-group">
+				Prevent others from using the tool for <input type="number" name="downtime" class="form-control" style="display:inline; width:auto" min="1" max="120" inputmode="numeric" pattern="[0-9]*" placeholder="0"> minutes after disabling the tool.
+				<a id="delayed_logoff_help" class="pointer" tabindex="0" data-toggle="popover" data-placement="bottom" data-trigger="focus" data-content="Some tools may require downtime after you finish using them. (For example, to perform automated cleaning or pump-down). Once you click &quot;Stop using the {{ tool }}&quot; the tool interlock will immediately disable the tool and it will remain unusable for the specified duration. Leave the duration blank to indicate that no post-usage downtime is required.">What's this?</a>
+			</div>
+			{% endif %}
 
-					{% with tool.get_current_usage_event as current_usage_event %}
+			{% with tool.get_current_usage_event as current_usage_event %}
 
-						{% if current_usage_event.cost_per_sample_run %}
+			{% if current_usage_event.cost_per_sample_run %}
 
-							{% if current_usage_event.customers.all|length > 0 %}
-								<table class="table">
-									<thead>
-									<tr>
-										<th>Customer</th>
-										<th>Project</th>
-										<th>Cost per Sample</th>
-										<th># of Samples</th>
-									</tr>
-									</thead>
-									<tbody>
-								{% for uep in current_usage_event.usageeventproject_set.all %}
-									<tr>
-										<td>{{ uep.customer }}<input type="hidden" value="{{ uep.customer.id }}" name="chosen_user__{{ uep.id }}" /></td>
-										<td>{{ uep.project }}<input type="hidden" value="{{ uep.project.id }}" name="chosen_project__{{ uep.id }}" /></td>
-										<td><input type="text" class="form-control" name="fixed_cost__{{uep.id}}" id="fixed_cost__{{uep.id}}" value={% if uep.cost_per_sample is not None%}"{{uep.cost_per_sample}}"{% else %}""{% endif %} onblur="save_fixed_comment(this);" /></td>
-										<td><input type="text" class="form-control" name="num_samples__{{uep.id}}" id="num_samples__{{uep.id}}" value={% if uep.sample_num is not None%}"{{uep.sample_num}}"{% else %}""{% endif %} onblur="save_fixed_comment(this);" /></td>
-									</tr>
-								{% endfor %}
-									</tbody>
-								</table>
+			{% if current_usage_event.customers.all|length > 0 %}
+			<table class="table">
+				<thead>
+					<tr>
+						<th>Customer</th>
+						<th>Project</th>
+						<th>Cost per Sample</th>
+						<th># of Samples</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for uep in current_usage_event.usageeventproject_set.all %}
+					<tr>
+						<td>{{ uep.customer }}<input type="hidden" value="{{ uep.customer.id }}" name="chosen_user__{{ uep.id }}" /></td>
+						<td>{{ uep.project }}<input type="hidden" value="{{ uep.project.id }}" name="chosen_project__{{ uep.id }}" /></td>
+						<td><input type="text" class="form-control" name="fixed_cost__{{uep.id}}" id="fixed_cost__{{uep.id}}" value={% if uep.cost_per_sample is not None%}"{{uep.cost_per_sample}}"{% else %}""{% endif %} onblur="save_fixed_comment(this);" /></td>
+						<td><input type="text" class="form-control" name="num_samples__{{uep.id}}" id="num_samples__{{uep.id}}" value={% if uep.sample_num is not None%}"{{uep.sample_num}}"{% else %}""{% endif %} onblur="save_fixed_comment(this);" /></td>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
 
-								<script type="text/javascript">
+			<script type="text/javascript">
 								{% for uep in current_usage_event.usageeventproject_set.all %}
 								$("#fixed_cost__{{uep.id}}").limitInputCharacters(NUMBERS_ONLY);
 								$("#num_samples__{{uep.id}}").limitInputCharacters(INTEGERS_ONLY);
 								{% endfor %}
-								</script>
-							{% endif %}
+			</script>
+			{% endif %}
 
-						{% endif %}
+			{% endif %}
 
-					<div class="form-group" style="align: left; vertical-algin: top;">
-						<label class="control-label col-sm-2" for="operator_comment">Comment / Description of Run</label>
-						<textarea class="form-control" name="operator_comment" id="operator_comment" onblur="save_operator_comment()" rows="6" cols="50" placeholder="Please enter a brief description of the work performed, or make any notes you'd find useful for reference">{% if current_usage_event.operator_comment is not None %}{{ current_usage_event.operator_comment }}{% endif %}</textarea>
-					</div>
-					{% endwith %}
-					<div id="stop_wrapper" style="display:inline-block" data-toggle="tooltip" data-placement="bottom" title="Please answer the required questions (above) to proceed">
-						<button id="stop" class="btn btn-default" onclick="disable_tool('{% url 'disable_tool' tool.id %}'); return false"><span class="glyphicon glyphicon-stop"></span> Stop using the {{ tool.name }}</button>
-						<button id="pulse" class="btn btn-danger" onclick="pulse_interlock({{ tool.interlock.id }});return false;" title="Use this button if the interlock for the {{ tool.name }} failed to open when you started your session"><span class="glyphicon glyphicon-exclamation-sign"></span> Open Interlock</button>
-					</div><p>
+			<div class="form-group" style="align: left; vertical-algin: top;">
+				<label class="control-label col-sm-2" for="operator_comment">Comment / Description of Run</label>
+				<textarea class="form-control" name="operator_comment" id="operator_comment" onblur="save_operator_comment()" rows="6" cols="50" placeholder="Please enter a brief description of the work performed, or make any notes you'd find useful for reference">{% if current_usage_event.operator_comment is not None %}{{ current_usage_event.operator_comment }}{% endif %}</textarea>
+			</div>
+			{% endwith %}
+			<div id="stop_wrapper" style="display:inline-block" data-toggle="tooltip" data-placement="bottom" title="Please answer the required questions (above) to proceed">
+				<button id="stop" class="btn btn-default" onclick="disable_tool('{% url 'disable_tool' tool.id %}'); return false"><span class="glyphicon glyphicon-stop"></span> Stop using the {{ tool.name }}</button>
+				<button id="pulse" class="btn btn-danger" onclick="pulse_interlock({{ tool.interlock.id }});return false;" title="Use this button if the interlock for the {{ tool.name }} failed to open when you started your session"><span class="glyphicon glyphicon-exclamation-sign"></span> Open Interlock</button>
+			</div><p>
 				{% endif %}
-			{% else %}
+				{% else %}
 				{% if user.is_staff %}
 
-					{% for g in user.groups.all %}
-						{% if g.name == "Fixed Cost Billing" %}
-					<h4>How would you like to use this tool?</h4>
-					<div class="radio"><label><input type="radio" name="billing_mode" value="false" id="billing_mode" onclick="show_autologout(1);" checked>Standard billing (time & materials)</label></div>
-					<div class="radio"><label><input type="radio" name="billing_mode" value="true" id="billing_mode" onclick="show_autologout(0);">Fixed per sample rate (totals to be entered manually)</label></div>
-						{% endif %}
-					{% endfor %}
-					<h4>What would you like to do?</h4>
-					<div class="radio"><label><input type="radio" onchange="use_tool_for_self({{ tool.id }}){% if my_reservation %};set_start_button(0);{% endif %}" name="staff_charge" value="false" {% if not staff_member_for_customer %} checked{% endif %}>Use this tool for my own project</label></div>
-					<div class="radio"><label><input type="radio" onchange="use_tool_for_other({{ tool.id }}){% if my_reservation %};set_start_button(1);{% endif %}" name="staff_charge" value="true" {% if staff_member_for_customer %} checked{% endif %}>Use this tool on behalf of another user</label></div>
-					<div id="project_choice">
+				{% for g in user.groups.all %}
+				{% if g.name == "Fixed Cost Billing" %}
+				<h4>How would you like to use this tool?</h4>
+				<div class="radio"><label><input type="radio" name="billing_mode" value="false" id="billing_mode" onclick="show_autologout(1);" checked>Standard billing (time & materials)</label></div>
+				<div class="radio"><label><input type="radio" name="billing_mode" value="true" id="billing_mode" onclick="show_autologout(0);">Fixed per sample rate (totals to be entered manually)</label></div>
+				{% endif %}
+				{% endfor %}
+				<h4>What would you like to do?</h4>
+				<div class="radio"><label><input type="radio" onchange="use_tool_for_self({{ tool.id }}){% if my_reservation %};set_start_button(0);{% endif %}" name="staff_charge" value="false" {% if not staff_member_for_customer %} checked{% endif %}>Use this tool for my own project</label></div>
+				<div class="radio"><label><input type="radio" onchange="use_tool_for_other({{ tool.id }}){% if my_reservation %};set_start_button(1);{% endif %}" name="staff_charge" value="true" {% if staff_member_for_customer %} checked{% endif %}>Use this tool on behalf of another user</label></div>
+				<div id="project_choice">
 					{% if not staff_member_for_customer and my_reservation_projects is not None %}
 
 					{% endif %}
-					</div>
-					<div id="project_choice_multi">
+				</div>
+				<div id="project_choice_multi">
 					{% if staff_member_for_customer and my_reservation_projects is not None %}
 
 					{% if multi_core_user %}
@@ -430,7 +449,7 @@ my_reservation_projects = {{ my_reservation_projects }}
 
 					<select id="credit_cost_collector_select" name="credit_cost_collector_select" class="form-control" style="display: none;">
 						<option value="0">You may select a credit cost collector to receive funds for the staff charge related to this work</option>
-					{% for c in request.user.core_ids.all %}
+						{% for c in request.user.core_ids.all %}
 
 						{% for ccc in c.creditcostcollector_set.all %}
 						{% if ccc.project.active %}
@@ -438,200 +457,201 @@ my_reservation_projects = {{ my_reservation_projects }}
 						{% endif %}
 						{% endfor %}
 
-					{% endfor %}
+						{% endfor %}
 					</select>
 					{% else %}
 					<select id="credit_cost_collector_select" name="credit_cost_collector_select" class="form-control">
 						<option value="0">You may select a credit cost collector to receive funds for the staff charge related to this work</option>
-					{% for c in request.user.core_ids.all %}
+						{% for c in request.user.core_ids.all %}
 						{% for ccc in c.creditcostcollector_set.all %}
 						{% if ccc.project.active %}
 						<option value="{{ ccc.id }}" class="core_{{ c.id }}">{{ ccc.name }}</option>
 						{% endif %}
 						{% endfor %}
-					{% endfor %}
+						{% endfor %}
 					</select>
 					{% endif %}
 
 					<table id="usage_event_entries" class="table">
 
-					{% if request.device != 'mobile' %}
-					<tr>
-						<th>&nbsp;</th>
-						<th style="min-width:200px">Customer</th>
-						<th style="min-width:200px">Project</th>
-						<th style="min-width:300px">Samples</th>
-					</tr>
+						{% if request.device != 'mobile' %}
+						<tr>
+							<th>&nbsp;</th>
+							<th style="min-width:200px">Customer</th>
+							<th style="min-width:200px">Project</th>
+							<th style="min-width:300px">Samples</th>
+						</tr>
 
 
-					{% for r in my_reservation_projects %}
-					<tr id="row_{{ forloop.counter }}">
-						<td style="vertical-align: top">
-							<span class="glyphicon glyphicon-remove-circle grey pointer" onclick="remove_row({{ forloop.counter }});"</span>
-						</td>
-						<td>
-							{{ r.customer }}
-							<input type="hidden" value="{{ r.customer.id }}" id="user_textbox__{{ forloop.counter }}" name="chosen_user__{{ forloop.counter }}" data-row="{{ forloop.counter }}">
-						</td>
-						<td id="project__{{ forloop.counter }}" style="vertical-align: top">
-							{{ r.project }}
-							<input type="hidden" value="{{ r.project.id }}" name="chosen_project__{{ forloop.counter }}" id="chosen_project__{{ forloop.counter }}">
-						</td>
-						<td>
-						<select name="chosen_sample__{{ forloop.counter }}" class="form-control" id="chosen_sample__{{ forloop.counter }}" multiple size="4" style="width:fit-content">
-						{% for s in r.project.sample_project.all %}
-						<option value="{{ s.id }}"{% if s in r.sample.all %} selected{% endif %}>{{ s }}</option> 
-						{% endfor %}
-						</select>
-						</td>
-					</tr>
-					{% endfor %}
-					<tr>
-						<td colspan="4" style="text-align:center"><a href="javascript:void(0)" onclick="add_customer()">Add another customer</a></td>
-					</tr>
-
-					{% else %}
-
-					{% for r in my_reservation_projects %}
-
-					<tr id="row_{{ forloop.counter }}">
-
-						<td>
-							<table style="border: 3px solid black;">
-							<tr>
-								<td style="vertical-align: top">
-									{{ r.customer }}<input type="hidden" value="{{ r.customer.id }}" id="user_textbox__{{ forloop.counter }}" name="chosen_user__{{ forloop.counter }}" data-row="{{ forloop.counter }}">
-								</td>
-							</tr>
-							<tr>
-								<td id="project__{{ forloop.counter }}" style="vertical-align: top">
-									{{ r.project }}
-									<input type="hidden" value="{{ r.project.id }}" name="chosen_project__{{ forloop.counter }}" id="chosen_project__{{ forloop.counter }}">
-								</td>
-							</tr>
-							<tr>
-								<td>
-									<select name="chosen_sample__{{ forloop.counter }}" class="form-control" id="chosen_sample__{{ forloop.counter }}" multiple size="4" style="width:fit-content">
+						{% for r in my_reservation_projects %}
+						<tr id="row_{{ forloop.counter }}">
+							<td style="vertical-align: top">
+								<span class="glyphicon glyphicon-remove-circle grey pointer" onclick="remove_row({{ forloop.counter }});"</span>
+							</td>
+							<td>
+								{{ r.customer }}
+								<input type="hidden" value="{{ r.customer.id }}" id="user_textbox__{{ forloop.counter }}" name="chosen_user__{{ forloop.counter }}" data-row="{{ forloop.counter }}">
+							</td>
+							<td id="project__{{ forloop.counter }}" style="vertical-align: top">
+								{{ r.project }}
+								<input type="hidden" value="{{ r.project.id }}" name="chosen_project__{{ forloop.counter }}" id="chosen_project__{{ forloop.counter }}">
+							</td>
+							<td>
+								<select name="chosen_sample__{{ forloop.counter }}" class="form-control" id="chosen_sample__{{ forloop.counter }}" multiple size="4" style="width:fit-content">
 									{% for s in r.project.sample_project.all %}
-										<option value="{{ s.id }}"{% if s in r.sample.all %} selected{% endif %}>{{ s }}</option>
+									<option value="{{ s.id }}" {% if s in r.sample.all %} selected{% endif %}>{{ s }}</option>
 									{% endfor %}
-									</select>
-								</td>
-							</tr>
-							<tr>
-								<td>
-									<button class="btn btn-danger" onclick="remove_row({{ forloop.counter }});">Remove Customer</button>
-								</td>
-							</tr>
-							</table>
-						</td>
+								</select>
+							</td>
+						</tr>
+						{% endfor %}
+						<tr>
+							<td colspan="4" style="text-align:center"><a href="javascript:void(0)" onclick="add_customer()">Add another customer</a></td>
+						</tr>
 
-					</tr>
+						{% else %}
 
-					{% endfor %}
+						{% for r in my_reservation_projects %}
 
-					{% endif %}
+						<tr id="row_{{ forloop.counter }}">
+
+							<td>
+								<table style="border: 3px solid black;">
+									<tr>
+										<td style="vertical-align: top">
+											{{ r.customer }}<input type="hidden" value="{{ r.customer.id }}" id="user_textbox__{{ forloop.counter }}" name="chosen_user__{{ forloop.counter }}" data-row="{{ forloop.counter }}">
+										</td>
+									</tr>
+									<tr>
+										<td id="project__{{ forloop.counter }}" style="vertical-align: top">
+											{{ r.project }}
+											<input type="hidden" value="{{ r.project.id }}" name="chosen_project__{{ forloop.counter }}" id="chosen_project__{{ forloop.counter }}">
+										</td>
+									</tr>
+									<tr>
+										<td>
+											<select name="chosen_sample__{{ forloop.counter }}" class="form-control" id="chosen_sample__{{ forloop.counter }}" multiple size="4" style="width:fit-content">
+												{% for s in r.project.sample_project.all %}
+												<option value="{{ s.id }}" {% if s in r.sample.all %} selected{% endif %}>{{ s }}</option>
+												{% endfor %}
+											</select>
+										</td>
+									</tr>
+									<tr>
+										<td>
+											<button class="btn btn-danger" onclick="remove_row({{ forloop.counter }});">Remove Customer</button>
+										</td>
+									</tr>
+								</table>
+							</td>
+
+						</tr>
+
+						{% endfor %}
+
+						{% endif %}
 
 					</table>
 
 					{% endif %}
-					</div>
+				</div>
 				{% elif tool.operational and not tool.required_resource_is_unavailable and not tool.delayed_logoff_in_progress and not tool.scheduled_outage_in_progress %}
-					<div id="project_choice"></div>
+				<div id="project_choice"></div>
 				{% endif %}
 
 				{% if rendered_configuration_html == "" and tool.allow_autologout %}
 				<span style="" id="auto_logout_feature">
 					<div class="checkbox"><label><input type="checkbox" name="set_for_autologout" id="set_for_autologout" onchange="toggle_autologout();" />Set autologout for this tool use</label></div>
 					<div id="duration_options" class="datetimepicker-container" style="display: none;">
-					Please select the end time for this run: <input class="form-control" type="text" name="autologout_endtime" id="autologout_endtime" />
-					or choose a duration for the run: <input class="form-control duration-picker" type="text" name="autologout_duration" id="autologout_duration" /> 
+						Please select the end time for this run: <input class="form-control" type="text" name="autologout_endtime" id="autologout_endtime" />
+						or choose a duration for the run: <input class="form-control duration-picker" type="text" name="autologout_duration" id="autologout_duration" />
 					</div>
 				</span>
 				{% endif %}
 
 				<div>
-				{% if my_reservation %}
+					{% if my_reservation %}
 					<button id="start" class="btn btn-default"><span class="glyphicon glyphicon-play"></span> Start using the {{ tool.name }}</button>
-				{% elif user.is_staff or tool.operational and not tool.required_resource_is_unavailable and not tool.delayed_logoff_in_progress and not tool.scheduled_outage_in_progress %}
+					{% elif user.is_staff or tool.operational and not tool.required_resource_is_unavailable and not tool.delayed_logoff_in_progress and not tool.scheduled_outage_in_progress %}
 					<button id="start" class="btn btn-default" style="display:none"><span class="glyphicon glyphicon-play"></span> Start using the {{ tool.name }}</button>
-				{% endif %}
+					{% endif %}
 				</div>
-			{% endif %}
+				{% endif %}
 		</form>
 		<div style="height:150px">{# Spacer #}</div>
 	</div>
 
 	<div class="tab-pane" id="details">
 		{% if user.is_staff and tool.in_use %}
-			<p>You may <a href="javascript:void(0)" onclick="disable_tool('{% url 'disable_tool' tool.id %}')">force {{ tool.get_current_usage_event.operator }} off this tool</a>.</p>
+		<p>You may <a href="javascript:void(0)" onclick="disable_tool('{% url 'disable_tool' tool.id %}')">force {{ tool.get_current_usage_event.operator }} off this tool</a>.</p>
 		{% endif %}
 		<div class="media">
 			<span class="glyphicon glyphicon-info-sign pull-left notification-icon primary-highlight"></span>
 			<div class="media-body">
 				<p><a href="{% url 'get_email_form_for_user' tool.primary_owner.id %}" title="Email {{ tool.primary_owner.first_name }}"><span class="glyphicon glyphicon-send small-icon"></span>{{ tool.primary_owner }}</a> is primarily responsible for this tool and can be contacted with any questions or concerns about the tool.</p>
 				{% if tool.backup_owners.all.count == 1 %}
-					{% with tool.backup_owners.all|first as backup %}
-						<p>If you are unable to reach {{ tool.primary_owner }} then please contact the backup tool owner, <a href="{% url 'get_email_form_for_user' backup.id %}" title="Email {{ backup.first_name }}"><span class="glyphicon glyphicon-send small-icon"></span>{{ backup }}</a>.</p>
-					{% endwith %}
+				{% with tool.backup_owners.all|first as backup %}
+				<p>If you are unable to reach {{ tool.primary_owner }} then please contact the backup tool owner, <a href="{% url 'get_email_form_for_user' backup.id %}" title="Email {{ backup.first_name }}"><span class="glyphicon glyphicon-send small-icon"></span>{{ backup }}</a>.</p>
+				{% endwith %}
 				{% elif tool.backup_owners.all.count > 1 %}
-					<p>If you are unable to reach {{ tool.primary_owner }} then please contact
+				<p>
+					If you are unable to reach {{ tool.primary_owner }} then please contact
 					{% for x in tool.backup_owners.all %}
-						{% if not forloop.last %}
-							<a href="{% url 'get_email_form_for_user' x.id %}" title="Email {{ x.first_name }}"><span class="glyphicon glyphicon-send small-icon"></span>{{ x }}</a>,
-						{% else %}
-							or <a href="{% url 'get_email_form_for_user' x.id %}" title="Email {{ x.first_name }}"><span class="glyphicon glyphicon-send small-icon"></span>{{ x }}</a>.
-						{% endif %}
+					{% if not forloop.last %}
+					<a href="{% url 'get_email_form_for_user' x.id %}" title="Email {{ x.first_name }}"><span class="glyphicon glyphicon-send small-icon"></span>{{ x }}</a>,
+					{% else %}
+					or <a href="{% url 'get_email_form_for_user' x.id %}" title="Email {{ x.first_name }}"><span class="glyphicon glyphicon-send small-icon"></span>{{ x }}</a>.
+					{% endif %}
 					{% endfor %}
-					</p>
+				</p>
 				{% endif %}
 				{% if tool.notification_email_address %}
-					<p>Problem reports for the {{ tool.name }} are automatically emailed to <a href="{% url 'get_email_form' %}?recipient={{ tool.notification_email_address }}" title="Email {{ tool.notification_email_address }}"><span class="glyphicon glyphicon-send small-icon"></span>{{ tool.notification_email_address }}</a>.</p>
+				<p>Problem reports for the {{ tool.name }} are automatically emailed to <a href="{% url 'get_email_form' %}?recipient={{ tool.notification_email_address }}" title="Email {{ tool.notification_email_address }}"><span class="glyphicon glyphicon-send small-icon"></span>{{ tool.notification_email_address }}</a>.</p>
 				{% endif %}
 				<p>The {{ tool.name }} is located in room <span class="glyphicon glyphicon-map-marker small-icon"></span>{{ tool.location }}.</p>
 				<p>You may dial the phone that is closest to the {{ tool.name }} at extension <span class="glyphicon glyphicon-phone small-icon"></span>{{ tool.phone_number }}.</p>
 			</div>
 		</div>
 		{% if user.is_staff or tool.primary_owner == user %}
-			<div id="qualified_users_container" class="media">
-				{% include 'tool_control/qualified_users.html' %}
-			</div>
+		<div id="qualified_users_container" class="media">
+			{% include 'tool_control/qualified_users.html' %}
+		</div>
 		{% endif %}
 		{% if tool.required_resource_set.exists %}
-			<div class="media">
-				<a onclick="toggle_details(this)" data-toggle="collapse" data-target="#required_resources" class="pointer">
-					<span class="glyphicon glyphicon-leaf pull-left notification-icon success-highlight"></span>
-					<span class="glyphicon glyphicon-chevron-right pull-left chevron"></span>
-				</a>
-				<div class="media-body">
-					<h4 class="media-heading">Resources that are required for this tool to operate</h4>
-					<div id="required_resources" class="collapse">
-						<ul>
-							{% for u in tool.required_resource_set.all %}
-								<li>{{ u.name }} {% if u.category %}<span class="light-grey">({{ u.category }})</span>{% endif %}</li>
-							{% endfor %}
-						</ul>
-					</div>
+		<div class="media">
+			<a onclick="toggle_details(this)" data-toggle="collapse" data-target="#required_resources" class="pointer">
+				<span class="glyphicon glyphicon-leaf pull-left notification-icon success-highlight"></span>
+				<span class="glyphicon glyphicon-chevron-right pull-left chevron"></span>
+			</a>
+			<div class="media-body">
+				<h4 class="media-heading">Resources that are required for this tool to operate</h4>
+				<div id="required_resources" class="collapse">
+					<ul>
+						{% for u in tool.required_resource_set.all %}
+						<li>{{ u.name }} {% if u.category %}<span class="light-grey">({{ u.category }})</span>{% endif %}</li>
+						{% endfor %}
+					</ul>
 				</div>
 			</div>
+		</div>
 		{% endif %}
 		{% if tool.nonrequired_resource_set.exists %}
-			<div class="media">
-				<a onclick="toggle_details(this)" data-toggle="collapse" data-target="#nonrequired_resources" class="pointer">
-					<span class="glyphicon glyphicon-leaf pull-left notification-icon warning-highlight"></span>
-					<span class="glyphicon glyphicon-chevron-right pull-left chevron"></span>
-				</a>
-				<div class="media-body">
-					<h4 class="media-heading">Resources that are optional for this tool to operate</h4>
-					<div id="nonrequired_resources" class="collapse">
-						<ul>
-							{% for u in tool.nonrequired_resource_set.all %}
-								<li>{{ u.name }} <span class="light-grey">({{ u.category }})</span></li>
-							{% endfor %}
-						</ul>
-					</div>
+		<div class="media">
+			<a onclick="toggle_details(this)" data-toggle="collapse" data-target="#nonrequired_resources" class="pointer">
+				<span class="glyphicon glyphicon-leaf pull-left notification-icon warning-highlight"></span>
+				<span class="glyphicon glyphicon-chevron-right pull-left chevron"></span>
+			</a>
+			<div class="media-body">
+				<h4 class="media-heading">Resources that are optional for this tool to operate</h4>
+				<div id="nonrequired_resources" class="collapse">
+					<ul>
+						{% for u in tool.nonrequired_resource_set.all %}
+						<li>{{ u.name }} <span class="light-grey">({{ u.category }})</span></li>
+						{% endfor %}
+					</ul>
 				</div>
 			</div>
+		</div>
 		{% endif %}
 		<div class="media">
 			<a onclick="toggle_details(this)" data-toggle="collapse" data-target="#history" class="pointer">
@@ -684,27 +704,27 @@ my_reservation_projects = {{ my_reservation_projects }}
 			<p>Use this form to report a problem relating to the currently selected tool. The laboratory staff will be notified of the problem by email and the details of the problem will be visible to everyone on the website.</p>
 
 			{% if task_categories %}
-				<div class="form-group">
-					<label for="problem_category">Please choose a category that best describes this problem. If there is no appropriate category then leave this field blank.</label>
-					<select id="problem_category" name="problem_category" class="form-control" style="max-width:300px">
-						<option value="">&nbsp;</option>
-						{% for c in task_categories %}
-							<option value="{{ c.id }}">{{ c.name }}</option>
-						{% endfor %}
-					</select>
-				</div>
+			<div class="form-group">
+				<label for="problem_category">Please choose a category that best describes this problem. If there is no appropriate category then leave this field blank.</label>
+				<select id="problem_category" name="problem_category" class="form-control" style="max-width:300px">
+					<option value="">&nbsp;</option>
+					{% for c in task_categories %}
+					<option value="{{ c.id }}">{{ c.name }}</option>
+					{% endfor %}
+				</select>
+			</div>
 			{% endif %}
 
 			{% if task_statuses and user.is_staff %}
-				<div class="form-group">
-					<label for="status">What is the status of this task?</label>
-					<select id="status" name="status" class="form-control" style="max-width:300px">
-						<option value="">&nbsp;</option>
-						{% for s in task_statuses %}
-							<option>{{ s.name }}</option>
-						{% endfor %}
-					</select>
-				</div>
+			<div class="form-group">
+				<label for="status">What is the status of this task?</label>
+				<select id="status" name="status" class="form-control" style="max-width:300px">
+					<option value="">&nbsp;</option>
+					{% for s in task_statuses %}
+					<option>{{ s.name }}</option>
+					{% endfor %}
+				</select>
+			</div>
 			{% endif %}
 
 			<div class="form-group">
@@ -712,39 +732,38 @@ my_reservation_projects = {{ my_reservation_projects }}
 				<textarea id="description" name="description" class="form-control" rows="7" required></textarea>
 			</div>
 			{% if user.is_staff %}
-				<div class="form-group">
-					<div style="position:relative">
-						<label for="estimated_resolution_time" class="control-label">What is your best estimate of when the problem will be resolved? Leave this field blank if you are unsure.</label>
-						<input id="estimated_resolution_time" name="estimated_resolution_time" type="text" class="form-control" autocomplete="off">
-						<script>
-							var timepicker_properties =
-							{
-								useCurrent: false, 
-								format: 'YYYY-MM-DD hh:mm A',
-								sideBySide: true
-							};
-							$('#estimated_resolution_time').datetimepicker(timepicker_properties);
-						</script>
-					</div>
+			<div class="form-group">
+				<div style="position:relative">
+					<label for="estimated_resolution_time" class="control-label">What is your best estimate of when the problem will be resolved? Leave this field blank if you are unsure.</label>
+					<input id="estimated_resolution_time" name="estimated_resolution_time" type="text" class="form-control" autocomplete="off">
+					<script>
+						var timepicker_properties =
+						{
+							useCurrent: false,
+							format: 'YYYY-MM-DD hh:mm A',
+							sideBySide: true
+						};
+						$('#estimated_resolution_time').datetimepicker(timepicker_properties);
+					</script>
 				</div>
+			</div>
 			{% endif %}
 			<div class="form-group">
-				<div class="checkbox"><label><input name="safety_hazard" type="checkbox"/>This problem represents a safety hazard to the laboratory and should be regarded as urgent. Notify the laboratory safety officer of this issue.</label></div>
-				<div class="checkbox"><label><input name="force_shutdown" type="checkbox"/>Shut down the tool so that it may not be used until this problem is resolved.</label></div>
+				<div class="checkbox"><label><input name="safety_hazard" type="checkbox" />This problem represents a safety hazard to the laboratory and should be regarded as urgent. Notify the laboratory safety officer of this issue.</label></div>
+				<div class="checkbox"><label><input name="force_shutdown" type="checkbox" />Shut down the tool so that it may not be used until this problem is resolved.</label></div>
 			</div>
 			<div class="form-group">
 				<button type="submit" class="btn btn-danger">Report problem</button>
 			</div>
 		</form>
 		<script type="text/javascript">
-		function submit_report_problem()
-		{
-			if ($('#estimated_resolution_time').val() != "") {
-				$('#estimated_resolution_time').val(convert_12_to_24($('#estimated_resolution_time').val()));
-			}
+			function submit_report_problem() {
+				if ($('#estimated_resolution_time').val() != "") {
+					$('#estimated_resolution_time').val(convert_12_to_24($('#estimated_resolution_time').val()));
+				}
 
-			return true;
-		}
+				return true;
+			}
 		</script>
 
 		<div style="height:150px">{# Spacer #}</div>
@@ -796,26 +815,26 @@ my_reservation_projects = {{ my_reservation_projects }}
 
 	<select id="credit_cost_collector_select" name="credit_cost_collector_select" class="form-control" style="display: none;">
 		<option value="0">You may select a credit cost collector to receive funds for this work</option>
-	{% for c in request.user.core_ids.all %}
+		{% for c in request.user.core_ids.all %}
 
 		{% for ccc in c.creditcostcollector_set.all %}
 		{% if ccc.project.active %}
-			<option value="{{ ccc.id }}" style="display: none;" class="core_{{ c.id }}">{{ ccc.name }}</option>
+		<option value="{{ ccc.id }}" style="display: none;" class="core_{{ c.id }}">{{ ccc.name }}</option>
 		{% endif %}
 		{% endfor %}
 
-	{% endfor %}
+		{% endfor %}
 	</select>
 	{% else %}
 	<select id="credit_cost_collector_select" name="credit_cost_collector_select" class="form-control">
 		<option value="0">You may select a credit cost collector to receive funds for this work</option>
-	{% for c in request.user.core_ids.all %}
+		{% for c in request.user.core_ids.all %}
 		{% for ccc in c.creditcostcollector_set.all %}
 		{% if ccc.project.active %}
-			<option value="{{ ccc.id }}" class="core_{{ c.id }}">{{ ccc.name }}</option>
+		<option value="{{ ccc.id }}" class="core_{{ c.id }}">{{ ccc.name }}</option>
 		{% endif %}
 		{% endfor %}
-	{% endfor %}
+		{% endfor %}
 	</select>
 	{% endif %}
 
@@ -847,7 +866,7 @@ my_reservation_projects = {{ my_reservation_projects }}
 	$('.duration-picker').durationPicker({showSeconds: false, showDays: false});
 
 	{% if tool.get_current_usage_event is not None %}
-	function save_operator_comment() 
+	function save_operator_comment()
 	{
 		ajax_get("{% url 'save_operator_comment' %}", { "usage_id": {{ tool.get_current_usage_event.id }}, "operator_comment": $("#operator_comment").val() },undefined,undefined);
 	}
@@ -869,7 +888,7 @@ my_reservation_projects = {{ my_reservation_projects }}
 		ajax_post("{% url 'save_sample_comment' %}", { "uep_id": uep_id, "notes": $(el).val(), "sample_id": sample_id}, undefined, undefined);
 	}
 
-	function save_comment(el) 
+	function save_comment(el)
 	{
 		id = $(el).prop("id").split("__")[1];
 		ajax_get("{% url 'save_tool_comment' %}", { "uep_id": id, "comment": $(el).val() }, undefined, undefined);
@@ -931,33 +950,6 @@ my_reservation_projects = {{ my_reservation_projects }}
 		{% if staff_member_for_customer %}
 		staff_reserved_for_customer = true;
 
-		/*
-		var rp = {{ reservation_projects }};
-
-		if ($("#project_choice_multi").html() == "") {
-			$("#project_choice_multi").html($("#project_choice_multi_source").html());
-		}
-
-		var table_row;
-
-		for (r in rp) {
-			table_row = "<tr id=\"row_" + current_entry_number + "\"><td style=\"vertical-align: top\"><span class=\"glyphicon glyphicon-remove-circle grey pointer\" onclick=\"remove_row(" + current_entry_number + ");\"></span></td><td>" + rp[r]["customer"] + "<input type=\"hidden\" value=\"" + rp[r]["user_id"] + "\" id=\"user_textbox__" + current_entry_number + "\" name=\"chosen_user__" + current_entry_number + "\" data-row=\"" + current_entry_number + "\"></td><td id=\"project__" + current_entry_number + "\" style=\"vertical-align: top\">" + rp[r]["project"] + "<input type=\"hidden\" value=\"" + rp[r]["project_id"] + "\" name=\"chosen_project__" + current_entry_number + "\" id=\"chosen_project__" + current_entry_number + "\"></td><td>";
-
-			selected_samples = ""
-			for (s in rp[r]["samples"]) {
-				//table_row += rp[r]["samples"][s]["sample"] + "<input type=\"hidden\" value=\"" + rp[r]["samples"][s]["sample_id"] + "\" id=\"chosen_sample__" + current_entry_number + "\" name=\"chosen_sample__" + current_entry_number + "\"><br/>";
-				selected_samples += rp[r]["samples"][s]["sample_id"] + ",";
-				table_row += rp[r]["samples"][s]["sample"] + "<br/>";
-			}
-			selected_samples = selected_samples.substr(0, selected_samples.length-1);
-
-			table_row += "<input type=\"hidden\" value=\"" + selected_samples + "\" name=\"selected_sample__" + current_entry_number + "\" id=\"selected_sample__" + current_entry_number + "\"></td></tr>";
-
-			$("#usage_event_entries tr:last").before(table_row);
-			current_entry_number++;
-		}
-		*/
-
 		$("#project_choice_multi").show();
 		$("#start").unbind("click");
 		$("#start").click(on_submit);
@@ -995,7 +987,7 @@ my_reservation_projects = {{ my_reservation_projects }}
 		} else {
 			var url = "/open_interlock/" + interlock_id + "/";
 			var contents = {};
-		
+
 			ajax_get(url, contents, null, null, null, null);
 		}
 	}
@@ -1024,7 +1016,7 @@ my_reservation_projects = {{ my_reservation_projects }}
 	{% if not staff_member_for_customer and my_reservation_projects is None %}
 	use_tool_for_self({{ tool.id }});
 	{% elif not staff_member_for_customer and my_reservation_projects is not None %}
-	
+
 
 	$("#override_staff_charge").remove();
 	$("#start").unbind("click");
@@ -1082,5 +1074,28 @@ my_reservation_projects = {{ my_reservation_projects }}
 	{% if my_reservation_projects is not None %}
 	current_entry_number = parseInt({{ my_reservation_projects.count }}) + 1;
 	{% endif %}
+	$(document).ready(function() {
+        var $dragging = null;
+
+        $("#upcoming_reservations").on("mousedown", function(e) {
+            $dragging = $(this);
+            var offset = $dragging.offset();
+            var mouseX = e.pageX - offset.left;
+            var mouseY = e.pageY - offset.top;
+            $(document).on("mousemove", function(e) {
+                if ($dragging) {
+                    $dragging.offset({
+                        top: e.pageY - mouseY,
+                        left: e.pageX - mouseX
+                    });
+                }
+            });
+        });
+
+        $(document).on("mouseup", function(e) {
+            $dragging = null;
+            $(document).off("mousemove");
+        });
+});
 //# sourceURL=tool_control/tool_status.html
 </script>

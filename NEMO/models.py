@@ -1456,7 +1456,7 @@ class Interlock(models.Model):
 			s = str(self.card.type.relay_prefix) + str(self.channel)
 			if self.card.type.relay_suffix is not None:
 				s = s + str(self.card.type.relay_suffix)
-
+			s = s.lower()
 			req = data['datavalues'][s]
 
 		except requests.exceptions.RequestException as e:
