@@ -1272,7 +1272,7 @@ class ConsumableOrder(models.Model):
     order_date = models.DateTimeField(auto_now_add=True)
     fulfilled = models.BooleanField(default=False)
     cancelled = models.BooleanField(default=False)
-    created = models.DateTimeField(default=timezone.now, auto_now_add=True)
+    created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField(null=True, blank=True)
     name = models.CharField(max_length=100, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
@@ -1292,7 +1292,7 @@ class ConsumableOrderItem(models.Model):
     notes = models.TextField(null=True, blank=True)
     fulfilled_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='item_fulfilled_by')
     cancelled_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='item_cancelled_by')
-    created = models.DateTimeField(default=timezone.now, auto_now_add=True)
+    created = models.DateTimeField(default=timezone.now)
     updated = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
