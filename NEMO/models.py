@@ -1185,6 +1185,10 @@ class Consumable(models.Model):
 	# add core_id to manage inventory for the appropriate core
 	core_id = models.ForeignKey('Core', on_delete=models.SET_NULL, null=True, blank=True, related_name='consumable_core')
 	credit_cost_collector = models.ForeignKey('CreditCostCollector', on_delete=models.SET_NULL, null=True, blank=True, related_name='consumable_cost_collector')
+
+	# add related user for supply manager
+	supply_manager = models.ForeignKey(
+		User, on_delete=models.SET_NULL, null=True, blank=True, related_name='supply_manager')
 	
 	class Meta:
 		ordering = ['name']
@@ -1267,10 +1271,13 @@ class ConsumableOrder(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     order_date = models.DateTimeField(auto_now_add=True)
     fulfilled = models.BooleanField(default=False)
+    cancelled = models.BooleanField(default=False)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField()
     name = models.CharField(max_length=100, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
+    fulfilled_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    cancelled_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
         return f"Order {self.id} - {self.name} - by {self.user.get_full_name()}"
@@ -1280,6 +1287,13 @@ class ConsumableOrderItem(models.Model):
     order = models.ForeignKey(ConsumableOrder, related_name='items', on_delete=models.CASCADE)
     consumable = models.ForeignKey(Consumable, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
+    fulfilled = models.BooleanField(default=False)
+    cancelled = models.BooleanField(default=False)
+    notes = models.TextField(null=True, blank=True)
+    fulfilled_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    cancelled_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField()
 
     def __str__(self):
         return f"{self.quantity} of {self.consumable.name}"

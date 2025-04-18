@@ -91,9 +91,9 @@
         var formsetContainer = $('#formset-container');
         var addItemButton = $('#add-item');
         var formCount = {{ formset.total_form_count }};
-	var consumablesOptions = `<option value>---------</option>{% for consumable in consumables %}<option value="{{ consumable.id }}">{{ consumable.name }}</option>{% endfor %}`;
-	var allConsumables = {{ all_consumables| safe }};
-	var consumablesFullList = {{ consumables_full_list | safe }};
+		var consumablesOptions = `<option value>---------</option>{% for consumable in consumables %}<option value="{{ consumable.id }}">{{ consumable.name }}</option>{% endfor %}`;
+		var allConsumables = {{ all_consumables| safe }};
+		var consumablesFullList = {{ consumables_full_list | safe }};
 
         addItemButton.click(function() {
             var newItem = $(`
