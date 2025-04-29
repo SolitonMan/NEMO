@@ -30,8 +30,10 @@
 <script>
 
 	function mark_item_fulfilled(order_id, item_id) {
+		var url = "{% url 'mark_item_fulfilled' %}";
+		url = url + "/" + item_id + "/";
 		$.ajax({
-			url: "{% url 'mark_item_fulfilled' item_id %}",
+			url: url,
 			type: "POST",
 			data: {
 				order_id: order_id,
@@ -50,8 +52,10 @@
 			alert("You must enter a reason to cancel this item.");
 			return;
 		}
+		var url = "{% url 'mark_item_cancelled' %}";
+		url = url + "/" + item_id + "/";
 		$.ajax({
-			url: "{% url 'mark_item_cancelled' item_id %}",
+			url: url,
 			type: "POST",
 			data: {
 				order_id: order_id,
