@@ -10,10 +10,16 @@
 <p>The following items were included in this order:</p>
 <table class="table table-striped">
 {% for item in order.items.all %}
-<tr>
-	<td>{{ item.quantity }} {{ item.consumable.unit.abbreviation }}</td>
-	<td>{{ item.consumable.name }}</td>
-</tr>
+	<tr>
+		<td>{{ item.quantity }} {{ item.consumable.unit.abbreviation }}</td>
+		<td>{{ item.consumable.name }}</td>
+		{% if not item.fulfilled %}
+		<td><input type="button" onclick="mark_item_fulfilled({{ order.id }}, {{ item.id }});" value="Mark fulfilled" class="btn btn-success" /></td>
+		<td><input type="button" onclick="mark_item_cancelled({{ order.id }}, {{ item.id }});" value="Mark cancelled" class="btn btn-danger" /></td>
+		{% else %}
+		<td colspan="2"><span class="text-success">Fulfilled</span></td>
+		{% endif %}
+	</tr>
 {% endfor %}
 </table>
 <form method="post">
@@ -21,4 +27,42 @@
 	<input type="hidden" name="order_id" value="{{ order.id }}">
 	<button type="submit" class="btn btn-success">Mark as Fulfilled</button>
 </form>
+<script>
+
+	function mark_item_fulfilled(order_id, item_id) {
+		$.ajax({
+			url: "{% url 'mark_item_fulfilled' %}",
+			type: "POST",
+			data: {
+				order_id: order_id,
+				item_id: item_id,
+				csrfmiddlewaretoken: '{{ csrf_token }}'
+			},
+			success: function (response) {
+				location.reload();
+			}
+		});
+	}
+
+	function mark_item_cancelled(order_id, item_id) {
+		let cancel_msg = prompt("Please enter a reason for cancelling this item:");
+		if (cancel_msg == null || cancel_msg == "") {
+			alert("You must enter a reason to cancel this item.");
+			return;
+		}
+		$.ajax({
+			url: "{% url 'mark_item_cancelled' %}",
+			type: "POST",
+			data: {
+				order_id: order_id,
+				item_id: item_id,
+				cancel_msg: cancel_msg,
+				csrfmiddlewaretoken: '{{ csrf_token }}'
+			},
+			success: function (response) {
+				location.reload();
+			}
+		});
+	}
+</script>
 {% endblock %}

@@ -103,6 +103,8 @@ def order_detail(request, order_id):
 	order = get_object_or_404(ConsumableOrder, id=order_id)
 	if request.method == 'POST':
 		order.fulfilled = True
+		order.fulfilled_date = timezone.now()
+		order.fulfilled_by = request.user
 		order.updated = timezone.now()
 		order.save()
 		for item in order.items.all():
@@ -116,5 +118,64 @@ def order_detail(request, order_id):
 				updated=timezone.now(),
 				project_percent=100.0
 			)
+
+		# send an email to let the user know their order is ready
+		subject = "Your order '" + str(order.name) + "' has been fulfilled"
+		msg = "Hello " + str(order.user.first_name) + ",\n\nYour order '" + str(order.name) + \
+                    "' has been fulfilled. You can pick it up at the front desk.\n\nThank you,\nNEMO Team"
+		order.user.email_user(subject,msg,"LEOHelp@psu.edu")
+
 		return redirect('order_list')
 	return render(request, 'consumables/order_detail.html', {'order': order})
+
+
+@staff_member_required(login_url=None)
+@login_required
+def mark_item_fulfilled(request, item_id):
+	item = get_object_or_404(ConsumableOrderItem, id=item_id)
+	item.fulfilled = True
+	item.fulfilled_date = timezone.now()
+	item.fulfilled_by = request.user
+	item.updated = timezone.now()
+	item.save()
+
+	# Create a ConsumableWithdraw entry for the fulfilled item
+	ConsumableWithdraw.objects.create(
+		customer = item.order.user,
+		merchant = request.user,
+		consumable = item.consumable,
+		quantity = item.quantity,
+		project = item.order.project,
+		date = timezone.now(),
+		updated = timezone.now(),
+		project_percent = 100.0
+	)
+
+	# send an email to let the user know their item is ready
+	subject = "Your order for '" + str(item.consumable.name) + "' has been fulfilled"
+	msg = "Hello " + str(item.order.user.first_name) + ",\n\nYour order '" + str(item.order.name) + \
+                "' has been fulfilled. You can pick it up at the front desk.\n\nThank you,\nNEMO Team"
+	item.order.user.email_user(subject,msg,"LEOHelp@psu.edu")
+
+	return redirect('order_detail', order_id=item.order.id)
+
+
+@staff_member_required(login_url=None)
+@login_required
+def mark_item_cancelled(request, item_id):
+	cancel_msg = request.POST.get('cancel_msg')
+	item = get_object_or_404(ConsumableOrderItem, id=item_id)
+	item.cancelled = True
+	item.cancelled_date = timezone.now()
+	item.cancelled_by = request.user
+	item.updated = timezone.now()
+	item.save()
+
+	# send an email to let the user know their item has been cancelled
+	subject = "Your order for '" + str(item.consumable.name) + "' has been cancelled"
+	msg = "Hello " + str(item.order.user.first_name) + ",\n\nYour order '" + str(item.order.name) + \
+                "' has been cancelled. The reason given was: \n\n " + str(cancel_msg) + \
+		"\n\nYou can contact the NEMO team for more information.\n\nThank you,\nNEMO Team"
+	item.order.user.email_user(subject,msg,"LEOHelp@psu.edu")
+
+	return redirect('order_detail', order_id=item.order.id)

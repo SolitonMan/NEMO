@@ -1187,8 +1187,7 @@ class Consumable(models.Model):
 	credit_cost_collector = models.ForeignKey('CreditCostCollector', on_delete=models.SET_NULL, null=True, blank=True, related_name='consumable_cost_collector')
 
 	# add related user for supply manager
-	supply_manager = models.ForeignKey(
-		User, on_delete=models.SET_NULL, null=True, blank=True, related_name='supply_manager')
+	supply_manager = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='supply_manager')
 	
 	class Meta:
 		ordering = ['name']
