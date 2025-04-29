@@ -42,7 +42,7 @@ def consumables(request):
 			dictionary['projects'] = form.cleaned_data['customer'].active_projects()
 
 	dictionary['form'] = form
-	return render(request, 'consumables.html', dictionary)
+	return render(request, 'consumables/consumables.html', dictionary)
 
 
 @staff_member_required(login_url=None)
@@ -80,7 +80,7 @@ def create_order(request):
 			order.save()
 			formset.instance = order
 			formset.save()
-			return render(request, 'order_confirmation.html', {'order':order})
+			return render(request, 'consumables/order_confirmation.html', {'order':order})
 	else:
 		order_form = ConsumableOrderForm(user=request.user)
 		formset = ConsumableOrderItemFormSet()
@@ -91,12 +91,12 @@ def create_order(request):
 	for tool in tools:
 		all_consumables[tool.id] = list(tool.consumables.values('id', 'name').order_by('name'))
 
-	return render(request, 'create_order.html', {'order_form': order_form, 'formset': formset, 'consumables': consumables, 'tools': tools, 'all_consumables': json.dumps(all_consumables), 'consumables_full_list': json.dumps(list(consumables.values('id', 'name').order_by('name'))), })
+	return render(request, 'consumables/create_order.html', {'order_form': order_form, 'formset': formset, 'consumables': consumables, 'tools': tools, 'all_consumables': json.dumps(all_consumables), 'consumables_full_list': json.dumps(list(consumables.values('id', 'name').order_by('name'))), })
 
 @login_required
 def order_list(request):
 	orders = ConsumableOrder.objects.filter(fulfilled=False)
-	return render(request, 'order_list.html', {'orders': orders})
+	return render(request, 'consumables/order_list.html', {'orders': orders})
 
 @login_required
 def order_detail(request, order_id):
@@ -117,4 +117,4 @@ def order_detail(request, order_id):
 				project_percent=100.0
 			)
 		return redirect('order_list')
-	return render(request, 'order_detail.html', {'order': order})
+	return render(request, 'consumables/order_detail.html', {'order': order})

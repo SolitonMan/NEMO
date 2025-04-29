@@ -1267,36 +1267,36 @@ class ConsumableWithdraw(models.Model):
 
 
 class ConsumableOrder(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='order_user')
-    project = models.ForeignKey(Project, on_delete=models.CASCADE)
-    order_date = models.DateTimeField(auto_now_add=True)
-    fulfilled = models.BooleanField(default=False)
-    cancelled = models.BooleanField(default=False)
-    created = models.DateTimeField(default=timezone.now)
-    updated = models.DateTimeField(null=True, blank=True)
-    name = models.CharField(max_length=100, null=True, blank=True)
-    description = models.TextField(null=True, blank=True)
-    fulfilled_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='order_fulfilled_by')
-    cancelled_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='order_cancelled_by')
+	user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='order_user')
+	project = models.ForeignKey(Project, on_delete=models.CASCADE)
+	order_date = models.DateTimeField(auto_now_add=True)
+	fulfilled = models.BooleanField(default=False)
+	cancelled = models.BooleanField(default=False)
+	created = models.DateTimeField(default=timezone.now)
+	updated = models.DateTimeField(null=True, blank=True)
+	name = models.CharField(max_length=100, null=True, blank=True)
+	description = models.TextField(null=True, blank=True)
+	fulfilled_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='order_fulfilled_by')
+	cancelled_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='order_cancelled_by')
 
-    def __str__(self):
-        return f"Order {self.id} - {self.name} - by {self.user.get_full_name()}"
+	def __str__(self):
+		return f"Order {self.id} - {self.name} - by {self.user.get_full_name()}"
 
 
 class ConsumableOrderItem(models.Model):
-    order = models.ForeignKey(ConsumableOrder, related_name='items', on_delete=models.CASCADE)
-    consumable = models.ForeignKey(Consumable, on_delete=models.CASCADE)
-    quantity = models.PositiveIntegerField()
-    fulfilled = models.BooleanField(default=False)
-    cancelled = models.BooleanField(default=False)
-    notes = models.TextField(null=True, blank=True)
-    fulfilled_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='item_fulfilled_by')
-    cancelled_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='item_cancelled_by')
-    created = models.DateTimeField(default=timezone.now)
-    updated = models.DateTimeField(null=True, blank=True)
+	order = models.ForeignKey(ConsumableOrder, related_name='items', on_delete=models.CASCADE)
+	consumable = models.ForeignKey(Consumable, on_delete=models.CASCADE)
+	quantity = models.PositiveIntegerField()
+	fulfilled = models.BooleanField(default=False)
+	cancelled = models.BooleanField(default=False)
+	notes = models.TextField(null=True, blank=True)
+	fulfilled_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='item_fulfilled_by')
+	cancelled_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='item_cancelled_by')
+	created = models.DateTimeField(default=timezone.now)
+	updated = models.DateTimeField(null=True, blank=True)
 
-    def __str__(self):
-        return f"{self.quantity} of {self.consumable.name}"
+	def __str__(self):
+		return f"{self.quantity} of {self.consumable.name}"
 
 
 
