@@ -80,26 +80,25 @@
 		var consumablesFullList = {{ consumables_full_list | safe }};
 
         addItemButton.click(function() {
-            var newItem = $(`
-                <div class="order-item form-row">
-                    <div class="form-group col-md-4">
-                        <input type="text" name="items-${formCount}-search" class="form-control" placeholder="Filter consumables..." id="id_items-${formCount}-search">
-                    </div>
-                    <div class="form-group col-md-4">
-                        <select name="items-${formCount}-consumable" class="form-control" id="id_items-${formCount}-consumable">
-                            ${consumablesOptions}
-                        </select>
-                    </div>
-                    <div class="form-group col-md-2">
-                        <input type="number" name="items-${formCount}-quantity" class="form-control" id="id_items-${formCount}-quantity">
-                    </div>
-                    <div class="form-group col-md-2">
-                        <button type="button" class="btn btn-danger remove-item">Remove</button>
-                    </div>
-                </div>
-            `);
-            formsetContainer.append(newItem);
-            formCount++;
+			var newItem = $(`
+				<div class="order-item form-row">
+					<div class="form-group col-md-4">
+						<input type="text" name="items-${formCount}-search" class="form-control" placeholder="Filter consumables..." id="id_items-${formCount}-search">
+					</div>
+					<div class="form-group col-md-4">
+						<select name="items-${formCount}-consumable" class="form-control" id="id_items-${formCount}-consumable"></select>
+					</div>
+					<div class="form-group col-md-2">
+						<input type="number" name="items-${formCount}-quantity" class="form-control" id="id_items-${formCount}-quantity">
+					</div>
+					<div class="form-group col-md-2">
+						<button type="button" class="btn btn-danger remove-item">Remove</button>
+					</div>
+				</div>
+			`);
+			newItem.find('select[name$="consumable"]').html(consumablesOptions); // Use .html() to set options
+			formsetContainer.append(newItem);
+			formCount++;
 
             // Update the total form count
             $('#id_items-TOTAL_FORMS').val(formCount);
