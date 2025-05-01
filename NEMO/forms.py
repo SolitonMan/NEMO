@@ -225,28 +225,29 @@ class ConsumableWithdrawForm(ModelForm):
 			raise ValidationError('{} is not a member of the project {}. Users can only bill to projects they belong to.'.format(customer, project))
 
 class ConsumableOrderForm(forms.ModelForm):
-    project = forms.ModelChoiceField(queryset=Project.objects.none(), required=True)
+	project = forms.ModelChoiceField(queryset=Project.objects.none(), required=True)
 
-    class Meta:
-        model = ConsumableOrder
-        fields = ['project', 'name', 'description']
+	class Meta:
+		model = ConsumableOrder
+		fields = ['project', 'name', 'description']
 
-    def __init__(self, *args, **kwargs):
-        user = kwargs.pop('user', None)
-        super().__init__(*args, **kwargs)
-        if user:
-            self.fields['project'].queryset = user.projects.filter(active=True)
+	def __init__(self, *args, **kwargs):
+		user = kwargs.pop('user', None)
+		super().__init__(*args, **kwargs)
+		if user:
+			self.fields['project'].queryset = user.projects.filter(active=True)
 
 class ConsumableOrderItemForm(forms.ModelForm):
-    search = forms.CharField(required=False, widget=forms.TextInput(attrs={'placeholder': 'Filter consumables...'}))
+	search = forms.CharField(required=False, widget=forms.TextInput(attrs={'placeholder': 'Filter consumables...'}))
 
-    class Meta:
-        model = ConsumableOrderItem
-        fields = ['search', 'consumable', 'quantity']
+	class Meta:
+		model = ConsumableOrderItem
+		fields = ['search', 'consumable', 'quantity']
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['consumable'].queryset = Consumable.objects.filter(category__id=1, visible=True).order_by('name')
+	def __init__(self, *args, **kwargs):
+		super().__init__(*args, **kwargs)
+		self.fields['consumable'].queryset = Consumable.objects.filter(category__id=1, visible=True).order_by('name')
+		self.fields['consumable'].label_from_instance = lambda obj: f"{obj.name} ({obj.core_id.name if obj.core_id else 'No Core'})"
 
 ConsumableOrderItemFormSet = forms.inlineformset_factory(
     ConsumableOrder, ConsumableOrderItem, form=ConsumableOrderItemForm, extra=1, can_delete=True
