@@ -4,6 +4,9 @@ from collections import defaultdict
 from django.core.mail import send_mail
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
+from django.db import models
+from django.db.models import F, Value
+from django.db.models.functions import Concat
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods, require_GET
@@ -120,21 +123,48 @@ def create_order(request):
 	else:
 		order_form = ConsumableOrderForm(user=request.user)
 		formset = ConsumableOrderItemFormSet()
-		consumables = Consumable.objects.filter(category__id=1, visible=True).order_by('name')
 
-	tools = Tool.objects.filter(consumables__isnull=False).order_by('name').distinct()
-	all_consumables = {}
-	for tool in tools:
-		all_consumables[tool.id] = list(tool.consumables.values('id', 'name').order_by('name'))
+		# Annotate consumables with core names
+		consumables = Consumable.objects.filter(category__id=1, visible=True).annotate(
+			core_name=F('core_id__name')
+		).annotate(
+			display_name=Concat(
+				F('name'),
+				Value(' ('),
+				F('core_name'),
+				Value(')'),
+				output_field=models.CharField()
+			)
+		).order_by('name')
 
-	return render(request, 'consumables/create_order.html', {
-		'order_form': order_form,
-		'formset': formset,
-		'consumables': consumables,
-		'tools': tools,
-		'all_consumables': json.dumps(all_consumables),
-		'consumables_full_list': json.dumps(list(consumables.values('id', 'name').order_by('name'))),
-	})
+		tools = Tool.objects.filter(consumables__isnull=False).order_by('name').distinct()
+
+		# Update all_consumables and consumables_full_list with display_name
+		all_consumables = {}
+		for tool in tools:
+			all_consumables[tool.id] = list(tool.consumables.annotate(
+				core_name=F('core_id__name')
+			).annotate(
+				display_name=Concat(
+					F('name'),
+					Value(' ('),
+					F('core_name'),
+					Value(')'),
+					output_field=models.CharField()
+				)
+			).values('id', 'display_name').order_by('name'))
+
+		consumables_full_list = list(consumables.values('id', 'display_name').order_by('name'))
+
+		return render(request, 'consumables/create_order.html', {
+			'order_form': order_form,
+			'formset': formset,
+			'consumables': consumables,
+			'tools': tools,
+			'all_consumables': json.dumps(all_consumables),
+			'consumables_full_list': json.dumps(consumables_full_list),
+		})
+
 
 @login_required
 def order_list(request):
