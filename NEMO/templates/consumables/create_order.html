@@ -166,7 +166,7 @@
 				$(this).empty();
 				$(this).append('<option value="">---------</option>');
 				availableConsumables.forEach(function (consumable) {
-					var option = new Option(consumable.name, consumable.id);
+					var option = new Option(consumable.display_name, consumable.id);
 					if (consumable.id == currentConsumable) {
 						option.selected = true;
 					}
