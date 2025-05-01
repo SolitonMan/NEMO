@@ -1197,7 +1197,9 @@ class Consumable(models.Model):
 		ordering = ['name']
 
 	def __str__(self):
-		return str(self.name) + ' (' + str(self.core_id.name) + ')'
+		core_name = self.core_id.name if self.core_id else "No Core"
+		return f"{self.name} ({core_name})"
+
 
 class ConsumableUnit(models.Model):
 	name = models.CharField(max_length=100)
