@@ -1,5 +1,7 @@
 import json
 
+from collections import defaultdict
+from django.core.mail import send_mail
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
@@ -67,6 +69,7 @@ def save_withdraw_notes(request):
 	cw.save()
 	return HttpResponse()
 
+
 @login_required
 def create_order(request):
 	if request.method == 'POST':
@@ -74,13 +77,46 @@ def create_order(request):
 		order_form = ConsumableOrderForm(request.POST, user=request.user)
 		formset = ConsumableOrderItemFormSet(request.POST)
 		if order_form.is_valid() and formset.is_valid():
+			# Save the order
 			order = order_form.save(commit=False)
 			order.user = request.user
 			order.updated = timezone.now()
 			order.save()
+
+			# Save the order items
 			formset.instance = order
-			formset.save()
-			return render(request, 'consumables/order_confirmation.html', {'order':order})
+			order_items = formset.save()
+
+			# Group items by supply manager
+			supply_manager_items = defaultdict(list)
+			for item in order_items:
+				if item.consumable.supply_manager:
+					supply_manager_items[item.consumable.supply_manager].append(item)
+
+			# Send notifications to each supply manager
+			for manager, items in supply_manager_items.items():
+				item_list = "\n".join([f"{item.quantity} x {item.consumable.name}" for item in items])
+				subject = f"New Order Notification: Items to Fulfill"
+				message = f"""
+				Hello {manager.get_first_last()},
+
+				A new order has been placed that includes items you manage. Below are the details:
+
+				Order ID: {order.id}
+				Ordered By: {order.user.get_full_name()}
+				Project: {order.project}
+				Items:
+				{item_list}
+
+				Please fulfill these items at your earliest convenience.
+
+				Thank you,
+				NEMO Team
+				"""
+
+				manager.email_user(subject,message,"LEOHelp@psu.edu")
+
+			return render(request, 'consumables/order_confirmation.html', {'order': order})
 	else:
 		order_form = ConsumableOrderForm(user=request.user)
 		formset = ConsumableOrderItemFormSet()
@@ -91,7 +127,14 @@ def create_order(request):
 	for tool in tools:
 		all_consumables[tool.id] = list(tool.consumables.values('id', 'name').order_by('name'))
 
-	return render(request, 'consumables/create_order.html', {'order_form': order_form, 'formset': formset, 'consumables': consumables, 'tools': tools, 'all_consumables': json.dumps(all_consumables), 'consumables_full_list': json.dumps(list(consumables.values('id', 'name').order_by('name'))), })
+	return render(request, 'consumables/create_order.html', {
+		'order_form': order_form,
+		'formset': formset,
+		'consumables': consumables,
+		'tools': tools,
+		'all_consumables': json.dumps(all_consumables),
+		'consumables_full_list': json.dumps(list(consumables.values('id', 'name').order_by('name'))),
+	})
 
 @login_required
 def order_list(request):
@@ -151,11 +194,21 @@ def mark_item_fulfilled(request, item_id):
 		project_percent = 100.0
 	)
 
-	# send an email to let the user know their item is ready
-	subject = "Your order for '" + str(item.consumable.name) + "' has been fulfilled"
-	msg = "Hello " + str(item.order.user.first_name) + ",\n\nYour order '" + str(item.order.name) + \
-                "' has been fulfilled. You can pick it up at the front desk.\n\nThank you,\nNEMO Team"
-	item.order.user.email_user(subject,msg,"LEOHelp@psu.edu")
+	# Send an HTML email to let the user know their item is ready
+	subject = f"Your order for '{item.consumable.name}' has been fulfilled"
+	plain_message = f"Hello {item.order.user.first_name},\n\nYour order '{item.order.name}' has been fulfilled. You can pick it up at the front desk.\n\nThank you,\nNEMO Team"
+	html_message = f"""
+        <p>Hello {item.order.user.first_name},</p>
+        <p>Your order <strong>'{item.order.name}'</strong> has been fulfilled. You can pick it up at the front desk.</p>
+        <p>Thank you,<br>NEMO Team</p>
+	"""
+	send_mail(
+		subject,
+		plain_message,
+		"LEOHelp@psu.edu",
+		[item.order.user.email],
+		html_message=html_message
+	)
 
 	return redirect('order_detail', order_id=item.order.id)
 

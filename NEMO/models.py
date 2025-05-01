@@ -192,6 +192,10 @@ class User(models.Model):
 		fname += self.first_name + ' ' + self.last_name + ' (' + self.username + ')'
 		return fname
 
+	def get_first_last(self):
+		fname = self.first_name + ' ' + self.last_name
+		return fname
+
 	def get_short_name(self):
 		return self.first_name
 
@@ -1193,7 +1197,7 @@ class Consumable(models.Model):
 		ordering = ['name']
 
 	def __str__(self):
-		return self.name
+		return self.name + ' (' + str(self.core_id.name) + ')'
 
 class ConsumableUnit(models.Model):
 	name = models.CharField(max_length=100)
