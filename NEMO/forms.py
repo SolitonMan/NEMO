@@ -238,7 +238,7 @@ class ConsumableOrderForm(forms.ModelForm):
             self.fields['project'].queryset = user.projects.filter(active=True)
 
 class ConsumableOrderItemForm(forms.ModelForm):
-    search = forms.CharField(required=False, widget=forms.TextInput(attrs={'placeholder': 'Search consumables...'}))
+    search = forms.CharField(required=False, widget=forms.TextInput(attrs={'placeholder': 'Filter consumables...'}))
 
     class Meta:
         model = ConsumableOrderItem

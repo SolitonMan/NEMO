@@ -1197,7 +1197,7 @@ class Consumable(models.Model):
 		ordering = ['name']
 
 	def __str__(self):
-		return self.name + ' (' + str(self.core_id.name) + ')'
+		return str(self.name) + ' (' + str(self.core_id.name) + ')'
 
 class ConsumableUnit(models.Model):
 	name = models.CharField(max_length=100)
