@@ -247,7 +247,6 @@ class ConsumableOrderItemForm(forms.ModelForm):
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 		self.fields['consumable'].queryset = Consumable.objects.filter(category__id=1, visible=True).order_by('name')
-		self.fields['consumable'].label_from_instance = lambda obj: print(f"Label: {obj.name} ({obj.core_id.name if obj.core_id else 'No Core'})") or f"{obj.name} ({obj.core_id.name if obj.core_id else 'No Core'})"
    
 
 ConsumableOrderItemFormSet = forms.inlineformset_factory(
