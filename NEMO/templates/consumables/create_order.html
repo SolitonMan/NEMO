@@ -146,8 +146,6 @@
                     $(this).hide();
                 }
 			});
-
-		$('#add-item').click();
 	});
 
 	// Tool selection change event
@@ -158,6 +156,7 @@
 
 	// Initial load
 	filterConsumables($('#tool_select').val());
+	$('#add-item').click();
 
 	function filterConsumables(toolId) {
 		var availableConsumables = allConsumables[toolId] || consumablesFullList;
