@@ -196,8 +196,8 @@ def order_detail(request, order_id):
 
 @staff_member_required(login_url=None)
 @login_required
-def mark_item_fulfilled(request, item_id, send_mail):
-	send_mail = bool(send_mail)
+def mark_item_fulfilled(request, item_id, do_mail):
+	do_mail = bool(do_mail)
 	item = get_object_or_404(ConsumableOrderItem, id=item_id)
 	item.fulfilled = True
 	item.fulfilled_date = timezone.now()
@@ -218,7 +218,7 @@ def mark_item_fulfilled(request, item_id, send_mail):
 	)
 
 	# Send an HTML email to let the user know their item is ready
-	if send_mail:
+	if do_mail:
 		subject = f"Your order for '{item.consumable.name}' has been fulfilled"
 		plain_message = f"Hello {item.order.user.first_name},\n\nYour order '{item.order.name}' has been fulfilled. You can pick it up at the front desk.\n\nThank you,\nNEMO Team"
 		html_message = f"""

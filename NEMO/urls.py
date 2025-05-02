@@ -175,7 +175,7 @@ urlpatterns = [
     path('create_order/', consumables.create_order, name='create_order'),
     path('order_list/', consumables.order_list, name='order_list'),
     path('order_detail/<int:order_id>/', consumables.order_detail, name='order_detail'),
-    path('mark_item_fulfilled/<int:item_id>/<int:send_mail>/', consumables.mark_item_fulfilled, name='mark_item_fulfilled'),
+    path('mark_item_fulfilled/<int:item_id>/<int:do_mail>/', consumables.mark_item_fulfilled, name='mark_item_fulfilled'),
     path('mark_item_cancelled/<int:item_id>/', consumables.mark_item_cancelled, name='mark_item_cancelled'),
 
     # Training:
