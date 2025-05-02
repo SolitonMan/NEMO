@@ -182,7 +182,7 @@ def order_detail(request, order_id):
 		order.save()
 		for item in order.items.all():
 			if item.fulfilled == False:
-				mark_item_fulfilled(request, item.id)
+				mark_item_fulfilled(request, item.id, 0)
 
 		# send an email to let the user know their order is ready
 		subject = "Your order '" + str(order.name) + "' has been fulfilled"
@@ -196,7 +196,8 @@ def order_detail(request, order_id):
 
 @staff_member_required(login_url=None)
 @login_required
-def mark_item_fulfilled(request, item_id):
+def mark_item_fulfilled(request, item_id, send_mail):
+	send_mail = bool(send_mail)
 	item = get_object_or_404(ConsumableOrderItem, id=item_id)
 	item.fulfilled = True
 	item.fulfilled_date = timezone.now()
@@ -217,20 +218,21 @@ def mark_item_fulfilled(request, item_id):
 	)
 
 	# Send an HTML email to let the user know their item is ready
-	subject = f"Your order for '{item.consumable.name}' has been fulfilled"
-	plain_message = f"Hello {item.order.user.first_name},\n\nYour order '{item.order.name}' has been fulfilled. You can pick it up at the front desk.\n\nThank you,\nNEMO Team"
-	html_message = f"""
-        <p>Hello {item.order.user.first_name},</p>
-        <p>Your order <strong>'{item.order.name}'</strong> has been fulfilled. You can pick it up at the front desk.</p>
-        <p>Thank you,<br>NEMO Team</p>
-	"""
-	send_mail(
-		subject,
-		plain_message,
-		"LEOHelp@psu.edu",
-		[item.order.user.email],
-		html_message=html_message
-	)
+	if send_mail:
+		subject = f"Your order for '{item.consumable.name}' has been fulfilled"
+		plain_message = f"Hello {item.order.user.first_name},\n\nYour order '{item.order.name}' has been fulfilled. You can pick it up at the front desk.\n\nThank you,\nNEMO Team"
+		html_message = f"""
+		<p>Hello {item.order.user.first_name},</p>
+		<p>Your order <strong>'{item.order.name}'</strong> has been fulfilled. You can pick it up at the front desk.</p>
+		<p>Thank you,<br>NEMO Team</p>
+		"""
+		send_mail(
+			subject,
+			plain_message,
+			"LEOHelp@psu.edu",
+			[item.order.user.email],
+			html_message=html_message
+		)
 
 	return redirect('order_detail', order_id=item.order.id)
 

@@ -33,7 +33,7 @@
 
 	function mark_item_fulfilled(order_id, item_id) {
 		$.ajax({
-			url: "{% url 'mark_item_fulfilled' 0 %}".replace("0", item_id),
+			url: "{% url 'mark_item_fulfilled' 0 1 %}".replace("0", item_id),
 			type: "POST",
 			data: {
 				order_id: order_id,
