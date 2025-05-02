@@ -258,7 +258,7 @@ class StaffChargeAdminForm(forms.ModelForm):
 
 @register(StaffCharge)
 class StaffChargeAdmin(admin.ModelAdmin):
-	list_display = ('id', 'staff_member', 'customer', 'start', 'end')
+	list_display = ('id', 'staff_member', 'customer', 'start', 'end', 'duration')
 	list_filter = ('start',)
 	date_hierarchy = 'start'
 	ordering = ['-id']

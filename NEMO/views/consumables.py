@@ -181,16 +181,8 @@ def order_detail(request, order_id):
 		order.updated = timezone.now()
 		order.save()
 		for item in order.items.all():
-			ConsumableWithdraw.objects.create(
-				customer=order.user,
-				merchant=request.user,
-				consumable=item.consumable,
-				quantity=item.quantity,
-				project=order.project,
-				date=timezone.now(),
-				updated=timezone.now(),
-				project_percent=100.0
-			)
+			if item.fulfilled == False:
+				mark_item_fulfilled(request, item.id)
 
 		# send an email to let the user know their order is ready
 		subject = "Your order '" + str(order.name) + "' has been fulfilled"
