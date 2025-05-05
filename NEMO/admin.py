@@ -617,6 +617,9 @@ class ConsumableAdmin(admin.ModelAdmin):
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "credit_cost_collector":
 			kwargs["queryset"] = CreditCostCollector.objects.order_by('project__project_number')
+		if db_field.name == "supply_manager":
+			kwargs["queryset"] = User.objects.filter(
+				is_active=True).order_by('last_name', 'first_name')
 		return super(ConsumableAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 

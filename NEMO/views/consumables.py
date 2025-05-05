@@ -186,9 +186,14 @@ def order_detail(request, order_id):
 
 		# send an email to let the user know their order is ready
 		subject = "Your order '" + str(order.name) + "' has been fulfilled"
-		msg = "Hello " + str(order.user.first_name) + ",\n\nYour order '" + str(order.name) + \
+		plain_message = "Hello " + str(order.user.first_name) + ",\n\nYour order '" + str(order.name) + \
                     "' has been fulfilled. You can pick it up at the front desk.\n\nThank you,\nNEMO Team"
-		order.user.email_user(subject,msg,"LEOHelp@psu.edu")
+		html_message = f"""
+		<p>Hello {order.user.first_name},</p>
+		<p>Your order <strong>'{order.name}'</strong> has been fulfilled. You can pick it up at the front desk.</p>
+		<p>Thank you,<br>NEMO Team</p>
+		"""
+		send_mail(subject,plain_message,"LEOHelp@psu.edu",[order.user.email],html_message=html_message)
 
 		return redirect('order_list')
 	return render(request, 'consumables/order_detail.html', {'order': order})
@@ -220,10 +225,10 @@ def mark_item_fulfilled(request, item_id, do_mail):
 	# Send an HTML email to let the user know their item is ready
 	if do_mail:
 		subject = f"Your order for '{item.consumable.name}' has been fulfilled"
-		plain_message = f"Hello {item.order.user.first_name},\n\nYour order '{item.order.name}' has been fulfilled. You can pick it up at the front desk.\n\nThank you,\nNEMO Team"
+		plain_message = f"Hello {item.order.user.first_name},\n\nYour order for '{item.consumable.name}' from the order '{item.order.name}' has been fulfilled. You can pick it up at the front desk.\n\nThank you,\nNEMO Team"
 		html_message = f"""
 		<p>Hello {item.order.user.first_name},</p>
-		<p>Your order <strong>'{item.order.name}'</strong> has been fulfilled. You can pick it up at the front desk.</p>
+		<p>Your order for <strong>'{item.consumable.name}'</strong> has been fulfilled. You can pick it up at the front desk.</p>
 		<p>Thank you,<br>NEMO Team</p>
 		"""
 		send_mail(
@@ -250,9 +255,22 @@ def mark_item_cancelled(request, item_id):
 
 	# send an email to let the user know their item has been cancelled
 	subject = "Your order for '" + str(item.consumable.name) + "' has been cancelled"
-	msg = "Hello " + str(item.order.user.first_name) + ",\n\nYour order '" + str(item.order.name) + \
-                "' has been cancelled. The reason given was: \n\n " + str(cancel_msg) + \
+	plain_message = "Hello " + str(item.order.user.first_name) + ",\n\nYour order item '" + str(item.consumable.name) + \
+                "' from order '" + str(item.order.name) + "' has been cancelled. The reason given was: \n\n " + str(cancel_msg) + \
 		"\n\nYou can contact the NEMO team for more information.\n\nThank you,\nNEMO Team"
-	item.order.user.email_user(subject,msg,"LEOHelp@psu.edu")
+	html_message = f"""
+		<p>Hello {item.order.user.first_name},</p>
+		<p>Your order item <strong>'{item.consumable.name}'</strong> from order <strong>'{item.order.name}'</strong> has been cancelled. The reason given was :</p>
+		<p><strong>{cancel_msg}</strong></p>
+		<p>If you have any questions please contact the NEMO team for more information.</p>
+		<p>Thank you,<br>NEMO Team</p>
+		"""
+	send_mail(
+			subject,
+			plain_message,
+			"LEOHelp@psu.edu",
+			[item.order.user.email],
+			html_message=html_message
+		)
 
 	return redirect('order_detail', order_id=item.order.id)
