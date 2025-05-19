@@ -1304,6 +1304,18 @@ class ConsumableOrderItem(models.Model):
 		return f"{self.quantity} of {self.consumable.name}"
 
 
+class ConsumableRate(models.Model):
+	consumable = models.ForeignKey(Consumable, on_delete=models.CASCADE)
+	academic_per_unit = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+	external_per_unit = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+	industry_per_unit = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+
+	class Meta:
+		ordering = ['consumable']
+
+	def __str__(self):
+		return f"{self.consumable.name} costs {self.academic_per_unit} / {self.external_per_unit} / {self.industry_per_unit}"
+
 
 class ContestTransaction(models.Model):
 	content_type = models.ForeignKey(ContentType, on_delete=models.SET_NULL, null=True)
