@@ -147,13 +147,17 @@ def create_order(request):
 		all_consumables = {}
 		for tool in tools:
 			all_consumables[tool.id] = list(tool.consumables.annotate(
-				core_name=F('core_id__name')
+				core_name=F('core_id__name'),
+				academic_per_unit=F('consumablerate__academic_per_unit')
 			).annotate(
 				display_name=Concat(
 					F('name'),
 					Value(' ('),
-					F('core_name'),
-					Value(')'),
+					F('core_name'),					
+					Value(') - $'),
+					F('academic_per_unit'),
+					Value(' '),
+					F('unit__abbreviation'),
 					output_field=models.CharField()
 				)
 			).values('id', 'display_name').order_by('name'))
