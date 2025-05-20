@@ -12,7 +12,7 @@
 	{% for item in order.items.all %}
 	<tr>
 		<td>{{ item.quantity }} {{ item.consumable.unit.abbreviation }}</td>
-		<td>{{ item.consumable.name }}</td>
+		<td>{{ item.consumable.name }} (${{ item.consumable.consumablerate_set.all.0.academic_per_unit }} per {{ item.consumable.unit.abbreviation }})</td>
 	</tr>
 	{% endfor %}
 </table>

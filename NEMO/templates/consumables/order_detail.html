@@ -12,7 +12,7 @@
 {% for item in order.items.all %}
 	<tr>
 		<td>{{ item.quantity }} {{ item.consumable.unit.abbreviation }}</td>
-		<td>{{ item.consumable.name }}</td>
+		<td>{{ item.consumable.name }} (${{ item.consumable.consumablerate_set.all.0.academic_per_unit }} per {{ item.consumable.unit.abbreviation }})</td>
 		{% if not item.fulfilled and not item.cancelled %}
 		<td><input type="button" onclick="mark_item_fulfilled({{ order.id }}, {{ item.id }});" value="Fulfill Item" class="btn btn-success" /></td>
 		<td><input type="button" onclick="mark_item_cancelled({{ order.id }}, {{ item.id }});" value="Cancel Item" class="btn btn-danger" /></td>

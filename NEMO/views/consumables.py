@@ -126,13 +126,17 @@ def create_order(request):
 
 		# Annotate consumables with core names
 		consumables = Consumable.objects.filter(category__id=1, visible=True).annotate(
-			core_name=F('core_id__name')
+			core_name=F('core_id__name'),
+			academic_per_unit=F('consumablerate__academic_per_unit')
 		).annotate(
 			display_name=Concat(
 				F('name'),
 				Value(' ('),
 				F('core_name'),
-				Value(')'),
+				Value(') - $'),
+				F('academic_per_unit'),
+				Value(' '),
+				F('unit__abbreviation'),
 				output_field=models.CharField()
 			)
 		).order_by('name')
