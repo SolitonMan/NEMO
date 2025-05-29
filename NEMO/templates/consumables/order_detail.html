@@ -73,7 +73,7 @@
 			return;
 		}
 		$.ajax({
-			url: "{% url 'mark_item_cancelled' 0 %}".replace("0", item_id),
+			url: "{% url 'mark_item_cancelled' 0 1 %}".replace("0", item_id),
 			type: "POST",
 			data: {
 				order_id: order_id,
