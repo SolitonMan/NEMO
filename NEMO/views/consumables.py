@@ -234,8 +234,11 @@ def order_detail(request, order_id):
 			"""
 
 		send_mail(subject,plain_message,"LEOHelp@psu.edu",[order.user.email],html_message=html_message)
+		for_user = 0
+		if request.user == order.user:
+			for_user = 1
 
-		return redirect('order_list')
+		return redirect('order_list', for_user=for_user)
 
 	allow_cancel = True
 	for item in order.items.all():
