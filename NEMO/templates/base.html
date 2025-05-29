@@ -83,6 +83,7 @@
 									<a href="#" class="dropdown-toggle" data-toggle="dropdown">Supplies <b class="caret"></b></a>
 									<ul class="dropdown-menu">
 									{% navigation_url 'create_order' 'Order Supplies' %}
+                                    <a href="{% url 'order_list' 1 %}">My Orders</a>
 									</ul>
 								</li>
 								{% navigation_url 'samples' 'Samples' %}
@@ -130,7 +131,7 @@
                                                 {% navigation_url 'maintenance' 'Maintenance' %}
                                                 {% endif %}
                                                 {% navigation_url 'create_notification_scheme' 'Notification Schemes' %}
-                                                {% navigation_url 'order_list' 'Orders' %}
+                                                <a href="{% url 'order_list' 0 %}">Orders</a>
                                                 {% if user.is_superuser %}
                                                 {% navigation_url 'delegates' 'PI Delegates' %}
                                                 {% endif %}

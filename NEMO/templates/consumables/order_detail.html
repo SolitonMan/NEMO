@@ -14,7 +14,11 @@
 		<td>{{ item.quantity }} {{ item.consumable.unit.abbreviation }}</td>
 		<td>{{ item.consumable.name }} (${{ item.consumable.consumablerate_set.all.0.academic_per_unit }} per {{ item.consumable.unit.abbreviation }})</td>
 		{% if not item.fulfilled and not item.cancelled %}
-		<td><input type="button" onclick="mark_item_fulfilled({{ order.id }}, {{ item.id }}, 1);" value="Fulfill Item" class="btn btn-success" /></td>
+		<td>
+			{% if request.user.is_staff %}
+			<input type="button" onclick="mark_item_fulfilled({{ order.id }}, {{ item.id }}, 1);" value="Fulfill Item" class="btn btn-success" />
+			{% endif %}
+		</td>
 		<td><input type="button" onclick="mark_item_cancelled({{ order.id }}, {{ item.id }}, 1);" value="Cancel Item" class="btn btn-danger" /></td>
 		{% elif item.fulfilled %}
 		<td colspan="2"><span class="text-success">Fulfilled</span></td>

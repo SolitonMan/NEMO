@@ -203,7 +203,13 @@
                                 $(this).focus();
                                 valid = false;
                                 return false;
-                        }
+						}
+						if ($(this).val() < 1) {
+								alert('Please enter a positive integer value for each quantity.');
+								$(this).focus();
+								valid = false;
+								return false;
+						}
                 });
 
                 return valid;

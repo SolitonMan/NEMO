@@ -175,9 +175,13 @@ def create_order(request):
 
 
 @login_required
-def order_list(request):
+def order_list(request, for_user):
 	orders = ConsumableOrder.objects.all().order_by('-created')
+	for_user = bool(for_user)
+	if for_user:
+		orders = orders.filter(user=request.user)
 	return render(request, 'consumables/order_list.html', {'orders': orders})
+
 
 @login_required
 def order_detail(request, order_id):
@@ -284,7 +288,6 @@ def mark_item_fulfilled(request, item_id, do_mail):
 	return redirect('order_detail', order_id=item.order.id)
 
 
-@staff_member_required(login_url=None)
 @login_required
 def mark_item_cancelled(request, item_id, do_mail):
 	do_mail = bool(do_mail)
