@@ -25,13 +25,14 @@
 	{% endfor %}
 </table>
 {% if not order.fulfilled and not order.cancelled %}
-<form method="post">
+<br /><br />
+<form method="post" style="display:inline;">
 	{% csrf_token %}
 	<input type="hidden" name="order_id" value="{{ order.id }}">
 	<input type="hidden" name="action" value="fulfill" />
 	<button type="submit" class="btn btn-success">Mark as Fulfilled</button>
 </form>
-<form method="post" onsubmit="return mark_order_cancelled()">
+<form method="post" onsubmit="return mark_order_cancelled()" style="display:inline;">
 	{% csrf_token %}
 	<input type="hidden" name="order_id" value="{{ order.id }}">
 	<input type="hidden" name="action" value="cancel" />
