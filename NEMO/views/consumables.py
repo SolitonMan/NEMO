@@ -198,7 +198,7 @@ def order_detail(request, order_id):
 			order.fulfilled_by = request.user
 			order.updated = timezone.now()
 			order.save()
-			for item in order.items.all():
+			for item in order.consumableorderitem_set.all():
 				if item.fulfilled == False and item.cancelled == False:
 					mark_item_fulfilled(request, item.id, 0)
 
@@ -219,7 +219,7 @@ def order_detail(request, order_id):
 			order.cancelled_by = request.user
 			order.updated = timezone.now()
 			order.save()
-			for item in order.items.all():
+			for item in order.consumableorderitem_set.all():
 				if item.cancelled == False and item.fulfilled == False:
 					mark_item_cancelled(request, item.id, 0)
 			# send an email to let the user know their order has been cancelled
