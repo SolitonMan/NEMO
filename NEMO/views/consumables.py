@@ -176,7 +176,7 @@ def create_order(request):
 
 @login_required
 def order_list(request):
-	orders = ConsumableOrder.objects.filter(fulfilled=False)
+	orders = ConsumableOrder.objects.filter(fulfilled=False, cancelled=False)
 	return render(request, 'consumables/order_list.html', {'orders': orders})
 
 @login_required
