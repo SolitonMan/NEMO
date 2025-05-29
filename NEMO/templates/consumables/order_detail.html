@@ -14,8 +14,8 @@
 		<td>{{ item.quantity }} {{ item.consumable.unit.abbreviation }}</td>
 		<td>{{ item.consumable.name }} (${{ item.consumable.consumablerate_set.all.0.academic_per_unit }} per {{ item.consumable.unit.abbreviation }})</td>
 		{% if not item.fulfilled and not item.cancelled %}
-		<td><input type="button" onclick="mark_item_fulfilled({{ order.id }}, {{ item.id }});" value="Fulfill Item" class="btn btn-success" /></td>
-		<td><input type="button" onclick="mark_item_cancelled({{ order.id }}, {{ item.id }});" value="Cancel Item" class="btn btn-danger" /></td>
+		<td><input type="button" onclick="mark_item_fulfilled({{ order.id }}, {{ item.id }}, 1);" value="Fulfill Item" class="btn btn-success" /></td>
+		<td><input type="button" onclick="mark_item_cancelled({{ order.id }}, {{ item.id }}, 1);" value="Cancel Item" class="btn btn-danger" /></td>
 		{% elif item.fulfilled %}
 		<td colspan="2"><span class="text-success">Fulfilled</span></td>
 		{% elif item.cancelled %}
@@ -27,17 +27,35 @@
 <form method="post">
 	{% csrf_token %}
 	<input type="hidden" name="order_id" value="{{ order.id }}">
+	<input type="hidden" name="action" value="fulfill" />
 	<button type="submit" class="btn btn-success">Mark as Fulfilled</button>
 </form>
+<form method="post" onsubmit="return mark_order_cancelled()">
+	{% csrf_token %}
+	<input type="hidden" name="order_id" value="{{ order.id }}">
+	<input type="hidden" name="action" value="cancel" />
+	<input type="hidden" name="cancel_reason" value="" />
+	<button type="submit" class="btn btn-danger" {% if not allow_cancel %} disabled{% endif %}>Cancel Order</button>
+</form>
 <script>
+	function mark_order_cancelled() {
+		let cancel_msg = prompt("Please enter a reason for cancelling this order:");
+		if (cancel_msg == null || cancel_msg == "") {
+			alert("You must enter a reason to cancel this order.");
+			return false;
+		}
+		document.querySelector('input[name="cancel_reason"]').value = cancel_msg;
+		return true;
+	}
 
-	function mark_item_fulfilled(order_id, item_id) {
+	function mark_item_fulfilled(order_id, item_id, do_mail) {
 		$.ajax({
 			url: "{% url 'mark_item_fulfilled' 0 1 %}".replace("0", item_id),
 			type: "POST",
 			data: {
 				order_id: order_id,
 				item_id: item_id,
+				do_mail: do_mail,
 				csrfmiddlewaretoken: '{{ csrf_token }}'
 			},
 			success: function (response) {
@@ -46,7 +64,7 @@
 		});
 	}
 
-	function mark_item_cancelled(order_id, item_id) {
+	function mark_item_cancelled(order_id, item_id, do_mail) {
 		let cancel_msg = prompt("Please enter a reason for cancelling this item:");
 		if (cancel_msg == null || cancel_msg == "") {
 			alert("You must enter a reason to cancel this item.");
@@ -59,6 +77,7 @@
 				order_id: order_id,
 				item_id: item_id,
 				cancel_msg: cancel_msg,
+				do_mail: do_mail,
 				csrfmiddlewaretoken: '{{ csrf_token }}'
 			},
 			success: function (response) {
