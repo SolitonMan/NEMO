@@ -9,7 +9,7 @@
 </p>
 <p>The following items were included in this order:</p>
 <table class="table table-striped">
-{% for item in order.items.all %}
+	{% for item in order.items.all %}
 	<tr>
 		<td>{{ item.quantity }} {{ item.consumable.unit.abbreviation }}</td>
 		<td>{{ item.consumable.name }} (${{ item.consumable.consumablerate_set.all.0.academic_per_unit }} per {{ item.consumable.unit.abbreviation }})</td>
@@ -22,8 +22,9 @@
 		<td colspan="2"><span class="text-success">Cancelled</span></td>
 		{% endif %}
 	</tr>
-{% endfor %}
+	{% endfor %}
 </table>
+{% if not order.fulfilled and not order.cancelled %}
 <form method="post">
 	{% csrf_token %}
 	<input type="hidden" name="order_id" value="{{ order.id }}">
@@ -37,6 +38,7 @@
 	<input type="hidden" name="cancel_reason" value="" />
 	<button type="submit" class="btn btn-danger" {% if not allow_cancel %} disabled{% endif %}>Cancel Order</button>
 </form>
+{% endif %}
 <script>
 	function mark_order_cancelled() {
 		let cancel_msg = prompt("Please enter a reason for cancelling this order:");

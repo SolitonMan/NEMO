@@ -209,7 +209,7 @@ def order_detail(request, order_id):
 			"""
 
 		if action == 'cancel':
-			cancel_reason = request.POST.get('cancel_reason', 'No reason provided')
+			cancel_msg = request.POST.get('cancel_msg', 'No reason provided')
 			order.cancelled = True
 			order.cancelled_date = timezone.now()
 			order.cancelled_by = request.user
@@ -221,10 +221,10 @@ def order_detail(request, order_id):
 			# send an email to let the user know their order has been cancelled
 			subject = "Your order '" + str(order.name) + "' has been cancelled"
 			plain_message = "Hello " + str(order.user.first_name) + ",\n\nYour order '" + str(order.name) + \
-			    "' has been cancelled. The reason given was: '" + str(cancel_reason) + "'.  If you have any questions you can contact the NEMO team for more information.\n\nThank you,\nNEMO Team"
+			    "' has been cancelled. The reason given was: '" + str(cancel_msg) + "'.  If you have any questions you can contact the NEMO team for more information.\n\nThank you,\nNEMO Team"
 			html_message = f"""
 			<p>Hello {order.user.first_name},</p>
-			<p>Your order <strong>'{order.name}'</strong> has been cancelled.  The reason given was:<br/><br/><strong>'{cancel_reason}'</strong></p>
+			<p>Your order <strong>'{order.name}'</strong> has been cancelled.  The reason given was:<br/><br/><strong>'{cancel_msg}'</strong></p>
 			<p>If you have any questions you can contact the NEMO team for more information.</p>
 			<p>Thank you,<br>NEMO Team</p>
 			"""

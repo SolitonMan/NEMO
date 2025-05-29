@@ -6,6 +6,7 @@
 	<thead>
 		<tr>
 			<th>Order</th>
+			<th>Status</th>
 			<th>Name</th>
 			<th>User</th>
 			<th>Project</th>
@@ -15,6 +16,15 @@
 		{% for order in orders %}
 		<tr>
 			<td><a href="{% url 'order_detail' order.id %}">Order {{ order.id }}</a></td>
+			<td>
+				{% if order.fulfilled %}
+				<span class="text-success">Fulfilled</span>
+				{% elif order.cancelled %}
+				<span class="text-danger">Cancelled</span>
+				{% else %}
+				<span class="text-warning">Open</span>
+				{% endif %}
+			</td>
 			<td>{{ order.name }}</td>
 			<td>{{ order.user.get_full_name }}</td>
 			<td>{{ order.project }}</td>
