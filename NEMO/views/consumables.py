@@ -260,7 +260,7 @@ def mark_item_fulfilled(request, item_id, do_mail):
 	item.save()
 
 	# Create a ConsumableWithdraw entry for the fulfilled item
-	ConsumableWithdraw.objects.create(
+	consumable_withdraw = ConsumableWithdraw.objects.create(
 		customer = item.order.user,
 		merchant = request.user,
 		consumable = item.consumable,
@@ -270,6 +270,9 @@ def mark_item_fulfilled(request, item_id, do_mail):
 		updated = timezone.now(),
 		project_percent = 100.0
 	)
+
+	item.consumable_withdraw = consumable_withdraw
+	item.save()
 
 	# Send an HTML email to let the user know their item is ready
 	if do_mail:

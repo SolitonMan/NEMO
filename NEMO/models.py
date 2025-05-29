@@ -1268,7 +1268,7 @@ class ConsumableWithdraw(models.Model):
 		ordering = ['-date']
 
 	def __str__(self):
-		return str(self.id)
+		return str(self.id) + ' - ' + str(self.consumable.name) + ' - ' + str(self.quantity) + ' ' + str(self.consumable.unit.abbreviation) + ' - ' + str(self.project) + ' - ' + str(self.date)
 
 
 class ConsumableOrder(models.Model):
@@ -1299,6 +1299,7 @@ class ConsumableOrderItem(models.Model):
 	cancelled_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='item_cancelled_by')
 	created = models.DateTimeField(default=timezone.now)
 	updated = models.DateTimeField(null=True, blank=True)
+	consumable_withdraw = models.ForeignKey('ConsumableWithdraw', on_delete=models.SET_NULL, null=True, blank=True, related_name='order_item_withdraw')
 
 	def __str__(self):
 		return f"{self.quantity} of {self.consumable.name}"
