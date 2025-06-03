@@ -43,7 +43,7 @@
 	{% csrf_token %}
 	<input type="hidden" name="order_id" value="{{ order.id }}">
 	<input type="hidden" name="action" value="cancel" />
-	<input type="hidden" name="cancel_reason" value="" />
+	<input type="hidden" name="cancel_msg" value="" />
 	<button type="submit" class="btn btn-danger" {% if not allow_cancel %} disabled{% endif %}>Cancel Order</button>
 </form>
 {% endif %}
@@ -54,7 +54,7 @@
 			alert("You must enter a reason to cancel this order.");
 			return false;
 		}
-		document.querySelector('input[name="cancel_reason"]').value = cancel_msg;
+		document.querySelector('input[name="cancel_msg"]').value = cancel_msg;
 		return true;
 	}
 

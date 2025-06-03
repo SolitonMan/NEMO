@@ -200,7 +200,7 @@ def order_detail(request, order_id):
 			order.save()
 			for item in order.items.all():
 				if item.fulfilled == False and item.cancelled == False:
-					mark_item_fulfilled(request, item.id, 0)
+					fulfill_item(item, request.user, 0)
 
 			# send an email to let the user know their order is ready
 			subject = "Your order '" + str(order.name) + "' has been fulfilled"
@@ -221,7 +221,7 @@ def order_detail(request, order_id):
 			order.save()
 			for item in order.items.all():
 				if item.cancelled == False and item.fulfilled == False:
-					mark_item_cancelled(request, item.id, 0)
+					cancel_item(item, request.user, 0)
 			# send an email to let the user know their order has been cancelled
 			subject = "Your order '" + str(order.name) + "' has been cancelled"
 			plain_message = "Hello " + str(order.user.first_name) + ",\n\nYour order '" + str(order.name) + \
@@ -251,79 +251,76 @@ def order_detail(request, order_id):
 @staff_member_required(login_url=None)
 @login_required
 def mark_item_fulfilled(request, item_id, do_mail):
-	do_mail = bool(do_mail)
-	item = get_object_or_404(ConsumableOrderItem, id=item_id)
-	item.fulfilled = True
-	item.fulfilled_date = timezone.now()
-	item.fulfilled_by = request.user
-	item.updated = timezone.now()
-	item.save()
-
-	# Create a ConsumableWithdraw entry for the fulfilled item
-	consumable_withdraw = ConsumableWithdraw.objects.create(
-		customer = item.order.user,
-		merchant = request.user,
-		consumable = item.consumable,
-		quantity = item.quantity,
-		project = item.order.project,
-		date = timezone.now(),
-		updated = timezone.now(),
-		project_percent = 100.0
-	)
-
-	item.consumable_withdraw = consumable_withdraw
-	item.save()
-
-	# Send an HTML email to let the user know their item is ready
-	if do_mail:
-		subject = f"Your order for '{item.consumable.name}' has been fulfilled"
-		plain_message = f"Hello {item.order.user.first_name},\n\nYour order for '{item.consumable.name}' from the order '{item.order.name}' has been fulfilled. You can pick it up at the front desk.\n\nThank you,\nNEMO Team"
-		html_message = f"""
-		<p>Hello {item.order.user.first_name},</p>
-		<p>Your order for <strong>'{item.consumable.name}'</strong> has been fulfilled. You can pick it up at the front desk.</p>
-		<p>Thank you,<br>NEMO Team</p>
-		"""
-		send_mail(
-			subject,
-			plain_message,
-			"LEOHelp@psu.edu",
-			[item.order.user.email],
-			html_message=html_message
-		)
-
-	return redirect('order_detail', order_id=item.order.id)
-
+    item = get_object_or_404(ConsumableOrderItem, id=item_id)
+    fulfill_item(item, request.user, do_mail)
+    return redirect('order_detail', order_id=item.order.id)
 
 @login_required
 def mark_item_cancelled(request, item_id, do_mail):
-	do_mail = bool(do_mail)
-	cancel_msg = request.POST.get('cancel_msg')
-	item = get_object_or_404(ConsumableOrderItem, id=item_id)
-	item.cancelled = True
-	item.cancelled_date = timezone.now()
-	item.cancelled_by = request.user
-	item.updated = timezone.now()
-	item.save()
+    item = get_object_or_404(ConsumableOrderItem, id=item_id)
+    cancel_msg = request.POST.get('cancel_msg')
+    cancel_item(item, request.user, cancel_msg, do_mail)
+    return redirect('order_detail', order_id=item.order.id)
 
-	# send an email to let the user know their item has been cancelled
-	if do_mail:
-		subject = "Your order for '" + str(item.consumable.name) + "' has been cancelled"
-		plain_message = "Hello " + str(item.order.user.first_name) + ",\n\nYour order item '" + str(item.consumable.name) + \
-			"' from order '" + str(item.order.name) + "' has been cancelled. The reason given was: \n\n " + str(cancel_msg) + \
-			"\n\nYou can contact the NEMO team for more information.\n\nThank you,\nNEMO Team"
-		html_message = f"""
-			<p>Hello {item.order.user.first_name},</p>
-			<p>Your order item <strong>'{item.consumable.name}'</strong> from order <strong>'{item.order.name}'</strong> has been cancelled. The reason given was :</p>
-			<p><strong>{cancel_msg}</strong></p>
-			<p>If you have any questions please contact the NEMO team for more information.</p>
-			<p>Thank you,<br>NEMO Team</p>
-			"""
-		send_mail(
-				subject,
-				plain_message,
-				"LEOHelp@psu.edu",
-				[item.order.user.email],
-				html_message=html_message
-			)
 
-	return redirect('order_detail', order_id=item.order.id)
+def fulfill_item(item, user, do_mail):
+    item.fulfilled = True
+    item.fulfilled_date = timezone.now()
+    item.fulfilled_by = user
+    item.updated = timezone.now()
+    item.save()
+
+    consumable_withdraw = ConsumableWithdraw.objects.create(
+        customer=item.order.user,
+        merchant=user,
+        consumable=item.consumable,
+        quantity=item.quantity,
+        project=item.order.project,
+        date=timezone.now(),
+        updated=timezone.now(),
+        project_percent=100.0
+    )
+    item.consumable_withdraw = consumable_withdraw
+    item.save()
+
+    if do_mail:
+        subject = f"Your order for '{item.consumable.name}' has been fulfilled"
+        plain_message = f"Hello {item.order.user.first_name},\n\nYour order for '{item.consumable.name}' from the order '{item.order.name}' has been fulfilled. You can pick it up at the front desk.\n\nThank you,\nNEMO Team"
+        html_message = f"""
+        <p>Hello {item.order.user.first_name},</p>
+        <p>Your order for <strong>'{item.consumable.name}'</strong> has been fulfilled. You can pick it up at the front desk.</p>
+        <p>Thank you,<br>NEMO Team</p>
+        """
+        send_mail(
+            subject,
+            plain_message,
+            "LEOHelp@psu.edu",
+            [item.order.user.email],
+            html_message=html_message
+        )
+
+def cancel_item(item, user, cancel_msg, do_mail):
+    item.cancelled = True
+    item.cancelled_date = timezone.now()
+    item.cancelled_by = user
+    item.updated = timezone.now()
+    item.save()
+
+    if do_mail:
+        subject = f"Your order for '{item.consumable.name}' has been cancelled"
+        plain_message = f"Hello {item.order.user.first_name},\n\nYour order item '{item.consumable.name}' from order '{item.order.name}' has been cancelled. The reason given was: \n\n {cancel_msg}\n\nYou can contact the NEMO team for more information.\n\nThank you,\nNEMO Team"
+        html_message = f"""
+            <p>Hello {item.order.user.first_name},</p>
+            <p>Your order item <strong>'{item.consumable.name}'</strong> from order <strong>'{item.order.name}'</strong> has been cancelled. The reason given was :</p>
+            <p><strong>{cancel_msg}</strong></p>
+            <p>If you have any questions please contact the NEMO team for more information.</p>
+            <p>Thank you,<br>NEMO Team</p>
+            """
+        send_mail(
+            subject,
+            plain_message,
+            "LEOHelp@psu.edu",
+            [item.order.user.email],
+            html_message=html_message
+        )
+
