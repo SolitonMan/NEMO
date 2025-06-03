@@ -23,7 +23,7 @@
 		{% elif item.fulfilled %}
 		<td colspan="2"><span class="text-success">Fulfilled </span>{% if item.consumable_withdraw is not None %} <span> Withdrawal: {{ item.consumable_withdraw }}</span>{% endif %}</td>
 		{% elif item.cancelled %}
-		<td colspan="2"><span class="text-success">Cancelled</span></td>
+		<td colspan="2"><span class="text-danger">Cancelled</span></td>
 		{% endif %}
 	</tr>
 	{% endfor %}
