@@ -20,6 +20,6 @@
 <a href="{% url 'create_order' %}">Create another order</a>
 {% if request.user.is_staff %}
 <br/>
-<a href="{% url 'order_list' %}">View all orders</a>
+<a href="{% url 'order_list' 0 %}">View all orders</a>
 {% endif %}
 {% endblock %}
