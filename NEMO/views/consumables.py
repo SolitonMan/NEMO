@@ -221,7 +221,7 @@ def order_detail(request, order_id):
 			order.save()
 			for item in order.items.all():
 				if item.cancelled == False and item.fulfilled == False:
-					cancel_item(item, request.user, 0)
+					cancel_item(item, request.user, "", 0)
 			# send an email to let the user know their order has been cancelled
 			subject = "Your order '" + str(order.name) + "' has been cancelled"
 			plain_message = "Hello " + str(order.user.first_name) + ",\n\nYour order '" + str(order.name) + \
