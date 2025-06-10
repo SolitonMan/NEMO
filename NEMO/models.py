@@ -20,7 +20,7 @@ from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotFou
 from django.urls import reverse
 from django.utils import timezone
 
-from NEMO.utilities import send_mail, EmailCategory, format_datetime, SettingType
+from NEMO.utilities import EmailCategory, format_datetime, SettingType
 from NEMO.views.constants import ADDITIONAL_INFORMATION_MAXIMUM_LENGTH
 from NEMO.widgets.configuration_editor import ConfigurationEditor
 
@@ -180,8 +180,8 @@ class User(models.Model):
 
 	def email_user(self, subject, message, from_email=None):
 		""" Sends an email to this user. """
-		#send_mail(subject=subject, message='', from_email=from_email, recipient_list=[self.email], html_message=message)
-		send_mail(subject, message, from_email, [self.email], html_message=message)
+		send_mail(subject=subject, message='', from_email=from_email, recipient_list=[self.email], html_message=message)
+		#send_mail(subject, message, from_email, [self.email], html_message=message)
 
 	def get_full_name(self):
 		fname = ""
