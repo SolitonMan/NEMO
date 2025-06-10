@@ -98,22 +98,22 @@ def create_order(request):
 
 			# Send notifications to each supply manager
 			for manager, items in supply_manager_items.items():
-				item_list = "\n".join([f"{item.quantity} x {item.consumable.name}" for item in items])
+				item_list = "<br>".join([f"{item.quantity} x {item.consumable.name}" for item in items])
 				subject = f"New Order Notification: Items to Fulfill"
 				message = f"""
-				Hello {manager.get_first_last()},
+				Hello {manager.get_first_last()},<br><br>
 
-				A new order has been placed that includes items you manage. Below are the details:
+				A new order has been placed that includes items you manage. Below are the details:<br><br>
 
-				Order ID: {order.id}
-				Ordered By: {order.user.get_full_name()}
-				Project: {order.project}
-				Items:
-				{item_list}
+				Order ID: {order.id}<br>
+				Ordered By: {order.user.get_full_name()}<br>
+				Project: {order.project}<br>
+				Items:<br>
+				{item_list}<br><br>
 
-				Please fulfill these items at your earliest convenience.
+				Please fulfill these items at your earliest convenience.<br><br>
 
-				Thank you,
+				Thank you,<br>
 				NEMO Team
 				"""
 
@@ -193,6 +193,7 @@ def order_detail(request, order_id):
 		html_message = ""
 
 		if action == 'fulfill':
+			pickup_location = request.POST.get('pickup_location', 'the Front Desk')
 			order.fulfilled = True
 			order.fulfilled_date = timezone.now()
 			order.fulfilled_by = request.user
@@ -205,10 +206,10 @@ def order_detail(request, order_id):
 			# send an email to let the user know their order is ready
 			subject = "Your order '" + str(order.name) + "' has been fulfilled"
 			plain_message = "Hello " + str(order.user.first_name) + ",\n\nYour order '" + str(order.name) + \
-			    "' has been fulfilled. You can pick it up at the front desk.\n\nThank you,\nNEMO Team"
+			    "' has been fulfilled. You can pick it up at " + str(pickup_location) + ".\n\nThank you,\nNEMO Team"
 			html_message = f"""
 			<p>Hello {order.user.first_name},</p>
-			<p>Your order <strong>'{order.name}'</strong> has been fulfilled. You can pick it up at the front desk.</p>
+			<p>Your order <strong>'{order.name}'</strong> has been fulfilled. You can pick it up at {pickup_location}.</p>
 			<p>Thank you,<br>NEMO Team</p>
 			"""
 
