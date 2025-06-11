@@ -201,7 +201,7 @@ def order_detail(request, order_id):
 			order.save()
 			for item in order.items.all():
 				if item.fulfilled == False and item.cancelled == False:
-					fulfill_item(item, request.user, 0)
+					fulfill_item(item, request.user, "", 0)
 
 			# send an email to let the user know their order is ready
 			subject = "Your order '" + str(order.name) + "' has been fulfilled"
