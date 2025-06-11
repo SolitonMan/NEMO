@@ -253,7 +253,8 @@ def order_detail(request, order_id):
 @login_required
 def mark_item_fulfilled(request, item_id, do_mail):
     item = get_object_or_404(ConsumableOrderItem, id=item_id)
-    fulfill_item(item, request.user, do_mail)
+    pickup_location = request.POST.get('pickup_location')
+    fulfill_item(item, request.user, pickup_location, do_mail)
     return redirect('order_detail', order_id=item.order.id)
 
 @login_required
@@ -264,7 +265,7 @@ def mark_item_cancelled(request, item_id, do_mail):
     return redirect('order_detail', order_id=item.order.id)
 
 
-def fulfill_item(item, user, do_mail):
+def fulfill_item(item, user, pickup_location, do_mail):
     item.fulfilled = True
     item.fulfilled_date = timezone.now()
     item.fulfilled_by = user
@@ -286,10 +287,10 @@ def fulfill_item(item, user, do_mail):
 
     if do_mail:
         subject = f"Your order for '{item.consumable.name}' has been fulfilled"
-        plain_message = f"Hello {item.order.user.first_name},\n\nYour order for '{item.consumable.name}' from the order '{item.order.name}' has been fulfilled. You can pick it up at the front desk.\n\nThank you,\nNEMO Team"
+        plain_message = f"Hello {item.order.user.first_name},\n\nYour order for '{item.consumable.name}' from the order '{item.order.name}' has been fulfilled. You can pick it up at {pickup_location}.\n\nThank you,\nNEMO Team"
         html_message = f"""
         <p>Hello {item.order.user.first_name},</p>
-        <p>Your order for <strong>'{item.consumable.name}'</strong> has been fulfilled. You can pick it up at the front desk.</p>
+        <p>Your order for <strong>'{item.consumable.name}'</strong> has been fulfilled. You can pick it up at {pickup_location}.</p>
         <p>Thank you,<br>NEMO Team</p>
         """
         send_mail(
