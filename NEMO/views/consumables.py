@@ -76,7 +76,7 @@ def save_withdraw_notes(request):
 @login_required
 def create_order(request):
 	if request.method == 'POST':
-		consumables = Consumable.objects.filter(category__id=1, visible=True).order_by('name')
+		consumables = Consumable.objects.filter(category__id=1, visible=True, core_id__id=2).order_by('name')
 		order_form = ConsumableOrderForm(request.POST, user=request.user)
 		formset = ConsumableOrderItemFormSet(request.POST)
 		if order_form.is_valid() and formset.is_valid():
@@ -125,7 +125,7 @@ def create_order(request):
 		formset = ConsumableOrderItemFormSet()
 
 		# Annotate consumables with core names
-		consumables = Consumable.objects.filter(category__id=1, visible=True).annotate(
+		consumables = Consumable.objects.filter(category__id=1, visible=True,core_id__id=2).annotate(
 			core_name=F('core_id__name'),
 			academic_per_unit=F('consumablerate__academic_per_unit')
 		).annotate(

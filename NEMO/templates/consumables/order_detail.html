@@ -59,6 +59,7 @@
 	}
 
 	function mark_item_fulfilled(order_id, item_id, do_mail) {
+		let pickup_location = prompt("Please enter a location where the user can pick up the order:");
 		$.ajax({
 			url: "{% url 'mark_item_fulfilled' 0 1 %}".replace("0", item_id),
 			type: "POST",
@@ -66,6 +67,7 @@
 				order_id: order_id,
 				item_id: item_id,
 				do_mail: do_mail,
+				pickup_location: pickup_location,
 				csrfmiddlewaretoken: '{{ csrf_token }}'
 			},
 			success: function (response) {
