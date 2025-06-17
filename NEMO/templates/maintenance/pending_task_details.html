@@ -76,7 +76,7 @@
 			};
 			$('#estimated_resolution_time').datetimepicker(timepicker_properties);
 			{% if task.estimated_resolution_time %}
-			$('#estimated_resolution_time').val('{{ task.estimated_resolution_time }}');
+			$('#estimated_resolution_time').val('{{ task.estimated_resolution_time|date:"Y-m-d H:i" }}');
 			{% endif %}
 		</script>
 	</div>
