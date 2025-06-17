@@ -122,9 +122,13 @@
 <script type="text/javascript">
 function submit_task_update() 
 {
-	if ($('#estimated_resolution_time').val() != "") {
-		$('#estimated_resolution_time').val(convert_12_to_24($('#estimated_resolution_time').val()));
-	}
+    var val = $('#estimated_resolution_time').val();
+    console.log("Before conversion:", val);
+    if (val != "") {
+        var converted = convert_12_to_24(val);
+        console.log("After conversion:", converted);
+        $('#estimated_resolution_time').val(converted);
+    }
 
 	return true;
 }
