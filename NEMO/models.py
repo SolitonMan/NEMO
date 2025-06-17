@@ -20,7 +20,7 @@ from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotFou
 from django.urls import reverse
 from django.utils import timezone
 
-from NEMO.utilities import send_mail, EmailCategory, format_datetime, SettingType
+from NEMO.utilities import EmailCategory, format_datetime, SettingType
 from NEMO.views.constants import ADDITIONAL_INFORMATION_MAXIMUM_LENGTH
 from NEMO.widgets.configuration_editor import ConfigurationEditor
 
@@ -180,8 +180,8 @@ class User(models.Model):
 
 	def email_user(self, subject, message, from_email=None):
 		""" Sends an email to this user. """
-		#send_mail(subject=subject, message='', from_email=from_email, recipient_list=[self.email], html_message=message)
-		send_mail(subject, message, from_email, [self.email])
+		send_mail(subject=subject, message='', from_email=from_email, recipient_list=[self.email], html_message=message)
+		#send_mail(subject, message, from_email, [self.email], html_message=message)
 
 	def get_full_name(self):
 		fname = ""
@@ -190,6 +190,10 @@ class User(models.Model):
 			fname += "[INACTIVE] "
 
 		fname += self.first_name + ' ' + self.last_name + ' (' + self.username + ')'
+		return fname
+
+	def get_first_last(self):
+		fname = self.first_name + ' ' + self.last_name
 		return fname
 
 	def get_short_name(self):
@@ -396,6 +400,9 @@ class Tool(models.Model):
 	reservation_required = models.BooleanField(default=False, help_text='Require that users have a current (within 15 minutes) reservation in order to use the tool')
 	allow_autologout = models.BooleanField(default=False, help_text='Allow users to set an end time for the tool run.')
 	qualification_duration = models.PositiveIntegerField(default=182, null=True, blank=True, help_text="The tool may indicate the number of days without use a user will be considered qualified.  The default is 182 days (6 months).  Each night a script will run to check a user's last date of use for a tool against this time period.  If the date of last use is greater than the qualification_duration value the user will be set to limited status.  This change can be reversed in LEO.")
+
+	# add a many to many relationship with the consumable table.  This will allow each tool
+	consumables = models.ManyToManyField('Consumable', blank=True, help_text="Select the consumables that are required for this tool. Consumables are used to track the amount of consumable used during a tool run.  This is not a required field.", related_name='tool_consumables')
 
 	# Core info
 	core_id = models.ForeignKey('Core', related_name="tool_core", on_delete=models.SET_NULL, help_text="The core facility of which this tool is part.", null=True)
@@ -1182,12 +1189,17 @@ class Consumable(models.Model):
 	# add core_id to manage inventory for the appropriate core
 	core_id = models.ForeignKey('Core', on_delete=models.SET_NULL, null=True, blank=True, related_name='consumable_core')
 	credit_cost_collector = models.ForeignKey('CreditCostCollector', on_delete=models.SET_NULL, null=True, blank=True, related_name='consumable_cost_collector')
+
+	# add related user for supply manager
+	supply_manager = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='supply_manager')
 	
 	class Meta:
 		ordering = ['name']
 
 	def __str__(self):
-		return self.name
+		core_name = self.core_id.name if self.core_id else "No Core"
+		return f"{self.name} ({core_name})"
+
 
 class ConsumableUnit(models.Model):
 	name = models.CharField(max_length=100)
@@ -1256,29 +1268,54 @@ class ConsumableWithdraw(models.Model):
 		ordering = ['-date']
 
 	def __str__(self):
-		return str(self.id)
+		return str(self.id) + ' - ' + str(self.consumable.name) + ' - ' + str(self.quantity) + ' ' + str(self.consumable.unit.abbreviation) + ' - ' + str(self.project) + ' - ' + str(self.date)
 
 
 class ConsumableOrder(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    project = models.ForeignKey(Project, on_delete=models.CASCADE)
-    order_date = models.DateTimeField(auto_now_add=True)
-    fulfilled = models.BooleanField(default=False)
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField()
+	user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='order_user')
+	project = models.ForeignKey(Project, on_delete=models.CASCADE)
+	order_date = models.DateTimeField(auto_now_add=True)
+	fulfilled = models.BooleanField(default=False)
+	cancelled = models.BooleanField(default=False)
+	created = models.DateTimeField(default=timezone.now)
+	updated = models.DateTimeField(null=True, blank=True)
+	name = models.CharField(max_length=100, null=True, blank=True)
+	description = models.TextField(null=True, blank=True)
+	fulfilled_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='order_fulfilled_by')
+	cancelled_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='order_cancelled_by')
 
-    def __str__(self):
-        return f"Order {self.id} by {self.user.get_full_name()}"
+	def __str__(self):
+		return f"Order {self.id} - {self.name} - by {self.user.get_full_name()}"
 
 
 class ConsumableOrderItem(models.Model):
-    order = models.ForeignKey(ConsumableOrder, related_name='items', on_delete=models.CASCADE)
-    consumable = models.ForeignKey(Consumable, on_delete=models.CASCADE)
-    quantity = models.PositiveIntegerField()
+	order = models.ForeignKey(ConsumableOrder, related_name='items', on_delete=models.CASCADE)
+	consumable = models.ForeignKey(Consumable, on_delete=models.CASCADE)
+	quantity = models.PositiveIntegerField()
+	fulfilled = models.BooleanField(default=False)
+	cancelled = models.BooleanField(default=False)
+	notes = models.TextField(null=True, blank=True)
+	fulfilled_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='item_fulfilled_by')
+	cancelled_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='item_cancelled_by')
+	created = models.DateTimeField(default=timezone.now)
+	updated = models.DateTimeField(null=True, blank=True)
+	consumable_withdraw = models.ForeignKey('ConsumableWithdraw', on_delete=models.SET_NULL, null=True, blank=True, related_name='order_item_withdraw')
 
-    def __str__(self):
-        return f"{self.quantity} of {self.consumable.name}"
+	def __str__(self):
+		return f"{self.quantity} of {self.consumable.name}"
 
+
+class ConsumableRate(models.Model):
+	consumable = models.ForeignKey(Consumable, on_delete=models.CASCADE)
+	academic_per_unit = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+	external_per_unit = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+	industry_per_unit = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+
+	class Meta:
+		ordering = ['consumable']
+
+	def __str__(self):
+		return f"{self.consumable.name} costs {self.academic_per_unit} / {self.external_per_unit} / {self.industry_per_unit}"
 
 
 class ContestTransaction(models.Model):

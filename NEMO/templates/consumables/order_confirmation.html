@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Order Confirmation</h2>
+<p>
+	Thank you for your order {{order.user.first_name}}!  The details of this order are:<br />
+	<b>Project:</b> {{ order.project }}<br />
+	<b>Name:</b> {{ order.name }}<br />
+	<b>Description:</b> {{ order.description }}
+</p>
+<p>The item(s) included in this order are:</p>
+<table class="table table-striped">
+	{% for item in order.items.all %}
+	<tr>
+		<td>{{ item.quantity }} {{ item.consumable.unit.abbreviation }}</td>
+		<td>{{ item.consumable.name }} (${{ item.consumable.consumablerate_set.all.0.academic_per_unit }} per {{ item.consumable.unit.abbreviation }})</td>
+	</tr>
+	{% endfor %}
+</table>
+
+<a href="{% url 'create_order' %}">Create another order</a>
+{% if request.user.is_staff %}
+<br/>
+<a href="{% url 'order_list' 0 %}">View all orders</a>
+{% endif %}
+{% endblock %}

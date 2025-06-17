@@ -122,6 +122,9 @@ def create_or_modify_tool(request, tool_id):
 		dictionary['pqd'] = pqd
 		dictionary['users'] = User.objects.filter(is_active=True, projects__active=True).distinct()
 		dictionary['tool'] = tool
+		dictionary['available_consumables'] = Consumable.objects.filter(category__id=1).exclude(id__in=tool.consumables.all())
+		dictionary['selected_consumables'] = tool.consumables.all() if tool else []
+
 		return render(request, 'tool_control/create_or_modify_tool.html', dictionary)
 
 	elif request.method == 'POST':
@@ -132,7 +135,10 @@ def create_or_modify_tool(request, tool_id):
 			return render(request, 'tool_control/create_or_modify_tool.html', dictionary)
 
 		form.save()
+		selected_consumables = request.POST.getlist('selected_consumables')
+		tool.consumables.set(selected_consumables)
 		return redirect('tools')
+
 
 
 @login_required

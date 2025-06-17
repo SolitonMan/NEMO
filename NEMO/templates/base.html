@@ -33,6 +33,7 @@
 
 	{# jQuery #}
 	<script type="text/javascript" src="{% static "jquery.js" %}"></script>
+	<!--script src="https://code.jquery.com/jquery-3.7.1.min.js"></script-->
 
 	{# Bootstrap #}
 	<script type="text/javascript" src="{% static "bootstrap/js/bootstrap.js" %}"></script>
@@ -48,6 +49,12 @@
 	{# NEMO #}
 	<script type="text/javascript" src="{% static "nemo.js" %}"></script>
 	<link rel="stylesheet" type="text/css" href="{% static "nemo.css" %}" />
+
+	<!-- DataTables CSS -->
+	<link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css">
+	<!-- DataTables JS -->
+	<script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+
 
 	{% block extrahead %}{% endblock %}
 
@@ -66,98 +73,106 @@
 			<a class="navbar-brand" href="{% url 'landing' %}">LEO</a>
 		</div>
 		<div class="navbar-collapse collapse" id="nemo-navigation">
-			<ul class="nav navbar-nav">
-				<li><a href="{% url 'calendar' %}">Calendar</a></li>
-				<li><a href="{% url 'tool_control' %}">Tool control</a></li>
-				{% if user.physical_access_levels.all|length > 0 %}
-				<li><a href="{% url 'new_area_access_customer' request.user.id %}">Area Access</a></li>
-				{% endif %}
-				{% navigation_url 'samples' 'Samples' %}
-				<li><a href="{% url 'status_dashboard' %}">Status dashboard</a></li>
-				{% if request.session.pi or user_delegate %}
-				{% if not request.session.technical_staff %}
-				{% navigation_url 'accounts_and_projects' 'Projects' %}
-				{% endif %}
-				{% endif %}
+                        <ul class="nav navbar-nav">
+                                <li><a href="{% url 'calendar' %}">Calendar</a></li>
+                                <li><a href="{% url 'tool_control' %}">Tool control</a></li>
+                                {% if user.physical_access_levels.all|length > 0 %}
+                                <li><a href="{% url 'new_area_access_customer' request.user.id %}">Area Access</a></li>
+                                {% endif %}
+								<li class="dropdown">
+									<a href="#" class="dropdown-toggle" data-toggle="dropdown">Supplies <b class="caret"></b></a>
+									<ul class="dropdown-menu">
+									{% navigation_url 'create_order' 'Order Supplies' %}
+                                    <li><a href="{% url 'order_list' 1 %}">My Orders</a></li>
+									</ul>
+								</li>
+								{% navigation_url 'samples' 'Samples' %}
+<li><a href="{% url 'status_dashboard' %}">Status dashboard</a></li>
+                                {% if request.session.pi or user_delegate %}
+                                {% if not request.session.technical_staff %}
+                                {% navigation_url 'accounts_and_projects' 'Projects' %}
+                                {% endif %}
+                                {% endif %}
 
-				{% if user.is_staff %}
-					<li class="dropdown">
-						<a href="#" class="dropdown-toggle" data-toggle="dropdown">Administration <b class="caret"></b></a>
-						<ul class="dropdown-menu">
-							{# The navigation_url tag will display the item if the URL name can be reversed. #}
-							{# This allows items to be easily removed from the public facing version of NEMO. #}
-							{% if user.is_superuser %}
-							{% navigation_url 'check_url' 'URL Checker' %}
-							{% endif %}
-							{% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
-							{% navigation_url 'abuse' 'Abuse' %}
-							{% endif %}
-							{% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
-							{% navigation_url 'alerts' 'Alerts' %}
-							{% endif %}
-							{% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
-							{% navigation_url 'area_access' 'Area access' %}
-							{% endif %}
-							{% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
-							{% navigation_url 'configuration_agenda' 'Configuration agenda' %}
-							{% endif %}
-							{% if user.is_superuser %}
-							{% navigation_url 'customization' 'Customization' %}
-							{% endif %}
-							{% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or user.is_superuser %}
-							{% navigation_url 'admin:index' 'Detailed administration' %}
-							{% endif %}
-							{% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
-							{% navigation_url 'email_broadcast' 'Email' %}
-							{% endif %}
-							{% if request.session.administrative_staff or request.user.is_superuser %}
-							{% navigation_url 'interlocks' 'Interlocks' %}
-							{% endif %}
-							{% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
-							{% navigation_url 'maintenance' 'Maintenance' %}
-							{% endif %}
-							{% navigation_url 'create_notification_scheme' 'Notification Schemes' %}
-							{% if user.is_superuser %}
-							{% navigation_url 'delegates' 'PI Delegates' %}
-							{% endif %}
-							{% if request.session.pi or request.session.administrative_staff or request.session.financial_admin or user.is_superuser or user.is_staff %}
-							{% navigation_url 'accounts_and_projects' 'Projects' %}
-							{% endif %}
-							{% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
-							{% navigation_url 'qualifications' 'Qualifications' %}
-							{% endif %}
-							{% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
-							{% navigation_url 'remote_work' 'Transaction validation' %}
-							{% endif %}
-							{% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
-							{% navigation_url 'resources' 'Resources' %}
-							{% endif %}
-							{% if request.session.core_admin or request.session.technical_staff or user.is_superuser %}
-							{% navigation_url 'staff_charges' 'Staff charges' %}
-							{% endif %}
-							{% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
-							{% navigation_url 'consumables' 'Supplies' %}
-							{% endif %}
-							{% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
-							{% navigation_url 'tools' 'Tools' %}
-							{% endif %}
-							{% if request.session.core_admin or request.session.technical_staff or user.is_superuser %}
-							{% navigation_url 'create_usage_event' 'Usage events' %}
-							{% endif %}
-							{% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
-							{% navigation_url 'users' 'Users' %}
-							{% endif %}
-							{% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
-							{% navigation_url 'work_orders' 'Work Orders' %}
-							{% endif %}
-						</ul>
-					</li>
-				{% endif %}
-				{% if logout_allowed %}
-					<li class="visible-xs"><a href="{% url 'logout' %}">Logout</a></li>
-				{% endif %}
-				<li><a href="mailto:LEOHelp@psu.edu">Report a problem</a></li>
-			</ul>
+                                {% if user.is_staff %}
+                                <li class="dropdown">
+                                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">Administration <b class="caret"></b></a>
+                                        <ul class="dropdown-menu">
+                                                {# The navigation_url tag will display the item if the URL name can be reversed. #}
+                                                {# This allows items to be easily removed from the public facing version of NEMO. #}
+                                                {% if user.is_superuser %}
+                                                {% navigation_url 'check_url' 'URL Checker' %}
+                                                {% endif %}
+                                                {% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
+                                                {% navigation_url 'abuse' 'Abuse' %}
+                                                {% endif %}
+                                                {% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
+                                                {% navigation_url 'alerts' 'Alerts' %}
+                                                {% endif %}
+                                                {% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
+                                                {% navigation_url 'area_access' 'Area access' %}
+                                                {% endif %}
+                                                {% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
+                                                {% navigation_url 'configuration_agenda' 'Configuration agenda' %}
+                                                {% endif %}
+                                                {% if user.is_superuser %}
+                                                {% navigation_url 'customization' 'Customization' %}
+                                                {% endif %}
+                                                {% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or user.is_superuser %}
+                                                {% navigation_url 'admin:index' 'Detailed administration' %}
+                                                {% endif %}
+                                                {% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
+                                                {% navigation_url 'email_broadcast' 'Email' %}
+                                                {% endif %}
+                                                {% if request.session.administrative_staff or request.user.is_superuser %}
+                                                {% navigation_url 'interlocks' 'Interlocks' %}
+                                                {% endif %}
+                                                {% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
+                                                {% navigation_url 'maintenance' 'Maintenance' %}
+                                                {% endif %}
+                                                {% navigation_url 'create_notification_scheme' 'Notification Schemes' %}
+                                                <li><a href="{% url 'order_list' 0 %}">Orders</a></li>
+                                                {% if user.is_superuser %}
+                                                {% navigation_url 'delegates' 'PI Delegates' %}
+                                                {% endif %}
+                                                {% if request.session.pi or request.session.administrative_staff or request.session.financial_admin or user.is_superuser or user.is_staff %}
+                                                {% navigation_url 'accounts_and_projects' 'Projects' %}
+                                                {% endif %}
+                                                {% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
+                                                {% navigation_url 'qualifications' 'Qualifications' %}
+                                                {% endif %}
+                                                {% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
+                                                {% navigation_url 'remote_work' 'Transaction validation' %}
+                                                {% endif %}
+                                                {% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
+                                                {% navigation_url 'resources' 'Resources' %}
+                                                {% endif %}
+                                                {% if request.session.core_admin or request.session.technical_staff or user.is_superuser %}
+                                                {% navigation_url 'staff_charges' 'Staff charges' %}
+                                                {% endif %}
+                                                {% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
+                                                {% navigation_url 'consumables' 'Supplies' %}
+                                                {% endif %}
+                                                {% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
+                                                {% navigation_url 'tools' 'Tools' %}
+                                                {% endif %}
+                                                {% if request.session.core_admin or request.session.technical_staff or user.is_superuser %}
+                                                {% navigation_url 'create_usage_event' 'Usage events' %}
+                                                {% endif %}
+                                                {% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
+                                                {% navigation_url 'users' 'Users' %}
+                                                {% endif %}
+                                                {% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
+                                                {% navigation_url 'work_orders' 'Work Orders' %}
+                                                {% endif %}
+                                        </ul>
+                                </li>
+                                {% endif %}
+                                {% if logout_allowed %}
+                                <li class="visible-xs"><a href="{% url 'logout' %}">Logout</a></li>
+                                {% endif %}
+                                <li><a href="mailto:LEOHelp@psu.edu">Report a problem</a></li>
+                        </ul>
 			<div  class="nav-tweak">
 			<ul class="nav-tweak nav navbar-nav navbar-right hidden-xs">
 				{% if user.is_staff and user.charging_staff_time %}

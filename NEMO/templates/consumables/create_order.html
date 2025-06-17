@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+{% block content %}
+<h2>Create Order</h2>
+<p>You can use this form to order supplies for your project.  For each row you can select the desired item from the dropdown list.  Use the Search field to the left of the list to filter the items in that list.  Add additional rows to the form to select more items.  NOTE:  All items will be charged to the selected project when the order is fulfilled.</p>
+<form method="post" id="order-form">
+    {% csrf_token %}
+	<table>
+		<tr>
+			<td>
+				<div class="form-group">
+					<span style="width:35%;">Project: {{ order_form.project|add_class:"form-control" }}</span>
+				</div>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<div class="form-group">
+					<span style="width:35%;">Name: {{ order_form.name|add_class:"form-control" }}</span>
+				</div>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<div class="form-group">
+					<span style="width:35%;">Description: {{ order_form.description|add_class:"form-control" }}</span>
+				</div>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<div class="form-group">
+					<label for="tool_select"><b>Select Tool:</b> If you are looking for supplies for a specific tool, you may be able to filter the supply item list if the tool of interest has a list of assigned supplies.  If you select a tool then the items in the supply lists will be filtered to the supplies assigned to the selected tool.  You can change back to all supplies by selecting All Tools.  No supply list with a selected item will be updated when a tool is selected.</label>
+					<select id="tool_select" class="form-control">
+						<option value="" selected>All Tools</option>
+						{% for tool in tools %}
+						<option value="{{ tool.id }}">{{ tool.name }}</option>
+						{% endfor %}
+					</select>
+				</div>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<div id="formset-container">
+					{{ formset.management_form }}
+					<div class="order-item form-row">
+						<div class="form-group col-md-4" style="font-weight:bold;">
+							Filter
+						</div>
+						<div class="form-group col-md-4" style="font-weight:bold;">
+							Item
+						</div>
+						<div class="form-group col-md-2" style="font-weight:bold;">
+							Quantity
+						</div>
+						<div class="form-group col-md-2">
+
+						</div>
+					</div>
+				</div>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<button type="button" class="btn btn-primary" id="add-item">Add Item</button><br /><br />
+				<button type="submit" class="btn btn-success">Submit Order</button>
+			</td>
+		</tr>
+	</table>
+</form>
+
+<script>
+    $(document).ready(function() {
+        var formsetContainer = $('#formset-container');
+        var addItemButton = $('#add-item');
+        var formCount = {{ formset.total_form_count }};
+		var consumablesOptions = `<option value>---------</option>{% for consumable in consumables %}<option value="{{ consumable.id }}">{{ consumable }}</option>{% endfor %}`;
+		var allConsumables = {{ all_consumables| safe }};
+		var consumablesFullList = {{ consumables_full_list | safe }};
+
+        addItemButton.click(function() {
+			var newItem = $(`
+				<div class="order-item form-row">
+					<div class="form-group col-md-4">
+						<input type="text" name="items-${formCount}-search" class="form-control" placeholder="Filter consumables..." id="id_items-${formCount}-search">
+					</div>
+					<div class="form-group col-md-4">
+						<select name="items-${formCount}-consumable" class="form-control" id="id_items-${formCount}-consumable"></select>
+					</div>
+					<div class="form-group col-md-2">
+						<input type="number" name="items-${formCount}-quantity" class="form-control" id="id_items-${formCount}-quantity">
+					</div>
+					<div class="form-group col-md-2">
+						<button type="button" class="btn btn-danger remove-item">Remove</button>
+					</div>
+				</div>
+			`);
+			newItem.find('select[name$="consumable"]').html(consumablesOptions); // Use .html() to set options
+			formsetContainer.append(newItem);
+			formCount++;
+
+            // Update the total form count
+            $('#id_items-TOTAL_FORMS').val(formCount);
+
+            // Add event listener for the new search input
+            newItem.find('input[name$="search"]').on('input', function() {
+                var searchTerm = $(this).val().toLowerCase();
+                var options = newItem.find('select[name$="consumable"] option');
+                options.each(function() {
+                    if ($(this).text().toLowerCase().includes(searchTerm)) {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                });
+            });
+
+            // Add event listener for the remove button
+            newItem.find('.remove-item').click(function() {
+                newItem.remove();
+                formCount--;
+                $('#id_items-TOTAL_FORMS').val(formCount);
+	    });
+
+	    // update select list of consumables
+	    filterConsumables($('#tool_select').val());
+        });
+
+        // Add event listeners for existing remove buttons
+        $('.remove-item').click(function() {
+            $(this).closest('.order-item').remove();
+            formCount--;
+            $('#id_items-TOTAL_FORMS').val(formCount);
+        });
+
+        // Add event listeners for existing search inputs
+        $('input[name$="search"]').on('input', function() {
+            var searchTerm = $(this).val().toLowerCase();
+            var options = $(this).closest('.order-item').find('select[name$="consumable"] option');
+            options.each(function() {
+                if ($(this).text().toLowerCase().includes(searchTerm)) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
+			});
+	});
+
+	// Tool selection change event
+	$('#tool_select').change(function () {
+		var toolId = $(this).val();
+		filterConsumables(toolId);
+	});
+
+	// Initial load
+	filterConsumables($('#tool_select').val());
+	$('#add-item').click();
+
+	function filterConsumables(toolId) {
+		var availableConsumables = allConsumables[toolId] || consumablesFullList;
+
+		$('#formset-container select[name$="consumable"]').each(function () {
+			var currentConsumable = $(this).val();
+			if (currentConsumable == '') {
+				$(this).empty();
+				$(this).append('<option value="">---------</option>');
+				availableConsumables.forEach(function (consumable) {
+					var option = new Option(consumable.display_name, consumable.id);
+					if (consumable.id == currentConsumable) {
+						option.selected = true;
+					}
+					$(this).append(option);
+				}.bind(this));
+			}
+		});
+	}
+
+        $('#order-form').on('submit', function () {
+                if (formCount === 0) {
+                        alert('Please add at least one item to the order.');
+                        return false;
+                }
+
+                var valid = true;
+
+                $('select[id^="id_items-"][id$="-consumable"]').each(function () {
+                        if ($(this).val() === '') {
+                                alert('Please select a consumable for each item.');
+                                $(this).focus();
+                                valid = false;
+                                return false;
+                        }
+                });
+
+                if (!valid) {
+                        return false;
+                }
+
+                $('input[id^="id_items-"][id$="-quantity"]').each(function () {
+                        if ($(this).val() === '') {
+                                alert('Please enter a quantity for each item.');
+                                $(this).focus();
+                                valid = false;
+                                return false;
+						}
+						if ($(this).val() < 1) {
+								alert('Please enter a positive integer value for each quantity.');
+								$(this).focus();
+								valid = false;
+								return false;
+						}
+                });
+
+                return valid;
+        });
+    });
+</script>
+{% endblock %}

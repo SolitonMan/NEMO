@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Order {{ order.id }} by {{ order.user.get_full_name }}</h2>
+<p>
+	The details of this order are:<br />
+	<b>Project:</b> {{ order.project }}<br />
+	<b>Name:</b> {{ order.name }}<br />
+	<b>Description:</b> {{ order.description }}
+</p>
+<p>The following items were included in this order:</p>
+<table class="table table-striped">
+	{% for item in order.items.all %}
+	<tr>
+		<td>{{ item.quantity }} {{ item.consumable.unit.abbreviation }}</td>
+		<td>{{ item.consumable.name }} (${{ item.consumable.consumablerate_set.all.0.academic_per_unit }} per {{ item.consumable.unit.abbreviation }})</td>
+		{% if not item.fulfilled and not item.cancelled %}
+		<td>
+			{% if request.user.is_staff %}
+			<input type="button" onclick="mark_item_fulfilled({{ order.id }}, {{ item.id }}, 1);" value="Fulfill Item" class="btn btn-success" />
+			{% endif %}
+		</td>
+		<td><input type="button" onclick="mark_item_cancelled({{ order.id }}, {{ item.id }}, 1);" value="Cancel Item" class="btn btn-danger" /></td>
+		{% elif item.fulfilled %}
+		<td colspan="2"><span class="text-success">Fulfilled </span>{% if item.consumable_withdraw is not None %} <span> Withdrawal: {{ item.consumable_withdraw }}</span>{% endif %}</td>
+		{% elif item.cancelled %}
+		<td colspan="2"><span class="text-danger">Cancelled</span></td>
+		{% endif %}
+	</tr>
+	{% endfor %}
+</table>
+{% if not order.fulfilled and not order.cancelled %}
+{% if request.user.is_staff %}
+<br />
+<br />
+<form method="post" onsubmit="return mark_order_fulfilled()" style="display:inline;">
+	{% csrf_token %}
+	<input type="hidden" name="order_id" value="{{ order.id }}">
+	<input type="hidden" name="action" value="fulfill" />
+	<input type="hidden" name="pickup_location" value="" />
+	<button type="submit" class="btn btn-success">Mark as Fulfilled</button>
+</form>
+{% endif %}
+<form method="post" onsubmit="return mark_order_cancelled()" style="display:inline;">
+	{% csrf_token %}
+	<input type="hidden" name="order_id" value="{{ order.id }}">
+	<input type="hidden" name="action" value="cancel" />
+	<input type="hidden" name="cancel_msg" value="" />
+	<button type="submit" class="btn btn-danger" {% if not allow_cancel %} disabled{% endif %}>Cancel Order</button>
+</form>
+{% endif %}
+<script>
+	function mark_order_fulfilled() {
+		let pickup_location = prompt("Please enter a location where the user can pick up the order:");
+		document.querySelector('input[name="pickup_location"]').value = pickup_location;
+		return true;
+	}
+
+	function mark_order_cancelled() {
+		let cancel_msg = prompt("Please enter a reason for cancelling this order:");
+		if (cancel_msg == null || cancel_msg == "") {
+			alert("You must enter a reason to cancel this order.");
+			return false;
+		}
+		document.querySelector('input[name="cancel_msg"]').value = cancel_msg;
+		return true;
+	}
+
+	function mark_item_fulfilled(order_id, item_id, do_mail) {
+		let pickup_location = prompt("Please enter a location where the user can pick up the order:");
+		$.ajax({
+			url: "{% url 'mark_item_fulfilled' 0 1 %}".replace("0", item_id),
+			type: "POST",
+			data: {
+				order_id: order_id,
+				item_id: item_id,
+				do_mail: do_mail,
+				pickup_location: pickup_location,
+				csrfmiddlewaretoken: '{{ csrf_token }}'
+			},
+			success: function (response) {
+				location.reload();
+			}
+		});
+	}
+
+	function mark_item_cancelled(order_id, item_id, do_mail) {
+		let cancel_msg = prompt("Please enter a reason for cancelling this item:");
+		if (cancel_msg == null || cancel_msg == "") {
+			alert("You must enter a reason to cancel this item.");
+			return;
+		}
+		$.ajax({
+			url: "{% url 'mark_item_cancelled' 0 1 %}".replace("0", item_id),
+			type: "POST",
+			data: {
+				order_id: order_id,
+				item_id: item_id,
+				cancel_msg: cancel_msg,
+				do_mail: do_mail,
+				csrfmiddlewaretoken: '{{ csrf_token }}'
+			},
+			success: function (response) {
+				location.reload();
+			}
+		});
+	}
+</script>
+{% endblock %}

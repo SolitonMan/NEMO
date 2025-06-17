@@ -9,7 +9,7 @@ from microsoft_auth.models import MicrosoftAccount
 from microsoft_auth.admin import MicrosoftAccountAdmin
 
 from NEMO.actions import lock_selected_interlocks, synchronize_with_tool_usage, unlock_selected_interlocks
-from NEMO.models import Account, ActivityHistory, Alert, Area, AreaAccessRecord, AreaAccessRecordProject, BillingType, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableUnit, ConsumableCategory, ConsumableType, ConsumableWithdraw, ContactInformation, ContactInformationCategory, ContestTransaction, ContestTransactionData, ContestTransactionNewData, Core, CreditCostCollector, Customization, Door, EmailLog, GlobalFlag, Interlock, InterlockCard, InterlockType, LandingPageChoice, LockBilling, MembershipHistory, News, Notification, NsfCategory, Organization, OrganizationType, PhysicalAccessLevel, PhysicalAccessLog, Project, Project2DCC, Reservation, ReservationConfiguration, ReservationProject, Resource, ResourceCategory, SafetyIssue, Sample, ScheduledOutage, ScheduledOutageCategory, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskHistory, TaskStatus, Tool, TrainingSession, UsageEvent, UsageEventProject, User, UserType, UserProfile, UserProfileSetting
+from NEMO.models import Account, ActivityHistory, Alert, Area, AreaAccessRecord, AreaAccessRecordProject, BillingType, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableOrder, ConsumableOrderItem, ConsumableUnit, ConsumableCategory, ConsumableType, ConsumableWithdraw, ContactInformation, ContactInformationCategory, ContestTransaction, ContestTransactionData, ContestTransactionNewData, Core, CreditCostCollector, Customization, Door, EmailLog, GlobalFlag, Interlock, InterlockCard, InterlockType, LandingPageChoice, LockBilling, MembershipHistory, News, Notification, NsfCategory, Organization, OrganizationType, PhysicalAccessLevel, PhysicalAccessLog, Project, Project2DCC, Reservation, ReservationConfiguration, ReservationProject, Resource, ResourceCategory, SafetyIssue, Sample, ScheduledOutage, ScheduledOutageCategory, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskHistory, TaskStatus, Tool, TrainingSession, UsageEvent, UsageEventProject, User, UserType, UserProfile, UserProfileSetting
 from NEMO.utilities import send_mail
 from NEMO.views.customization import get_customization, get_media_file_contents
 
@@ -182,7 +182,7 @@ class ToolAdmin(admin.ModelAdmin):
 			self.fieldsets = (
 				(None, {'fields': ('name', 'category', 'core_id', 'credit_cost_collector'),}),
 				('Current state', {'fields': ('post_usage_questions', 'visible', 'operational'),}),
-				('Contact information', {'fields': ('primary_owner', 'backup_owners', 'notification_email_address', 'location', 'phone_number'),}),
+				('Contact information', {'fields': ('primary_owner', 'backup_owners', 'notification_email_address', 'location', 'phone_number','infolink'),}),
 				('Usage policy', {'fields': ('qualification_duration', 'reservation_horizon', 'minimum_usage_block_time', 'maximum_usage_block_time', 'maximum_reservations_per_day', 'minimum_time_between_reservations', 'maximum_future_reservation_time', 'missed_reservation_threshold', 'requires_area_access', 'grant_physical_access_level_upon_qualification', 'grant_badge_reader_access_upon_qualification', 'interlocks', 'allow_delayed_logoff', 'reservation_required', 'allow_autologout'),}),
 				('Dependencies', {'fields': ('required_resources', 'nonrequired_resources'),}),
 			)
@@ -190,7 +190,7 @@ class ToolAdmin(admin.ModelAdmin):
 			self.fieldsets = (
 				(None, {'fields': ('name', 'category', 'core_id'),}),
 				('Current state', {'fields': ('visible', 'operational'),}),
-				('Contact information', {'fields': ('primary_owner', 'backup_owners', 'notification_email_address', 'location', 'phone_number'),}),
+				('Contact information', {'fields': ('primary_owner', 'backup_owners', 'notification_email_address', 'location', 'phone_number','infolink'),}),
 				('Usage policy', {'fields': ('reservation_horizon', 'minimum_usage_block_time', 'maximum_usage_block_time', 'maximum_reservations_per_day', 'minimum_time_between_reservations', 'maximum_future_reservation_time', 'missed_reservation_threshold', 'requires_area_access', 'grant_physical_access_level_upon_qualification', 'grant_badge_reader_access_upon_qualification', 'interlocks', 'allow_delayed_logoff', 'reservation_required', 'allow_autologout'),}),
 				('Dependencies', {'fields': ('required_resources', 'nonrequired_resources'),}),
 			)
@@ -258,7 +258,7 @@ class StaffChargeAdminForm(forms.ModelForm):
 
 @register(StaffCharge)
 class StaffChargeAdmin(admin.ModelAdmin):
-	list_display = ('id', 'staff_member', 'customer', 'start', 'end')
+	list_display = ('id', 'staff_member', 'customer', 'start', 'end', 'duration')
 	list_filter = ('start',)
 	date_hierarchy = 'start'
 	ordering = ['-id']
@@ -606,9 +606,10 @@ class UsageEventProjectAdmin(admin.ModelAdmin):
 
 @register(Consumable)
 class ConsumableAdmin(admin.ModelAdmin):
-	list_display = ('id', 'name', 'quantity', 'category', 'visible', 'reminder_threshold', 'reminder_email', 'core_id')
+	list_display = ('id', 'name', 'quantity', 'category', 'reminder_email', 'core_id', 'supply_manager')
 	list_filter = ('visible', 'category')
 	search_fields = ('name', 'category__name')
+	autocomplete_fields = ['supply_manager']
 
 	def has_delete_permission(self, request, obj=None):
 		return False
@@ -616,6 +617,9 @@ class ConsumableAdmin(admin.ModelAdmin):
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "credit_cost_collector":
 			kwargs["queryset"] = CreditCostCollector.objects.order_by('project__project_number')
+		if db_field.name == "supply_manager":
+			kwargs["queryset"] = User.objects.filter(
+				is_active=True).order_by('last_name', 'first_name')
 		return super(ConsumableAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 
@@ -659,6 +663,26 @@ class ConsumableWithdrawAdmin(admin.ModelAdmin):
 		if db_field.name == "project":
 			kwargs["queryset"] = Project.objects.filter(active=True,end_date__gte=timezone.now().date()).order_by('project_number')
 		return super(ConsumableWithdrawAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
+	def has_delete_permission(self, request, obj=None):
+		return False
+
+
+@register(ConsumableOrder)
+class ConsumableOrderAdmin(admin.ModelAdmin):
+	list_display = ('name',)
+
+	search_fields = ('name',)
+
+	def has_delete_permission(self, request, obj=None):
+		return False
+
+
+@register(ConsumableOrderItem)
+class ConsumableOrderItemAdmin(admin.ModelAdmin):
+	list_display = ('order__name',)
+
+	search_fields = ('order__name',)
 
 	def has_delete_permission(self, request, obj=None):
 		return False
