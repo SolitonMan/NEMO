@@ -14,7 +14,7 @@
             <div class="col-md-6">
                 <input type="text" name="search_tools" id="search_tools" value="" placeholder="Search tools..." class="form-control" style="margin-bottom: 5px;" />
                 <select multiple name="tools" id="tools" size="10" class="form-control" style="width: 100%;">
-                    {% for tool in form.fields.tools.queryset %}
+                    {% for tool in form.fields.tools_selected.queryset %}
                         <option value="{{ tool.id }}">{{ tool.name }}</option>
                     {% endfor %}
                 </select>
