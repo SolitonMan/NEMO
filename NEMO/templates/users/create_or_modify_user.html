@@ -318,7 +318,7 @@
 		{% endif %}
 		<div class="form-group">
 			<div class="col-sm-2">
-				<input type="text" class="form-control" value="{{ form.user_shareable_calendar_link.value|default_if_none:"" }}">
+				<input type="text" class="form-control" name="user_shareable_calendar_link" id="user_shareable_calendar_link" value="{{ form.user_shareable_calendar_link.value|default_if_none:"" }}">
 			</div>
 		</div>
 		<div class="form-group">
