@@ -1473,8 +1473,8 @@ def multi_calendar_view(request):
 										events.append({
 											"source": url,
 											"title": str(summary),
-											"start": occ_start,
-											"end": occ_end,
+											"start": ensure_datetime(occ_start),
+											"end": ensure_datetime(occ_end),
 											"location": str(location) if location else "",
 											"type": "external"
 										})
@@ -1483,8 +1483,8 @@ def multi_calendar_view(request):
 								events.append({
 									"source": url,
 									"title": str(summary),
-									"start": start_dt,
-									"end": end_dt,
+									"start": ensure_datetime(start_dt),
+									"end": ensure_datetime(end_dt),
 									"location": str(location) if location else "",
 									"type": "external"
 								})
@@ -1501,8 +1501,8 @@ def multi_calendar_view(request):
 					events.append({
 						"source": "LEO",
 						"title": f"{r.tool.name} reservation",
-						"start": r.start,
-						"end": r.end,
+						"start": ensure_datetime(r.start),
+						"end": ensure_datetime(r.end),
 						"location": "",
 						"type": "leo"
 					})
@@ -1516,3 +1516,11 @@ def multi_calendar_view(request):
 		"events": events,
 		"errors": error_messages,
 	})
+
+def ensure_datetime(dt):
+	if isinstance(dt, datetime.datetime):
+		return dt
+	elif isinstance(dt, datetime.date):
+		# Convert date to datetime at midnight (UTC or local as appropriate)
+		return datetime.datetime(dt.year, dt.month, dt.day)
+	return dt  # or raise an error if you want to be strict
