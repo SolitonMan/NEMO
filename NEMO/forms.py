@@ -335,3 +335,17 @@ def nice_errors(form, non_field_msg='General form errors'):
 				key = form.fields[field].label
 			result[key] = errors
 	return result
+
+
+class MultiCalendarForm(forms.Form):
+    ics_urls = forms.CharField(
+        widget=forms.Textarea(attrs={'placeholder': 'Enter one ICS URL per line', 'rows': 4}),
+        label="External Calendar URLs",
+        required=False
+    )
+    tools = forms.ModelMultipleChoiceField(
+        queryset=Tool.objects.filter(visible=True).order_by('category', 'name'),
+        widget=forms.CheckboxSelectMultiple,
+        required=False,
+        label="LEO Tools"
+    )

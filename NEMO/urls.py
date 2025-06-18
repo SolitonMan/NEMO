@@ -104,6 +104,7 @@ urlpatterns = [
     path('save_notifications/', calendar.save_notifications, name='save_notifications'),
     path('create_reservation_calendar_invite/<int:reservation_id>/', calendar.create_reservation_calendar_invite, name='create_reservation_calendar_invite'),
     path('create_reservation_customer_calendar_invite/<int:reservation_id>/', calendar.create_reservation_customer_calendar_invite, name='create_reservation_customer_calendar_invite'),
+    path('multi-calendar/', calendar.multi_calendar_view, name='multi_calendar'),
 
     # Qualifications:
     path('qualifications/', qualifications.qualifications, name='qualifications'),

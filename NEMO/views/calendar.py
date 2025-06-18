@@ -4,6 +4,14 @@ from http import HTTPStatus
 from logging import getLogger
 from re import match, search
 
+import requests
+import datetime
+from icalendar import Calendar, Event
+from dateutil.rrule import rrulestr
+from dateutil.tz import gettz, UTC
+from icalendar.prop import vDDDLists
+from .forms import MultiCalendarForm
+
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required, permission_required
@@ -1396,3 +1404,115 @@ def create_ics_for_reservation(request, reservation, cancelled=False):
 
 	attachment = create_email_attachment(ics, maintype='text', subtype='calendar', method=method_name)
 	return attachment
+
+
+@login_required
+def multi_calendar_view(request):
+	events = []
+	error_messages = []
+	if request.method == "POST":
+		form = MultiCalendarForm(request.POST)
+		if form.is_valid():
+			# Handle ICS URLs
+			ics_urls = [url.strip() for url in form.cleaned_data['ics_urls'].splitlines() if url.strip()]
+			for url in ics_urls:
+				try:
+					response = requests.get(url, timeout=10)
+					response.raise_for_status()
+					cal = Calendar.from_ical(response.text)
+					for component in cal.walk():
+						if component.name == "VEVENT":
+							event = Event.from_ical(component.to_ical())
+							dtstart = event.get('dtstart')
+							dtend = event.get('dtend')
+							summary = event.get('summary')
+							location = event.get('location')
+							rrule = event.get('rrule')
+							exdate = event.get('exdate')
+
+							if not dtstart or not summary:
+								continue
+
+							start_dt = dtstart.dt if hasattr(dtstart, 'dt') else dtstart
+							end_dt = dtend.dt if dtend and hasattr(dtend, 'dt') else None
+
+							# Recurrence handling
+							if rrule:
+							# Build exclusion set
+								exdates = set()
+								if exdate:
+									if isinstance(exdate, vDDDLists):
+										ex_items = exdate.dts
+									elif isinstance(exdate, list):
+										ex_items = exdate
+									else:
+										ex_items = [exdate]
+									for ex_item in ex_items:
+										actual_ex_dt = ex_item.dt if hasattr(ex_item, 'dt') else ex_item
+										if isinstance(actual_ex_dt, (datetime.date, datetime.datetime)):
+											exdates.add(actual_ex_dt.date())
+
+								# Prepare rrule start
+								rrule_dtstart = start_dt
+								if isinstance(rrule_dtstart, datetime.date) and not isinstance(rrule_dtstart, datetime.datetime):
+									rrule_dtstart = datetime.datetime(rrule_dtstart.year, rrule_dtstart.month, rrule_dtstart.day, 0, 0, 0)
+								if rrule_dtstart.tzinfo is None:
+									rrule_dtstart = rrule_dtstart.replace(tzinfo=UTC)
+
+								# Expand recurrences for the next N days (e.g., 30 days)
+								now = datetime.datetime.now(UTC)
+								window_start = now - datetime.timedelta(days=7)
+								window_end = now + datetime.timedelta(days=30)
+								rule_set = rrulestr(rrule.to_ical().decode('utf-8'), dtstart=rrule_dtstart)
+								occurrences = rule_set.between(window_start, window_end, inc=True)
+
+								for occ_start in occurrences:
+									occ_date = occ_start.date()
+									if occ_date not in exdates:
+										occ_end = occ_start + (end_dt - start_dt if end_dt else datetime.timedelta(hours=1))
+										events.append({
+											"source": url,
+											"title": str(summary),
+											"start": occ_start,
+											"end": occ_end,
+											"location": str(location) if location else "",
+											"type": "external"
+										})
+							else:
+							# Non-recurring event
+								events.append({
+									"source": url,
+									"title": str(summary),
+									"start": start_dt,
+									"end": end_dt,
+									"location": str(location) if location else "",
+									"type": "external"
+								})
+				except Exception as e:
+					error_messages.append(f"Failed to load {url}: {e}")
+
+			# Handle LEO tool reservations
+			tools = form.cleaned_data['tools']
+			if tools:
+				reservations = Reservation.objects.filter(
+					tool__in=tools, cancelled=False, missed=False, shortened=False
+				)
+				for r in reservations:
+					events.append({
+						"source": "LEO",
+						"title": f"{r.tool.name} reservation",
+						"start": r.start,
+						"end": r.end,
+						"location": "",
+						"type": "leo"
+					})
+	else:
+		form = MultiCalendarForm()
+
+	# Sort events by start time
+	events.sort(key=lambda e: e["start"] if e["start"] else datetime.datetime.max)
+	return render(request, "calendar/multi_calendar.html", {
+		"form": form,
+		"events": events,
+		"errors": error_messages,
+	})
