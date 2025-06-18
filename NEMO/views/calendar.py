@@ -1415,6 +1415,13 @@ def multi_calendar_view(request):
 		if form.is_valid():
 			# Handle ICS URLs
 			ics_urls = [url.strip() for url in form.cleaned_data['ics_urls'].splitlines() if url.strip()]
+			selected_users = form.cleaned_data.get('users_with_calendars')
+			ics_urls += [
+				u.user_shareable_calendar_link
+				for u in selected_users
+				if u.user_shareable_calendar_link
+			] if selected_users else []
+
 			for url in ics_urls:
 				try:
 					response = requests.get(url, timeout=10)

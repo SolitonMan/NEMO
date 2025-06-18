@@ -119,8 +119,7 @@ class User(models.Model):
 	credit_cost_collector = models.ForeignKey('CreditCostCollector', on_delete=models.SET_NULL, null=True, blank=True, related_name='user_credit_account')
 
 	user_comment = models.TextField(null=True, blank=True)
-	## multiple project and user UsageEvents
-	#events = model.ManyToManyField(UsageEvent, through='UsageEventProject')
+	user_shareable_calendar_link = models.CharField(max_length=4000, null=True, blank=True)
 
 	def has_perm(self, perm, obj=None):
 		"""

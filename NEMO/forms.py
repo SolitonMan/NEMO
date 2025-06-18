@@ -17,7 +17,7 @@ logger = getLogger(__name__)
 class UserForm(ModelForm):
 	class Meta:
 		model = User
-		fields = ['username', 'first_name', 'last_name', 'email', 'badge_number', 'access_expiration', 'type', 'domain', 'is_active', 'training_required', 'physical_access_levels', 'projects', 'user_comment']
+		fields = ['username', 'first_name', 'last_name', 'email', 'badge_number', 'access_expiration', 'type', 'domain', 'is_active', 'training_required', 'physical_access_levels', 'projects', 'user_shareable_calendar_link','user_comment']
 
 
 class ToolForm(ModelForm):
@@ -338,14 +338,24 @@ def nice_errors(form, non_field_msg='General form errors'):
 
 
 class MultiCalendarForm(forms.Form):
-    ics_urls = forms.CharField(
-        widget=forms.Textarea(attrs={'placeholder': 'Enter one ICS URL per line', 'rows': 4}),
-        label="External Calendar URLs",
-        required=False
-    )
-    tools_selected = forms.ModelMultipleChoiceField(
-        queryset=Tool.objects.filter(visible=True).order_by('category', 'name'),
-        widget=forms.MultipleHiddenInput,
-        required=False,
-        label="LEO Tools"
-    )
+	users_with_calendars = forms.ModelMultipleChoiceField(
+		queryset=User.objects.filter(
+			user_shareable_calendar_link__isnull=False
+		).exclude(user_shareable_calendar_link__exact='').order_by('last_name', 'first_name'),
+		widget=forms.SelectMultiple(attrs={'size': 8, 'class': 'form-control'}),
+		label="Users with Shareable Calendars",
+		required=False,
+	)
+
+	ics_urls = forms.CharField(
+		widget=forms.Textarea(attrs={'placeholder': 'Enter one ICS URL per line', 'rows': 4,'cols': 80,}),
+		label="External Calendar URLs",
+		required=False
+	)
+
+	tools_selected = forms.ModelMultipleChoiceField(
+		queryset=Tool.objects.filter(visible=True).order_by('category', 'name'),
+		widget=forms.MultipleHiddenInput,
+		required=False,
+		label="LEO Tools"
+	)

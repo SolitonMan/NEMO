@@ -3,6 +3,11 @@
 <h2>Multi-Calendar Viewer</h2>
 <form method="post" onsubmit="return on_submit();">
     {% csrf_token %}
+	<div class="form-group">
+		<label for="users_with_calendars">Select Users (with shareable calendars):</label>
+		{{ form.users_with_calendars }}
+	</div>
+
     <div class="form-group">
         <label for="ics_urls">External Calendar URLs (one per line):</label>
         {{ form.ics_urls }}

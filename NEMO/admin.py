@@ -811,7 +811,7 @@ if admin.site.is_registered(User):
 class UserAdmin(admin.ModelAdmin):
 	filter_horizontal = ('groups', 'user_permissions', 'projects', 'projects2dcc', 'physical_access_levels', 'pi_delegates', 'watching')
 	fieldsets = (
-		('Personal information', {'fields': ('first_name', 'last_name', 'username', 'email', 'badge_number', 'type', 'domain', 'credit_cost_collector', 'core_ids', 'contact', 'projects', 'projects2dcc', 'watching', 'user_comment')}),
+		('Personal information', {'fields': ('first_name', 'last_name', 'username', 'email', 'badge_number', 'type', 'domain', 'credit_cost_collector', 'core_ids', 'contact', 'projects', 'projects2dcc', 'watching', 'user_shareable_calendar_link','user_comment')}),
 		('Permissions', {'fields': ('is_active', 'is_staff', 'is_technician', 'is_superuser', 'training_required', 'groups', 'user_permissions', 'physical_access_levels', 'pi_delegates')}),
 		('Important dates', {'fields': ('date_joined', 'last_login', 'access_expiration')}),
 	)
