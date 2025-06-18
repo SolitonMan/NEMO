@@ -343,7 +343,7 @@ class MultiCalendarForm(forms.Form):
         label="External Calendar URLs",
         required=False
     )
-    tools = forms.ModelMultipleChoiceField(
+    tools_selected = forms.ModelMultipleChoiceField(
         queryset=Tool.objects.filter(visible=True).order_by('category', 'name'),
         widget=forms.MultipleHiddenInput,
         required=False,
