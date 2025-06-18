@@ -1509,6 +1509,9 @@ def multi_calendar_view(request):
 	else:
 		form = MultiCalendarForm()
 
+	now = datetime.datetime.now(UTC)
+	events = [e for e in events if e["start"] and e["start"] >= now]
+
 	# Sort events by start time
 	events.sort(key=lambda e: e["start"] if e["start"] else datetime.datetime.max)
 	return render(request, "calendar/multi_calendar.html", {
