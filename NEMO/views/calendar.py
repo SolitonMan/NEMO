@@ -1413,16 +1413,30 @@ def multi_calendar_view(request):
 	if request.method == "POST":
 		form = MultiCalendarForm(request.POST)
 		if form.is_valid():
-			# Handle ICS URLs
-			ics_urls = [url.strip() for url in form.cleaned_data['ics_urls'].splitlines() if url.strip()]
-			selected_users = form.cleaned_data.get('users_with_calendars')
-			ics_urls += [
-				u.user_shareable_calendar_link
-				for u in selected_users
-				if u.user_shareable_calendar_link
-			] if selected_users else []
+			# Parse manual ICS URLs as "Short Name:URL"
+			manual_url_map = {}
+			for line in form.cleaned_data['ics_urls'].splitlines():
+				line = line.strip()
+				if not line:
+					continue
+				if ':' in line:
+					short_name, url = line.split(':', 1)
+					manual_url_map[url.strip()] = short_name.strip()
+				else:
+					manual_url_map[line] = line  # fallback: use URL as name
 
-			for url in ics_urls:
+			# User-selected calendar links
+			selected_users = form.cleaned_data.get('users_with_calendars')
+			user_url_map = {}
+			if selected_users:
+				for u in selected_users:
+					if u.user_shareable_calendar_link:
+						user_url_map[u.user_shareable_calendar_link] = u.get_full_name()
+
+			# Combine all URLs and their sources
+			all_url_map = {**manual_url_map, **user_url_map}
+
+			for url, source_name in all_url_map.items():
 				try:
 					response = requests.get(url, timeout=10)
 					response.raise_for_status()
@@ -1445,7 +1459,7 @@ def multi_calendar_view(request):
 
 							# Recurrence handling
 							if rrule:
-							# Build exclusion set
+								# Build exclusion set
 								exdates = set()
 								if exdate:
 									if isinstance(exdate, vDDDLists):
@@ -1478,7 +1492,7 @@ def multi_calendar_view(request):
 									if occ_date not in exdates:
 										occ_end = occ_start + (end_dt - start_dt if end_dt else datetime.timedelta(hours=1))
 										events.append({
-											"source": "URL",
+											"source": source_name,
 											"title": str(summary),
 											"start": ensure_datetime(occ_start),
 											"end": ensure_datetime(occ_end),
@@ -1488,7 +1502,7 @@ def multi_calendar_view(request):
 							else:
 							# Non-recurring event
 								events.append({
-									"source": "URL",
+									"source": source_name,
 									"title": str(summary),
 									"start": ensure_datetime(start_dt),
 									"end": ensure_datetime(end_dt),
