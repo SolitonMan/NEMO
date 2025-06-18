@@ -1471,7 +1471,7 @@ def multi_calendar_view(request):
 									if occ_date not in exdates:
 										occ_end = occ_start + (end_dt - start_dt if end_dt else datetime.timedelta(hours=1))
 										events.append({
-											"source": url,
+											"source": "URL",
 											"title": str(summary),
 											"start": ensure_datetime(occ_start),
 											"end": ensure_datetime(occ_end),
@@ -1481,7 +1481,7 @@ def multi_calendar_view(request):
 							else:
 							# Non-recurring event
 								events.append({
-									"source": url,
+									"source": "URL",
 									"title": str(summary),
 									"start": ensure_datetime(start_dt),
 									"end": ensure_datetime(end_dt),
