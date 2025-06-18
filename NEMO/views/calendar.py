@@ -1519,8 +1519,11 @@ def multi_calendar_view(request):
 
 def ensure_datetime(dt):
 	if isinstance(dt, datetime.datetime):
+		if dt.tzinfo is None:
+			# Make naive datetimes UTC-aware
+			return dt.replace(tzinfo=UTC)
 		return dt
 	elif isinstance(dt, datetime.date):
-		# Convert date to datetime at midnight (UTC or local as appropriate)
-		return datetime.datetime(dt.year, dt.month, dt.day)
-	return dt  # or raise an error if you want to be strict
+		# Convert date to UTC-aware datetime at midnight
+		return datetime.datetime(dt.year, dt.month, dt.day, tzinfo=UTC)
+	return dt
