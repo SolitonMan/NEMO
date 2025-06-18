@@ -130,6 +130,7 @@
                                                 {% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
                                                 {% navigation_url 'maintenance' 'Maintenance' %}
                                                 {% endif %}
+											    {% navigation_url 'multi_calendar' 'Multi calendar' %}
                                                 {% navigation_url 'create_notification_scheme' 'Notification Schemes' %}
                                                 <li><a href="{% url 'order_list' 0 %}">Orders</a></li>
                                                 {% if user.is_superuser %}

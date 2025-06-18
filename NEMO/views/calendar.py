@@ -1492,7 +1492,7 @@ def multi_calendar_view(request):
 					error_messages.append(f"Failed to load {url}: {e}")
 
 			# Handle LEO tool reservations
-			tools = form.cleaned_data['tools']
+			tools = form.cleaned_data['tools_selected']
 			if tools:
 				reservations = Reservation.objects.filter(
 					tool__in=tools, cancelled=False, missed=False, shortened=False

@@ -345,7 +345,7 @@ class MultiCalendarForm(forms.Form):
     )
     tools = forms.ModelMultipleChoiceField(
         queryset=Tool.objects.filter(visible=True).order_by('category', 'name'),
-        widget=forms.CheckboxSelectMultiple,
+        widget=forms.MultipleHiddenInput,
         required=False,
         label="LEO Tools"
     )

@@ -1,9 +1,33 @@
 {% extends "base.html" %}
 {% block content %}
 <h2>Multi-Calendar Viewer</h2>
-<form method="post">
+<form method="post" onsubmit="return on_submit();">
     {% csrf_token %}
-    {{ form.as_p }}
+    <div class="form-group">
+        <label for="ics_urls">External Calendar URLs (one per line):</label>
+        {{ form.ics_urls }}
+    </div>
+
+    <div class="form-group">
+        <label for="tools"><h3>Tools</h3></label>
+        <div class="row">
+            <div class="col-md-6">
+                <input type="text" name="search_tools" id="search_tools" value="" placeholder="Search tools..." class="form-control" style="margin-bottom: 5px;" />
+                <select multiple name="tools" id="tools" size="10" class="form-control" style="width: 100%;">
+                    {% for tool in form.fields.tools.queryset %}
+                        <option value="{{ tool.id }}">{{ tool.name }}</option>
+                    {% endfor %}
+                </select>
+                <a href="javascript:move_all('tools');" class="selector-chooseall active" id="choose_tools">Choose all</a>
+            </div>
+            <div class="col-md-6">
+                <select multiple name="tools_selected" id="tools_selected" size="10" class="form-control" style="width: 100%;">
+                </select>
+                <a href="javascript:move_all('tools_selected');" class="selector-remove active" id="remove_tools">Remove all</a>
+            </div>
+        </div>
+    </div>
+
     <button type="submit" class="btn btn-primary">Load Calendars</button>
 </form>
 
@@ -42,4 +66,87 @@
         </tbody>
     </table>
 {% endif %}
+
+<script type="text/javascript">
+// Move all options between lists
+function move_all(sel) {
+    var id_tag = "#" + sel;
+    $("option", id_tag).each(function() {
+        if ($(this).css("display") != "none") {
+            $(this).prop("selected", true);
+        }
+    });
+    $(id_tag).click();
+    var search_tag = "#search_" + sel;
+    if (sel.indexOf("_") == -1) {
+        search_tag += sel;
+    } else {
+        search_tag += sel.substring(0,sel.indexOf("_"));
+    }
+    $(search_tag).keyup();
+}
+
+// Pair selects for moving options
+function pair_selects(s1, s2) {
+    s1.on("click", function () {
+        $("option:selected", this).each(function () {
+            s2.append($("<option></option>").attr("value",$(this).prop("value")).text($(this).text()));
+            $(this).remove();
+        });
+        sort_options(this);
+        sort_options(s2);
+    });
+    s2.on("click", function () {
+        $("option:selected", this).each(function () {
+            s1.append($("<option></option>").attr("value",$(this).prop("value")).text($(this).text()));
+            $(this).remove();
+        });
+        sort_options(this);
+        sort_options(s1);
+    });
+}
+
+function sort_options(sel) {
+    var options = $("option", sel);
+    var arr = options.map(function(_, o) { return { t: $(o).text(), v: o.value }; }).get();
+    arr.sort(function(o1, o2) { return o1.t.toLowerCase() > o2.t.toLowerCase() ? 1 : o1.t.toLowerCase() < o2.t.toLowerCase() ? -1 : 0; });
+    options.each(function(i, o) {
+        o.value = arr[i].v;
+        $(o).text(arr[i].t);
+    });
+}
+
+// Search filter for tools
+$("#search_tools").keyup(function() {
+    var data = this.value.split(" ");
+    var options = $("#tools option");
+    if (this.value.length < 3) {
+        options.show();
+        return;
+    }
+    options.hide();
+    options.filter(function(i,v) {
+        var $t = $(this);
+        for (var d = 0; d < data.length; ++d) {
+            var s = data[d].toUpperCase();
+            if ($t.text().toUpperCase().indexOf(s) > -1) {
+                return true;
+            }
+        }
+    }).show();
+});
+
+// On submit, select all in tools_selected
+function on_submit() {
+    $("#tools_selected option").each(function() {
+        $(this).prop("selected", true);
+    });
+    return true;
+}
+
+// Initialize paired selects
+$(document).ready(function() {
+    pair_selects($("#tools"), $("#tools_selected"));
+});
+</script>
 {% endblock %}
