@@ -317,8 +317,9 @@
 			</div>
 		{% endif %}
 		<div class="form-group">
+			<label class="control-label col-sm-2" for="user_shareable_calendar_link">ICS Calendar Link</label>
 			<div class="col-sm-2">
-				<input type="text" class="form-control" name="user_shareable_calendar_link" id="user_shareable_calendar_link" value="{{ form.user_shareable_calendar_link.value|default_if_none:"" }}">
+				<input type="text" class="form-control" name="user_shareable_calendar_link" id="user_shareable_calendar_link" value="{{ form.user_shareable_calendar_link.value|default_if_none:"" }}" style="width:100%;"	 >
 			</div>
 		</div>
 		<div class="form-group">
