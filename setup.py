@@ -33,6 +33,7 @@ setup(
 		'requests>=2.23.0',
 		'Pillow>=7.1.1',
 		'pyjwt>=1.7.1',
+		'icalendar>=6.3.0',
 	],
 	entry_points={
 		'console_scripts': ['nemo=NEMO.provisioning:entry_point'],
