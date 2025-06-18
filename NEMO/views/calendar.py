@@ -1434,7 +1434,7 @@ def multi_calendar_view(request):
 						user_url_map[u.user_shareable_calendar_link] = u.get_full_name()
 
 			# Combine all URLs and their sources
-			all_url_map = {**manual_url_map, **user_url_map}
+			all_url_map = {**user_url_map, **manual_url_map}
 
 			for url, source_name in all_url_map.items():
 				try:
