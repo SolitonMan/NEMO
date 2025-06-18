@@ -10,7 +10,6 @@ from icalendar import Calendar, Event
 from dateutil.rrule import rrulestr
 from dateutil.tz import gettz, UTC
 from icalendar.prop import vDDDLists
-from .forms import MultiCalendarForm
 
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
@@ -28,6 +27,7 @@ from django.utils.html import escape
 from django.utils.safestring import mark_safe
 
 from NEMO.decorators import disable_session_expiry_refresh
+from NEMO.forms import MultiCalendarForm
 from NEMO.models import Tool, Reservation, Configuration, ReservationConfiguration, ReservationProject, ReservationNotification, Consumable, UsageEvent, UsageEventProject, AreaAccessRecord, StaffCharge, StaffChargeProject, User, Project, ScheduledOutage, ScheduledOutageCategory, UserProfile, UserProfileSetting, Sample
 from NEMO.utilities import EmailCategory, create_email_log, bootstrap_primary_color, create_email_attachment, extract_times, extract_dates, format_datetime, parse_parameter_string
 from NEMO.views.constants import ADDITIONAL_INFORMATION_MAXIMUM_LENGTH
