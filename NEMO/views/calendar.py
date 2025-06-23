@@ -1,5 +1,5 @@
 import io
-from datetime import timedelta, datetime
+from datetime import timedelta
 from http import HTTPStatus
 from logging import getLogger
 from re import match, search
@@ -1380,7 +1380,7 @@ def create_ics_for_reservation(request, reservation, cancelled=False):
 	uid = 'UID:'+str(reservation.id)+'\n'
 	sequence = 'SEQUENCE:2\n' if cancelled else 'SEQUENCE:0\n'
 	priority = 'PRIORITY:5\n' if cancelled else 'PRIORITY:0\n'
-	now = datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')
+	now = datetime.datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')
 	start = reservation.start.strftime('%Y%m%dT%H%M%SZ')
 	end = reservation.end.strftime('%Y%m%dT%H%M%SZ')
 	#now = timezone.now()
