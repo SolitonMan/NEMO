@@ -348,7 +348,7 @@ class MultiCalendarForm(forms.Form):
 	)
 
 	ics_urls = forms.CharField(
-		widget=forms.Textarea(attrs={'placeholder': 'Enter one ICS URL per line', 'rows': 4,'class': 'form-control'}),
+		widget=forms.Textarea(attrs={'placeholder': 'Enter one ICS URL per line in the format label:url', 'rows': 4,'class': 'form-control'}),
 		label="External Calendar URLs",
 		required=False
 	)
