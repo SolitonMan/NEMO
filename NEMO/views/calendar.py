@@ -1414,8 +1414,8 @@ def multi_calendar_view(request):
 
 	def format_slot(slot):
 		return {
-			"start": slot[0].strftime("%m/%d/%Y %H:%M"),
-			"end": slot[1].strftime("%m/%d/%Y %H:%M"),
+			"start": slot[0].strftime("%m/%d/%Y %I:%M %p"),
+			"end": slot[1].strftime("%m/%d/%Y %I:%M %p"),
 		}
 
 	events = []
