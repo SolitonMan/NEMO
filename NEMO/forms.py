@@ -359,3 +359,23 @@ class MultiCalendarForm(forms.Form):
 		required=False,
 		label="LEO Tools"
 	)
+
+	slot_duration = forms.IntegerField(
+		label="Desired Slot Duration (minutes)",
+		min_value=1,
+		initial=60,
+		required=True,
+		widget=forms.NumberInput(attrs={'class': 'form-control'})
+	)
+
+	window_start = forms.DateTimeField(
+		label="Search Window Start",
+		required=False,
+		widget=forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'})
+	)
+
+	window_end = forms.DateTimeField(
+		label="Search Window End",
+		required=False,
+		widget=forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'})
+	)

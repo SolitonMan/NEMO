@@ -1415,6 +1415,11 @@ def multi_calendar_view(request):
 	if request.method == "POST":
 		form = MultiCalendarForm(request.POST)
 		if form.is_valid():
+
+			slot_duration = form.cleaned_data['slot_duration']
+			window_start = form.cleaned_data['window_start']
+			window_end = form.cleaned_data['window_end']
+
 			# Parse manual ICS URLs as "Short Name:URL"
 			manual_url_map = {}
 			for line in form.cleaned_data['ics_urls'].splitlines():
@@ -1537,9 +1542,13 @@ def multi_calendar_view(request):
 
 	# Sort events by start time
 	events.sort(key=lambda e: e["start"] if e["start"] else datetime.datetime.max)
+
+	available_slots = find_available_slots(events, slot_duration, window_start, window_end)
+
 	return render(request, "calendar/multi_calendar.html", {
 		"form": form,
 		"events": events,
+		"available_slots": available_slots,
 		"errors": error_messages,
 	})
 
@@ -1553,3 +1562,40 @@ def ensure_datetime(dt):
 		# Convert date to UTC-aware datetime at midnight
 		return datetime.datetime(dt.year, dt.month, dt.day, tzinfo=UTC)
 	return dt
+
+def find_available_slots(events, duration_minutes, window_start, window_end, max_results=3):
+	# events: list of {"start": datetime, "end": datetime}
+	# duration_minutes: int
+	# window_start, window_end: datetime
+	# Returns: list of (start, end) tuples
+
+	# 1. Sort and merge busy intervals
+	busy = sorted([(e["start"], e["end"]) for e in events if e["start"] and e["end"]])
+	merged = []
+	for s, e in busy:
+		if not merged or s > merged[-1][1]:
+			merged.append([s, e])
+		else:
+			merged[-1][1] = max(merged[-1][1], e)
+
+	# 2. Invert to get free intervals
+	free = []
+	prev_end = window_start
+	for s, e in merged:
+		if s > prev_end:
+			free.append((prev_end, s))
+		prev_end = max(prev_end, e)
+	if prev_end < window_end:
+		free.append((prev_end, window_end))
+
+	# 3. Find slots of required duration
+	slots = []
+	delta = datetime.timedelta(minutes=duration_minutes)
+	for s, e in free:
+		slot_start = s
+		while slot_start + delta <= e:
+			slots.append((slot_start, slot_start + delta))
+			if len(slots) >= max_results:
+				return slots
+			slot_start += datetime.timedelta(minutes=15)  # step size, e.g., 15 min
+	return slots

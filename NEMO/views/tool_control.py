@@ -155,13 +155,15 @@ def tool_control(request, tool_id=None, qualified_only=None, core_only=None):
 	tools = Tool.objects.filter(visible=True).order_by('category', 'name')
 	ctools = Tool.objects.filter(visible=True).order_by('category', 'name')
 
-	if qualified_only == '1':
-		tools = tools.filter(id__in=request.user.qualifications.all()).order_by('category', 'name')
-		ctools = ctools.filter(id__in=request.user.qualifications.all()).order_by('category', 'name')
+	if qualified_only is not None:
+		if int(qualified_only) == 1:
+			tools = tools.filter(id__in=request.user.qualifications.all()).order_by('category', 'name')
+			ctools = ctools.filter(id__in=request.user.qualifications.all()).order_by('category', 'name')
 
-	if core_only == '1':
-		tools = tools.filter(Q(core_id__in=request.user.core_ids.all()) | Q(id__in=request.user.qualifications.all())).order_by('category', 'name')
-		ctools = ctools.filter(Q(core_id__in=request.user.core_ids.all()) | Q(id__in=request.user.qualifications.all())).order_by('category', 'name')
+	if core_only is not None:
+		if int(core_only) == 1:
+			tools = tools.filter(Q(core_id__in=request.user.core_ids.all()) | Q(id__in=request.user.qualifications.all())).order_by('category', 'name')
+			ctools = ctools.filter(Q(core_id__in=request.user.core_ids.all()) | Q(id__in=request.user.qualifications.all())).order_by('category', 'name')
 
 	user_2dcc = False
 

@@ -32,7 +32,7 @@
 				<button type="button" class="btn btn-default" style="width:{% if user.is_superuser %}50%{% else %}33%{% endif %}" onclick="expand_all_categories()" title="Expand all tool categories"><span class="glyphicon glyphicon-resize-full"></span></button>
 				<button type="button" class="btn btn-default" style="width:{% if user.is_superuser %}50%{% else %}33%{% endif %}" onclick="collapse_all_categories()" title="Collapse all tool categories"><span class="glyphicon glyphicon-resize-small"></span></button>
 				{% if not user.is_superuser %}
-				<button type="button" class="btn btn-default" style="width:33%" onclick="update_tool_filter(this)" title="{% if user.is_staff %}{% if core_only == '1' %}Show all tools{% else %}Show core tools only{% endif %}{% else %}{% if qualified_only == '1' %}Show all tools{% else %}Show qualified tools only{% endif %}{% endif %}"><span class="glyphicon glyphicon-filter"></span></button>
+				<button type="button" class="btn btn-default" style="width:33%" onclick="update_tool_filter(this)" title="{% if user.is_staff %}{% if core_only == 1 %}Show all tools{% else %}Show core tools only{% endif %}{% else %}{% if qualified_only == 1 %}Show all tools{% else %}Show qualified tools only{% endif %}{% endif %}"><span class="glyphicon glyphicon-filter"></span></button>
 				{% endif %}
 			</div>
 			<input type="text" id="tool_search" placeholder="Search for a tool" class="form-control sidebar-item">
