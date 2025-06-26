@@ -1412,6 +1412,10 @@ def create_ics_for_reservation(request, reservation, cancelled=False):
 def multi_calendar_view(request):
 	events = []
 	error_messages = []
+	slot_duration = None
+	window_start = None
+	window_end = None
+
 	if request.method == "POST":
 		form = MultiCalendarForm(request.POST)
 		if form.is_valid():
