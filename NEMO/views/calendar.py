@@ -1,4 +1,5 @@
 import io
+from collections import defaultdict
 from datetime import timedelta
 from http import HTTPStatus
 from logging import getLogger
@@ -1547,9 +1548,22 @@ def multi_calendar_view(request):
 	# Sort events by start time
 	events.sort(key=lambda e: e["start"] if e["start"] else datetime.datetime.max)
 
+	# Group events by source
+	events_by_source = defaultdict(list)
+	for e in events:
+		events_by_source[e["source"]].append(e)
+
+	# Convert to a list of lists for find_available_slots
+	events_grouped = list(events_by_source.values())
+
 	available_slots = []
-	if slot_duration is not None and window_start is not None and window_end is not None:
-		available_slots = find_available_slots(events, slot_duration, window_start, window_end)
+	if (
+		slot_duration is not None
+		and window_start is not None
+		and window_end is not None
+		and events_grouped  # Only call if there are sources
+	):
+		available_slots = find_available_slots(events_grouped, slot_duration, window_start, window_end)
 
 	return render(request, "calendar/multi_calendar.html", {
 		"form": form,
@@ -1569,39 +1583,70 @@ def ensure_datetime(dt):
 		return datetime.datetime(dt.year, dt.month, dt.day, tzinfo=UTC)
 	return dt
 
-def find_available_slots(events, duration_minutes, window_start, window_end, max_results=3):
-	# events: list of {"start": datetime, "end": datetime}
+def find_available_slots(list_of_events, duration_minutes, window_start, window_end, max_results=3):
+	# list_of_events: list of lists of {"start": datetime, "end": datetime}
 	# duration_minutes: int
 	# window_start, window_end: datetime
 	# Returns: list of (start, end) tuples
 
-	# 1. Sort and merge busy intervals
-	busy = sorted([(e["start"], e["end"]) for e in events if e["start"] and e["end"]])
-	merged = []
-	for s, e in busy:
-		if not merged or s > merged[-1][1]:
-			merged.append([s, e])
-		else:
-			merged[-1][1] = max(merged[-1][1], e)
+	def get_free_intervals(busy, window_start, window_end):
+		busy = sorted([(e["start"], e["end"]) for e in busy if e["start"] and e["end"]])
+		merged = []
+		for s, e in busy:
+			if not merged or s > merged[-1][1]:
+				merged.append([s, e])
+			else:
+				merged[-1][1] = max(merged[-1][1], e)
+		free = []
+		prev_end = window_start
+		for s, e in merged:
+			if s > prev_end:
+				free.append((prev_end, s))
+			prev_end = max(prev_end, e)
+		if prev_end < window_end:
+			free.append((prev_end, window_end))
+		return free
 
-	# 2. Invert to get free intervals
-	free = []
-	prev_end = window_start
-	for s, e in merged:
-		if s > prev_end:
-			free.append((prev_end, s))
-		prev_end = max(prev_end, e)
-	if prev_end < window_end:
-		free.append((prev_end, window_end))
+	def intersect_intervals(lists):
+		if not lists:
+			return []
+		result = lists[0]
+		for free in lists[1:]:
+			new_result = []
+			i, j = 0, 0
+			while i < len(result) and j < len(free):
+				a_start, a_end = result[i]
+				b_start, b_end = free[j]
+				start = max(a_start, b_start)
+				end = min(a_end, b_end)
+				if start < end:
+					new_result.append((start, end))
+				if a_end < b_end:
+					i += 1
+				else:
+					j += 1
+			result = new_result
+			if not result:
+				break
+		return result
+
+	# 1. Get free intervals for each source
+	free_intervals_per_source = [
+		get_free_intervals(events, window_start, window_end)
+		for events in list_of_events
+	]
+
+	# 2. Intersect all free intervals
+	common_free = intersect_intervals(free_intervals_per_source)
 
 	# 3. Find slots of required duration
 	slots = []
 	delta = datetime.timedelta(minutes=duration_minutes)
-	for s, e in free:
+	for s, e in common_free:
 		slot_start = s
 		while slot_start + delta <= e:
 			slots.append((slot_start, slot_start + delta))
 			if len(slots) >= max_results:
 				return slots
-			slot_start += datetime.timedelta(minutes=15)  # step size, e.g., 15 min
+			slot_start += datetime.timedelta(minutes=15)
 	return slots
