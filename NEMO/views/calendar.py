@@ -1547,7 +1547,9 @@ def multi_calendar_view(request):
 	# Sort events by start time
 	events.sort(key=lambda e: e["start"] if e["start"] else datetime.datetime.max)
 
-	available_slots = find_available_slots(events, slot_duration, window_start, window_end)
+	available_slots = []
+	if slot_duration is not None and window_start is not None and window_end is not None:
+		available_slots = find_available_slots(events, slot_duration, window_start, window_end)
 
 	return render(request, "calendar/multi_calendar.html", {
 		"form": form,
