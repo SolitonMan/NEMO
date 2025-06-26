@@ -1411,6 +1411,13 @@ def create_ics_for_reservation(request, reservation, cancelled=False):
 
 @login_required
 def multi_calendar_view(request):
+
+	def format_slot(slot):
+		return {
+			"start": slot[0].strftime("%m/%d/%Y %H:%M"),
+			"end": slot[1].strftime("%m/%d/%Y %H:%M"),
+		}
+
 	events = []
 	error_messages = []
 	slot_duration = None
@@ -1564,6 +1571,9 @@ def multi_calendar_view(request):
 		and events_grouped  # Only call if there are sources
 	):
 		available_slots = find_available_slots(events_grouped, slot_duration, window_start, window_end)
+
+	if available_slots:
+		available_slots = [format_slot(slot) for slot in available_slots]
 
 	return render(request, "calendar/multi_calendar.html", {
 		"form": form,
