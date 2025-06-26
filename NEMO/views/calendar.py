@@ -1500,9 +1500,6 @@ def multi_calendar_view(request):
 									rrule_dtstart = rrule_dtstart.replace(tzinfo=UTC)
 
 								# Expand recurrences for the next N days (e.g., 30 days)
-								now = datetime.datetime.now(UTC)
-								window_start = now - datetime.timedelta(days=7)
-								window_end = now + datetime.timedelta(days=30)
 								rule_set = rrulestr(rrule.to_ical().decode('utf-8'), dtstart=rrule_dtstart)
 								occurrences = rule_set.between(window_start, window_end, inc=True)
 
