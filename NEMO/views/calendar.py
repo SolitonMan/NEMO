@@ -1637,6 +1637,14 @@ def find_available_slots(list_of_events, duration_minutes, window_start, window_
 				break
 		return result
 
+	def is_business_hours(dt_start, dt_end):
+		# Monday=0, Sunday=6
+		if dt_start.weekday() > 4 or dt_end.weekday() > 4:
+			return False
+		business_start = dt_start.replace(hour=8, minute=0, second=0, microsecond=0)
+		business_end = dt_start.replace(hour=17, minute=0, second=0, microsecond=0)
+		return (dt_start >= business_start and dt_end <= business_end)
+
 	# 1. Get free intervals for each source
 	free_intervals_per_source = [
 		get_free_intervals(events, window_start, window_end)
@@ -1646,14 +1654,17 @@ def find_available_slots(list_of_events, duration_minutes, window_start, window_
 	# 2. Intersect all free intervals
 	common_free = intersect_intervals(free_intervals_per_source)
 
-	# 3. Find slots of required duration
+	# 3. Find slots of required duration within business hours
 	slots = []
 	delta = datetime.timedelta(minutes=duration_minutes)
+	step = datetime.timedelta(minutes=15)
 	for s, e in common_free:
 		slot_start = s
 		while slot_start + delta <= e:
-			slots.append((slot_start, slot_start + delta))
-			if len(slots) >= max_results:
-				return slots
-			slot_start += datetime.timedelta(minutes=15)
+			slot_end = slot_start + delta
+			if is_business_hours(slot_start, slot_end):
+				slots.append((slot_start, slot_end))
+				if len(slots) >= max_results:
+					return slots
+			slot_start += step
 	return slots

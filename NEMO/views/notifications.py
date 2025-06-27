@@ -26,7 +26,7 @@ def get_notifications(user, notification_type):
 		return None
 
 
-def get_notificaiton_counts(user):
+def get_notification_counts(user):
 	counts = {}
 	for t in Notification.Types.Choices:
 		model = t[0]
