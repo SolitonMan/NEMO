@@ -17,8 +17,8 @@
 		</tr>
 		{% endfor %}
 	</table>
-	<button type="button" id="add-row">Add Tool</button>
-	<button type="submit">Find Schedule</button>
+	<button type="button" id="add-row" class="btn btn-success">Add Tool</button>
+	<button type="submit" class="btn btn-success">Find Schedule</button>
 </form>
 
 {% if schedule %}
@@ -38,10 +38,12 @@
 		{% endfor %}
 	</table>
 {% endif %}
-<tr id="empty-form-row" style="display:none;">
+<div style="display:none;">
+<tr id="empty-form-row">
 	<td>{{ formset.empty_form.tool|add_class:"form-control" }}</td>
 	<td>{{ formset.empty_form.duration|add_class:"form-control" }}</td>
 </tr>
+</div>
 <script>
 document.getElementById('add-row').onclick = function() {
 	var totalForms = document.getElementById('id_form-TOTAL_FORMS');
