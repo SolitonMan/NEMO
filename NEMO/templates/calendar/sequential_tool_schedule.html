@@ -5,20 +5,23 @@
 <form method="post">
 	{% csrf_token %}
 	{{ formset.management_form }}
-	<table>
+	<table id="tool-table">
 		<tr>
 			<th>Tool</th>
 			<th>Duration (minutes)</th>
+			<th></th>
 		</tr>
 		{% for form in formset %}
-		<tr>
+		<tr class="tool-row">
 			<td>{{ form.tool|add_class:"form-control" }}</td>
 			<td>{{ form.duration|add_class:"form-control" }}</td>
+			<td><button type="button" class="btn btn-danger remove-row">Delete</button></td>
 		</tr>
 		{% endfor %}
 		<tr id="empty-form-row" style="display:none;">
 			<td>{{ formset.empty_form.tool|add_class:"form-control" }}</td>
 			<td>{{ formset.empty_form.duration|add_class:"form-control" }}</td>
+			<td><button type="button" class="btn btn-danger remove-row">Delete</button></td>
 		</tr>
 	</table>
 	<button type="button" id="add-row" class="btn btn-success">Add Tool</button>
@@ -44,18 +47,38 @@
 {% endif %}
 
 <script>
+function updateTotalForms() {
+	var totalForms = document.getElementById('id_form-TOTAL_FORMS');
+	var rowCount = document.querySelectorAll('#tool-table tr.tool-row').length;
+	totalForms.value = rowCount;
+}
+
+function addRemoveHandler(btn) {
+	btn.onclick = function() {
+		var row = btn.closest('tr');
+		row.parentNode.removeChild(row);
+		updateTotalForms();
+	};
+}
+
+document.querySelectorAll('.remove-row').forEach(addRemoveHandler);
+
 document.getElementById('add-row').onclick = function() {
 	var totalForms = document.getElementById('id_form-TOTAL_FORMS');
 	var currentCount = parseInt(totalForms.value);
 	var newRow = document.getElementById('empty-form-row').cloneNode(true);
 	newRow.style.display = '';
 	newRow.id = '';
+	newRow.classList.add('tool-row');
 	// Update the names and ids
 	newRow.querySelectorAll('select, input').forEach(function(el) {
 		el.name = el.name.replace('__prefix__', currentCount);
 		el.id = el.id.replace('__prefix__', currentCount);
 	});
-	document.querySelector('form table').appendChild(newRow);
+	// Add remove handler to the new button
+	var removeBtn = newRow.querySelector('.remove-row');
+	addRemoveHandler(removeBtn);
+	document.getElementById('tool-table').appendChild(newRow);
 	totalForms.value = currentCount + 1;
 };
 </script>
