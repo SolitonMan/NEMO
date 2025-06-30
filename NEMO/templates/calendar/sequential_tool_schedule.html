@@ -11,8 +11,8 @@
 		</tr>
 		{% for form in formset %}
 		<tr>
-			<td>{{ form.tool }}</td>
-			<td>{{ form.duration }}</td>
+			<td>{{ form.tool|add_class:"form-control" }}</td>
+			<td>{{ form.duration|add_class:"form-control" }}</td>
 		</tr>
 		{% endfor %}
 	</table>
@@ -37,16 +37,22 @@
 		{% endfor %}
 	</table>
 {% endif %}
-
+<tr id="empty-form-row" style="display:none;">
+	<td>{{ formset.empty_form.tool|add_class:"form-control" }}</td>
+	<td>{{ formset.empty_form.duration|add_class:"form-control" }}</td>
+</tr>
 <script>
 document.getElementById('add-row').onclick = function() {
 	var totalForms = document.getElementById('id_form-TOTAL_FORMS');
 	var currentCount = parseInt(totalForms.value);
-	var newRow = document.createElement('tr');
-	newRow.innerHTML = `
-		<td><select name="form-${currentCount}-tool" id="id_form-${currentCount}-tool">{{ formset.empty_form.tool }}</select></td>
-		<td><input type="number" name="form-${currentCount}-duration" id="id_form-${currentCount}-duration"></td>
-	`;
+	var newRow = document.getElementById('empty-form-row').cloneNode(true);
+	newRow.style.display = '';
+	newRow.id = '';
+	// Update the names and ids
+	newRow.querySelectorAll('select, input').forEach(function(el) {
+		el.name = el.name.replace('__prefix__', currentCount);
+		el.id = el.id.replace('__prefix__', currentCount);
+	});
 	document.querySelector('form table').appendChild(newRow);
 	totalForms.value = currentCount + 1;
 };
