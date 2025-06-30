@@ -105,7 +105,7 @@ urlpatterns = [
     path('create_reservation_calendar_invite/<int:reservation_id>/', calendar.create_reservation_calendar_invite, name='create_reservation_calendar_invite'),
     path('create_reservation_customer_calendar_invite/<int:reservation_id>/', calendar.create_reservation_customer_calendar_invite, name='create_reservation_customer_calendar_invite'),
     path('multi_calendar/', calendar.multi_calendar_view, name='multi_calendar'),
-    path('tool_sequential_schedule/', calendar.sequential_tool_schedule, name='sequential_tool_schedule'),
+    path('sequential_tool_schedule/', calendar.sequential_tool_schedule, name='sequential_tool_schedule'),
 
     # Qualifications:
     path('qualifications/', qualifications.qualifications, name='qualifications'),
