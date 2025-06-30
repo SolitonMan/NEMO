@@ -379,3 +379,10 @@ class MultiCalendarForm(forms.Form):
 		required=False,
 		widget=forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'})
 	)
+
+
+class ToolDurationForm(forms.Form):
+	tool = forms.ModelChoiceField(queryset=Tool.objects.filter(visible=True).order_by('category', 'name'), label="Tool")
+	duration = forms.IntegerField(min_value=1, label="Duration (minutes)")
+
+ToolDurationFormSet = forms.formset_factory(ToolDurationForm, extra=1, min_num=1, validate_min=True)

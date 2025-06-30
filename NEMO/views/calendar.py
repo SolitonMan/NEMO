@@ -28,7 +28,7 @@ from django.utils.html import escape
 from django.utils.safestring import mark_safe
 
 from NEMO.decorators import disable_session_expiry_refresh
-from NEMO.forms import MultiCalendarForm
+from NEMO.forms import MultiCalendarForm, ToolDurationFormSet
 from NEMO.models import Tool, Reservation, Configuration, ReservationConfiguration, ReservationProject, ReservationNotification, Consumable, UsageEvent, UsageEventProject, AreaAccessRecord, StaffCharge, StaffChargeProject, User, Project, ScheduledOutage, ScheduledOutageCategory, UserProfile, UserProfileSetting, Sample
 from NEMO.utilities import EmailCategory, create_email_log, bootstrap_primary_color, create_email_attachment, extract_times, extract_dates, format_datetime, parse_parameter_string
 from NEMO.views.constants import ADDITIONAL_INFORMATION_MAXIMUM_LENGTH
@@ -1668,3 +1668,50 @@ def find_available_slots(list_of_events, duration_minutes, window_start, window_
 					return slots
 			slot_start += step
 	return slots
+
+
+def find_next_available_slot(tool, duration_minutes, after_time):
+	# Find the next available slot for the tool after 'after_time'
+	# This is a simplified version; you may want to use your existing logic for business hours, etc.
+	busy = Reservation.objects.filter(
+		tool=tool,
+		cancelled=False,
+		missed=False,
+		shortened=False,
+		end__gt=after_time
+	).order_by('start')
+
+	slot_start = after_time
+	slot_end = slot_start + datetime.timedelta(minutes=duration_minutes)
+	for res in busy:
+		if slot_end <= res.start:
+			return slot_start, slot_end
+		slot_start = max(slot_start, res.end)
+		slot_end = slot_start + datetime.timedelta(minutes=duration_minutes)
+	return slot_start, slot_end
+
+def sequential_tool_schedule(request):
+	if request.method == "POST":
+		formset = ToolDurationFormSet(request.POST)
+		if formset.is_valid():
+			schedule = []
+			current_time = timezone.now()
+			for form in formset:
+				tool = form.cleaned_data['tool']
+				duration = form.cleaned_data['duration']
+				start, end = find_next_available_slot(tool, duration, current_time)
+				schedule.append({
+					'tool': tool,
+					'start': start,
+					'end': end,
+				})
+				current_time = end
+			return render(request, "calendar/sequential_tool_schedule.html", {
+				"formset": formset,
+				"schedule": schedule,
+			})
+	else:
+		formset = ToolDurationFormSet()
+	return render(request, "calendar/sequential_tool_schedule.html", {
+		"formset": formset,
+	})

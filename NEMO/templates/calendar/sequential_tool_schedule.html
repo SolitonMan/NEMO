@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Sequential Tool Scheduler</h2>
+<form method="post">
+	{% csrf_token %}
+	{{ formset.management_form }}
+	<table>
+		<tr>
+			<th>Tool</th>
+			<th>Duration (minutes)</th>
+		</tr>
+		{% for form in formset %}
+		<tr>
+			<td>{{ form.tool }}</td>
+			<td>{{ form.duration }}</td>
+		</tr>
+		{% endfor %}
+	</table>
+	<button type="button" id="add-row">Add Tool</button>
+	<button type="submit">Find Schedule</button>
+</form>
+
+{% if schedule %}
+	<h3>Proposed Schedule</h3>
+	<table>
+		<tr>
+			<th>Tool</th>
+			<th>Start</th>
+			<th>End</th>
+		</tr>
+		{% for item in schedule %}
+		<tr>
+			<td>{{ item.tool }}</td>
+			<td>{{ item.start|date:"m/d/Y h:i A" }}</td>
+			<td>{{ item.end|date:"m/d/Y h:i A" }}</td>
+		</tr>
+		{% endfor %}
+	</table>
+{% endif %}
+
+<script>
+document.getElementById('add-row').onclick = function() {
+	var totalForms = document.getElementById('id_form-TOTAL_FORMS');
+	var currentCount = parseInt(totalForms.value);
+	var newRow = document.createElement('tr');
+	newRow.innerHTML = `
+		<td><select name="form-${currentCount}-tool" id="id_form-${currentCount}-tool">{{ formset.empty_form.tool }}</select></td>
+		<td><input type="number" name="form-${currentCount}-duration" id="id_form-${currentCount}-duration"></td>
+	`;
+	document.querySelector('form table').appendChild(newRow);
+	totalForms.value = currentCount + 1;
+};
+</script>
+{% endblock %}
