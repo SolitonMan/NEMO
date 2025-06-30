@@ -382,7 +382,7 @@ class MultiCalendarForm(forms.Form):
 
 
 class ToolDurationForm(forms.Form):
-	tool = forms.ModelChoiceField(queryset=Tool.objects.filter(visible=True).order_by('category', 'name'), label="Tool")
+	tool = forms.ModelChoiceField(queryset=Tool.objects.filter(visible=True).order_by('name'), label="Tool")
 	duration = forms.IntegerField(min_value=1, label="Duration (minutes)")
 
 ToolDurationFormSet = forms.formset_factory(ToolDurationForm, extra=1, min_num=1, validate_min=True)
