@@ -77,9 +77,9 @@ def get_samples(request):
 	try:
 		sample_list = Sample.objects.filter(project__in=[int(project_id)], active_flag=True).order_by('-updated','-created')
 		project = Project.objects.get(id=int(project_id))
-	except:
+	except (ValueError, Project.DoesNotExist):
 		sample_list = None
-		project = request.user.active_projects[0]
+		project = request.user.active_projects()[0]
 
 	if sample_list is not None and  sample_list.count() == 0:
 		sample_list = None
