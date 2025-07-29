@@ -125,7 +125,7 @@ def create_order(request):
 		formset = ConsumableOrderItemFormSet()
 
 		# Annotate consumables with core names
-		consumables = Consumable.objects.filter(category__id=1, visible=True,core_id__id=2).annotate(
+		consumables = Consumable.objects.filter(category__id=1, visible=True, core_id__id=2).annotate(
 			core_name=F('core_id__name'),
 			academic_per_unit=F('consumablerate__academic_per_unit')
 		).annotate(
@@ -140,6 +140,10 @@ def create_order(request):
 				output_field=models.CharField()
 			)
 		).order_by('name')
+
+		if not request.user.is_staff:
+			# Filter consumables based on user's cores
+			consumables = consumables.filter(type_id=1)
 
 		tools = Tool.objects.filter(consumables__isnull=False).order_by('name').distinct()
 
