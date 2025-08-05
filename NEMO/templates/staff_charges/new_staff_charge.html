@@ -891,6 +891,12 @@
 				alert("Please choose the core that will be paid for this staff charge.");
 				$("#core_select").focus();
 				return false;
+			} else {
+				if ($("#credit_cost_collector_select option:selected").val() == "0") {
+					alert("Please choose the credit cost collector to receive the payment for this work.");
+					$("#credit_cost_collector_select").focus();
+					return false;
+				}
 			}
 			{% endif %}
 			
@@ -942,6 +948,12 @@
 				alert("Please choose the core that will be paid for this staff charge.");
 				$("#ad_hoc_core_select").focus();
 				return false;
+			} else {
+				if ($("#ad_hoc_credit_cost_collector_select option:selected").val() == "0") {
+					alert("Please choose the credit cost collector that will receive the payment for this work.");
+					$("#ad_hoc_credit_cost_collector_select").focus();
+					return false;
+				}
 			}
 			{% endif %}
 			//var failure_dialog = ajax_failure_callback("There was a problem with your ad hoc submission");
