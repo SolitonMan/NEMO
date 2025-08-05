@@ -584,6 +584,20 @@ function on_submit()
 		return false;
 	}
 
+	{% if multi_core_user %}
+	if ($("#ad_hoc_core_select option:selected").val() == "0") {
+		alert("Please choose the core that will be paid for this staff charge.");
+		$("#ad_hoc_core_select").focus();
+		return false;
+	} else {
+		if ($("#ad_hoc_credit_cost_collector_select option:selected").val() == "0") {
+			alert("Please choose the credit cost collector that will receive the payment for this work.");
+			$("#ad_hoc_credit_cost_collector_select").focus();
+			return false;
+		}
+	}
+	{% endif %}
+
 	for (var i=0; i<=current_entry_number; i++) {
 		b = false;
 		s = "form #ad_hoc_user_textbox__" + i;
