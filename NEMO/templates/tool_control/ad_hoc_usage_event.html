@@ -274,7 +274,7 @@
 			{% for c in request.user.core_ids.all %}
 
 				{% for ccc in c.creditcostcollector_set.all %}
-					<option value="{{ ccc.id }}" style="display: none;" class="core_{{ c.id }}">{{ ccc.name }}</option>
+					<option value="{{ ccc.id }}" style="display: none;" class="ad_hoc_core_{{ c.id }}">{{ ccc.name }}</option>
 				{% endfor %}
 
 			{% endfor %}
