@@ -351,6 +351,27 @@ function set_mode(iMode)
 	}
 }
 
+function ad_hoc_core_override_select()
+{
+	var iCore = $("#ad_hoc_core_select option:selected").val();
+
+	var sCore = ".ad_hoc_core_" + iCore;
+	$("#ad_hoc_credit_cost_collector_select").css("display","none");
+	$("#ad_hoc_credit_cost_collector_select option").each(function() {
+		$(this).css("display","none").prop("selected", false);
+	});
+
+	$(sCore).each(function() {
+		$(this).css("display","inline");
+	});
+
+	if ($(sCore).length > 0) {
+		$("#ad_hoc_credit_cost_collector_select").css("display","inline");
+	} else {
+		$("#ad_hoc_credit_cost_collector_select option").css("display","none");
+	}
+}
+
 function add_customer() 
 {
 	var failure_dialog = ajax_failure_callback("Cannot add new entry", "The web browser was not able to communicate with the server.");
