@@ -898,6 +898,12 @@
 					return false;
 				}
 			}
+			{% else %}
+				if ($("#credit_cost_collector_select option:selected").val() == "0") {
+					alert("Please choose the credit cost collector to receive the payment for this work.");
+					$("#credit_cost_collector_select").focus();
+					return false;
+				}
 			{% endif %}
 			
 			var failure_dialog = ajax_failure_callback("Could not begin charging staff time");
@@ -955,6 +961,12 @@
 					return false;
 				}
 			}
+			{% else %}
+				if ($("#ad_hoc_credit_cost_collector_select option:selected").val() == "0") {
+					alert("Please choose the credit cost collector that will receive the payment for this work.");
+					$("#ad_hoc_credit_cost_collector_select").focus();
+					return false;
+				}
 			{% endif %}
 			//var failure_dialog = ajax_failure_callback("There was a problem with your ad hoc submission");
 			//ajax_post("{% url 'ad_hoc_staff_charge' %}", serialize("#ad_hoc_staff_charge"), ad_hoc_overlap_callback, failure_dialog);
