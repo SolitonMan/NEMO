@@ -314,6 +314,50 @@ class UserProfileSetting(models.Model):
 	def __str__(self):
 		return str(self.name)
 
+class Requirement(models.Model):
+	name = models.CharField(max_length=255)
+	description = models.TextField(blank=True)
+	resource_link = models.URLField(blank=True, null=True)  # Optional: link to training/resource
+	retrain_interval_days = models.PositiveIntegerField(default=365, blank=True, null=True)  # Days until expiration
+
+	def __str__(self):
+		return self.name
+
+class ToolRequirement(models.Model):
+	tool = models.ForeignKey('Tool', on_delete=models.CASCADE)
+	requirement = models.ForeignKey('Requirement', on_delete=models.CASCADE)
+
+	class Meta:
+		unique_together = ('tool', 'requirement')
+
+class AreaRequirement(models.Model):
+	area = models.ForeignKey('Area', on_delete=models.CASCADE)
+	requirement = models.ForeignKey('Requirement', on_delete=models.CASCADE)
+
+	class Meta:
+		unique_together = ('area', 'requirement')
+
+class UserRequirementProgress(models.Model):
+	user = models.ForeignKey(User, on_delete=models.CASCADE)
+	requirement = models.ForeignKey('Requirement', on_delete=models.CASCADE)
+	status = models.CharField(
+		max_length=32,
+		choices=[
+			('not_started', 'Not Started'),
+			('in_progress', 'In Progress'),
+			('completed', 'Completed'),
+			('expired', 'Expired'),
+		],
+		default='not_started'
+	)
+	completed_on = models.DateTimeField(null=True, blank=True)
+	expires_on = models.DateTimeField(null=True, blank=True)
+	last_notified = models.DateTimeField(null=True, blank=True)  # For retraining notifications
+	notes = models.TextField(blank=True)  # Optional: evidence, comments
+
+	class Meta:
+		unique_together = ('user', 'requirement')
+
 class ProbationaryQualifications(models.Model):
 	user = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True)
 	tool = models.ForeignKey('Tool', on_delete=models.SET_NULL, null=True, blank=True)

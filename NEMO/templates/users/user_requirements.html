@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% load custom_tags_and_filters %}
+{% block title %}Your Requirements{% endblock %}
+{% block extrahead %}
+	{% load static %}
+	<script type="text/javascript" src="{% static "datetimepicker/bootstrap-datetimepicker.js" %}"></script>
+	<link rel="stylesheet" type="text/css" href="{% static "datetimepicker/bootstrap-datetimepicker.css" %}"/>
+{% endblock %}
+{% block content %}
+<h2>Your Requirements</h2>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Requirement</th>
+            <th>Status</th>
+            <th>Expires On</th>
+            <th>Resources</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for req in requirements %}
+        <tr>
+            <td>{{ req.name }}</td>
+            <td>{{ req.status|title }}</td>
+            <td>
+                {% if req.expires_on %}
+                    {{ req.expires_on|date:"Y-m-d" }}
+                {% else %}
+                    N/A
+                {% endif %}
+            </td>
+            <td>
+                {% if req.resource_link %}
+                    <a href="{{ req.resource_link }}" target="_blank">Resource</a>
+                {% else %}
+                    -
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

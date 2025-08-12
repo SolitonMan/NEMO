@@ -17,7 +17,7 @@ from django.views.decorators.http import require_GET, require_http_methods, requ
 
 from NEMO.admin import record_local_many_to_many_changes, record_active_state
 from NEMO.forms import UserForm
-from NEMO.models import Account, UserRelationship, UserRelationshipType, User, UserProfile, UserProfileSetting, Project, Tool, PhysicalAccessLevel, Reservation, StaffCharge, UsageEvent, AreaAccessRecord, ActivityHistory, ProbationaryQualifications, Sample
+from NEMO.models import Account, UserRelationship, UserRelationshipType, User, UserProfile, UserProfileSetting, Project, Tool, PhysicalAccessLevel, Reservation, StaffCharge, UsageEvent, AreaAccessRecord, ActivityHistory, ProbationaryQualifications, Sample, UserRequirementProgress, Requirement, AreaRequirement, ToolRequirement
 
 
 @staff_member_required(login_url=None)
@@ -474,3 +474,16 @@ def get_samples(request):
 	return render(request, 'users/add_sample.html', dictionary)
 
 
+@login_required
+def user_requirements(request):
+	progress_list = UserRequirementProgress.objects.filter(user=request.user).select_related('requirement')
+	requirements = []
+	for progress in progress_list:
+		requirements.append({
+			'name': progress.requirement.name,
+			'description': progress.requirement.description,
+			'status': progress.status,
+			'expires_on': progress.expires_on,
+			'resource_link': getattr(progress.requirement, 'resource_link', None),  # If you have a resource_link field
+		})
+	return render(request, 'requirements/user_requirements.html', {'requirements': requirements})
