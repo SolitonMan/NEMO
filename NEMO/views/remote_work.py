@@ -38,7 +38,7 @@ def remote_work(request):
 	if start_date is None:
 		start_date = timezone.now().strftime('%Y-%m-%d')
 	else:
-		start_date = timezone.make_aware(datetime.strptime(start_date, '%B, %Y').strftime('%Y-%m-%d'))
+		start_date = timezone.make_aware(datetime.strptime(start_date, '%B, %Y'))
 
 	first_of_the_month, last_of_the_month = get_month_timeframe(start_date)
 	operator = request.GET.get('operator')
