@@ -1182,42 +1182,21 @@ def outage_details(request, outage_id):
 @login_required
 @require_GET
 def usage_details(request, event_id):
-    try:
-        # Attempt to fetch with annotations
-        event = get_object_or_404(
-            UsageEvent.objects.filter(id=event_id).annotate(
-                project_number=F('usageeventproject__projects__number'),
-                project_name=F('usageeventproject__project__name'),
-                customer_name=F('usageeventproject__customer__name')
-            ).annotate(
-                project_display=Concat(
-                    F('projects_number'),
-                    Value(' - '),
-                    F('project_name'),
-                    output_field=CharField()
-                ),
-                customer_display=F('customer_name')
-            ),
-            id=event_id
-        )     
-        projects = set()
-        customers = set()
-        
-        for item in [event] + list(getattr(event, 'projects', [])):
-            if hasattr(item, 'project_display') and item.project_display:
-                projects.add(item.project_display)
-            if hasattr(item, 'customer_display') and item.customer_display:
-                customers.add(item.customer_display)
-        
-        event.projects_formatted = ", ".join(sorted(projects)) if projects else "None"
-        event.customers_formatted = ", ".join(sorted(customers)) if customers else "None"
-        
-    except Exception as e:
-        
-        event = get_object_or_404(UsageEvent, id=event_id)
-        event.projects_formatted = "Error loading project details"
-        event.customers_formatted = "Error loading customer details"
+    event = get_object_or_404(UsageEvent, id=event_id)
+    uep = UsageEventProject.objects.filter(usage_event=event).select_related('project', 'customer')
     
+    # Customer string 
+    customers = ", ".join({r.customer.name for r in uep if r.customer})
+    customer_string = customers or "No customers"
+     # Project string 
+    projects = " | ".join(f"{r.project.number} - {r.project.name}" for r in uep if r.project)
+    project_string = projects or "No projects"
+   
+    
+	# Annotate the event 
+    event.customer_string = ", ".join(customers) if customers else "No customers"
+    event.project_string = " | ".join(projects) if projects else "No projects"
+
     return render(request, 'calendar/usage_details.html', {'event': event})
 
 

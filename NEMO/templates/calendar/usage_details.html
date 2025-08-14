@@ -5,15 +5,14 @@
 <div class="modal-body">
 	User: {{ event.user }}<br>
 	Operator: {{ event.operator }}<br>
-	{% if event.projects_formatted %}
-	Projects: {{ event.projects_formatted }}<br>
+	{% if event.project_string and event.project_string != "No projects" %}
+	Projects: {{ event.project_string }}<br>
 	{% elif event.project %}
-	Project: {{ event.project.name }}<br>
+	Project: {{ event.project.number }} - {{ event.project.name }}<br>
 	{% else %}
 	Project: None<br>
 	{% endif %}
-	{% if event.customers_formatted %}
-	Customers: {{ event.customers_formatted }}<br>
+	Customers: {{ event.customer_string }}<br>
 	{% endif %}
 	Tool: {{ event.tool }}<br>
 	Start: {{ event.start }}<br>
