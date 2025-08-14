@@ -1189,7 +1189,7 @@ def usage_details(request, event_id):
     customers = ", ".join({str(r.customer) for r in uep if r.customer})
     customer_string = customers or "No customers"
      # Project string 
-    projects = " | ".join(f"{r.project_number} - {r.project.name}" for r in uep if r.project)
+    projects = " | ".join(f"{r.project.project_number} - {r.project.name}" for r in uep if r.project)
     project_string = projects or "No projects"
    
     
