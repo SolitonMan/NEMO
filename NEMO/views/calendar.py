@@ -1186,7 +1186,7 @@ def usage_details(request, event_id):
     uep = UsageEventProject.objects.filter(usage_event=event).select_related('project', 'customer')
     
     # Customer string 
-    customers = ", ".join({r.customer for r in uep if r.customer})
+    customers = ", ".join({str(r.customer) for r in uep if r.customer})
     customer_string = customers or "No customers"
      # Project string 
     projects = " | ".join(f"{r.project_number} - {r.project.name}" for r in uep if r.project)
