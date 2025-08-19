@@ -6,7 +6,9 @@
 	Operator: {{ event.operator }}<br>
 
 {% if user == event.user or r.user.is_staff %}
-	{% if event.project %}Project: {{ event.project }}<br>{% endif %}
+	{% if event.project %}
+		Project: {{ event.project }}<br>
+	{% endif %}
 	<table class="table">
 		<thead>
 			<tr>
@@ -16,22 +18,26 @@
 		</thead>
 		<tbody>
 			{% for r in rp %}
-			Customers: {{ event.customer_string }}<br>
-			{% if event.project_string and event.project_string != "No projects" %}
-			Projects: {{ event.project_string }}<br>
-			{% elif event.project %}
-			Project: {{ event.project.project_number}} - {{ event.project.name }}<br>
-			{% else %}
-			Project: None<br>
-			{% endif %}
-			{% endfor %}
-			</td>
-			</tr>
+            <tr>
+                <td>
+                    Customers: {{ event.customer_string }}<br>
+                </td>
+                <td>
+                    {% if event.sample_string and event.sample_string != "No samples" %}
+                    {% if event.project_string and event.project_string != "No projects" %}
+                    Projects: {{ event.project_string }}<br>
+                    {% elif event.project %}
+                    Project: {{ event.project.project_number}} - {{ event.project.name }}<br>
+                    {% else %}
+                    Project: None<br>
+                    {% endif %}
+                </td>
+            </tr>
 		{% endfor %}
 		</tbody>
 	</table>
-	{% endif %}
 {% endif %}
+
 	
 	Tool: {{ event.tool }}<br>
 	Start: {{ event.start }}<br>
