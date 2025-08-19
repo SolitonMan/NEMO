@@ -6,28 +6,24 @@
 	Operator: {{ event.operator }}<br>
 
 	{% if request.user.is_staff %}
-	{% if event.project %}
-	Project: {{ event.project }}<br>
-	{% endif %}
-
-	<table class="table">
-		<thead>
-			<tr>
-				<th>Customer</th>
-				<th>Project</th>
-			</tr>
-		</thead>
-		<tbody>
-			<tr>
-				<td>
-					Customers: {{ event.customer_string }}<br>
-				</td>
-				<td>
-					Projects: {{ event.project_string }}<br>
-				</td>
-			</tr>
-		</tbody>
-	</table>
+		<table class="table">
+			<thead>
+				<tr>
+					<th>Customer</th>
+					<th>Project</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>
+						{{ event.customer_string }}<br>
+					</td>
+					<td>
+						{{ event.project_string }}<br>
+					</td>
+				</tr>
+			</tbody>
+		</table>
 	{% endif %}
 
 
