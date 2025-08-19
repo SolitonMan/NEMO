@@ -23,7 +23,6 @@
                     Customers: {{ event.customer_string }}<br>
                 </td>
                 <td>
-                    {% if event.sample_string and event.sample_string != "No samples" %}
                     {% if event.project_string and event.project_string != "No projects" %}
                     Projects: {{ event.project_string }}<br>
                     {% elif event.project %}
