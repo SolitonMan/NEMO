@@ -3,18 +3,39 @@
 	<h4 class="modal-title">{{ event.tool }} usage details</h4>
 </div>
 <div class="modal-body">
-	User: {{ event.user }}<br>
 	Operator: {{ event.operator }}<br>
-	{% if event.project_string and event.project_string != "No projects" %}
-	Projects: {{ event.project_string }}<br>
-	{% elif event.project %}
-	Project: {{ event.project.project_number}} - {{ event.project.name }}<br>
-	{% else %}
-	Project: None<br>
+
+{% if user == event.user or r.user.is_staff %}
+	{% if event.project %}Project: {{ event.project }}<br>{% endif %}
+	<table class="table">
+		<thead>
+			<tr>
+				<th>Customer</th>
+				<th>Project</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for r in rp %}
+			Customers: {{ event.customer_string }}<br>
+			{% if event.project_string and event.project_string != "No projects" %}
+			Projects: {{ event.project_string }}<br>
+			{% elif event.project %}
+			Project: {{ event.project.project_number}} - {{ event.project.name }}<br>
+			{% else %}
+			Project: None<br>
+			{% endif %}
+			{% endfor %}
+			</td>
+			</tr>
+		{% endfor %}
+		</tbody>
+	</table>
 	{% endif %}
-	Customers: {{ event.customer_string }}<br>
+{% endif %}
+	
 	Tool: {{ event.tool }}<br>
 	Start: {{ event.start }}<br>
+
 	{% if event.end %}
 	End: {{ event.end }}<br>
 	{% else %}
