@@ -5,10 +5,11 @@
 <div class="modal-body">
 	Operator: {{ event.operator }}<br>
 
-{% if request.user.is_staff %}
+	{% if request.user.is_staff %}
 	{% if event.project %}
-		Project: {{ event.project }}<br>
+	Project: {{ event.project }}<br>
 	{% endif %}
+
 	<table class="table">
 		<thead>
 			<tr>
@@ -17,22 +18,14 @@
 			</tr>
 		</thead>
 		<tbody>
-			{% for r in rp %}
 			<tr>
 				<td>
 					Customers: {{ event.customer_string }}<br>
 				</td>
 				<td>
-					{% if event.project_string and event.project_string != "No projects" %}
 					Projects: {{ event.project_string }}<br>
-					{% elif event.project %}
-					Project: {{ event.project.project_number}} - {{ event.project.name }}<br>
-					{% else %}
-					Project: None<br>
-					{% endif %}
 				</td>
 			</tr>
-			{% endfor %}
 		</tbody>
 	</table>
 	{% endif %}
