@@ -110,6 +110,7 @@ urlpatterns = [
     # Requirements:
     path('requirements/', requirements_admin.manage_requirements, name='manage_requirements'),
     path('user_requirements/', users.user_requirements, name='user_requirements'),
+    path('add_requirement/', requirements_admin.add_requirement, name='add_requirement'),
 
     # Qualifications:
     path('qualifications/', qualifications.qualifications, name='qualifications'),
