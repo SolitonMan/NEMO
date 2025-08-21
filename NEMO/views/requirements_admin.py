@@ -24,38 +24,30 @@ def add_requirement(request):
 
 @staff_member_required(login_url=None)
 def manage_requirements(request):
-    tools = Tool.objects.all()
-    areas = Area.objects.all()
-    requirements = Requirement.objects.all()
+	if request.method == "POST":
+		obj_type = request.POST.get("obj_type")
+		obj_id = request.POST.get("obj_id")
+		assigned_ids = request.POST.getlist("assigned_requirements")
+		if obj_type == "tool":
+			tool = get_object_or_404(Tool, id=obj_id)
+			ToolRequirement.objects.filter(tool=tool).exclude(requirement_id__in=assigned_ids).delete()
+			for req_id in assigned_ids:
+				ToolRequirement.objects.get_or_create(tool=tool, requirement_id=req_id)
+		elif obj_type == "area":
+			area = get_object_or_404(Area, id=obj_id)
+			AreaRequirement.objects.filter(area=area).exclude(requirement_id__in=assigned_ids).delete()
+			for req_id in assigned_ids:
+				AreaRequirement.objects.get_or_create(area=area, requirement_id=req_id)
+		return redirect('manage_requirements')
 
-    if request.method == "POST":
-        # Handle tool requirements
-        for tool in tools:
-            req_ids = request.POST.getlist(f"tool_{tool.id}_requirements")
-            ToolRequirement.objects.filter(tool=tool).exclude(requirement_id__in=req_ids).delete()
-            for req_id in req_ids:
-                ToolRequirement.objects.get_or_create(tool=tool, requirement_id=req_id)
-
-        # Handle area requirements
-        for area in areas:
-            req_ids = request.POST.getlist(f"area_{area.id}_requirements")
-            AreaRequirement.objects.filter(area=area).exclude(requirement_id__in=req_ids).delete()
-            for req_id in req_ids:
-                AreaRequirement.objects.get_or_create(area=area, requirement_id=req_id)
-
-        return redirect('manage_requirements')
-
-    # Prepare current assignments
-    tool_requirements = {tool.id: set(ToolRequirement.objects.filter(tool=tool).values_list('requirement_id', flat=True)) for tool in tools}
-    area_requirements = {area.id: set(AreaRequirement.objects.filter(area=area).values_list('requirement_id', flat=True)) for area in areas}
-
-    return render(request, 'requirements/manage_requirements.html', {
-        'tools': tools,
-        'areas': areas,
-        'requirements': requirements,
-        'tool_requirements': tool_requirements,
-        'area_requirements': area_requirements,
-    })
+	tools = Tool.objects.all()
+	areas = Area.objects.all()
+	requirements = Requirement.objects.all()
+	return render(request, 'requirements/manage_requirements.html', {
+		'tools': tools,
+		'areas': areas,
+		'requirements': requirements,
+	})
 
 def mark_requirement_completed(user, requirement):
     now = timezone.now()

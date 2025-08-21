@@ -1,43 +1,136 @@
 {% extends 'base.html' %}
-{% load custom_tags_and_filters %}
 {% block title %}Manage Requirements{% endblock %}
-{% block extrahead %}
-	{% load static %}
-	<script type="text/javascript" src="{% static "datetimepicker/bootstrap-datetimepicker.js" %}"></script>
-	<link rel="stylesheet" type="text/css" href="{% static "datetimepicker/bootstrap-datetimepicker.css" %}"/>
-{% endblock %}
 {% block content %}
-<h2>Manage Tool and Area Requirements</h2>
-<form method="post">
-    {% csrf_token %}
-    <h3>Tools</h3>
-    {% for tool in tools %}
-        <div>
-            <strong>{{ tool.name }}</strong><br>
-            <select name="tool_{{ tool.id }}_requirements" multiple class="form-control" style="width:300px;">
-                {% for req in requirements %}
-                    <option value="{{ req.id }}"
-                        {% if req.id in tool_requirements|get_item:tool.id %}selected{% endif %}>
-                        {{ req.name }}
-                    </option>
-                {% endfor %}
-            </select>
-        </div>
-    {% endfor %}
-    <h3>Areas</h3>
-    {% for area in areas %}
-        <div>
-            <strong>{{ area.name }}</strong><br>
-            <select name="area_{{ area.id }}_requirements" multiple class="form-control" style="width:300px;">
-                {% for req in requirements %}
-                    <option value="{{ req.id }}"
-                        {% if req.id in area_requirements|get_item:area.id %}selected{% endif %}>
-                        {{ req.name }}
-                    </option>
-                {% endfor %}
-            </select>
-        </div>
-    {% endfor %}
-    <button type="submit" class="btn btn-primary">Save</button>
-</form>
+<h2>Manage Tool/Area Requirements</h2>
+<div>
+	<label>Search Tool or Area:</label>
+	<input type="text" id="search_obj" class="form-control" placeholder="Type tool or area name..." style="width:300px;">
+	<select id="obj_select" class="form-control" style="width:300px;">
+		<optgroup label="Tools">
+			{% for t in tools %}
+				<option value="tool_{{ t.id }}">{{ t.name }}</option>
+			{% endfor %}
+		</optgroup>
+		<optgroup label="Areas">
+			{% for a in areas %}
+				<option value="area_{{ a.id }}">{{ a.name }}</option>
+			{% endfor %}
+		</optgroup>
+	</select>
+</div>
+<div id="requirements_panel" style="margin-top:30px; display:none;">
+	<form method="post">
+		{% csrf_token %}
+		<input type="hidden" name="obj_type" id="obj_type">
+		<input type="hidden" name="obj_id" id="obj_id">
+		<div class="row">
+			<div class="col-sm-5">
+				<label>Unassigned Requirements</label>
+				<input type="text" id="search_unassigned" class="form-control" placeholder="Filter unassigned...">
+				<select multiple id="unassigned_requirements" class="form-control" size="10" style="width:100%;">
+				</select>
+			</div>
+			<div class="col-sm-2" style="text-align:center; margin-top:40px;">
+				<button type="button" id="assign_btn" class="btn btn-primary">&gt;&gt;</button><br><br>
+				<button type="button" id="unassign_btn" class="btn btn-secondary">&lt;&lt;</button>
+			</div>
+			<div class="col-sm-5">
+				<label>Assigned Requirements</label>
+				<input type="text" id="search_assigned" class="form-control" placeholder="Filter assigned...">
+				<select multiple name="assigned_requirements" id="assigned_requirements" class="form-control" size="10" style="width:100%;">
+				</select>
+			</div>
+		</div>
+		<br>
+		<button type="submit" class="btn btn-success">Save</button>
+	</form>
+</div>
+<script>
+	const allRequirements = [
+		{% for req in requirements %}
+			{ id: {{ req.id }}, name: "{{ req.name|escapejs }}" },
+		{% endfor %}
+	];
+	const toolRequirements = {
+		{% for t in tools %}
+			{{ t.id }}: [{% for tr in t.toolrequirement_set.all %}{{ tr.requirement_id }},{% endfor %}],
+		{% endfor %}
+	};
+	const areaRequirements = {
+		{% for a in areas %}
+			{{ a.id }}: [{% for ar in a.arearequirement_set.all %}{{ ar.requirement_id }},{% endfor %}],
+		{% endfor %}
+	};
+
+	function filterSelect(selectId, searchId) {
+		const searchVal = document.getElementById(searchId).value.toLowerCase();
+		const select = document.getElementById(selectId);
+		for (let i = 0; i < select.options.length; i++) {
+			const opt = select.options[i];
+			opt.style.display = opt.text.toLowerCase().includes(searchVal) ? "" : "none";
+		}
+	}
+
+	document.getElementById("search_unassigned").addEventListener("keyup", function() {
+		filterSelect("unassigned_requirements", "search_unassigned");
+	});
+	document.getElementById("search_assigned").addEventListener("keyup", function() {
+		filterSelect("assigned_requirements", "search_assigned");
+	});
+
+	document.getElementById("search_obj").addEventListener("keyup", function() {
+		const val = this.value.toLowerCase();
+		const select = document.getElementById("obj_select");
+		for (let i = 0; i < select.options.length; i++) {
+			const opt = select.options[i];
+			opt.style.display = opt.text.toLowerCase().includes(val) ? "" : "none";
+		}
+	});
+
+	document.getElementById("obj_select").addEventListener("change", function() {
+		const val = this.value;
+		if (!val) return;
+		document.getElementById("requirements_panel").style.display = "";
+		const [type, id] = val.split("_");
+		document.getElementById("obj_type").value = type;
+		document.getElementById("obj_id").value = id;
+		let assigned = [];
+		if (type === "tool") assigned = toolRequirements[id] || [];
+		else if (type === "area") assigned = areaRequirements[id] || [];
+		const assignedSet = new Set(assigned);
+		const unassigned = allRequirements.filter(r => !assignedSet.has(r.id));
+		const assignedReqs = allRequirements.filter(r => assignedSet.has(r.id));
+		const unassignedSelect = document.getElementById("unassigned_requirements");
+		const assignedSelect = document.getElementById("assigned_requirements");
+		unassignedSelect.innerHTML = "";
+		assignedSelect.innerHTML = "";
+		unassigned.forEach(r => {
+			const opt = document.createElement("option");
+			opt.value = r.id;
+			opt.text = r.name;
+			unassignedSelect.appendChild(opt);
+		});
+		assignedReqs.forEach(r => {
+			const opt = document.createElement("option");
+			opt.value = r.id;
+			opt.text = r.name;
+			assignedSelect.appendChild(opt);
+		});
+	});
+
+	document.getElementById("assign_btn").addEventListener("click", function() {
+		const unassigned = document.getElementById("unassigned_requirements");
+		const assigned = document.getElementById("assigned_requirements");
+		Array.from(unassigned.selectedOptions).forEach(opt => {
+			assigned.appendChild(opt);
+		});
+	});
+	document.getElementById("unassign_btn").addEventListener("click", function() {
+		const unassigned = document.getElementById("unassigned_requirements");
+		const assigned = document.getElementById("assigned_requirements");
+		Array.from(assigned.selectedOptions).forEach(opt => {
+			unassigned.appendChild(opt);
+		});
+	});
+</script>
 {% endblock %}
