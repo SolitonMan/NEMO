@@ -1142,3 +1142,8 @@ class SampleAdmin(admin.ModelAdmin):
 
 	def has_delete_permission(self, request, obj=None):
 		return False
+
+@admin.register(Requirement)
+class RequirementAdmin(admin.ModelAdmin):
+	list_display = ('name', 'description', 'resource_link', 'retrain_interval_days')
+	search_fields = ('name', 'description')

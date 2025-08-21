@@ -149,7 +149,7 @@
                                                 {% navigation_url 'remote_work' 'Transaction validation' %}
                                                 {% endif %}
                                                 {% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
-                                                {% navigation_url 'manage_requirements' 'Requirements Management' %}
+                                                {% navigation_url 'manage_requirements' 'Requirements Assignment' %}
                                                 {% endif %}
                                                 {% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
                                                 {% navigation_url 'resources' 'Resources' %}

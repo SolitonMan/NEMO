@@ -6,6 +6,23 @@ from django.shortcuts import render, redirect, get_object_or_404
 from NEMO.models import Tool, Area, Requirement, ToolRequirement, AreaRequirement, UserRequirementProgress
 
 @staff_member_required(login_url=None)
+def add_requirement(request):
+	if request.method == "POST":
+		name = request.POST.get("name")
+		description = request.POST.get("description")
+		resource_link = request.POST.get("resource_link")
+		retrain_interval_days = request.POST.get("retrain_interval_days") or 365
+		if name:
+			Requirement.objects.create(
+				name=name,
+				description=description,
+				resource_link=resource_link,
+				retrain_interval_days=retrain_interval_days
+			)
+			return redirect('manage_requirements')
+	return render(request, 'requirements/add_requirement.html')
+
+@staff_member_required(login_url=None)
 def manage_requirements(request):
     tools = Tool.objects.all()
     areas = Area.objects.all()
