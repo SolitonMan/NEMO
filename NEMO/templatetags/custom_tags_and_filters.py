@@ -76,7 +76,7 @@ def navigation_url(url_name, description):
 
 @register.filter
 def get_item(dictionary, key):
-	return dictionary.get(key)
+	return dictionary.get(key, set())
 
 
 dist_version: str = 0

@@ -9,7 +9,7 @@ from microsoft_auth.models import MicrosoftAccount
 from microsoft_auth.admin import MicrosoftAccountAdmin
 
 from NEMO.actions import lock_selected_interlocks, synchronize_with_tool_usage, unlock_selected_interlocks
-from NEMO.models import Account, ActivityHistory, Alert, Area, AreaAccessRecord, AreaAccessRecordProject, BillingType, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableOrder, ConsumableOrderItem, ConsumableUnit, ConsumableCategory, ConsumableType, ConsumableWithdraw, ContactInformation, ContactInformationCategory, ContestTransaction, ContestTransactionData, ContestTransactionNewData, Core, CreditCostCollector, Customization, Door, EmailLog, GlobalFlag, Interlock, InterlockCard, InterlockType, LandingPageChoice, LockBilling, MembershipHistory, News, Notification, NsfCategory, Organization, OrganizationType, PhysicalAccessLevel, PhysicalAccessLog, Project, Project2DCC, Reservation, ReservationConfiguration, ReservationProject, Resource, ResourceCategory, SafetyIssue, Sample, ScheduledOutage, ScheduledOutageCategory, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskHistory, TaskStatus, Tool, TrainingSession, UsageEvent, UsageEventProject, User, UserType, UserProfile, UserProfileSetting
+from NEMO.models import Account, ActivityHistory, Alert, Area, AreaAccessRecord, AreaAccessRecordProject, AreaRequirement, BillingType, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableOrder, ConsumableOrderItem, ConsumableUnit, ConsumableCategory, ConsumableType, ConsumableWithdraw, ContactInformation, ContactInformationCategory, ContestTransaction, ContestTransactionData, ContestTransactionNewData, Core, CreditCostCollector, Customization, Door, EmailLog, GlobalFlag, Interlock, InterlockCard, InterlockType, LandingPageChoice, LockBilling, MembershipHistory, News, Notification, NsfCategory, Organization, OrganizationType, PhysicalAccessLevel, PhysicalAccessLog, Project, Project2DCC, Requirement, Reservation, ReservationConfiguration, ReservationProject, Resource, ResourceCategory, SafetyIssue, Sample, ScheduledOutage, ScheduledOutageCategory, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskHistory, TaskStatus, Tool, ToolRequirement, TrainingSession, UsageEvent, UsageEventProject, User, UserType, UserProfile, UserProfileSetting, UserRequirementProgress
 from NEMO.utilities import send_mail
 from NEMO.views.customization import get_customization, get_media_file_contents
 
@@ -168,10 +168,19 @@ class ToolAdminForm(forms.ModelForm):
 			self.fields['nonrequired_resources'].initial = self.instance.nonrequired_resource_set.all()
 
 
+class ToolRequirementInline(admin.TabularInline):
+    model = ToolRequirement
+    extra = 1
+
+class AreaRequirementInline(admin.TabularInline):
+    model = AreaRequirement
+    extra = 1
+
 @register(Tool)
 class ToolAdmin(admin.ModelAdmin):
 	list_display = ('name', 'category', 'core_id', 'visible', 'operational', 'primary_owner')
 	list_filter = ('visible', 'operational', 'core_id')
+	inlines = [ToolRequirementInline]
 	form = ToolAdminForm
 
 	search_fields = ('name', 'category')
@@ -220,6 +229,8 @@ class ToolAdmin(admin.ModelAdmin):
 
 	def has_delete_permission(self, request, obj=None):
 		return False
+
+
 
 #@register(MicrosoftAccount)
 class UpdatedMicrosoftAccountAdmin(MicrosoftAccountAdmin):
@@ -1017,6 +1028,7 @@ class ResourceCategoryAdmin(admin.ModelAdmin):
 @register(Area)
 class AreaAdmin(admin.ModelAdmin):
 	list_display = ('id', 'name', 'welcome_message', 'core_id')
+	inlines = [AreaRequirementInline]
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == 'credit_cost_collector':

@@ -11,7 +11,7 @@ from NEMO.scheduler import start_scheduler
 from NEMO.views import (
     abuse, accounts_and_projects, alerts, api, area_access, authentication, calendar, configuration_agenda, consumables,
     contact_staff, customization, email, feedback, get_projects, history, interlock, jumbotron, kiosk, landing,
-    maintenance, mobile, notifications, usage, news, qualifications, remote_work, resources, safety, samples, sidebar,
+    maintenance, mobile, notifications, usage, news, qualifications, remote_work, requirements_admin, resources, safety, samples, sidebar,
     staff_charges, status_dashboard, tasks, tool_control, training, tutorials, users, work_orders
 )
 
@@ -106,6 +106,10 @@ urlpatterns = [
     path('create_reservation_customer_calendar_invite/<int:reservation_id>/', calendar.create_reservation_customer_calendar_invite, name='create_reservation_customer_calendar_invite'),
     path('multi_calendar/', calendar.multi_calendar_view, name='multi_calendar'),
     path('sequential_tool_schedule/', calendar.sequential_tool_schedule, name='sequential_tool_schedule'),
+
+    # Requirements:
+    path('requirements/', requirements_admin.manage_requirements, name='manage_requirements'),
+    path('user_requirements/', users.user_requirements, name='user_requirements'),
 
     # Qualifications:
     path('qualifications/', qualifications.qualifications, name='qualifications'),

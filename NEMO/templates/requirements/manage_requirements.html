@@ -1,0 +1,33 @@
+<h2>Manage Tool and Area Requirements</h2>
+<form method="post">
+    {% csrf_token %}
+    <h3>Tools</h3>
+    {% for tool in tools %}
+        <div>
+            <strong>{{ tool.name }}</strong><br>
+            <select name="tool_{{ tool.id }}_requirements" multiple class="form-control" style="width:300px;">
+                {% for req in requirements %}
+                    <option value="{{ req.id }}"
+                        {% if req.id in tool_requirements|get_item:tool.id %}selected{% endif %}>
+                        {{ req.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+    {% endfor %}
+    <h3>Areas</h3>
+    {% for area in areas %}
+        <div>
+            <strong>{{ area.name }}</strong><br>
+            <select name="area_{{ area.id }}_requirements" multiple class="form-control" style="width:300px;">
+                {% for req in requirements %}
+                    <option value="{{ req.id }}"
+                        {% if req.id in area_requirements|get_item:area.id %}selected{% endif %}>
+                        {{ req.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+    {% endfor %}
+    <button type="submit" class="btn btn-primary">Save</button>
+</form>

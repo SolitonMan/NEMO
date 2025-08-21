@@ -71,6 +71,13 @@ def create_or_modify_user(request, user_id):
 	except:
 		user = None
 
+	requirements = Requirement.objects.all()
+	assigned_requirements = set(
+		UserRequirementProgress.objects.filter(user=user).values_list('requirement_id', flat=True)
+	)
+	dictionary['requirements'] = requirements
+	dictionary['assigned_requirements'] = assigned_requirements
+
 	if dictionary['identity_service_available']:
 		try:
 			result = requests.get(urljoin(settings.IDENTITY_SERVICE['url'], '/areas/'), timeout=3)
@@ -131,63 +138,19 @@ def create_or_modify_user(request, user_id):
 		if not form.is_valid():
 			return render(request, 'users/create_or_modify_user.html', dictionary)
 
-		# Remove the user account from the domain if it's deactivated, changed domain, or changed username...
-		if dictionary['identity_service_available'] and user:
-			no_longer_active = form.initial['is_active'] is True and form.cleaned_data['is_active'] is False
-			domain_switched = form.initial['domain'] != '' and form.initial['domain'] != form.cleaned_data['domain']
-			username_changed = form.initial['username'] != form.cleaned_data['username']
-			if no_longer_active or domain_switched or username_changed:
-				parameters = {
-					'username': form.initial['username'],
-					'domain': form.initial['domain'],
-				}
-				try:
-					result = requests.delete(settings.IDENTITY_SERVICE['url'], data=parameters, timeout=3)
-					# If the delete succeeds, or the user is not found, then everything is ok.
-					if result.status_code not in (HTTPStatus.OK, HTTPStatus.NOT_FOUND):
-						dictionary['identity_service_available'] = False
-						logger.error('The identity service encountered a problem while attempting to delete a user. The HTTP error is {}: {}'.format(result.status_code, result.text))
-						dictionary['warning'] = 'The user information was not modified because the identity service could not delete the corresponding domain account. The NEMO administrator has been notified to resolve the problem.'
-						return render(request, 'users/create_or_modify_user.html', dictionary)
-				except Exception as e:
-					dictionary['identity_service_available'] = False
-					logger.error('There was a problem communicating with the identity service while attempting to delete a user. An exception was encountered: ' + type(e).__name__ + ' - ' + str(e))
-					dictionary['warning'] = 'The user information was not modified because the identity service could not delete the corresponding domain account. The NEMO administrator has been notified to resolve the problem.'
-					return render(request, 'users/create_or_modify_user.html', dictionary)
-
-		# Ensure the user account is added and configured correctly on the current domain if the user is active...
-		if dictionary['identity_service_available'] and form.cleaned_data['is_active']:
-			parameters = {
-				'username': form.cleaned_data['username'],
-				'domain': form.cleaned_data['domain'],
-				'badge_number': form.cleaned_data.get('badge_number', ''),
-				'email': form.cleaned_data.get('email'),
-				'access_expiration': form.cleaned_data.get('access_expiration'),
-				'requested_areas': request.POST.getlist('externally_managed_access_levels'),
-			}
-			try:
-				if len(parameters['requested_areas']) > 0 and not parameters['badge_number']:
-					dictionary['warning'] = 'A user must have a badge number in order to have area access. Please enter the badge number first, then grant access to areas.'
-					return render(request, 'users/create_or_modify_user.html', dictionary)
-				result = requests.put(settings.IDENTITY_SERVICE['url'], data=parameters, timeout=3)
-				if result.status_code == HTTPStatus.NOT_FOUND:
-					dictionary['warning'] = 'The username was not found on this domain. Did you spell the username correctly in this form and did you select the correct domain? Ensure the user exists on the domain in order to proceed.'
-					return render(request, 'users/create_or_modify_user.html', dictionary)
-				if result.status_code != HTTPStatus.OK:
-					dictionary['identity_service_available'] = False
-					logger.error('The identity service encountered a problem while attempting to modify a user. The HTTP error is {}: {}'.format(result.status_code, result.text))
-					dictionary['warning'] = 'The user information was not modified because the identity service encountered a problem while creating the corresponding domain account. The NEMO administrator has been notified to resolve the problem.'
-					return render(request, 'users/create_or_modify_user.html', dictionary)
-			except Exception as e:
-				dictionary['identity_service_available'] = False
-				logger.error('There was a problem communicating with the identity service while attempting to modify a user. An exception was encountered: ' + type(e).__name__ + ' - ' + str(e))
-				dictionary['warning'] = 'The user information was not modified because the identity service encountered a problem while creating the corresponding domain account. The NEMO administrator has been notified to resolve the problem.'
-				return render(request, 'users/create_or_modify_user.html', dictionary)
-
 		# Only save the user model for now, and wait to process the many-to-many relationships.
 		# This way, many-to-many changes can be recorded.
 		# See this web page for more information:
 		# https://docs.djangoproject.com/en/dev/topics/forms/modelforms/#the-save-method
+
+		# Save assigned requirements
+		req_ids = request.POST.getlist('requirements')
+		# Remove unassigned
+		UserRequirementProgress.objects.filter(user=user).exclude(requirement_id__in=req_ids).delete()
+		# Add new assignments
+		for req_id in req_ids:
+			UserRequirementProgress.objects.get_or_create(user=user, requirement_id=req_id)
+
 		user = form.save(commit=False)
 		user.save()
 		record_active_state(request, user, form, 'is_active', user_id == 'new')
@@ -486,4 +449,4 @@ def user_requirements(request):
 			'expires_on': progress.expires_on,
 			'resource_link': getattr(progress.requirement, 'resource_link', None),  # If you have a resource_link field
 		})
-	return render(request, 'requirements/user_requirements.html', {'requirements': requirements})
+	return render(request, 'users/user_requirements.html', {'requirements': requirements})

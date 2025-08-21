@@ -319,6 +319,8 @@ class Requirement(models.Model):
 	description = models.TextField(blank=True)
 	resource_link = models.URLField(blank=True, null=True)  # Optional: link to training/resource
 	retrain_interval_days = models.PositiveIntegerField(default=365, blank=True, null=True)  # Days until expiration
+	created = models.DateTimeField(auto_now_add=True,null=True)
+	updated = models.DateTimeField(null=True)
 
 	def __str__(self):
 		return self.name
@@ -326,6 +328,8 @@ class Requirement(models.Model):
 class ToolRequirement(models.Model):
 	tool = models.ForeignKey('Tool', on_delete=models.CASCADE)
 	requirement = models.ForeignKey('Requirement', on_delete=models.CASCADE)
+	created = models.DateTimeField(auto_now_add=True,null=True)
+	updated = models.DateTimeField(null=True)
 
 	class Meta:
 		unique_together = ('tool', 'requirement')
@@ -333,6 +337,8 @@ class ToolRequirement(models.Model):
 class AreaRequirement(models.Model):
 	area = models.ForeignKey('Area', on_delete=models.CASCADE)
 	requirement = models.ForeignKey('Requirement', on_delete=models.CASCADE)
+	created = models.DateTimeField(auto_now_add=True,null=True)
+	updated = models.DateTimeField(null=True)
 
 	class Meta:
 		unique_together = ('area', 'requirement')
@@ -354,6 +360,8 @@ class UserRequirementProgress(models.Model):
 	expires_on = models.DateTimeField(null=True, blank=True)
 	last_notified = models.DateTimeField(null=True, blank=True)  # For retraining notifications
 	notes = models.TextField(blank=True)  # Optional: evidence, comments
+	created = models.DateTimeField(auto_now_add=True,null=True)
+	updated = models.DateTimeField(null=True)
 
 	class Meta:
 		unique_together = ('user', 'requirement')

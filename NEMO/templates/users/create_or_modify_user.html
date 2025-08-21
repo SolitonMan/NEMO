@@ -316,6 +316,25 @@
 				</div>
 			</div>
 		{% endif %}
+
+		{% if request.user.is_staff %}
+		<div class="form-group">
+			<label class="control-label col-sm-2">Requirements</label>
+			<div class="col-sm-4">
+				{% for req in requirements %}
+					<div class="checkbox">
+						<label>
+							<input type="checkbox" name="requirements" value="{{ req.id }}"
+								{% if req.id in assigned_requirements %}checked{% endif %}>
+							{{ req.name }}
+							{% if req.description %}<span class="text-muted">({{ req.description }})</span>{% endif %}
+						</label>
+					</div>
+				{% endfor %}
+			</div>
+		</div>
+		{% endif %}
+
 		<div class="form-group">
 			<label class="control-label col-sm-2" for="user_shareable_calendar_link">ICS Calendar Link</label>
 			<div class="col-sm-2">

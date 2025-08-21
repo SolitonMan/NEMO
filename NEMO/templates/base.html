@@ -88,6 +88,7 @@
 									</ul>
 								</li>
 								{% navigation_url 'samples' 'Samples' %}
+								{% navigation_url 'user_requirements' 'Requirements' %}
 <li><a href="{% url 'status_dashboard' %}">Status dashboard</a></li>
                                 {% if request.session.pi or user_delegate %}
                                 {% if not request.session.technical_staff %}
@@ -146,6 +147,9 @@
                                                 {% endif %}
                                                 {% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
                                                 {% navigation_url 'remote_work' 'Transaction validation' %}
+                                                {% endif %}
+                                                {% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
+                                                {% navigation_url 'manage_requirements' 'Requirements Management' %}
                                                 {% endif %}
                                                 {% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
                                                 {% navigation_url 'resources' 'Resources' %}
