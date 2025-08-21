@@ -1,3 +1,12 @@
+{% extends 'base.html' %}
+{% load custom_tags_and_filters %}
+{% block title %}Manage Requirements{% endblock %}
+{% block extrahead %}
+	{% load static %}
+	<script type="text/javascript" src="{% static "datetimepicker/bootstrap-datetimepicker.js" %}"></script>
+	<link rel="stylesheet" type="text/css" href="{% static "datetimepicker/bootstrap-datetimepicker.css" %}"/>
+{% endblock %}
+{% block content %}
 <h2>Manage Tool and Area Requirements</h2>
 <form method="post">
     {% csrf_token %}
@@ -31,3 +40,4 @@
     {% endfor %}
     <button type="submit" class="btn btn-primary">Save</button>
 </form>
+{% endblock %}
