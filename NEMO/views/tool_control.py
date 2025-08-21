@@ -1276,7 +1276,7 @@ def disable_tool_multi(request, tool_id, usage_event, dynamic_form):
 		else:
 			if current_usage_event.cost_per_sample_run:
 				for cuep in uep:
-					cuep.project_percent = 100.0
+					cuep.project_percent = 100.0 / uep.count()
 					cuep.updated = timezone.now()
 					cuep.save()
 
