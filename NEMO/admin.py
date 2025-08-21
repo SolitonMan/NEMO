@@ -1147,3 +1147,9 @@ class SampleAdmin(admin.ModelAdmin):
 class RequirementAdmin(admin.ModelAdmin):
 	list_display = ('name', 'description', 'resource_link', 'retrain_interval_days')
 	search_fields = ('name', 'description')
+
+@admin.register(UserRequirementProgress)
+class UserRequirementProgressAdmin(admin.ModelAdmin):
+	list_display = ('user', 'requirement', 'status', 'completed_on', 'expires_on', 'last_notified')
+	search_fields = ('user__username', 'user__first_name', 'user__last_name', 'requirement__name')
+	list_filter = ('status', 'expires_on')
