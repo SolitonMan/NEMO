@@ -777,7 +777,7 @@
 		function save_customer_comment(el)
 		{
 			scp_id = $(el).prop("id").split("__")[1];
-			ajax_post("{% url 'save_customer_comment' %}", { "scp_id": scp_id, "comment": $(el).val()}, undefined, undefined);
+			ajax_get("{% url 'save_customer_comment' %}", { "scp_id": scp_id, "comment": $(el).val()}, undefined, undefined);
 		}
 
 		function remove_sample(scp_id, sample_id)
