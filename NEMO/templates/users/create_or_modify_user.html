@@ -509,8 +509,6 @@
 				{% for project in form.instance.projects.all %}
 					{% if project.active %}
 					add_project('{{ project }} - {{ project.owner }} of {{ project.organization }}', {{ project.id }});
-					{% else %}
-					add_project('<span style="background-color: #f0f0f0;">{{ project }} - {{ project.owner }} of {{ project.organization }}</span>', {{ project.id }});
 					{% endif %}
 				{% endfor %}
 			{% endif %}
