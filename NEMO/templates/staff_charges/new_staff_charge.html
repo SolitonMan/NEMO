@@ -106,36 +106,42 @@
 				<th>Samples</th>
 				<th style="min-width: 300px;">Customer/Project Comments</th>
 			</tr>
-		{% for s in scp %}
-		<tr>
-			<td>{{ s.customer }}</td>
-			<td>{{ s.project }}</td>
-			<td>
-			<table>
-			{% if s.sample_detail.all is not None %}
-			{% for smp in s.staffchargeprojectsample_set.all %}
-			{% if smp.active_flag %}
+			{% for s in scp %}
 			<tr>
-			<td style="width: 60%">{{ smp.sample }}</td>
-			<td>
-			<textarea rows="2" cols="5" class="form-control" name="smpc__{{s.id}}__{{smp.sample.id}}" id="smpc__{{s.id}}__{{smp.sample.id}}" onblur="save_sample_comment(this);">{% if smp.notes is not None %}{{ smp.notes }}{% endif %}</textarea>
-			</td>
-			<td><input type="button" class="btn btn-danger" value="-" onclick="remove_sample({{s.id}},{{smp.sample.id}});" title="Remove this sample from the run" /></td>
+				<td>{{ s.customer }}</td>
+				<td>{{ s.project }}</td>
+				<td>
+				</td>
+				<td>
+					<label for="customer_comment__{{ s.id }}">Customer/Project Comments</label>
+					<textarea class="form-control" name="customer_comment__{{ s.id }}" id="customer_comment__{{ s.id }}" onblur="save_customer_comment(this)" rows="6" cols="50" placeholder="Please enter a brief description of the work performed, or make any notes you'd find useful for reference">{% if s.comment is not None %}{{ s.comment }}{% endif %}</textarea>
+				</td>
 			</tr>
-			{% endif %}
-			{% endfor %}
-			{% endif %}
-			<tr><td colspan="2"><input type="button" class="btn btn-success" value="+New" onclick="add_run_sample({{s.project.id}},{{s.id}});" title="Add a new sample" /><input type="button" class="btn" value="+Existing" onclick="add_run_existing_sample({{s.project.id}},{{s.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff" {% if s.project.sample_set.all.count == 0 %}disabled {% endif %}/></td></tr>
+			<table>
+				{% if s.sample_detail.all is not None %}
+				{% for smp in s.staffchargeprojectsample_set.all %}
+				{% if smp.active_flag %}
+				<tr>
+					<td style="width: 60%">{{ smp.sample }}</td>
+					<td>
+						<textarea rows="2" cols="5" class="form-control" name="smpc__{{s.id}}__{{smp.sample.id}}" id="smpc__{{s.id}}__{{smp.sample.id}}" onblur="save_sample_comment(this);">{% if smp.notes is not None %}{{ smp.notes }}{% endif %}</textarea>
+					</td>
+					<td><input type="button" class="btn btn-danger" value="-" onclick="remove_sample({{s.id}},{{smp.sample.id}});" title="Remove this sample from the run" /></td>
+				</tr>
+				{% endif %}
+				{% endfor %}
+				{% endif %}
+				<tr><td colspan="2"><input type="button" class="btn btn-success" value="+New" onclick="add_run_sample({{s.project.id}},{{s.id}});" title="Add a new sample" /><input type="button" class="btn" value="+Existing" onclick="add_run_existing_sample({{s.project.id}},{{s.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff" {% if s.project.sample_set.all.count= =0 %}disabled {% endif %} /></td></tr>
 			</table>
 			</td>
-		</tr>
-		{% endfor %}
-		<tr>
-			<td colspan="4" align="left" valign="top">
-				<label for="staff_member_comment">Comment / Purpose of Charge</label>
-				<textarea name="staff_member_comment" id="staff_member_comment" onblur="save_staff_comment()" class="form-control" rows="6" cols="30" placeholder="Please enter a description of the work done or reason the charge is being made">{% if staff_charge.staff_member_comment is not None %}{{ staff_charge.staff_member_comment }}{% endif %}</textarea>
-			</td>
-		</tr>
+			</tr>
+			{% endfor %}
+			<tr>
+				<td colspan="4" align="left" valign="top">
+					<label for="staff_member_comment">Comment / Purpose of Charge</label>
+					<textarea name="staff_member_comment" id="staff_member_comment" onblur="save_staff_comment()" class="form-control" rows="6" cols="30" placeholder="Please enter a description of the work done or reason the charge is being made">{% if staff_charge.staff_member_comment is not None %}{{ staff_charge.staff_member_comment }}{% endif %}</textarea>
+				</td>
+			</tr>
 		</table>
 
 		{% else %}
@@ -167,8 +173,11 @@
 					</td></tr>
 					</table>
 				</td>
+				<td>
+					<label for="customer_comment__{{ s.id }}">Customer/Project Comments</label>
+					<textarea class="form-control" name="customer_comment__{{ s.id }}" id="customer_comment__{{ s.id }}" onblur="save_customer_comment(this)" rows="6" cols="50" placeholder="Please enter a brief description of the work performed, or make any notes you'd find useful for reference">{% if s.comment is not None %}{{ s.comment }}{% endif %}</textarea>
+				</td>
 			</tr>
-			
 		</tbody>
 
 		{% endfor %}
@@ -237,7 +246,7 @@
 
             <td>
                 <label for="customer_comment__{{ s.id }}">Customer/Project Comments</label>
-                <textarea class="form-control" name="customer_comment__{{ s.id }}" id="customer_comment__{{ s.id }}" onblur="save_customer_comment(this)" rows="6" cols="50" placeholder="Please enter a brief description of the work performed, or make any notes you'd find useful for reference">{% if s.customer_comment is not None %}{{ s.customer_comment }}{% endif %}</textarea>
+                <textarea class="form-control" name="customer_comment__{{ s.id }}" id="customer_comment__{{ s.id }}" onblur="save_customer_comment(this)" rows="6" cols="50" placeholder="Please enter a brief description of the work performed, or make any notes you'd find useful for reference">{% if s.comment is not None %}{{ s.comment }}{% endif %}</textarea>
             </td>
 		</tr>
 		{% endfor %}
@@ -776,7 +785,7 @@
 
 		function save_customer_comment(el)
 		{
-			scp_id = $(el).prop("id").split("__")[1];
+			var scp_id = $(el).prop("id").split("__")[1];
 			ajax_get("{% url 'save_customer_comment' %}", { "scp_id": scp_id, "comment": $(el).val()}, undefined, undefined);
 		}
 
