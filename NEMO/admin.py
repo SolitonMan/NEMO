@@ -422,6 +422,7 @@ class ProjectAdmin(admin.ModelAdmin):
 	search_fields = ('name', 'organization__name', 'internal_order', 'wbs_element', 'application_identifier', 'account__name', 'simba_cost_center', 'owner__first_name', 'owner__last_name', 'owner__username', 'bill_to__first_name', 'bill_to__last_name', 'bill_to__username', 'project_number')
 	list_filter = ('active',)
 	exclude = ('account',)
+	autocomplete_fields = ['organization', 'bill_to', 'bill_to_alt', 'owner', 'billing_type']
 	form = ProjectAdminForm
 
 	def save_model(self, request, obj, form, change):
@@ -1066,6 +1067,7 @@ class OrganizationTypeAdmin(admin.ModelAdmin):
 @register(BillingType)
 class BillingTypeAdmin(admin.ModelAdmin):
 	list_display = ('id', 'name')
+	search_fields = ('name',)
 
 	def has_delete_permission(self, request, obj=None):
 		return False
