@@ -610,7 +610,7 @@ class UsageEventAdmin(admin.ModelAdmin):
 class UsageEventProjectAdmin(admin.ModelAdmin):
 	list_display = ('id', 'usage_event', 'customer', 'project', 'project_percent')
 
-	search_fields = ('project__project_number', 'customer__first_name', 'customer__last_name')
+	search_fields = ('project__project_number', 'customer__first_name', 'customer__last_name', 'usage_event__id')
 	autocomplete_fields = ['usage_event', 'project', 'customer']
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
