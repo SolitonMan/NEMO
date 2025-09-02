@@ -27,6 +27,7 @@ def pulse_interlock(request, interlock_id=None):
 	try:
 		ilock = Interlock.objects.get(id=interlock_id)
 		ilock.pulse()
+		tools = ", ".join([tool.name for tool in ilock.tools.all()])
 		return HttpResponse("The interlock was pulsed")
 	except Interlock.DoesNotExist:
 		return HttpResponeBadRequest("No interlock was found matching your request.")
@@ -43,6 +44,7 @@ def open_interlock(request, interlock_id=None):
 	try:
 		ilock = Interlock.objects.get(id=interlock_id)
 		ilock.unlock()
+		tools = ", ".join([tool.name for tool in ilock.tools.all()])
 		return HttpResponse("The interlock was opened")
 	except Interlock.DoesNotExist:
 		return HttpResponeBadRequest("No interlock was found matching your request.")

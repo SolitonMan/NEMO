@@ -387,7 +387,8 @@ class Tool(models.Model):
 	# adding new field to create many to many relationship with the Interlock table.  This will allow each tool
 	# to be configured to use as many interlocks as needed.  Each item will be assigned to the tool individually
 	interlocks = models.ManyToManyField('Interlock', blank=True, related_name="interlocks")
-	interlock = models.OneToOneField('Interlock', blank=True, null=True, on_delete=models.SET_NULL)
+	# ONE TO ONE INTERLOCK RELATIONSHIP
+	#interlock = models.OneToOneField('Interlock', blank=True, null=True, on_delete=models.SET_NULL)
 	reservation_horizon = models.PositiveIntegerField(default=14, null=True, blank=True, help_text="Users may create reservations this many days in advance. Leave this field blank to indicate that no reservation horizon exists for this tool.")
 	minimum_usage_block_time = models.PositiveIntegerField(null=True, blank=True, help_text="The minimum amount of time (in minutes) that a user must reserve this tool for a single reservation. Leave this field blank to indicate that no minimum usage block time exists for this tool.")
 	maximum_usage_block_time = models.PositiveIntegerField(null=True, blank=True, help_text="The maximum amount of time (in minutes) that a user may reserve this tool for a single reservation. Leave this field blank to indicate that no maximum usage block time exists for this tool.")
@@ -1416,6 +1417,8 @@ class Interlock(models.Model):
 	channel = models.PositiveIntegerField()
 	state = models.IntegerField(choices=State.Choices, default=State.UNKNOWN)
 	most_recent_reply = models.TextField(default="None")
+
+	tools = models.ManyToManyField('Tool', blank=True, related_name='tools_using_interlock')
 
 	def unlock(self):
 		return self.__issue_command(self.State.UNLOCKED)

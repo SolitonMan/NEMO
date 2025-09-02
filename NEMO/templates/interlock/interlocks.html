@@ -23,16 +23,16 @@
 		</thead>
 		<tbody>
 		{% for i in interlocks %}
-		<tr>
-			<td>{{ i.card.server }}</td>
-			<td>{{ i.card.number }}</td>
-			<td>{{ i.tool.name }}</td>
-			<td>{{ i.tool.in_use }}</td>
-			<td>{{ i.card.type.name }}</td>
-			<td>{{ i.state }}</td>
-			<td>{{ i.remote_state }}</td>
-			<td><button class="btn btn-success" onclick="pulse_one({{i.id}})">Pulse</button></td>
-		</tr>
+			<tr>
+				<td>{{ i.card.server }}</td>
+				<td>{{ i.card.number }}</td>
+				<td>{% for tool in i.tools.all %}{{ tool.name }}<br>{% endfor %}</td>
+				<td>{% for tool in i.tools.all %}{{ tool.in_use }}<br>{% endfor %}</td>
+				<td>{{ i.card.type.name }}</td>
+				<td>{{ i.state }}</td>
+				<td>{{ i.remote_state }}</td>
+				<td><button class="btn btn-success" onclick="pulse_one({{i.id}})">Pulse</button></td>
+			</tr>
 		{% endfor %}
 		</tbody>
 	</table>
