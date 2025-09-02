@@ -175,6 +175,7 @@ class ToolAdmin(admin.ModelAdmin):
 	form = ToolAdminForm
 
 	search_fields = ('name', 'category')
+	autocomplete_fields = ['primary_owner', 'credit_cost_collector']
 #	readonly_fields = ('qualified_users',)
 
 	def change_view(self, request, object_id, form_url='', extra_context=None):
@@ -239,7 +240,7 @@ class TrainingSessionAdmin(admin.ModelAdmin):
 	date_hierarchy = 'date'
 
 	search_fields = ('trainee__first_name','trainee__last_name','trainer__first_name','trainer__last_name','project__project_number')
-	autocomplete_fields = ['trainer', 'trainee', 'tool']
+	autocomplete_fields = ['trainer', 'trainee', 'tool', 'project']
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "project":
@@ -330,6 +331,7 @@ class AreaAccessRecordProjectAdmin(admin.ModelAdmin):
 	list_display = ('id', 'area_access_record', 'customer', 'project', 'project_percent')
 
 	search_fields = ('customer__first_name','customer__last_name','project__project_number')
+	autocomplete_fields = ['area_access_record', 'project', 'customer']
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "project":
@@ -346,6 +348,7 @@ class ConfigurationAdmin(admin.ModelAdmin):
 	filter_horizontal = ('maintainers',)
 
 	search_fields = ('tool__name', 'name', 'consumable__name')
+	autocomplete_fields = ['tool']
 
 	#def change_view(self, request, object_id, form_url='', extra_context=None):
 	#	if not request.user.is_superuser:
@@ -744,7 +747,7 @@ class TaskAdmin(admin.ModelAdmin):
 	date_hierarchy = 'creation_time'
 
 	search_fields = ('tool__name', 'creator__first_name', 'creator__last_name')
-	autocomplete_fields = ['creator']
+	autocomplete_fields = ['tool', 'creator', 'resolver', 'last_updated_by']
 
 	def has_delete_permission(self, request, obj=None):
 		return False
