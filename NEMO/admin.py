@@ -392,7 +392,6 @@ class ConfigurationHistoryAdmin(admin.ModelAdmin):
 class AccountAdmin(admin.ModelAdmin):
 	list_display = ('id', 'name','simba_cost_center', 'ibis_account', 'owner', 'active')
 	search_fields = ('name','simba_cost_center', 'ibis_account')
-	autocomplete_fields = ['simba_cost_center', 'ibis_account', 'owner']
 	list_filter = ('active',)
 
 	def save_model(self, request, obj, form, change):
@@ -1045,6 +1044,7 @@ class ResourceCategoryAdmin(admin.ModelAdmin):
 @register(Area)
 class AreaAdmin(admin.ModelAdmin):
 	list_display = ('id', 'name', 'welcome_message', 'core_id')
+	search_fields = ('name',)
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == 'credit_cost_collector':
