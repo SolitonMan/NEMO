@@ -285,7 +285,7 @@ class StaffChargeAdmin(admin.ModelAdmin):
 class StaffChargeProjectAdmin(admin.ModelAdmin):
 	list_display = ('id', 'staff_charge', 'customer', 'project', 'project_percent')
 
-	search_fields = ('customer__first_name','customer__last_name','project__project_number')
+	search_fields = ('customer__first_name','customer__last_name','project__project_number','staff_charge__id')
 
 	autocomplete_fields = ['staff_charge', 'project', 'customer']
 
