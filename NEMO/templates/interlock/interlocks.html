@@ -26,8 +26,8 @@
 			<tr>
 				<td>{{ i.card.server }}</td>
 				<td>{{ i.channel }}</td>
-				<td>{% for tool in i.tools.all %}{{ tool.name }}<br>{% endfor %}</td>
-				<td>{% for tool in i.tools.all %}{{ tool.in_use }}<br>{% endfor %}</td>
+				<td>{% for tool in i.tool_set.all %}{{ tool.name }}<br>{% endfor %}</td>
+				<td>{% for tool in i.tool_set.all %}{{ tool.in_use }}<br>{% endfor %}</td>
 				<td>{{ i.card.type.name }}</td>
 				<td>{{ i.state }}</td>
 				<td>{{ i.remote_state }}</td>
