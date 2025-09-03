@@ -12,7 +12,7 @@ from NEMO.scheduler import pulse_interlocks #, force_scheduler
 
 @staff_member_required(login_url=None)
 def interlocks(request):
-	interlocks = Interlock.objects.all()
+	interlocks = Interlock.objects.all().order_by('card__server')
 
 	dictionary = {
 		'interlocks': interlocks,
