@@ -32,7 +32,7 @@ $('#temp_holding_element').html("{{ tool_summary }}");
 	{% elif tool.problematic == True %}
 		$('a[data-tool-id={{ tool.id }}]').append('<span class="glyphicon glyphicon-wrench warning-highlight sidebar-status-icon" title="This tool requires maintenance"></span>');
 	{% endif %}
-	<!--{% if tool.probationary_user %}
+	{% if tool.probationary_user %}
 		$('a[data-tool-id={{ tool.id }}]').append('<span class="glyphicon glyphicon-hourglass primary-highlight sidebar-status-icon" title="Probationary User"></span>');
-	{% endif %}-->
+	{% endif %}
 {% endfor %}
