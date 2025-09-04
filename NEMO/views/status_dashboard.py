@@ -5,7 +5,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_GET
 
 from NEMO.decorators import disable_session_expiry_refresh
-from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, Resource, ScheduledOutage, Task, Tool, UsageEvent
+from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, ProbationaryQualifications, Resource, ScheduledOutage, Task, Tool, UsageEvent
 
 
 @login_required
@@ -58,6 +58,9 @@ def create_tool_summary(request):
 	usage_events = UsageEvent.objects.filter(end=None, tool__visible=True, active_flag=True).prefetch_related('operator', 'user', 'tool')
 	scheduled_outages = ScheduledOutage.objects.filter(start__lte=timezone.now(), end__gt=timezone.now())
 	tool_summary = merge(request, tools, tasks, unavailable_resources, usage_events, scheduled_outages)
+	for tool in tools:
+		if str(tool.id) in tool_summary:
+			tool_summary[str(tool.id)]["probationary_user"] = ProbationaryQualifications.objects.filter(tool=tool, user=request.user, probationary_user=True, disabled = False).exists()
 	tool_summary = list(tool_summary.values())
 	tool_summary.sort(key=lambda x: x['name'])
 	return tool_summary
