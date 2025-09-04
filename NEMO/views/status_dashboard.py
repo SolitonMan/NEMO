@@ -58,9 +58,6 @@ def create_tool_summary(request):
 	usage_events = UsageEvent.objects.filter(end=None, tool__visible=True, active_flag=True).prefetch_related('operator', 'user', 'tool')
 	scheduled_outages = ScheduledOutage.objects.filter(start__lte=timezone.now(), end__gt=timezone.now())
 	tool_summary = merge(request, tools, tasks, unavailable_resources, usage_events, scheduled_outages)
-	for tool in tools:
-		if str(tool.id) in tool_summary.keys:
-			tool_summary[str(tool.id)]["probationary_user"] = ProbationaryQualifications.objects.filter(tool=tool, user=request.user, probationary_user=True, disabled = False).exists()
 	tool_summary = list(tool_summary.values())
 	tool_summary.sort(key=lambda x: x['name'])
 	return tool_summary
@@ -86,7 +83,10 @@ def merge(request, tools, tasks, unavailable_resources, usage_events, scheduled_
 			'include_force_logout': False,
 			'allow_force_logoff': True,
 			'watched': request.user in tool.tool_watchers.all(),
+			'probationary_user': ProbationaryQualifications.objects.filter(tool=tool,user=request.user, probationary_user=True,disabled=False).exists()
+
 		}
+	
 	for task in tasks:
 		result[task.tool.id]['problematic'] = True
 	for event in usage_events:
