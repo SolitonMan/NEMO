@@ -83,8 +83,7 @@ def merge(request, tools, tasks, unavailable_resources, usage_events, scheduled_
 			'include_force_logout': False,
 			'allow_force_logoff': True,
 			'watched': request.user in tool.tool_watchers.all(),
-			'probationary_user': ProbationaryQualifications.objects.filter(tool=tool,user=request.user, probationary_user=True,disabled=False).exists()
-
+			'probationary_user': ProbationaryQualifications.objects.filter(tool=tool,user=request.user, probationary_user=True,disabled=False).exists(),
 		}
 	
 	for task in tasks:
