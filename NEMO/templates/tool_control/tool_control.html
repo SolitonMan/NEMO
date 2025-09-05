@@ -22,6 +22,19 @@
 		.show_li {
 			display: inline;
 		}
+		.toggle-arrow {
+			float: right;
+			transition: transform 0.3s ease;
+		}
+
+		.expanded .toggle-arrow {
+			transform: rotate(90deg);
+		}
+
+		.clickable-row {
+			cursor: pointer;
+		}
+
 	</style>
 
 	{% if device == 'mobile' %}

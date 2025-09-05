@@ -121,11 +121,11 @@
 					</tbody>
 				</table>
 				{% else %}
-
-				<table class="table">
 					{% for uep in current_usage_event.usageeventproject_set.all %}
-					<tbody style="border: 5px solid rgb(66, 139, 202);">
-						<tr id="tr_{{ uep.id }}" onclick="toggle_following(this);"><td><b>{{ uep.customer }}</b></td></tr>
+
+				<table class="table" style="border: 5px solid rgb(66, 139, 202); border-radius: 2px; padding: 5px 5px 5px 5px;">
+					<tbody>
+						<tr id="tr_{{ uep.id }}" class="clickable-row" onclick="toggle_following(this);"><td><b>{{ uep.customer }}</b><span class="toggle-arrow">&#9654;</span></td></tr>
 						<tr style="display: none;"><td>Project: {{ uep.project }}</td></tr>
 						<tr style="display: none;" class="samples_header"><td><u>Samples</u></td></tr>
 						{% if uep.sample_detail.all is not None %}
@@ -147,8 +147,8 @@
 						{% endif %}
 						<tr style="display: none;"><td>General Customer Comment:<br /><textarea rows="3" cols="4" class="form-control" name="cc__{{ uep.id }}" id="cc__{{ uep.id }}" value="{{ uep.comment }}" onblur="save_comment(this);">{% if uep.comment is not None %}{{ uep.comment }}{% endif %}</textarea></td></tr>
 					</tbody>
-					{% endfor %}
 				</table>
+					{% endfor %}
 				{% endif %}
 				{% else %}
 				for the customer {{ current_usage_event.customers.all.0 }} charging the project {{ current_usage_event.projects.all.0 }}
@@ -905,18 +905,19 @@
 	window.onunload = save_operator_comment;
 	{% endif %}
 
-	function toggle_following(el)
-	{
-		var id = $(el).prop("id");
-		var sel = "#" + id + " ~ tr";
-		$(sel).each(function() {
-			if ($(this).css("display") == "none") {
-				$(this).show();
-			} else {
-				$(this).hide();
-			}
-		});
+
+	function toggle_following(row) {
+		// Toggle visibility of the following rows
+		let next = row.parentElement.nextElementSibling;
+		while (next && next.tagName === 'TR') {
+			next.style.display = (next.style.display === 'none') ? '' : 'none';
+			next = next.nextElementSibling;
+		}
+
+		// Toggle arrow rotation
+		row.classList.toggle('expanded');
 	}
+
 
 	function toggleEndOutage(el)
 	{
