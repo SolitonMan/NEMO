@@ -195,7 +195,6 @@ def tool_control(request, tool_id=None, qualified_only=None, core_only=None):
 		'cat_tools': categorized_tools,
 		'users': users,
 		'user_2dcc': user_2dcc,
-		'b_active_projects': b_active_projects,
 	}
 
 	if request.user.core_ids.count() > 1:
