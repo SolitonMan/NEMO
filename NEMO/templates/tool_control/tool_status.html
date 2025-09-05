@@ -9,7 +9,7 @@
 	{% if device == 'mobile' %}
 	<h1>{{ tool.name }}</h1>
 	<ul class="nav nav-pills" id="tabs" style="margin-bottom:10px">
-		<li style="width:48%; text-align:center" class="active"><a href="#summary" style="padding: 10px 5px">Summary</a></li>
+		{% if b_active_projects %}<li style="width:48%; text-align:center" class="active"><a href="#summary" style="padding: 10px 5px">Summary</a></li>{% endif %}
 		<li style="width:48%; text-align:center"><a href="#details" style="padding: 10px 5px">Details</a></li>
 		<li style="width:48%; text-align:center"><a href="#problem" style="padding: 10px 5px">Report a problem</a></li>
 		<li style="width:48%; text-align:center"><a href="#comment" style="padding: 10px 5px">Post a comment</a></li>
@@ -17,7 +17,7 @@
 	{% else %}
 	<h1 style="margin-right:20px; margin-top:0; margin-bottom:10px">{{ tool.name }}</h1>
 	<ul class="nav nav-pills" id="tabs">
-		<li class="active"><a href="#summary">Summary</a></li>
+		{% if b_active_projects %}<li class="active"><a href="#summary">Summary</a></li>{% endif %}
 		<li><a href="#details">Details</a></li>
 		<li><a href="#problem">Report a problem</a></li>
 		<li><a href="#comment">Post a comment</a></li>
@@ -62,6 +62,7 @@
 {% endif %}
 <br />
 <div class="tab-content" {% if device != 'mobile' %} style="width: 75%" {% endif %}>
+{% if b_active_projects %}
 	<div class="tab-pane active" id="summary">
 		{# Display tool status... #}
 		{% if tool.in_use %}
@@ -582,7 +583,7 @@
 		</form>
 		<div style="height:150px">{# Spacer #}</div>
 	</div>
-
+{% endif %}
 	<div class="tab-pane" id="details">
 		{% if user.is_staff and tool.in_use %}
 		<p>You may <a href="javascript:void(0)" onclick="disable_tool('{% url 'disable_tool' tool.id %}')">force {{ tool.get_current_usage_event.operator }} off this tool</a>.</p>
