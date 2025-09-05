@@ -123,10 +123,11 @@
 				{% else %}
 					{% for uep in current_usage_event.usageeventproject_set.all %}
 
-				<table class="table" style="border: 5px solid rgb(66, 139, 202); border-radius: 2px; padding: 5px 5px 5px 5px;">
+				<table class="table" style="border: 2px solid rgb(66, 139, 202); border-radius: 10px; padding: 5px 5px 5px 5px; border-collapse: separate; border-spacing: 0; overflow: hidden;">
 					<tbody>
 						<tr id="tr_{{ uep.id }}" class="clickable-row" onclick="toggle_following(this);"><td><b>{{ uep.customer }}</b><span class="toggle-arrow">&#9654;</span></td></tr>
 						<tr style="display: none;"><td>Project: {{ uep.project }}</td></tr>
+						<tr style="display: none;"><td>&nbsp;</td></tr>
 						<tr style="display: none;" class="samples_header"><td><u>Samples</u></td></tr>
 						{% if uep.sample_detail.all is not None %}
 						{% for s in uep.usageeventprojectsample_set.all %}
@@ -145,7 +146,8 @@
 						{% endfor %}
 						<tr style="display: none;" class="samples_end"><td><input type="button" class="btn btn-success" value="Add New Sample" onclick="add_run_sample({{uep.project.id}},{{uep.id}});" title="Add a new sample" /><input type="button" class="btn" value="Add Existing Sample" onclick="add_run_existing_sample({{uep.project.id}},{{uep.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff" {% if uep.project.sample_set.all.count == 0 %}disabled {% endif %} /></td></tr>
 						{% endif %}
-						<tr style="display: none;"><td>General Customer Comment:<br /><textarea rows="3" cols="4" class="form-control" name="cc__{{ uep.id }}" id="cc__{{ uep.id }}" value="{{ uep.comment }}" onblur="save_comment(this);">{% if uep.comment is not None %}{{ uep.comment }}{% endif %}</textarea></td></tr>
+						<tr style="display: none;"><td>&nbsp;</td></tr>
+						<tr style="display: none;"><td><b>General Customer Comment:</b><br /><textarea rows="3" cols="4" class="form-control" name="cc__{{ uep.id }}" id="cc__{{ uep.id }}" value="{{ uep.comment }}" onblur="save_comment(this);">{% if uep.comment is not None %}{{ uep.comment }}{% endif %}</textarea></td></tr>
 					</tbody>
 				</table>
 					{% endfor %}
