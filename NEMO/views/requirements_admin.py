@@ -1,6 +1,7 @@
 from datetime import timedelta
 
-from django.contrib.admin.views.decorators import staff_member_required, login_required
+from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
 from django.shortcuts import render, redirect, get_object_or_404
 from NEMO.models import Tool, Area, Requirement, ToolRequirement, AreaRequirement, UserRequirementProgress
