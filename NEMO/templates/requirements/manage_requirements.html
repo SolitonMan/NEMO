@@ -6,14 +6,15 @@
 	<label>Search Tool or Area:</label>
 	<input type="text" id="search_obj" class="form-control" placeholder="Type tool or area name..." style="width:300px;">
 	<select id="obj_select" class="form-control" style="width:300px;">
+		<option value="">-- Select Tool or Area --</option>
 		<optgroup label="Tools">
 			{% for t in tools %}
-				<option value="tool_{{ t.id }}">{{ t.name }}</option>
+			<option value="tool_{{ t.id }}">{{ t.name }}</option>
 			{% endfor %}
 		</optgroup>
 		<optgroup label="Areas">
 			{% for a in areas %}
-				<option value="area_{{ a.id }}">{{ a.name }}</option>
+			<option value="area_{{ a.id }}">{{ a.name }}</option>
 			{% endfor %}
 		</optgroup>
 	</select>
