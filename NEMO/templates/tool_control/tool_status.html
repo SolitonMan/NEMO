@@ -584,7 +584,7 @@
 		<div style="height:150px">{# Spacer #}</div>
 	</div>
 {% endif %}
-	<div class="tab-pane" id="details">
+	<div class="tab-pane{% if not b_active_projects %} active{% endif %}" id="details">
 		{% if user.is_staff and tool.in_use %}
 		<p>You may <a href="javascript:void(0)" onclick="disable_tool('{% url 'disable_tool' tool.id %}')">force {{ tool.get_current_usage_event.operator }} off this tool</a>.</p>
 		{% endif %}
