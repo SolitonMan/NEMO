@@ -593,7 +593,7 @@
 			<div class="media-body">
 				{% if tool.infolink is not None and tool.infolink != "" %}
 				<p>
-				For more information about the {{ tool.name }} please visit the <a href="{{ infolink }}" target="_blank">tool's detail page</a>
+				For more information about the {{ tool.name }} please visit the <a href="{{ tool.infolink }}" target="_blank">tool's detail page</a>
 				</p>
 				{% endif %}
 				<p><a href="{% url 'get_email_form_for_user' tool.primary_owner.id %}" title="Email {{ tool.primary_owner.first_name }}"><span class="glyphicon glyphicon-send small-icon"></span>{{ tool.primary_owner }}</a> is primarily responsible for this tool and can be contacted with any questions or concerns about the tool.</p>
