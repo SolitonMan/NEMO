@@ -91,6 +91,9 @@
 	document.getElementById("obj_select").addEventListener("change", function() {
 		const val = this.value;
 		if (!val) return;
+		if (val === "") {
+			document.getElementById("requirements_panel").style.display = "none";
+		} 
 		document.getElementById("requirements_panel").style.display = "";
 		const [type, id] = val.split("_");
 		document.getElementById("obj_type").value = type;
@@ -117,9 +120,6 @@
 			opt.text = r.name;
 			assignedSelect.appendChild(opt);
 		});
-		if (val === "") {
-			document.getElementById("requirements_panel").style.display = "none";
-		} 
 	});
 
 	document.getElementById("assign_btn").addEventListener("click", function() {
