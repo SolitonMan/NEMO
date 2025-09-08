@@ -5,7 +5,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_GET
 
 from NEMO.decorators import disable_session_expiry_refresh
-from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, Resource, ScheduledOutage, Task, Tool, UsageEvent
+from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, ProbationaryQualifications, Resource, ScheduledOutage, Task, Tool, UsageEvent
 
 
 @login_required
@@ -67,6 +67,11 @@ def merge(request, tools, tasks, unavailable_resources, usage_events, scheduled_
 	result = {}
 	tools_with_delayed_logoff_in_effect = [x.tool.id for x in UsageEvent.objects.filter(end__gt=timezone.now(), active_flag=True)]
 	for tool in tools:
+		try:
+			probationary = (ProbationaryQualifications.objects.filter(tool=tool,user=request.user,probationary_user=True,disabled=False).exists())
+		except Exception as e:
+			probationary = False
+
 		result[tool.id] = {
 			'name': tool.name,
 			'id': tool.id,
@@ -83,7 +88,9 @@ def merge(request, tools, tasks, unavailable_resources, usage_events, scheduled_
 			'include_force_logout': False,
 			'allow_force_logoff': True,
 			'watched': request.user in tool.tool_watchers.all(),
+			'probationary_user': probationary,
 		}
+	
 	for task in tasks:
 		result[task.tool.id]['problematic'] = True
 	for event in usage_events:

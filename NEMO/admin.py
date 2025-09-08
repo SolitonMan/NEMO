@@ -184,6 +184,7 @@ class ToolAdmin(admin.ModelAdmin):
 	form = ToolAdminForm
 
 	search_fields = ('name', 'category')
+	autocomplete_fields = ['primary_owner', 'credit_cost_collector']
 #	readonly_fields = ('qualified_users',)
 
 	def change_view(self, request, object_id, form_url='', extra_context=None):
@@ -250,6 +251,7 @@ class TrainingSessionAdmin(admin.ModelAdmin):
 	date_hierarchy = 'date'
 
 	search_fields = ('trainee__first_name','trainee__last_name','trainer__first_name','trainer__last_name','project__project_number')
+	autocomplete_fields = ['trainer', 'trainee', 'tool', 'project']
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "project":
@@ -277,8 +279,9 @@ class StaffChargeAdmin(admin.ModelAdmin):
 	form = StaffChargeAdminForm
 
 	search_fields = ('staff_member__first_name','staff_member__last_name','projects__project_number')
+	autocomplete_fields = ['staff_member', 'customer', 'project']
 
-	exclude = ('related_usage_event',)
+	exclude = ('related_usage_event','related_override_charge')
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "project":
@@ -293,7 +296,9 @@ class StaffChargeAdmin(admin.ModelAdmin):
 class StaffChargeProjectAdmin(admin.ModelAdmin):
 	list_display = ('id', 'staff_charge', 'customer', 'project', 'project_percent')
 
-	search_fields = ('customer__first_name','customer__last_name','project__project_number')
+	search_fields = ('customer__first_name','customer__last_name','project__project_number','staff_charge__id')
+
+	autocomplete_fields = ['staff_charge', 'project', 'customer']
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "project":
@@ -320,6 +325,7 @@ class AreaAccessRecordAdmin(admin.ModelAdmin):
 	form = AreaAccessRecordAdminForm
 
 	search_fields = ('area__name', 'customers__first_name','customers__last_name','projects__project_number')
+	autocomplete_fields = ['customer', 'user', 'area', 'project']
 
 	exclude = ('related_usage_event',)
 
@@ -336,6 +342,7 @@ class AreaAccessRecordProjectAdmin(admin.ModelAdmin):
 	list_display = ('id', 'area_access_record', 'customer', 'project', 'project_percent')
 
 	search_fields = ('customer__first_name','customer__last_name','project__project_number')
+	autocomplete_fields = ['area_access_record', 'project', 'customer']
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "project":
@@ -352,6 +359,7 @@ class ConfigurationAdmin(admin.ModelAdmin):
 	filter_horizontal = ('maintainers',)
 
 	search_fields = ('tool__name', 'name', 'consumable__name')
+	autocomplete_fields = ['tool']
 
 	#def change_view(self, request, object_id, form_url='', extra_context=None):
 	#	if not request.user.is_superuser:
@@ -387,6 +395,8 @@ class ConfigurationHistoryAdmin(admin.ModelAdmin):
 	date_hierarchy = 'modification_time'
 
 	search_fields = ('user__first_name', 'user__last_name', 'configuration__tool__name')
+
+	autocomplete_fields = ['configuration', 'user']
 
 	def has_delete_permission(self, request, obj=None):
 		return False
@@ -431,8 +441,10 @@ class ProjectAdminForm(forms.ModelForm):
 class ProjectAdmin(admin.ModelAdmin):
 	list_display = ('id', 'name', 'project_number', 'simba_cost_center', 'internal_order', 'wbs_element', 'account', 'organization', 'owner', 'bill_to', 'end_date', 'active')
 	search_fields = ('name', 'organization__name', 'internal_order', 'wbs_element', 'application_identifier', 'account__name', 'simba_cost_center', 'owner__first_name', 'owner__last_name', 'owner__username', 'bill_to__first_name', 'bill_to__last_name', 'bill_to__username', 'project_number')
+	autocomplete_fields = ['organization', 'account', 'owner', 'bill_to', 'bill_to_alt', 'billing_type']
 	list_filter = ('active',)
 	exclude = ('account',)
+	autocomplete_fields = ['organization', 'bill_to', 'bill_to_alt', 'owner']
 	form = ProjectAdminForm
 
 	def save_model(self, request, obj, form, change):
@@ -500,6 +512,7 @@ class Project2DCCAdmin(admin.ModelAdmin):
 	search_fields = ('project_id', 'leo_project__project_number', 'leo_project__name')
 	list_display = ('project_id', 'get_project_number', 'get_project_name')
 	form = Project2DCCAdminForm
+	autocomplete_fields = ['leo_project']
 
 	def get_project_name(self, obj):
 		return obj.leo_project.name
@@ -534,6 +547,7 @@ class ReservationAdmin(admin.ModelAdmin):
 	date_hierarchy = 'start'
 
 	search_fields = ('user__first_name', 'user__last_name', 'tool__name', 'projects__project_number')
+	autocomplete_fields = ['user', 'creator', 'tool', 'project']
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "project":
@@ -549,6 +563,7 @@ class ReservationConfigurationAdmin(admin.ModelAdmin):
 	list_display = ('id', 'reservation', 'configuration', 'consumable')
 
 	search_fields = ('reservation__user__first_name', 'reservation__user__last_name', 'reservation__tool__name', 'reservation__projects__project_number')
+	autocomplete_fields = ['reservation', 'configuration', 'consumable']
 
 	def has_delete_permission(self, request, obj=None):
 		return False
@@ -558,6 +573,7 @@ class ReservationProjectAdmin(admin.ModelAdmin):
 	list_display = ('id', 'reservation', 'project', 'customer')
 
 	search_fields = ('project__project_number', 'customer__first_name', 'customer__last_name')
+	autocomplete_fields = ['reservation', 'project', 'customer']
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "project":
@@ -584,6 +600,7 @@ class UsageEventAdmin(admin.ModelAdmin):
 	form = UsageEventAdminForm
 
 	search_fields = ('tool__name', 'projects__project_number', 'customers__first_name', 'customers__last_name')
+	autocomplete_fields = ['tool', 'user', 'operator', 'project']
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "project":
@@ -604,7 +621,8 @@ class UsageEventAdmin(admin.ModelAdmin):
 class UsageEventProjectAdmin(admin.ModelAdmin):
 	list_display = ('id', 'usage_event', 'customer', 'project', 'project_percent')
 
-	search_fields = ('project__project_number', 'customer__first_name', 'customer__last_name')
+	search_fields = ('project__project_number', 'customer__first_name', 'customer__last_name', 'usage_event__id')
+	autocomplete_fields = ['usage_event', 'project', 'customer']
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "project":
@@ -667,6 +685,7 @@ class ConsumableWithdrawAdmin(admin.ModelAdmin):
 	date_hierarchy = 'date'
 
 	search_fields = ('customer__first_name', 'customer__last_name', 'merchant__first_name', 'merchant__last_name', 'project__project_number','consumable__name')
+	autocomplete_fields = ['customer', 'merchant', 'consumable', 'project']
 
 	exclude = ('usage_event',)
 
@@ -684,6 +703,7 @@ class ConsumableOrderAdmin(admin.ModelAdmin):
 	list_display = ('name',)
 
 	search_fields = ('name',)
+	autocomplete_fields = ['user', 'project', 'fulfilled_by', 'cancelled_by']
 
 	def has_delete_permission(self, request, obj=None):
 		return False
@@ -694,6 +714,7 @@ class ConsumableOrderItemAdmin(admin.ModelAdmin):
 	list_display = ('order__name',)
 
 	search_fields = ('order__name',)
+	autocomplete_fields = ['order', 'consumable', 'fulfilled_by', 'cancelled_by', 'consumable_withdraw']
 
 	def has_delete_permission(self, request, obj=None):
 		return False
@@ -715,6 +736,7 @@ class InterlockAdmin(admin.ModelAdmin):
 	readonly_fields = ['state', 'most_recent_reply']
 
 	search_fields = ('tool__name', 'card__server')
+	autocomplete_fields = ['card']
 
 	def has_delete_permission(self, request, obj=None):
 		return False
@@ -736,6 +758,7 @@ class TaskAdmin(admin.ModelAdmin):
 	date_hierarchy = 'creation_time'
 
 	search_fields = ('tool__name', 'creator__first_name', 'creator__last_name')
+	autocomplete_fields = ['tool', 'creator', 'resolver', 'last_updated_by']
 
 	def has_delete_permission(self, request, obj=None):
 		return False
@@ -765,6 +788,7 @@ class TaskHistoryAdmin(admin.ModelAdmin):
 	date_hierarchy = 'time'
 
 	search_fields = ('task__tool__name', 'user__first_name', 'user__last_name')
+	autocomplete_fields = ['task', 'user']
 
 	def has_delete_permission(self, request, obj=None):
 		return False
@@ -775,6 +799,7 @@ class CommentAdmin(admin.ModelAdmin):
 	list_filter = ('visible', 'creation_date')
 	date_hierarchy = 'creation_date'
 	search_fields = ('content',)
+	autocomplete_fields = ['tool', 'author', 'hidden_by']
 
 	def has_delete_permission(self, request, obj=None):
 		return False
@@ -795,6 +820,7 @@ class ResourceAdmin(admin.ModelAdmin):
 class ActivityHistoryAdmin(admin.ModelAdmin):
 	list_display = ('__str__', 'content_type', 'object_id', 'action', 'date', 'authorizer')
 	date_hierarchy = 'date'
+	autocomplete_fields = ['authorizer']
 
 	def has_delete_permission(self, request, obj=None):
 		return False
@@ -803,6 +829,7 @@ class ActivityHistoryAdmin(admin.ModelAdmin):
 class MembershipHistoryAdmin(admin.ModelAdmin):
 	list_display = ('__str__', 'parent_content_type', 'parent_object_id', 'action', 'child_content_type', 'child_object_id', 'date', 'authorizer')
 	date_hierarchy = 'date'
+	autocomplete_fields = ['authorizer']
 
 	def has_delete_permission(self, request, obj=None):
 		return False
@@ -829,6 +856,7 @@ class UserAdmin(admin.ModelAdmin):
 	search_fields = ('first_name', 'last_name', 'username', 'email')
 	list_display = ('first_name', 'last_name', 'username', 'email', 'is_active', 'is_staff', 'is_superuser', 'date_joined', 'last_login')
 	list_filter = ('is_active','groups')
+	autocomplete_fields = ['contact']
 
 	def save_model(self, request, obj, form, change):
 		""" Audit project membership and qualifications when a user is saved. """
@@ -875,6 +903,7 @@ class SafetyIssueAdmin(admin.ModelAdmin):
 	list_filter = ('resolved', 'visible', 'creation_time', 'resolution_time')
 	readonly_fields = ('creation_time', 'resolution_time')
 	search_fields = ('location', 'concern', 'progress', 'resolution',)
+	autocomplete_fields = ['reporter', 'resolver']
 
 	def has_delete_permission(self, request, obj=None):
 		return False
@@ -951,6 +980,7 @@ class ScheduledOutageAdmin(admin.ModelAdmin):
 	list_display = ('id', 'tool', 'resource', 'creator', 'title', 'start', 'end')
 
 	search_fields = ('tool__name', 'creator__first_name', 'creator__last_name', 'title')
+	autocomplete_fields = ['tool', 'creator']
 
 	def has_delete_permission(self, request, obj=None):
 		return False
@@ -1064,6 +1094,7 @@ class OrganizationAdmin(admin.ModelAdmin):
 	list_display = ('id', 'name', 'organization_type', 'billing_type', 'url')
 
 	search_fields = ('name',)
+	autocomplete_fields = ['contact']
 
 	def has_delete_permission(self, request, obj=None):
 		return False
@@ -1078,6 +1109,7 @@ class OrganizationTypeAdmin(admin.ModelAdmin):
 @register(BillingType)
 class BillingTypeAdmin(admin.ModelAdmin):
 	list_display = ('id', 'name')
+	search_fields = ('name',)
 
 	def has_delete_permission(self, request, obj=None):
 		return False
@@ -1094,6 +1126,7 @@ class CreditCostCollectorAdmin(admin.ModelAdmin):
 	list_display = ('id', 'name', 'project', 'core')
 
 	search_fields = ('name', 'project__project_number')
+	autocomplete_fields = ['project']
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "project":
@@ -1108,6 +1141,7 @@ class UserProfileAdmin(admin.ModelAdmin):
 	list_display = ('user', 'setting', 'value')
 
 	search_fields = ('user', 'setting', 'value')
+	autocomplete_fields = ['user']
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "user":
@@ -1131,6 +1165,7 @@ class SampleAdmin(admin.ModelAdmin):
 	filter_horizontal = ('project',)
 	list_display = ('identifier','nickname','description','get_projects','created_by','created')
 	search_fields = ('identifier','nickname','description','project__project_number','created_by__last_name','created_by__first_name','created_by__username')
+	autocomplete_fields = ['created_by', 'updated_by', 'parent_sample']
 
 	def get_projects(self, obj):
 		return "\n".join([p.project_number for p in obj.project.all()])

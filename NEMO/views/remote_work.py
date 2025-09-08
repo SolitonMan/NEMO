@@ -130,7 +130,7 @@ def remote_work(request):
 						transactions[transaction_key]['class'] = 'warning-highlight'
 					else:
 						# more than one contest record open
-						 transactions[transaction_key]['class'] = 'conflict-highlight'
+						transactions[transaction_key]['class'] = 'conflict-highlight'
 				else:
 					if u.contest_record:
 						if u.contest_record.all().count() > 0:

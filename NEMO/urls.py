@@ -133,6 +133,7 @@ urlpatterns = [
     path('continue_staff_charge/<int:staff_charge_id>/', staff_charges.continue_staff_charge, name='continue_staff_charge'),
     path('save_staff_comment/', staff_charges.save_staff_comment, name='save_staff_comment'),
     path('save_sc_customer_comment/', staff_charges.save_sc_customer_comment, name='save_sc_customer_comment'),
+    path('save_customer_comment/', staff_charges.save_sc_customer_comment, name='save_customer_comment'),
 
     # Status dashboard:
     path('status_dashboard/', status_dashboard.status_dashboard, name='status_dashboard'),

@@ -3,15 +3,37 @@
 	<h4 class="modal-title">{{ event.tool }} usage details</h4>
 </div>
 <div class="modal-body">
-	User: {{ event.user }}<br>
 	Operator: {{ event.operator }}<br>
-	Project: {{ event.project.name }}<br>
+
+	{% if request.user.is_staff %}
+		<table class="table">
+			<thead>
+				<tr>
+					<th>Customer</th>
+					<th>Project</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>
+						{{ event.customer_string }}<br>
+					</td>
+					<td>
+						{{ event.project_string }}<br>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	{% endif %}
+
+
 	Tool: {{ event.tool }}<br>
 	Start: {{ event.start }}<br>
+
 	{% if event.end %}
-		End: {{ event.end }}<br>
+	End: {{ event.end }}<br>
 	{% else %}
-		This tool is currently in use.<br>
+	This tool is currently in use.<br>
 	{% endif %}
 	Identifier: {{ event.id }}<br>
 </div>

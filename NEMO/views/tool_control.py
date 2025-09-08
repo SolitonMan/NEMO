@@ -145,8 +145,7 @@ def create_or_modify_tool(request, tool_id):
 @require_GET
 def tool_control(request, tool_id=None, qualified_only=None, core_only=None):
 	""" Presents the tool control view to the user, allowing them to being/end using a tool or see who else is using it. """
-	if request.user.active_project_count() == 0:
-		return render(request, 'no_project.html')
+	
 
 	# The tool-choice sidebar is not available for mobile devices, so redirect the user to choose a tool to view.
 	if request.device == 'mobile' and (tool_id is None or int(tool_id) == 0):
@@ -239,6 +238,12 @@ def tool_status(request, tool_id):
 	""" Gets the current status of the tool (that is, whether it is currently in use or not). """
 	tool = get_object_or_404(Tool, id=tool_id, visible=True)
 
+	b_active_projects = False	
+
+	if request.user.active_project_count() > 0:
+		#return render(request, 'no_project.html')
+		b_active_projects = True
+
 	upcoming = {}
 	ur = Reservation.objects.filter(tool=tool, start__gt=timezone.now(), cancelled=False).order_by('start')[:3]
 	if ur:
@@ -261,6 +266,7 @@ def tool_status(request, tool_id):
 		'task_statuses': TaskStatus.objects.all(),
 		'post_usage_questions': DynamicForm(tool.post_usage_questions).render(),
 		'upcoming': upcoming,
+		'b_active_projects': b_active_projects,
 	}
 
 	# set multi core user flag
@@ -1276,7 +1282,7 @@ def disable_tool_multi(request, tool_id, usage_event, dynamic_form):
 		else:
 			if current_usage_event.cost_per_sample_run:
 				for cuep in uep:
-					cuep.project_percent = 100.0
+					cuep.project_percent = 100.0 / uep.count()
 					cuep.updated = timezone.now()
 					cuep.save()
 

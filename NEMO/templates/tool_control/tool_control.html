@@ -22,6 +22,41 @@
 		.show_li {
 			display: inline;
 		}
+		.toggle-arrow {
+			float: right;
+			transition: transform 0.3s ease;
+		}
+
+		.expanded .toggle-arrow {
+			transform: rotate(90deg);
+		}
+
+		.clickable-row {
+			cursor: pointer;
+		}
+
+		.samples_header {
+			background-color: #e6f2ff;
+			font-weight: bold;
+			border-top: 2px solid #337ab7;
+			border-bottom: 1px solid #b3d1ff;
+			color: #23527c;
+			padding: 8px 0;
+		}
+
+		.sample_item {
+			background-color: #f9f9f9;
+			border-left: 4px solid #337ab7;
+			border-bottom: 1px solid #eee;
+			padding-left: 10px;
+		}
+
+		.samples_end {
+			background-color: #f1f8e9;
+			border-bottom: 2px solid #8bc34a;
+			text-align: right;
+			padding: 6px 0;
+		}
 	</style>
 
 	{% if device == 'mobile' %}
@@ -1033,6 +1068,20 @@
 						$("#tool_control").append(input);
 					}
 				}
+
+				{% if multi_core_user %}
+				if ($("#core_select option:selected").val() == "0") {
+					alert("Please choose the core that will be paid for this staff charge.");
+					$("#core_select").focus();
+					return false;
+				} else {
+					if ($("#credit_cost_collector_select option:selected").val() == "0") {
+						alert("Please choose the credit cost collector to receive the payment for this work.");
+						$("#credit_cost_collector_select").focus();
+						return false;
+					}
+				}
+				{% endif %}
 
 
 				var failure_dialog = ajax_failure_callback("Could not begin charging staff time");

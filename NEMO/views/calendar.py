@@ -1180,12 +1180,31 @@ def outage_details(request, outage_id):
 	outage = get_object_or_404(ScheduledOutage, id=outage_id)
 	return render(request, 'calendar/outage_details.html', {'outage': outage})
 
+#                  Oringal usage_details
+# @login_required
+# @require_GET
+# def usage_details(request, event_id):
+# 	event = get_object_or_404(UsageEvent, id=event_id)
+# 	return render(request, 'calendar/usage_details.html', {'event': event})
+
 
 @login_required
 @require_GET
 def usage_details(request, event_id):
-	event = get_object_or_404(UsageEvent, id=event_id)
-	return render(request, 'calendar/usage_details.html', {'event': event})
+    event = get_object_or_404(UsageEvent, id=event_id)
+    uep = UsageEventProject.objects.filter(usage_event=event).select_related('project', 'customer')
+    
+    # Customer string 
+    customers =({str(r.customer) for r in uep if r.customer})
+     # Project string 
+    projects = (f"{r.project.project_number} - {r.project.name}" for r in uep if r.project)
+   
+    
+	# Annotate the event 
+    event.customer_string = ", ".join(customers) if customers else "No customers"
+    event.project_string = " | ".join(projects) if projects else "No projects"
+
+    return render(request, 'calendar/usage_details.html', {'event': event})
 
 
 @login_required

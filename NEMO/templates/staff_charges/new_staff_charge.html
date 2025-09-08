@@ -100,41 +100,43 @@
 		{% if request.device != 'mobile' %}
 
 		<table class="table">
-		<tr>
-			<th>Customer</th>
-			<th>Project</th>
-			<th>Samples</th>
-		</tr>
-		{% for s in scp %}
-		<tr>
-			<td>{{ s.customer }}</td>
-			<td>{{ s.project }}</td>
-			<td>
-			<table>
-			{% if s.sample_detail.all is not None %}
-			{% for smp in s.staffchargeprojectsample_set.all %}
-			{% if smp.active_flag %}
 			<tr>
-			<td style="width: 60%">{{ smp.sample }}</td>
-			<td>
-			<textarea rows="2" cols="5" class="form-control" name="smpc__{{s.id}}__{{smp.sample.id}}" id=="smpc__{{s.id}}__{{smp.sample.id}}" onblur="save_sample_comment(this);">{% if smp.notes is not None %}{{ smp.notes }}{% endif %}</textarea>
-			</td>
-			<td><input type="button" class="btn btn-danger" value="-" onclick="remove_sample({{s.id}},{{smp.sample.id}});" title="Remove this sample from the run" /></td>
+				<th>Customer</th>
+				<th>Project</th>
+				<th>Samples</th>
+				<th style="min-width: 300px;">Customer/Project Comments</th>
 			</tr>
-			{% endif %}
+			{% for s in scp %}
+			<tr>
+				<td>{{ s.customer }}</td>
+				<td>{{ s.project }}</td>
+				<td>
+					<table>
+						{% if s.sample_detail.all is not None %}
+						{% for smp in s.staffchargeprojectsample_set.all %}
+						{% if smp.active_flag %}
+						<tr>
+							<td style="width: 60%">{{ smp.sample }}</td>
+							<td>
+								<textarea rows="2" cols="5" class="form-control" name="smpc__{{s.id}}__{{smp.sample.id}}" id="smpc__{{s.id}}__{{smp.sample.id}}" onblur="save_sample_comment(this);">{% if smp.notes is not None %}{{ smp.notes }}{% endif %}</textarea>
+							</td>
+							<td><input type="button" class="btn btn-danger" value="-" onclick="remove_sample({{s.id}},{{smp.sample.id}});" title="Remove this sample from the run" /></td>
+						</tr>
+						{% endif %}
+						{% endfor %}
+						{% endif %}
+						<tr><td colspan="2"><input type="button" class="btn btn-success" value="+New" onclick="add_run_sample({{s.project.id}},{{s.id}});" title="Add a new sample" /><input type="button" class="btn" value="+Existing" onclick="add_run_existing_sample({{s.project.id}},{{s.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff" {% if s.project.sample_set.all.count == 0 %}disabled {% endif %} /></td></tr>
+					</table>
+				</td>
+				<td><label for="customer_comment__{{ s.id }}">Customer/Project Comments</label><textarea class="form-control" name="customer_comment__{{ s.id }}" id="customer_comment__{{ s.id }}" onblur="save_customer_comment(this)" rows="6" cols="50" placeholder="Please enter a brief description of the work performed, or make any notes you'd find useful for reference">{% if s.comment is not None %}{{ s.comment }}{% endif %}</textarea></td>
+			</tr>
 			{% endfor %}
-			{% endif %}
-			<tr><td colspan="2"><input type="button" class="btn btn-success" value="+New" onclick="add_run_sample({{s.project.id}},{{s.id}});" title="Add a new sample" /><input type="button" class="btn" value="+Existing" onclick="add_run_existing_sample({{s.project.id}},{{s.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff" {% if s.project.sample_set.all.count == 0 %}disabled {% endif %}/></td></tr>
-			</table>
-			</td>
-		</tr>
-		{% endfor %}
-		<tr>
-			<td colspan="3" align="left" valign="top">
-				<label for="staff_member_comment">Comment / Purpose of Charge</label>
-				<textarea name="staff_member_comment" id="staff_member_comment" onblur="save_staff_comment()" class="form-control" rows="6" cols="30" placeholder="Please enter a description of the work done or reason the charge is being made">{% if staff_charge.staff_member_comment is not None %}{{ staff_charge.staff_member_comment }}{% endif %}</textarea>
-			</td>
-		</tr>
+			<tr>
+				<td colspan="4" align="left" valign="top">
+					<label for="staff_member_comment">Comment / Purpose of Charge</label>
+					<textarea name="staff_member_comment" id="staff_member_comment" onblur="save_staff_comment()" class="form-control" rows="6" cols="30" placeholder="Please enter a description of the work done or reason the charge is being made">{% if staff_charge.staff_member_comment is not None %}{{ staff_charge.staff_member_comment }}{% endif %}</textarea>
+				</td>
+			</tr>
 		</table>
 
 		{% else %}
@@ -167,7 +169,10 @@
 					</table>
 				</td>
 			</tr>
-			
+			<tr><td>
+				<label for="customer_comment__{{ s.id }}">Customer/Project Comments</label>
+				<textarea class="form-control" name="customer_comment__{{ s.id }}" id="customer_comment__{{ s.id }}" onblur="save_customer_comment(this)" rows="3" placeholder="Please enter a brief description of the work performed">{% if s.comment is not None %}{{ s.comment }}{% endif %}</textarea>
+			</td></tr>
 		</tbody>
 
 		{% endfor %}
@@ -233,6 +238,11 @@
 			<tr><td colspan="2"><input type="button" class="btn btn-success" value="+New" onclick="add_run_sample({{s.project.id}},{{s.id}});" title="Add a new sample" /><input type="button" class="btn" value="+Existing" onclick="add_run_existing_sample({{s.project.id}},{{s.id}});" title="Add an existing sample" style="background-color: #0000ff; color: #ffffff" {% if s.project.sample_set.all.count == 0 %}disabled {% endif %}/></td></tr>
 			</table>
 			</td>
+
+            <td>
+                <label for="customer_comment__{{ s.id }}">Customer/Project Comments</label>
+                <textarea class="form-control" name="customer_comment__{{ s.id }}" id="customer_comment__{{ s.id }}" onblur="save_customer_comment(this)" rows="6" cols="50" placeholder="Please enter a brief description of the work performed, or make any notes you'd find useful for reference">{% if s.comment is not None %}{{ s.comment }}{% endif %}</textarea>
+            </td>
 		</tr>
 		{% endfor %}
 		</table>
@@ -477,7 +487,7 @@
 
 	<div style="display:none;" id="fragment-collector"></div>
 
-	<script>
+    <script>
 		var current_entry_number = 2;
 		var ad_hoc_entry_number = 2;
 		var ss = [];
@@ -516,7 +526,7 @@
 			if ($(sCore).length > 0) {
 				$("#credit_cost_collector_select").css("display","inline");
 			} else {
-				$("#credit_cost_collector_select option").css("display","none");	
+				$("#credit_cost_collector_select option").css("display","none");
 			}
 		}
 
@@ -546,7 +556,7 @@
 			$("#customer").val(search_selection.id);
 		}
 
-		function add_customer() 
+		function add_customer()
 		{
 			var failure_dialog = ajax_failure_callback("Cannot add new entry", "The web browser was not able to communicate with the server.");
 			ajax_get("{% url 'staff_charge_entry' %}", { "entry_number": current_entry_number }, add_entry_success_callback, failure_dialog);
@@ -663,7 +673,7 @@
 			});
 		}
 
-		function fetch_samples(row, ad_hoc) 
+		function fetch_samples(row, ad_hoc)
 		{
 			// A function to retrieve a list of samples for a project and load it into the interface
 			var target_element;
@@ -673,7 +683,7 @@
 				target_element = "#sample__" + row;
 			}
 			$(target_element).html("");
-	
+
 			var project_id = $("#chosen_project__" + row).val();
 
 			var parameters =
@@ -719,7 +729,7 @@
 				"url": url,
 				"data": {
 					"modal_caller": "",
-					"request_mode": "reservation", 
+					"request_mode": "reservation",
 				},
 				"type": "GET",
 				"dataType": "html"
@@ -741,7 +751,7 @@
 								type: "POST",
 								url: url,
 								data: serialize("#sample_dialog .modal-content form"),
-								success: function(response, status, xml_http_request) { 
+								success: function(response, status, xml_http_request) {
 									ss.push(parseInt(response));
 									//alert(ss.join("\n"));
 									$("#sample_dialog").modal('hide');
@@ -768,6 +778,12 @@
 			ajax_post("{% url 'save_sample_comment' %}", { "scp_id": scp_id, "notes": $(el).val(), "sample_id": sample_id}, undefined, undefined);
 		}
 
+		function save_customer_comment(el)
+		{
+			var scp_id = $(el).prop("id").split("__")[1];
+			ajax_get("{% url 'save_customer_comment' %}", { "scp_id": scp_id, "comment": $(el).val()}, undefined, undefined);
+		}
+
 		function remove_sample(scp_id, sample_id)
 		{
 			if (confirm("This will remove the sample from the current tool run.  Click OK to proceed or Cancel to abort the removal.")) {
@@ -784,7 +800,7 @@
 				"url": url,
 				"data": {
 					"modal_caller": "",
-					"request_mode": "reservation", 
+					"request_mode": "reservation",
 				},
 				"type": "GET",
 				"dataType": "html"
@@ -806,10 +822,10 @@
 								type: "POST",
 								url: url,
 								data: serialize("#sample_dialog .modal-content form"),
-								success: function(response, status, xml_http_request) { 
+								success: function(response, status, xml_http_request) {
 									$("#sample_dialog").modal('hide');
 									$("#sample_dialog .modal-content").html("");
-									
+
 									// create the UsageEventProjectSample record
 									var add_sample_url = "/add_run_existing_sample/";
 									var data = {"scp_id":scp_id,"sample_id":response,}
@@ -826,19 +842,19 @@
 
 		function add_run_existing_sample(project_id, scp_id)
 		{
-			// display a list of existing samples for the project then create or restore a relationship to the sample in the 
+			// display a list of existing samples for the project then create or restore a relationship to the sample in the
 			// UsageEventProjectSample table
 			var url = "/modal_select_sample/" + project_id + "/";
 			var ap = {
 				"url": url,
 				"data": {
 					"modal_caller": "",
-					"request_mode": "reservation", 
+					"request_mode": "reservation",
 				},
 				"type": "GET",
 				"dataType": "html"
 			};
-	
+
 			jQuery.ajax(ap)
 				.fail(ajax_failure_callback("Oops, something went wrong!"))
 				.done(function(response, status, xml_http_request)
@@ -852,7 +868,7 @@
 							event.preventDefault();
 							$("#sample_dialog .modal-content form").off("submit");
 							$("#sample_dialog").modal('hide');
-									
+
 							// create the UsageEventProjectSample record
 							var add_sample_url = "/add_run_existing_sample/";
 							var data = {"scp_id":scp_id,"sample_id":$("#select_sample").val(),}
@@ -891,9 +907,21 @@
 				alert("Please choose the core that will be paid for this staff charge.");
 				$("#core_select").focus();
 				return false;
+			} else {
+				if ($("#credit_cost_collector_select option:selected").val() == "0") {
+					alert("Please choose the credit cost collector to receive the payment for this work.");
+					$("#credit_cost_collector_select").focus();
+					return false;
+				}
 			}
+			{% else %}
+				if ($("#credit_cost_collector_select option:selected").val() == "0") {
+					alert("Please choose the credit cost collector to receive the payment for this work.");
+					$("#credit_cost_collector_select").focus();
+					return false;
+				}
 			{% endif %}
-			
+
 			var failure_dialog = ajax_failure_callback("Could not begin charging staff time");
 
 			// create hidden fields for samples since multiple select lists are not submitting from modal
@@ -942,7 +970,19 @@
 				alert("Please choose the core that will be paid for this staff charge.");
 				$("#ad_hoc_core_select").focus();
 				return false;
+			} else {
+				if ($("#ad_hoc_credit_cost_collector_select option:selected").val() == "0") {
+					alert("Please choose the credit cost collector that will receive the payment for this work.");
+					$("#ad_hoc_credit_cost_collector_select").focus();
+					return false;
+				}
 			}
+			{% else %}
+				if ($("#ad_hoc_credit_cost_collector_select option:selected").val() == "0") {
+					alert("Please choose the credit cost collector that will receive the payment for this work.");
+					$("#ad_hoc_credit_cost_collector_select").focus();
+					return false;
+				}
 			{% endif %}
 			//var failure_dialog = ajax_failure_callback("There was a problem with your ad hoc submission");
 			//ajax_post("{% url 'ad_hoc_staff_charge' %}", serialize("#ad_hoc_staff_charge"), ad_hoc_overlap_callback, failure_dialog);
@@ -999,7 +1039,7 @@
 			}
 		}
 
-		function submit_override(num) 
+		function submit_override(num)
 		{
 			var form_id = "#override_charges_" + num;
 			var failure_dialog = ajax_failure_callback("There was an error processing the data.  Please check the form and try again.");
@@ -1007,7 +1047,7 @@
 			return false;
 		}
 
-		function continue_staff_charges(id, url) 
+		function continue_staff_charges(id, url)
 		{
 			location.href = url;
 		}
@@ -1041,5 +1081,5 @@
 		}
 		$(on_load);
 
-	</script>
+    </script>
 {% endblock %}
