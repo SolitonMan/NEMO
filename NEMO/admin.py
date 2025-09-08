@@ -1058,6 +1058,7 @@ class ResourceCategoryAdmin(admin.ModelAdmin):
 @register(Area)
 class AreaAdmin(admin.ModelAdmin):
 	list_display = ('id', 'name', 'welcome_message', 'core_id')
+	search_fields = ('name',)
 	inlines = [AreaRequirementInline]
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
