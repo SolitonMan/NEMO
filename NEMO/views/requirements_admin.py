@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.admin.views.decorators import staff_member_required, login_required
 from django.core.mail import send_mail
 from django.shortcuts import render, redirect, get_object_or_404
 from NEMO.models import Tool, Area, Requirement, ToolRequirement, AreaRequirement, UserRequirementProgress
@@ -20,7 +20,20 @@ def add_requirement(request):
 				retrain_interval_days=retrain_interval_days
 			)
 			return redirect('manage_requirements')
-	return render(request, 'requirements/add_requirement.html')
+	requirements = Requirement.objects.all()
+	return render(request, "requirements/add_requirement.html", {"requirements": requirements})
+
+@login_required
+def edit_requirement(request, requirement_id):
+    requirement = get_object_or_404(Requirement, id=requirement_id)
+    if request.method == "POST":
+        requirement.name = request.POST.get("name")
+        requirement.description = request.POST.get("description")
+        requirement.resource_link = request.POST.get("resource_link")
+        requirement.retrain_interval_days = request.POST.get("retrain_interval_days")
+        requirement.save()
+        return redirect("add_requirement")
+    return render(request, "requirements/edit_requirement.html", {"requirement": requirement})
 
 @staff_member_required(login_url=None)
 def manage_requirements(request):

@@ -23,4 +23,17 @@
     </div>
     <button type="submit" class="btn btn-primary">Add Requirement</button>
 </form>
+
+<hr>
+
+<h3>Existing Requirements</h3>
+<ul>
+    {% for req in requirements %}
+        <li>
+            <a href="{% url 'edit_requirement' req.id %}">{{ req.name }}</a>
+        </li>
+    {% empty %}
+        <li>No requirements found.</li>
+    {% endfor %}
+</ul>
 {% endblock %}
