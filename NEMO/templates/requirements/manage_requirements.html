@@ -117,6 +117,9 @@
 			opt.text = r.name;
 			assignedSelect.appendChild(opt);
 		});
+		if (val === "") {
+			document.getElementById("requirements_panel").style.display = "none";
+		} 
 	});
 
 	document.getElementById("assign_btn").addEventListener("click", function() {
