@@ -840,6 +840,7 @@ def enable_tool_multi(request):
 							project_events[k].sample_detail.add(Sample.objects.get(id=int(s)))
 
 		except Exception as inst:
+			logger.error("Exception occurred creating UsageEvent and UsageEventProject records: " + str(inst))
 			return HttpResponse(inst)
 
 		# All policy checks passed so enable the tool for the user.
