@@ -801,6 +801,7 @@ def enable_tool_multi(request):
 								new_usage_event.delete()
 								return response
 
+			logger.error(f"project_events: {project_events}")
 			# if set for autologout, automatically divide 100 percent by the total number of customers
 			customer_count = 0
 			for p in project_events.values():
