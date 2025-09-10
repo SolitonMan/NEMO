@@ -698,7 +698,7 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge, billing_mod
 @require_POST
 def enable_tool_multi(request):
 	logger = getLogger(__name__)
-	logger.info(f"request.POST (lists): {request.POST.lists()}")
+	logger.error(f"request.POST (lists): {request.POST.lists()}")
 	""" Enable a tool for a single operator to charge to multiple customers.  """
 	id = 0
 	sample_selections = None
@@ -721,14 +721,14 @@ def enable_tool_multi(request):
 	billing_mode = billing_mode == 'true'
 	end_scheduled_outage = int(request.POST.get('end_scheduled_outage')) == 1
 
-	logger.info(f"Checking for open UsageEvent: operator={operator}, tool={tool}, count={UsageEvent.objects.filter(operator=operator, start__lt=timezone.now(), tool=tool, end=None).count()}")
+	logger.error(f"Checking for open UsageEvent: operator={operator}, tool={tool}, count={UsageEvent.objects.filter(operator=operator, start__lt=timezone.now(), tool=tool, end=None).count()}")
 
 	# check if a usage event already exists
 	if UsageEvent.objects.filter(operator=operator, tool=tool, end=None, start__lt=timezone.now()).exists():
-		logger.info("Open UsageEvent found, skipping creation.")
+		logger.error("Open UsageEvent found, skipping creation.")
 		pass
 	else:
-		logger.info("No open UsageEvent, proceeding to create new records.")
+		logger.error("No open UsageEvent, proceeding to create new records.")
 		try:
 			new_usage_event = UsageEvent()
 			new_usage_event.operator = operator
