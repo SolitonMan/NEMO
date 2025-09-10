@@ -698,7 +698,7 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge, billing_mod
 @require_POST
 def enable_tool_multi(request):
 	logger = getLogger(__name__)
-	logger.error(f"request.POST (lists): {request.POST.lists()}")
+	logger.error(f"request.POST (lists): {list(request.POST.lists())}")
 	""" Enable a tool for a single operator to charge to multiple customers.  """
 	id = 0
 	sample_selections = None
