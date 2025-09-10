@@ -9,7 +9,7 @@ from django.core import mail
 from django.utils import timezone
 from django.utils.html import strip_tags
 
-from NEMO.models import Interlock, Tool, UsageEvent, StaffCharge, AreaAccessRecord, ConsumableWithdraw, GlobalFlag, ProbationaryQualifications, ToolUseNotificationLog
+from NEMO.models import Interlock, Tool, UsageEvent, UsageEventProject, StaffChargeProject, AreaAccessRecordProject, StaffCharge, AreaAccessRecord, ConsumableWithdraw, GlobalFlag, ProbationaryQualifications, ToolUseNotificationLog
 from NEMO.utilities import send_mail
 
 
@@ -71,6 +71,41 @@ def update_autologout():
 		u.end = u.end_time
 		u.updated = timezone.now()
 		u.save()
+
+		usage_event_projects = UsageEventProject.objects.filter(usage_event=u)
+
+		for uep in usage_event_projects:
+			uep.project_percent = round((100/usage_event_projects.count()),2)
+			uep.updated = timezone.now()
+			uep.save()
+
+		staff_charges = StaffCharge.objects.filter(related_usage_event=u)
+
+		for sc in staff_charges:
+			sc.end = timezone.now()
+			sc.updated = timezone.now()
+			sc.save()
+
+			staff_charge_projects = StaffChargeProject.objects.filter(staff_charge=sc)
+
+			for scp in staff_charge_projects:
+				scp.project_percent = round((100/staff_charge_projects.count()),2)
+				scp.updated = timezone.now()
+				scp.save()
+
+		area_access_records = AreaAccessRecord.objects.filter(related_usage_event=u)
+
+		for aar in area_access_records:
+			aar.end = timezone.now()
+			aar.updated = timezone.now()
+			aar.save()
+
+			area_access_record_projects = AreaAccessRecordProject.objects.filter(area_access_record=aar)
+
+			for aarp in area_access_record_projects:
+				aarp.project_percent = round((100/area_access_record_projects.count()),2)
+				aarp.updated = timezone.now()
+				aarp.save()
 
 
 def daily_validate_transactions():
