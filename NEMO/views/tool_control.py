@@ -804,30 +804,31 @@ def enable_tool_multi(request):
 			logger.error("project_events: %s",{k: vars(v) for k, v in project_events.items()}
 )
 			# if set for autologout, automatically divide 100 percent by the total number of customers
-			customer_count = 0
-			for p in project_events.values():
-				customer_count += 1
-
-			if set_for_autologout:
-				current_count = 0
-				logger.error("setting values for project_percent")
-				for p in project_events.values():
-					logger.error(f"p = {p}")
-					current_count += 1
-					current_percent_total = 0.0
-					if current_count < customer_count:
-						p.project_percent = round(Decimal(100/customer_count),2)
-						current_percent_total += round(Decimal(100/customer_count),2)
-					else:
-						#p.project_percent = round(Decimal(100 - (customer_count - 1)*(100/customer_count)),2)
-						p.project_percent = round(Decimal(100.0 - current_percent_total), 2)
+#			customer_count = 0
+#			for p in project_events.values():
+#				customer_count += 1
+#
+#			if set_for_autologout:
+#				current_count = 0
+#				logger.error("setting values for project_percent")
+#				for p in project_events.values():
+#					logger.error(f"p = {p}")
+#					current_count += 1
+#					current_percent_total = 0.0
+#					if current_count < customer_count:
+#						p.project_percent = round(Decimal(100/customer_count),2)
+#						current_percent_total += round(Decimal(100/customer_count),2)
+#					else:
+#						#p.project_percent = round(Decimal(100 - (customer_count - 1)*(100/customer_count)),2)
+#						p.project_percent = round(Decimal(100.0 - current_percent_total), 2)
 
 			for p in project_events.values():
 				logger.error(f"saving record for {p}")
-				if set_for_autologout:
-					p.full_clean()
-				else:
-					p.full_clean(exclude='project_percent')
+#				if set_for_autologout:
+#					p.full_clean()
+#				else:
+#					p.full_clean(exclude='project_percent')
+				p.full_clean(exclude='project_percent')
 				p.save()
 
 
