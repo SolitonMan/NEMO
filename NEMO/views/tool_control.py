@@ -810,7 +810,9 @@ def enable_tool_multi(request):
 
 			if set_for_autologout:
 				current_count = 0
+				logger.error("setting values for project_percent")
 				for p in project_events.values():
+					logger.error(f"p = {p}")
 					current_count += 1
 					current_percent_total = 0.0
 					if current_count < customer_count:
