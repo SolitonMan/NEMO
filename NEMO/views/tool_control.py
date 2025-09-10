@@ -751,6 +751,7 @@ def enable_tool_multi(request):
 			sample_selections = {}
 
 			for key, value in request.POST.items():
+				logger.error(f"Processing key/value: {key} = {value}")
 				if is_valid_field(key):
 					attribute, separator, index = key.partition("__")
 					index = int(index)
@@ -818,6 +819,7 @@ def enable_tool_multi(request):
 						p.project_percent = round(Decimal(100.0 - current_percent_total), 2)
 
 			for p in project_events.values():
+				logger.error(f"saving record for {p}")
 				if set_for_autologout:
 					p.full_clean()
 				else:
