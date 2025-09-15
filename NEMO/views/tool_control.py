@@ -575,105 +575,6 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge, billing_mod
 			aarp.updated = timezone.now()
 			aarp.save()
 
-#		if tool.requires_area_access and AreaAccessRecord.objects.filter(area=tool.requires_area_access,user=operator,end=None, active_flag=True).count() == 0:
-#			if AreaAccessRecord.objects.filter(user=operator,end=None, active_flag=True).count() > 0:
-#				areas = AreaAccessRecord.objects.filter(user=operator,end=None, active_flag=True)
-#				for a in areas:
-#					a.end = timezone.now()
-#					a.updated = timezone.now()
-#					a.save()
-#
-#					tmp_aarp = AreaAccessRecordProject.objects.filter(area_access_record=a)
-#					tmp_count = tmp_aarp.count()
-#
-#					for taarp in tmp_aarp:
-#						taarp.project_percent = round((100/tmp_count),2)
-#						taarp.updated = timezone.now()
-#						taarp.save()
-#
-#			aar = AreaAccessRecord()
-#			aar.area = tool.requires_area_access
-#			aar.customer = operator
-#			aar.user = request.user
-#			aar.project = project
-#			aar.start = timezone.now()
-#			aar.related_usage_event = new_usage_event
-#			aar.created = timezone.now()
-#			aar.updated = timezone.now()
-#
-#			if staff_charge:
-#				aar.staff_charge = new_staff_charge
-#			if billing_mode:
-#				aar.cost_per_sample_run = True
-#
-#			aar.save()
-#
-#			# create area access record project
-#			aarp = AreaAccessRecordProject()
-#			aarp.area_access_record = aar
-#			aarp.project = project
-#			aarp.customer = user
-#			aarp.created = timezone.now()
-#			aarp.updated = timezone.now()
-#			aarp.save()
-#
-#
-#		elif tool.requires_area_access and AreaAccessRecord.objects.filter(area=tool.requires_area_access,user=operator,end=None, active_flag=True).count() > 0:
-#			if AreaAccessRecord.objects.filter(area=tool.requires_area_access,user=operator,end=None, active_flag=True).count() == 1:
-#				aar = AreaAccessRecord.objects.filter(area=tool.requires_area_access,user=operator,end=None, active_flag=True)[0]
-#
-#				aarp = AreaAccessRecordProject.objects.filter(area_access_record=aar)
-#
-#				bNewRecord = True
-#
-#				for a in aarp:
-#					if a.customer == uep.customer and a.project == uep.project:
-#						bNewRecord = False
-#
-#				if bNewRecord:
-#
-#					if AreaAccessRecord.objects.filter(user=request.user, end=None, active_flag=True).count() > 0:
-#						areas = AreaAccessRecord.objects.filter(user=request.user, end=None, active_flag=True)
-#						for a in areas:
-#							a.end = timezone.now()
-#							a.updated = timezone.now()
-#							a.save()
-#
-#							tmp_aarp = AreaAccessRecordProject.objects.filter(area_access_record=a)
-#							tmp_count = tmp_aarp.count()
-#
-#							for taarp in tmp_aarp:
-#								taarp.project_percent = round((100/tmp_count),2)
-#								taarp.updated = timezone.now()
-#								taarp.save()
-#
-#
-#					aarnew = AreaAccessRecord()
-#					aarnew.area = tool.requires_area_access
-#					aarnew.customer = uep.customer
-#					aarnew.user = request.user
-#					aarnew.start = timezone.now()
-#					aarnew.project = project
-#					aarnew.created = timezone.now()
-#					aarnew.updated = timezone.now()
-#
-#					if staff_charge:
-#						aarnew.staff_charge = staff_charge
-#					if billing_mode:
-#						aarnew.cost_per_sample_run = True
-#
-#					aarnew.save()
-#
-#					aarnewp = AreaAccessRecordProject()
-#					aarnewp.area_access_record = aarnew
-#					aarnewp.project = project
-#					aarnewp.customer = uep.customer
-#					aarnewp.created = timezone.now()
-#					aarnewp.updated = timezone.now()
-#					aarnewp.save()
-					
-
-
 		# check for samples and save if any
 		samples = request.POST['selected_sample']
 		if samples is not None and samples != '' and samples != "null":
@@ -698,7 +599,6 @@ def enable_tool(request, tool_id, user_id, project_id, staff_charge, billing_mod
 @require_POST
 def enable_tool_multi(request):
 	logger = getLogger(__name__)
-
 	""" Enable a tool for a single operator to charge to multiple customers.  """
 	id = 0
 	sample_selections = None
@@ -715,7 +615,6 @@ def enable_tool_multi(request):
 			set_for_autologout = False
 
 	response = HttpResponse()
-
 
 	# initiate a UsageEvent
 	billing_mode = request.POST.get('billing_mode')
@@ -797,28 +696,8 @@ def enable_tool_multi(request):
 								new_usage_event.delete()
 								return response
 
-			# if set for autologout, automatically divide 100 percent by the total number of customers
-			customer_count = 0
 			for p in project_events.values():
-				customer_count += 1
-
-			if set_for_autologout:
-				current_count = 0
-				for p in project_events.values():
-					current_count += 1
-					current_percent_total = 0.0
-					if current_count < customer_count:
-						p.project_percent = round(Decimal(100/customer_count),2)
-						current_percent_total += round(Decimal(100/customer_count),2)
-					else:
-						#p.project_percent = round(Decimal(100 - (customer_count - 1)*(100/customer_count)),2)
-						p.project_percent = round(Decimal(100.0 - current_percent_total), 2)
-
-			for p in project_events.values():
-				if set_for_autologout:
-					p.full_clean()
-				else:
-					p.full_clean(exclude='project_percent')
+				p.full_clean(exclude='project_percent')
 				p.save()
 
 
@@ -831,6 +710,7 @@ def enable_tool_multi(request):
 							project_events[k].sample_detail.add(Sample.objects.get(id=int(s)))
 
 		except Exception as inst:
+			logger.error("Exception occurred creating UsageEvent and UsageEventProject records: " + str(inst))
 			return HttpResponse(inst)
 
 		# All policy checks passed so enable the tool for the user.
@@ -966,65 +846,6 @@ def enable_tool_multi(request):
 					for smp in s.sample_detail.all():
 						aarp.sample_detail.add(smp)
 
-#		elif tool.requires_area_access and AreaAccessRecord.objects.filter(area=tool.requires_area_access,user=operator,end=None, active_flag=True).count() > 0:
-#			bNewRecord = True
-#
-#			aar = AreaAccessRecord.objects.filter(area=tool.requires_area_access,user=operator,end=None, active_flag=True)[0]
-#			aarp = AreaAccessRecordProject.objects.filter(area_access_record=aar)
-#
-#			for a in aarp:
-#				new_usage_event_projects = UsageEventProject.objects.filter(usage_event=new_usage_event)
-#
-#				for uep in new_usage_event_projects:
-#					if a.customer == uep.customer and a.project == uep.project:
-#						bNewRecord = False
-#
-#			if bNewRecord:
-#				if AreaAccessRecord.objects.filter(user=operator,end=None, active_flag=True).count() > 0:
-#					areas = AreaAccessRecord.objects.filter(user=operator,end=None, active_flag=True)
-#					for a in areas:
-#						a.end = timezone.now()
-#						a.updated = timezone.now()
-#						a.save()
-#
-#						tmp_aarp = AreaAccessRecordProject.objects.filter(area_access_record=a)
-#						tmp_count = tmp_aarp.count()
-#
-#						for taarp in tmp_aarp:
-#							taarp.project_percent = round((100/tmp_count),2)
-#							taarp.updated = timezone.now()
-#							taarp.save()
-#
-#				aarnew = AreaAccessRecord()
-#				aarnew.area = tool.requires_area_access
-#				aarnew.user = request.user
-#				aarnew.start = timezone.now()
-#				aarnew.related_usage_event = new_usage_event
-#				aarnew.created = timezone.now()
-#				aarnew.updated = timezone.now()
-#
-#				if new_staff_charge:
-#					aarnew.staff_charge = new_staff_charge
-#				if billing_mode:
-#					aarnew.cost_per_sample_run = True
-#
-#				aarnew.save()
-#
-#				if new_staff_charge:
-#					scp = StaffChargeProject.objects.filter(staff_charge=new_staff_charge, active_flag=True)
-#
-#					for s in scp:
-#						aarpnew = AreaAccessRecordProject()
-#						aarpnew.area_access_record = aarnew
-#						aarpnew.project = s.project
-#						aarpnew.customer = s.customer
-#						aarpnew.created = timezone.now()
-#						aarpnew.updated = timezone.now()
-#						aarpnew.save()
-#
-#						for smp in s.sample_detail.all():
-#							aarpnew.sample_detail.add(smp)
-#
 
 	return response
 
