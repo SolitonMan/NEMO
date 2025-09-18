@@ -972,7 +972,7 @@ class Project(models.Model):
 			if self.end_date < timezone.now().date():
 				s = '[INACTIVE]'
 
-		s += '[' + str(self.project_number) + '] ' + str(self.name) + ' [' + str(self.get_project()) + ' until ' + str(self.end_date) + ']'
+		s += '[' + str(self.project_number) + '] ' + str(self.name) + ' [' + str(self.get_project()) + ' until ' + (self.end_date.strftime("%m-%d-%Y") if self.end_date else '') + ']'
 
 		#if self.account is not None:
 		#	s += '[IBIS:' + str(self.account.ibis_account) + ']'
