@@ -354,7 +354,8 @@ class UserRequirementProgress(models.Model):
 			('completed', 'Completed'),
 			('expired', 'Expired'),
 		],
-		default='not_started'
+		default='not_started',
+		null=True, blank=True
 	)
 	completed_on = models.DateTimeField(null=True, blank=True)
 	expires_on = models.DateTimeField(null=True, blank=True)
