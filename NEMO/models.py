@@ -360,9 +360,9 @@ class UserRequirementProgress(models.Model):
 	completed_on = models.DateTimeField(null=True, blank=True)
 	expires_on = models.DateTimeField(null=True, blank=True)
 	last_notified = models.DateTimeField(null=True, blank=True)  # For retraining notifications
-	notes = models.TextField(blank=True)  # Optional: evidence, comments
-	created = models.DateTimeField(auto_now_add=True,null=True)
-	updated = models.DateTimeField(null=True)
+	notes = models.TextField(null=True, blank=True)  # Optional: evidence, comments
+	created = models.DateTimeField(auto_now_add=True,null=True, blank=True)
+	updated = models.DateTimeField(null=True, blank=True)
 
 	class Meta:
 		unique_together = ('user', 'requirement')
