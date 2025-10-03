@@ -9,7 +9,7 @@ from microsoft_auth.models import MicrosoftAccount
 from microsoft_auth.admin import MicrosoftAccountAdmin
 
 from NEMO.actions import lock_selected_interlocks, synchronize_with_tool_usage, unlock_selected_interlocks
-from NEMO.models import Account, ActivityHistory, Alert, Area, AreaAccessRecord, AreaAccessRecordProject, AreaRequirement, BillingType, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableOrder, ConsumableOrderItem, ConsumableUnit, ConsumableCategory, ConsumableType, ConsumableWithdraw, ContactInformation, ContactInformationCategory, ContestTransaction, ContestTransactionData, ContestTransactionNewData, Core, CreditCostCollector, Customization, Door, EmailLog, GlobalFlag, Interlock, InterlockCard, InterlockType, LandingPageChoice, LockBilling, MembershipHistory, News, Notification, NsfCategory, Organization, OrganizationType, PhysicalAccessLevel, PhysicalAccessLog, Project, Project2DCC, Requirement, Reservation, ReservationConfiguration, ReservationProject, Resource, ResourceCategory, SafetyIssue, Sample, ScheduledOutage, ScheduledOutageCategory, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskHistory, TaskStatus, Tool, ToolRequirement, TrainingSession, UsageEvent, UsageEventProject, User, UserType, UserProfile, UserProfileSetting, UserRequirementProgress
+from NEMO.models import Account, ActivityHistory, Alert, Area, AreaAccessRecord, AreaAccessRecordProject, AreaRequirement, BillingType, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableOrder, ConsumableOrderItem, ConsumableUnit, ConsumableCategory, ConsumableType, ConsumableWithdraw, ContactInformation, ContactInformationCategory, ContestTransaction, ContestTransactionData, ContestTransactionNewData, Core, CreditCostCollector, Customization, Door, EmailLog, GlobalFlag, Interlock, InterlockCard, InterlockType, LandingPageChoice, LockBilling, MembershipHistory, News, Notification, NsfCategory, Organization, OrganizationType, PhysicalAccessLevel, PhysicalAccessLog, Project, Project2DCC, Requirement, Reservation, ReservationConfiguration, ReservationProject, Resource, ResourceCategory, SafetyIssue, Sample, ScheduledOutage, ScheduledOutageCategory, ServiceType, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskHistory, TaskStatus, Tool, ToolRequirement, TrainingSession, UsageEvent, UsageEventProject, User, UserType, UserProfile, UserProfileSetting, UserRequirementProgress
 from NEMO.utilities import send_mail
 from NEMO.views.customization import get_customization, get_media_file_contents
 
@@ -160,6 +160,15 @@ class ToolAdminForm(forms.ModelForm):
 		)
 	)
 
+	service_types = forms.ModelMultipleChoiceField(
+		queryset=ServiceType.objects.all(),
+		required=False,
+		widget=FilteredSelectMultiple(
+			verbose_name='Service Types',
+			is_stacked=False
+		)
+	)
+
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 		if self.instance.pk:
@@ -193,7 +202,7 @@ class ToolAdmin(admin.ModelAdmin):
 				(None, {'fields': ('name', 'category', 'core_id', 'credit_cost_collector'),}),
 				('Current state', {'fields': ('post_usage_questions', 'visible', 'operational'),}),
 				('Contact information', {'fields': ('primary_owner', 'backup_owners', 'notification_email_address', 'location', 'phone_number','infolink'),}),
-				('Usage policy', {'fields': ('qualification_duration', 'reservation_horizon', 'minimum_usage_block_time', 'maximum_usage_block_time', 'maximum_reservations_per_day', 'minimum_time_between_reservations', 'maximum_future_reservation_time', 'missed_reservation_threshold', 'requires_area_access', 'grant_physical_access_level_upon_qualification', 'grant_badge_reader_access_upon_qualification', 'interlocks', 'allow_delayed_logoff', 'reservation_required', 'allow_autologout'),}),
+				('Usage policy', {'fields': ('qualification_duration', 'reservation_horizon', 'minimum_usage_block_time', 'maximum_usage_block_time', 'maximum_reservations_per_day', 'minimum_time_between_reservations', 'maximum_future_reservation_time', 'missed_reservation_threshold', 'requires_area_access', 'grant_physical_access_level_upon_qualification', 'grant_badge_reader_access_upon_qualification', 'interlocks', 'allow_delayed_logoff', 'reservation_required', 'allow_autologout','service_types'),}),
 				('Dependencies', {'fields': ('required_resources', 'nonrequired_resources'),}),
 			)
 		else:
@@ -201,7 +210,7 @@ class ToolAdmin(admin.ModelAdmin):
 				(None, {'fields': ('name', 'category', 'core_id'),}),
 				('Current state', {'fields': ('visible', 'operational'),}),
 				('Contact information', {'fields': ('primary_owner', 'backup_owners', 'notification_email_address', 'location', 'phone_number','infolink'),}),
-				('Usage policy', {'fields': ('reservation_horizon', 'minimum_usage_block_time', 'maximum_usage_block_time', 'maximum_reservations_per_day', 'minimum_time_between_reservations', 'maximum_future_reservation_time', 'missed_reservation_threshold', 'requires_area_access', 'grant_physical_access_level_upon_qualification', 'grant_badge_reader_access_upon_qualification', 'interlocks', 'allow_delayed_logoff', 'reservation_required', 'allow_autologout'),}),
+				('Usage policy', {'fields': ('reservation_horizon', 'minimum_usage_block_time', 'maximum_usage_block_time', 'maximum_reservations_per_day', 'minimum_time_between_reservations', 'maximum_future_reservation_time', 'missed_reservation_threshold', 'requires_area_access', 'grant_physical_access_level_upon_qualification', 'grant_badge_reader_access_upon_qualification', 'interlocks', 'allow_delayed_logoff', 'reservation_required', 'allow_autologout','service_types'),}),
 				('Dependencies', {'fields': ('required_resources', 'nonrequired_resources'),}),
 			)
 		return super().change_view(request, object_id, form_url, extra_context)

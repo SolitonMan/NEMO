@@ -459,6 +459,7 @@ class Tool(models.Model):
 	# Core info
 	core_id = models.ForeignKey('Core', related_name="tool_core", on_delete=models.SET_NULL, help_text="The core facility of which this tool is part.", null=True)
 	credit_cost_collector = models.ForeignKey('CreditCostCollector', related_name='tool_credit_account', on_delete=models.SET_NULL, null=True, blank=True)
+	service_types = models.ManyToManyField('ServiceType', blank=True, help_text="Select the service types that are applicable to this tool.")
 
 	class Meta:
 		ordering = ['name']
@@ -2175,3 +2176,16 @@ class WorkOrderTransaction(models.Model):
 		return "Work Order " + str(self.work_order.work_order_number) + " item " + str(self.content_type.model) + " with id " + str(self.object_id)
 
 
+class ServiceType(models.Model):
+	name = models.CharField(max_length=200)
+	description = models.TextField(null=True,blank=True)
+	active = models.BooleanField(default=True)
+	core = models.ForeignKey('Core', on_delete=models.SET_NULL, null=True, blank=True)
+	principle_assignee = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, related_name='service_type_principle_assignee')
+	secondary_assignee = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, related_name='service_type_secondary_assignee')
+	requirements = models.ManyToManyField('Requirement', blank=True, related_name='service_type_requirements')
+	created = models.DateTimeField(null=True, blank=True, default=timezone.now)
+	updated = models.DateTimeField(null=True, blank=True)
+
+	def __str__(self):
+		return self.name
