@@ -221,11 +221,7 @@ th {
 			<input type="hidden" name="consumable_withdraw_id" value="{{ value.id }}" />
 					{% endif %}
 			{% csrf_token %}
-				{% if value.type == "Tool Use" or value.type == "Withdraw" or not value.cost_per_sample_run %}
 			<input {% if value.contested %}disabled{% endif %}  type="submit" class="btn btn-warning" value="Contest" />
-				{% else %}
-				Cost Per Sample Run
-				{% endif %}
 			</form>
 				{% endif %}
 			{% endif %}
