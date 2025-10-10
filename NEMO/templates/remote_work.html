@@ -190,18 +190,10 @@ th {
 			<button id="b_c_{{ forloop.counter }}" {% if value.contested %}disabled{% endif %}  class="btn btn-success" onclick="validate_charge('{% url 'validate_usage_event' value.id %}', this, '#transaction_row_{{ forloop.counter }}')">Validate</button>
 					{% endif %}
 					{% if value.type == "Staff Charge" %}
-						{% if not value.cost_per_sample_run %}
 			<button id="b_c_{{ forloop.counter }}" {% if value.contested %}disabled{% endif %}  class="btn btn-success" onclick="validate_charge('{% url 'validate_staff_charge' value.id %}', this, '#transaction_row_{{ forloop.counter }}')">Validate</button>
-						{% else %}
-						Cost Per Sample Run
-						{% endif %}
 					{% endif %}
 					{% if value.type == "Area Access" %}
-						{% if not value.cost_per_sample_run %}
 			<button id="b_c_{{ forloop.counter }}" {% if value.contested %}disabled{% endif %}  class="btn btn-success" onclick="validate_charge('{% url 'validate_area_access_record' value.id %}', this, '#transaction_row_{{ forloop.counter }}')">Validate</button>
-						{% else %}
-						Cost Per Sample Run
-						{% endif %}
 					{% endif %}
 					{% if value.type == "Withdraw" %}
 			<button id="b_c_{{ forloop.counter }}" {% if value.contested %}disabled{% endif %}  class="btn btn-success" onclick="validate_charge('{% url 'validate_consumable_withdraw' value.id %}', this, '#transaction_row_{{ forloop.counter }}')">Validate</button>
@@ -229,11 +221,7 @@ th {
 			<input type="hidden" name="consumable_withdraw_id" value="{{ value.id }}" />
 					{% endif %}
 			{% csrf_token %}
-				{% if value.type == "Tool Use" or value.type == "Withdraw" or not value.cost_per_sample_run %}
 			<input {% if value.contested %}disabled{% endif %}  type="submit" class="btn btn-warning" value="Contest" />
-				{% else %}
-				Cost Per Sample Run
-				{% endif %}
 			</form>
 				{% endif %}
 			{% endif %}
