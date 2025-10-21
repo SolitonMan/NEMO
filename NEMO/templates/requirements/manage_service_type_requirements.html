@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% block title %}Manage Service Type Requirements{% endblock %}
+{% block content %}
+<h2>Manage Service Type Requirements</h2>
+
+<div>
+	<label>Select Service Type:</label>
+	<select id="service_type_select" class="form-control" style="width:420px;">
+		<option value="">-- Select Service Type --</option>
+		{% for st in service_types %}
+			<option value="{{ st.id }}">{{ st.name }}</option>
+		{% endfor %}
+	</select>
+</div>
+
+<div id="requirements_panel" style="margin-top:30px; display:none;">
+	<form method="post" id="service_type_form">
+		{% csrf_token %}
+		<input type="hidden" name="service_type_id" id="service_type_id">
+
+		<div class="row">
+			<div class="col-sm-5">
+				<label>Unassigned Requirements</label>
+				<input type="text" id="search_unassigned" class="form-control" placeholder="Filter unassigned..." />
+				<select multiple id="unassigned_requirements" class="form-control" size="12" style="width:100%;"></select>
+			</div>
+
+			<div class="col-sm-2" style="text-align:center; margin-top:70px;">
+				<button type="button" id="assign_btn" class="btn btn-primary">&gt;&gt;</button><br><br>
+				<button type="button" id="unassign_btn" class="btn btn-secondary">&lt;&lt;</button>
+			</div>
+
+			<div class="col-sm-5">
+				<label>Assigned Requirements</label>
+				<input type="text" id="search_assigned" class="form-control" placeholder="Filter assigned..." />
+				<select multiple name="assigned_requirements" id="assigned_requirements" class="form-control" size="12" style="width:100%;"></select>
+			</div>
+		</div>
+
+		<br>
+		<button type="submit" class="btn btn-success">Save</button>
+	</form>
+</div>
+
+<script>
+(function(){
+	// page-level data - populated from server on demand
+	const csrftoken = (function() {
+		let cookieValue = null;
+		if (document.cookie && document.cookie !== '') {
+			const cookies = document.cookie.split(';');
+			for (let i = 0; i < cookies.length; i++) {
+				const cookie = cookies[i].trim();
+				if (cookie.substring(0, 10) === 'csrftoken=') {
+					cookieValue = decodeURIComponent(cookie.substring(10));
+					break;
+				}
+			}
+		}
+		return cookieValue;
+	})();
+
+	function filterSelect(selectId, searchId) {
+		const searchVal = document.getElementById(searchId).value.toLowerCase();
+		const select = document.getElementById(selectId);
+		for (let i = 0; i < select.options.length; i++) {
+			const opt = select.options[i];
+			opt.style.display = opt.text.toLowerCase().includes(searchVal) ? "" : "none";
+		}
+	}
+
+	document.getElementById("search_unassigned").addEventListener("keyup", function() {
+		filterSelect("unassigned_requirements", "search_unassigned");
+	});
+	document.getElementById("search_assigned").addEventListener("keyup", function() {
+		filterSelect("assigned_requirements", "search_assigned");
+	});
+
+	// load assigned requirements via ajax
+	document.getElementById("service_type_select").addEventListener("change", function() {
+		const stId = this.value;
+		if (!stId) {
+			document.getElementById("requirements_panel").style.display = "none";
+			return;
+		}
+		document.getElementById("requirements_panel").style.display = "";
+		document.getElementById("service_type_id").value = stId;
+
+		// fetch assigned + all requirements
+		const url = "{% url 'service_type_requirements_ajax' %}?id=" + encodeURIComponent(stId);
+		fetch(url, { credentials: 'same-origin' })
+			.then(r => r.json())
+			.then(data => {
+				if (data.error) {
+					alert(data.error);
+					return;
+				}
+				const all = data.all || [];
+				const assignedSet = new Set((data.assigned || []).map(Number));
+
+				const unassignedSelect = document.getElementById("unassigned_requirements");
+				const assignedSelect = document.getElementById("assigned_requirements");
+				unassignedSelect.innerHTML = "";
+				assignedSelect.innerHTML = "";
+
+				all.forEach(r => {
+					const opt = document.createElement("option");
+					opt.value = r.id;
+					opt.text = r.name;
+					if (assignedSet.has(r.id)) assignedSelect.appendChild(opt);
+					else unassignedSelect.appendChild(opt);
+				});
+			})
+			.catch(err => {
+				console.error(err);
+				alert("Could not load requirements.");
+			});
+	});
+
+	// move items between lists
+	document.getElementById("assign_btn").addEventListener("click", function() {
+		const unassigned = document.getElementById("unassigned_requirements");
+		const assigned = document.getElementById("assigned_requirements");
+		Array.from(unassigned.selectedOptions).forEach(opt => {
+			assigned.appendChild(opt);
+		});
+	});
+	document.getElementById("unassign_btn").addEventListener("click", function() {
+		const unassigned = document.getElementById("unassigned_requirements");
+		const assigned = document.getElementById("assigned_requirements");
+		Array.from(assigned.selectedOptions).forEach(opt => {
+			unassigned.appendChild(opt);
+		});
+	});
+
+	// ensure all assigned options are selected before submit so they are posted
+	document.getElementById("service_type_form").addEventListener("submit", function(e){
+		const assigned = document.getElementById("assigned_requirements");
+		for (let i = 0; i < assigned.options.length; i++) assigned.options[i].selected = true;
+	});
+})();
+</script>
+{% endblock %}
