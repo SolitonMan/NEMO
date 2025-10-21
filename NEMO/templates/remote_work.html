@@ -184,22 +184,22 @@ th {
 			<td style="width:120px; background-color: inherit;">{% if value.duration != '' %}{{ value.duration|smooth_timedelta }}{% else %}{{ value.quantity }}{% endif %}</td>
 			<td style="width:150px; background-color: inherit;">{{ value.tool }}</td>
 			<td style="width:50px; text-align:center; background-color: inherit;">
-			{% if show_buttons %}
+				{% if show_buttons %}
 				{% if not value.validated %}
-					{% if value.type == "Tool Use" %}
-			<button id="b_c_{{ forloop.counter }}" {% if value.contested %}disabled{% endif %}  class="btn btn-success" onclick="validate_charge('{% url 'validate_usage_event' value.id %}', this, '#transaction_row_{{ forloop.counter }}')">Validate</button>
-					{% endif %}
-					{% if value.type == "Staff Charge" %}
-			<button id="b_c_{{ forloop.counter }}" {% if value.contested %}disabled{% endif %}  class="btn btn-success" onclick="validate_charge('{% url 'validate_staff_charge' value.id %}', this, '#transaction_row_{{ forloop.counter }}')">Validate</button>
-					{% endif %}
-					{% if value.type == "Area Access" %}
-			<button id="b_c_{{ forloop.counter }}" {% if value.contested %}disabled{% endif %}  class="btn btn-success" onclick="validate_charge('{% url 'validate_area_access_record' value.id %}', this, '#transaction_row_{{ forloop.counter }}')">Validate</button>
-					{% endif %}
-					{% if value.type == "Withdraw" %}
-			<button id="b_c_{{ forloop.counter }}" {% if value.contested %}disabled{% endif %}  class="btn btn-success" onclick="validate_charge('{% url 'validate_consumable_withdraw' value.id %}', this, '#transaction_row_{{ forloop.counter }}')">Validate</button>
-					{% endif %}
+				{% if value.type == "Tool Use" %}
+				<button id="b_c_{{ forloop.counter }}" {% if value.contested %}disabled{% endif %} class="btn {% if value.days_passed == 4 %}btn-danger{% else %}btn-success{% endif %}" onclick="validate_charge('{% url 'validate_usage_event' value.id %}', this, '#transaction_row_{{ forloop.counter }}')">Validate</button>
 				{% endif %}
-			{% endif %}
+				{% if value.type == "Staff Charge" %}
+				<button id="b_c_{{ forloop.counter }}" {% if value.contested %}disabled{% endif %} class="btn {% if value.days_passed == 4 %}btn-danger{% else %}btn-success{% endif %}" onclick="validate_charge('{% url 'validate_staff_charge' value.id %}', this, '#transaction_row_{{ forloop.counter }}')">Validate</button>
+				{% endif %}
+				{% if value.type == "Area Access" %}
+				<button id="b_c_{{ forloop.counter }}" {% if value.contested %}disabled{% endif %} class="btn {% if value.days_passed == 4 %}btn-danger{% else %}btn-success{% endif %}" onclick="validate_charge('{% url 'validate_area_access_record' value.id %}', this, '#transaction_row_{{ forloop.counter }}')">Validate</button>
+				{% endif %}
+				{% if value.type == "Withdraw" %}
+				<button id="b_c_{{ forloop.counter }}" {% if value.contested %}disabled{% endif %} class="btn {% if value.days_passed == 4 %}btn-danger{% else %}btn-success{% endif %}"onclick="validate_charge('{% url 'validate_consumable_withdraw' value.id %}', this, '#transaction_row_{{ forloop.counter }}')">Validate</button>
+				{% endif %}
+				{% endif %}
+				{% endif %}
 			</td>
 			<td style="width:50px; text-align:center; background-color: inherit;">
 			{% if show_buttons %}

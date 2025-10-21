@@ -2,7 +2,8 @@
 import json
 #import pytz
 
-from datetime import datetime #, timezone
+#from datetime import datetime #, timezone
+from datetime import datetime, date
 from logging import getLogger
 #from pytz import timezone
 from re import search
@@ -114,6 +115,7 @@ def remote_work(request):
 				'ad_hoc_created': u.ad_hoc_created,
 				'cost_per_sample_run': u.cost_per_sample_run,
 				'show_contested': False,
+				'days_passed': days_passed(u.end),
 			}
 
 			if u.validated:
@@ -188,6 +190,7 @@ def remote_work(request):
 				'cost_per_sample_run': s.cost_per_sample_run,
 				'related_usage_event': s.related_usage_event,
 				'show_contested': False,
+				'days_passed': days_passed(s.end),
 			}
 
 			if s.validated:
@@ -260,6 +263,7 @@ def remote_work(request):
 				'cost_per_sample_run': a.cost_per_sample_run,
 				'related_usage_event': a.related_usage_event,
 				'show_contested': False,
+				'days_passed': days_passed(a.end),
 			}
 
 			if a.validated:
@@ -341,6 +345,7 @@ def remote_work(request):
 				'ad_hoc_created': False,
 				'related_usage_event': c.usage_event,
 				'show_contested': False,
+				'days_passed': days_passed(c.date),
 			}
 
 			if c.validated:
@@ -1517,3 +1522,17 @@ def contest_transaction_entry(request):
 	entry_number = int(request.GET['entry_number'])
 	cost_per_sample_run = int(request.GET['cost_per_sample_run'])
 	return render(request, 'contest_transaction_entry.html', {'entry_number': entry_number, 'cost_per_sample_run': cost_per_sample_run })
+
+
+def days_passed(dt):
+	"""Return integer days between given date/datetime or None and today (local timezone)."""
+	if dt is None:
+		return None
+	try:
+		dt_date = dt.date()
+	except Exception:
+		dt_date = dt if isinstance(dt, date) else None
+	if dt_date is None:
+		return None
+	today = timezone.localtime(timezone.now()).date()
+	return (today - dt_date).days
