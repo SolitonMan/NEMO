@@ -609,7 +609,7 @@
 			bChanged = true;
 		}
 		if (bContinue) {
-			if ($("#contest_description").val() == "Other") {
+			if ($("#contest_reason").val() == "Other" && if $("#contest_description").val() == "") {
 				error_message = "Please enter a contest description.";
 				$("#contest_description").focus();
 				bSubmit = false;
