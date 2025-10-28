@@ -149,7 +149,10 @@
                                                 {% navigation_url 'remote_work' 'Transaction validation' %}
                                                 {% endif %}
                                                 {% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
-                                                {% navigation_url 'manage_requirements' 'Requirements Assignment' %}
+                                                {% navigation_url 'manage_requirements' 'Requirements - Assign to Tool or Area' %}
+                                                {% endif %}
+                                                {% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
+                                                {% navigation_url 'manage_service_type_requirements' 'Requirements - Assign to Service Type' %}
                                                 {% endif %}
                                                 {% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
                                                 {% navigation_url 'add_requirement' 'Requirements Management' %}
