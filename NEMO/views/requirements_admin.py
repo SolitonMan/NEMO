@@ -22,7 +22,7 @@ def add_requirement(request):
 				resource_link=resource_link,
 				retrain_interval_days=retrain_interval_days
 			)
-			return redirect('manage_requirements')
+			return redirect('add_requirement')
 	requirements = Requirement.objects.all()
 	return render(request, "requirements/add_requirement.html", {"requirements": requirements})
 
