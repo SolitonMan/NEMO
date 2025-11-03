@@ -13,16 +13,22 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         now = timezone.now()
-        one_month_ago = now - timedelta(days=30)
-        reminder_time = now + timedelta(days=7)
+        one_week_ago = now - timedelta(days=7)
+        reminder_time = now - timedelta(days=7)
 
-        records = UserRequirementProgress.objects.filter(status='not_started')
+        status_type = ['not_started', 'in_progress', 'expired']
+
+        records = UserRequirementProgress.objects.filter(status__in=status_type)
 
         for record in records:
             if record.created and record.created < reminder_time:
-                if not record.last_notified or record.last_notified < one_month_ago:
+                if not record.last_notified or record.last_notified < one_week_ago:
+                    status_message = {
+                        'not_started': 'not started','in_progress': 'in progress','expired': 'expired'
+                        }
                     message_text = (
                         f"Dear {getattr(record.user, 'name', getattr(record.user, 'get_full_name', record.user))},\n\n"
+                        f"Our records indicate that your requirement '{getattr(record.requirement, 'name', record.requirement)}' is currently '{status_message.get(record.status, record.status)}'. "
                         f"You have a pending user requirement: {getattr(record.requirement, 'name', record.requirement)}. "
                         "Please complete it at your earliest convenience.\n\nBest regards,\nAdmin Team"
                     )
