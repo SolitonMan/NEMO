@@ -1,9 +1,11 @@
 from django.core.management.base import BaseCommand
+from django.db.models import F
 from django.utils import timezone
 from datetime import timedelta
 
-from NEMO.models import UserRequirementProgress
+from NEMO.models import Requirement, UserRequirementProgress
 from NEMO.utilities import send_mail
+
 
 
 class Command(BaseCommand):
@@ -13,16 +15,18 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         now = timezone.now()
-        one_week_ago = now - timedelta(days=7)
-        reminder_time = now - timedelta(days=7)
-
         status_type = ['not_started', 'in_progress', 'expired']
 
         records = UserRequirementProgress.objects.filter(status__in=status_type)
 
         for record in records:
-            if record.created and record.created < reminder_time:
-                if not record.last_notified or record.last_notified < one_week_ago:
+            Requirement = record.requirement
+            notification_interval = Requirement.notification_interval 
+            Reminders_time = now - timedelta(days=notification_interval)
+            resource_link = Requirement.resource_link
+
+            if record.last_notified is None or record.last_notified < Reminders_time:
+                if record.updated and (record.last_notified is None or record.updated <= record.last_notified):
                     status_message = {
                         'not_started': 'not started','in_progress': 'in progress','expired': 'expired'
                         }
@@ -30,7 +34,9 @@ class Command(BaseCommand):
                         f"Dear {getattr(record.user, 'name', getattr(record.user, 'get_full_name', record.user))},\n\n"
                         f"Our records indicate that your requirement '{getattr(record.requirement, 'name', record.requirement)}' is currently '{status_message.get(record.status, record.status)}'. "
                         f"You have a pending user requirement: {getattr(record.requirement, 'name', record.requirement)}. "
-                        "Please complete it at your earliest convenience.\n\nBest regards,\nAdmin Team"
+                        f"Please complete it at your earliest convenience."
+                        f"\n\nYou can find more information and access the necessary resources here: {resource_link}."
+                        "\n\nBest regards,\nAdmin Team"
                     )
                     send_mail(
                         "Reminder: User Requirement Pending",
