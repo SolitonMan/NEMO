@@ -319,6 +319,7 @@ class Requirement(models.Model):
 	description = models.TextField(blank=True)
 	resource_link = models.URLField(blank=True, null=True)  # Optional: link to training/resource
 	retrain_interval_days = models.PositiveIntegerField(default=365, blank=True, null=True)  # Days until expiration
+	notification_interval = models.PositiveIntegerField(default=7, blank=True, null=True)  # After status update how many days until notification
 	created = models.DateTimeField(auto_now_add=True,null=True)
 	updated = models.DateTimeField(null=True)
 
