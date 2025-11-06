@@ -322,6 +322,7 @@ class Requirement(models.Model):
 	notification_interval = models.PositiveIntegerField(default=7, blank=True, null=True)  # After status update how many days until notification
 	created = models.DateTimeField(auto_now_add=True,null=True)
 	updated = models.DateTimeField(null=True)
+	expected_completion_time = models.PositiveIntegerField(default=None, blank=True, null=True, help_text="Expected time to complete this requirement in minutes.")
 
 	def __str__(self):
 		return self.name

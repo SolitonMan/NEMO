@@ -21,19 +21,48 @@
         <label>Retrain Interval (days)</label>
         <input type="number" name="retrain_interval_days" class="form-control" value="365">
     </div>
+    <div class="form-group">
+        <label>Expected completion time (minutes)</label>
+        <input type="number" name="expected_completion_time" class="form-control" value="">
+    </div>
     <button type="submit" class="btn btn-primary">Add Requirement</button>
 </form>
 
 <hr>
 
 <h3>Existing Requirements</h3>
-<ul>
-    {% for req in requirements %}
-        <li>
-            <a href="{% url 'edit_requirement' req.id %}">{{ req.name }}</a>
-        </li>
-    {% empty %}
-        <li>No requirements found.</li>
-    {% endfor %}
-</ul>
+<table>
+	<tr>
+		<th>Name</th>
+		<th>Description</th>
+		<th>Resource Link</th>
+		<th>Retrain Interval (days)</th>
+		<th>Expected Completion Time (minutes)</th>
+	</tr>
+	{% for req in requirements %}
+	<tr>
+		<td>
+			<a href="{% url 'edit_requirement' req.id %}">{{ req.name }}</a>
+		</td>
+		<td>
+			{{ req.description|default:"No description" }}
+		</td>
+		<td>
+			{% if req.resource_link %}
+			<a href="{{ req.resource_link }}" target="_blank">Resource</a>
+			{% else %}
+			No resource link
+			{% endif %}
+		</td>
+		<td>
+			{{ req.retrain_interval_days }}
+		</td>
+		<td>
+			{{ req.expected_completion_time }}
+		</td>
+	</tr>
+	{% empty %}
+	<tr><td colspan="5">No requirements found.</td></tr>
+	{% endfor %}
+</table>
 {% endblock %}

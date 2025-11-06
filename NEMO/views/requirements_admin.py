@@ -15,12 +15,15 @@ def add_requirement(request):
 		description = request.POST.get("description")
 		resource_link = request.POST.get("resource_link")
 		retrain_interval_days = request.POST.get("retrain_interval_days") or 365
+		expected_completion_time = request.POST.get("expected_completion_time")
+
 		if name:
 			Requirement.objects.create(
 				name=name,
 				description=description,
 				resource_link=resource_link,
-				retrain_interval_days=retrain_interval_days
+				retrain_interval_days=retrain_interval_days,
+				expected_completion_time=expected_completion_time
 			)
 			return redirect('add_requirement')
 	requirements = Requirement.objects.all()
@@ -34,6 +37,7 @@ def edit_requirement(request, requirement_id):
 		requirement.description = request.POST.get("description")
 		requirement.resource_link = request.POST.get("resource_link")
 		requirement.retrain_interval_days = request.POST.get("retrain_interval_days")
+		requirement.expected_completion_time = request.POST.get("expected_completion_time")
 		requirement.save()
 		return redirect("add_requirement")
 	return render(request, "requirements/edit_requirement.html", {"requirement": requirement})

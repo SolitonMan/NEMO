@@ -20,6 +20,10 @@
         <label>Retrain Interval (days)</label>
         <input type="number" name="retrain_interval_days" class="form-control" value="{{ requirement.retrain_interval_days }}">
     </div>
+    <div class="form-group">
+        <label>Expected completion time (minutes)</label>
+        <input type="number" name="expected_completion_time" class="form-control" value="{{ requirement.expected_completion_time }}">
+    </div>
     <button type="submit" class="btn btn-primary">Save Requirement</button>
 </form>
 {% endblock %}
