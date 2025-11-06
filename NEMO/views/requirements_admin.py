@@ -26,7 +26,7 @@ def add_requirement(request):
 				expected_completion_time=expected_completion_time
 			)
 			return redirect('add_requirement')
-	requirements = Requirement.objects.all()
+	requirements = Requirement.objects.all().order_by('name')
 	return render(request, "requirements/add_requirement.html", {"requirements": requirements})
 
 @login_required
