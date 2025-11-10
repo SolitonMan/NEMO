@@ -3,8 +3,16 @@
 {% block title %}Your Requirements{% endblock %}
 {% block extrahead %}
 	{% load static %}
-	<script type="text/javascript" src="{% static "datetimepicker/bootstrap-datetimepicker.js" %}"></script>
-	<link rel="stylesheet" type="text/css" href="{% static "datetimepicker/bootstrap-datetimepicker.css" %}"/>
+	<style>
+		/* × when open, + when closed */
+		button[aria-expanded="true"] .toggle-icon::before {
+			content: "\00D7";
+		}
+		/* × */
+		button[aria-expanded="false"] .toggle-icon::before {
+			content: "+";
+		}
+	</style>
 {% endblock %}
 {% block content %}
 <h2>Your Requirements</h2>
@@ -13,19 +21,19 @@
 		<h3 class="panel-title">
 			Things To Do
 			<button type="button" class="close" data-toggle="collapse" data-target="#things_to_do_body" aria-expanded="true" aria-controls="things_to_do_body">
-				<span aria-hidden="true">&times;</span>
+				<span class="toggle-icon" aria-hidden="true">&times;</span>
 			</button>
 		</h3>
 	</div>
 	<div id="things_to_do_body" class="panel-collapse collapse in">
 		<div class="panel-body">
 			<p>
-			There are tasks that occur when using LEO that are detailed elsehwere but a quick reference is provided here.
+			There are tasks that occur when using LEO that are detailed elsewhere but a quick reference is provided here.
 			</p>
 			<ul>
 				<li>To request training or service for the Materials Characterization Lab (MCL) use the <a href="https://pmd.mri.psu.edu/MRIIntake/" target="_blank">MCL intake form</a>.</li>
 				<li>To request service for the Nanofab use the <a href="https://pmd.mri.psu.edu/MRIIntake/Nanofab" target="_blank">Nanofab intake form</a>.</li>
-				<li>To request trainig for the Nanofab please refer to their <a href="https://pennstateoffice365.sharepoint.com/sites/MRI-NanofabEPKB" target="_blank">sharepoint page and use the Become a User - Requirements and Training link to find the steps to get training.</li>
+				<li>To request trainig for the Nanofab please refer to their <a href="https://pennstateoffice365.sharepoint.com/sites/MRI-NanofabEPKB" target="_blank">sharepoint page</a> and use the Become a User - Requirements and Training link to find the steps to get training.</li>
 			</ul>
 		</div>
 	</div>
