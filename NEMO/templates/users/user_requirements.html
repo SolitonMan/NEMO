@@ -4,14 +4,15 @@
 {% block extrahead %}
 	{% load static %}
 	<style>
-		/* × when open, + when closed */
-		button[aria-expanded="true"] .toggle-icon::before {
-			content: "x";
+		button[aria-expanded="true"] .toggle-icon::before {	content: "x"; }
+		button[aria-expanded="false"] .toggle-icon::before { content: "+"; }
+
+		button .toggle-icon::before {
+			font-weight: 700;
+			font-size: 1.1em;
+			line-height: 1;
 		}
-		/* × */
-		button[aria-expanded="false"] .toggle-icon::before {
-			content: "+";
-		}
+
 	</style>
 {% endblock %}
 {% block content %}
