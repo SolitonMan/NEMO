@@ -208,14 +208,6 @@ def csrf_failure(request, reason=""):
 
 
 def initialize_user_session(request, user, next_page):
-	# Requirements check
-	requirements = Requirement.objects.filter(login_requirement_flag=True)
-	user_requirements = UserRequirementProgress.objects.filter(user=user)
-	if user_requirements.count() == 0:
-		next_page = reverse('user_requirements')
-		for requirement in requirements:
-			UserRequirementProgress.objects.create(user=user, requirement=requirement, status='not_started', updated=timezone.now())
-
 	# Group flags
 	flags = {
 		"administrative_staff": user.groups.filter(name="Administrative Staff").exists(),
@@ -249,4 +241,13 @@ def initialize_user_session(request, user, next_page):
 			"active_core_id": ids,
 			"has_core": "true",
 		})
+
+	# Requirements check
+	requirements = Requirement.objects.filter(login_requirement_flag=True)
+	user_requirements = UserRequirementProgress.objects.filter(user=user)
+	if user_requirements.count() == 0:
+		for requirement in requirements:
+			UserRequirementProgress.objects.create(user=user, requirement=requirement, status='not_started', updated=timezone.now())
+		return HttpResponseRedirect(reverse('user_requirements'))
+
 	return next_page

@@ -30,11 +30,11 @@ class Command(BaseCommand):
 						'not_started': 'not started','in_progress': 'in progress','expired': 'expired'
 						}
 					message_text = (
-						f"Dear {getattr(record.user, 'name', getattr(record.user, 'get_full_name', record.user))},\n\n"
+						f"Dear {getattr(record.user, 'first_name', record.user)} {getattr(record.user, 'last_name', record.user)} ,<br><br>"
 						f"Our records indicate that your requirement '{getattr(record.requirement, 'name', record.requirement)}' is currently '{status_message.get(record.status, record.status)}'. "
 						f"Please complete it at your earliest convenience."
-						f"\n\nYou can find more information and access the necessary resources here: {resource_link}."
-						"\n\nBest regards,\nAdmin Team"
+						f"<br><br>You can find more information and access the necessary resources here: {resource_link}."
+						"<br><br>Best regards,<br>Admin Team"
 					)
 					send_mail(
 						"Reminder: User Requirement Pending",
