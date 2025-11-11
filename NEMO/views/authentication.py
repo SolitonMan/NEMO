@@ -188,7 +188,8 @@ def check_for_core(request):
 def set_ma_session(request, context):
 	next_page = request.GET.get(REDIRECT_FIELD_NAME, reverse('landing'))
 	login(request, request.user)
-	next_page = initialize_user_session(request, request.user, next_page)
+	if initialize_user_session(request, request.user, next_page) == HttpResponseRedirect(reverse('user_requirements')):
+		return HttpResponseRedirect(reverse('user_requirements'))
 	return context
 
 
