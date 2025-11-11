@@ -3,6 +3,22 @@ import re
 from django.http import HttpResponseForbidden
 from django.contrib.auth.middleware import RemoteUserMiddleware
 from django.conf import settings
+from django.shortcuts import redirect
+from django.urls import reverse
+
+class RequirementsRedirectMiddleware:
+	def __init__(self, get_response):
+		self.get_response = get_response
+
+	def __call__(self, request):
+		if (
+			request.user.is_authenticated
+			and request.session.get('force_requirements_redirect')
+			and request.path != reverse('user_requirements')
+		):
+			request.session.pop('force_requirements_redirect', None)
+			return redirect('user_requirements')
+		return self.get_response(request)
 
 
 class HTTPHeaderAuthenticationMiddleware(RemoteUserMiddleware):

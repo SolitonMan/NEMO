@@ -117,12 +117,13 @@ class LDAPAuthenticationBackend(ModelBackend):
 @sensitive_post_parameters('password')
 def login_user(request, context=None):
 	if request.user.is_authenticated:
-		# Already authenticated – honor next if valid, else landing
 		next_page = request.GET.get(REDIRECT_FIELD_NAME, reverse('landing'))
 		try:
 			resolve(next_page)
 		except:
 			next_page = reverse('landing')
+		if request.session.pop('force_requirements_redirect', False):
+			return HttpResponseRedirect(reverse('user_requirements'))
 		return HttpResponseRedirect(next_page)
 
 	dictionary = {
@@ -142,7 +143,9 @@ def login_user(request, context=None):
 
 	login(request, user)
 	next_page = request.GET.get(REDIRECT_FIELD_NAME, reverse('landing'))
-	if initialize_user_session(request, request.user, next_page) == 'user_requirements':
+	initialize_user_session(request, user, next_page)
+
+	if request.session.pop('force_requirements_redirect', False):
 		return HttpResponseRedirect(reverse('user_requirements'))
 
 	try:
@@ -190,8 +193,8 @@ def check_for_core(request):
 def set_ma_session(request, context):
 	next_page = request.GET.get(REDIRECT_FIELD_NAME, reverse('landing'))
 	login(request, request.user)
-	if initialize_user_session(request, request.user, next_page) == 'user_requirements':
-		return HttpResponseRedirect(reverse('user_requirements'))
+	initialize_user_session(request, request.user, next_page)
+	# Return context only; microsoft_auth will perform its own redirect
 	return context
 
 
@@ -237,20 +240,26 @@ def initialize_user_session(request, user, next_page):
 			"has_core": "true",
 		})
 	else:
-		names = ",".join([c[0] for c in cores]) + ","
-		ids = ",".join([str(c[1]) for c in cores]) + ","
+		names = ",".join([c[0] for c in cores])
+		ids = ",".join([str(c[1]) for c in cores])
 		request.session.update({
 			"active_core": names,
 			"active_core_id": ids,
 			"has_core": "true",
 		})
 
-	# Requirements check
-	requirements = Requirement.objects.filter(login_requirement_flag=True)
-	user_requirements = UserRequirementProgress.objects.filter(user=user)
-	if user_requirements.count() == 0:
-		for requirement in requirements:
-			UserRequirementProgress.objects.create(user=user, requirement=requirement, status='not_started', updated=timezone.now())
-		return 'user_requirements'
+	# Requirements check: create missing login requirements and set redirect flag
+	login_reqs = Requirement.objects.filter(login_requirement_flag=True)
+	existing = set(UserRequirementProgress.objects.filter(user=user).values_list('requirement_id', flat=True))
+	missing = [r for r in login_reqs if r.id not in existing]
+	if missing:
+		for r in missing:
+			UserRequirementProgress.objects.create(
+				user=user,
+				requirement=r,
+				status='not_started',
+				updated=timezone.now(),
+			)
+		request.session['force_requirements_redirect'] = True
 
 	return next_page
