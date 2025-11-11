@@ -116,38 +116,40 @@ class LDAPAuthenticationBackend(ModelBackend):
 @require_http_methods(['GET', 'POST'])
 @sensitive_post_parameters('password')
 def login_user(request, context=None):
-    if request.user.is_authenticated:
-        # Already authenticated – honor next if valid, else landing
-        next_page = request.GET.get(REDIRECT_FIELD_NAME, reverse('landing'))
-        try:
-            resolve(next_page)
-        except:
-            next_page = reverse('landing')
-        return HttpResponseRedirect(next_page)
+	if request.user.is_authenticated:
+		# Already authenticated – honor next if valid, else landing
+		next_page = request.GET.get(REDIRECT_FIELD_NAME, reverse('landing'))
+		try:
+			resolve(next_page)
+		except:
+			next_page = reverse('landing')
+		return HttpResponseRedirect(next_page)
 
-    dictionary = {
-        'login_banner': get_media_file_contents('login_banner.html'),
-        'user_name_or_password_incorrect': False,
-    }
+	dictionary = {
+		'login_banner': get_media_file_contents('login_banner.html'),
+		'user_name_or_password_incorrect': False,
+	}
 
-    if request.method == 'GET':
-        return render(request, 'login.html', dictionary)
+	if request.method == 'GET':
+		return render(request, 'login.html', dictionary)
 
-    username = request.POST.get('username', '')
-    password = request.POST.get('password', '')
-    user = authenticate(request, username=username, password=password)
-    if not user or not user.is_active:
-        dictionary['user_name_or_password_incorrect'] = True
-        return render(request, 'login.html', dictionary)
+	username = request.POST.get('username', '')
+	password = request.POST.get('password', '')
+	user = authenticate(request, username=username, password=password)
+	if not user or not user.is_active:
+		dictionary['user_name_or_password_incorrect'] = True
+		return render(request, 'login.html', dictionary)
 
-    login(request, user)
-    next_page = request.GET.get(REDIRECT_FIELD_NAME, reverse('landing'))
-    next_page = initialize_user_session(request, user, next_page)
-    try:
-        resolve(next_page)
-    except:
-        next_page = reverse('landing')
-    return HttpResponseRedirect(next_page)
+	login(request, user)
+	next_page = request.GET.get(REDIRECT_FIELD_NAME, reverse('landing'))
+	if initialize_user_session(request, request.user, next_page) == 'user_requirements':
+		return HttpResponseRedirect(reverse('user_requirements'))
+
+	try:
+		resolve(next_page)
+	except:
+		next_page = reverse('landing')
+	return HttpResponseRedirect(next_page)
 
 
 
@@ -188,7 +190,7 @@ def check_for_core(request):
 def set_ma_session(request, context):
 	next_page = request.GET.get(REDIRECT_FIELD_NAME, reverse('landing'))
 	login(request, request.user)
-	if initialize_user_session(request, request.user, next_page) == HttpResponseRedirect(reverse('user_requirements')):
+	if initialize_user_session(request, request.user, next_page) == 'user_requirements':
 		return HttpResponseRedirect(reverse('user_requirements'))
 	return context
 
@@ -249,6 +251,6 @@ def initialize_user_session(request, user, next_page):
 	if user_requirements.count() == 0:
 		for requirement in requirements:
 			UserRequirementProgress.objects.create(user=user, requirement=requirement, status='not_started', updated=timezone.now())
-		return HttpResponseRedirect(reverse('user_requirements'))
+		return 'user_requirements'
 
 	return next_page
