@@ -185,6 +185,13 @@ def check_for_core(request):
 	return False
 
 
+def set_ma_session(request, context):
+	next_page = request.GET.get(REDIRECT_FIELD_NAME, reverse('landing'))
+	login(request, request.user)
+	initialize_user_session(request, request.user, next_page)
+	return context
+
+
 def csrf_failure(request, reason=""):
 	response = HttpResponseForbidden()
 
