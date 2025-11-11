@@ -142,7 +142,7 @@ def login_user(request, context=None):
 
     login(request, user)
     next_page = request.GET.get(REDIRECT_FIELD_NAME, reverse('landing'))
-    initialize_user_session(request, user, next_page)
+    next_page = initialize_user_session(request, user, next_page)
     try:
         resolve(next_page)
     except:
@@ -188,7 +188,7 @@ def check_for_core(request):
 def set_ma_session(request, context):
 	next_page = request.GET.get(REDIRECT_FIELD_NAME, reverse('landing'))
 	login(request, request.user)
-	initialize_user_session(request, request.user, next_page)
+	next_page = initialize_user_session(request, request.user, next_page)
 	return context
 
 
@@ -211,10 +211,7 @@ def initialize_user_session(request, user, next_page):
 	# Requirements check
 	requirements = Requirement.objects.filter(login_requirement_flag=True)
 	user_requirements = UserRequirementProgress.objects.filter(user=user)
-	if user_requirements.count() > 0:
-		# existing user so do nothing with next page
-		pass
-	else:
+	if user_requirements.count() == 0:
 		next_page = reverse('user_requirements')
 		for requirement in requirements:
 			UserRequirementProgress.objects.create(user=user, requirement=requirement, status='not_started', updated=timezone.now())
@@ -252,3 +249,4 @@ def initialize_user_session(request, user, next_page):
 			"active_core_id": ids,
 			"has_core": "true",
 		})
+	return next_page
