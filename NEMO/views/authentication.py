@@ -8,6 +8,7 @@ from django.contrib.auth.backends import RemoteUserBackend, ModelBackend
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden
 from django.shortcuts import render
 from django.urls import reverse, resolve
+from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_http_methods, require_GET
@@ -140,8 +141,8 @@ def login_user(request, context=None):
         return render(request, 'login.html', dictionary)
 
     login(request, user)
-    initialize_user_session(request, user)
     next_page = request.GET.get(REDIRECT_FIELD_NAME, reverse('landing'))
+    initialize_user_session(request, user, next_page)
     try:
         resolve(next_page)
     except:
@@ -205,7 +206,18 @@ def csrf_failure(request, reason=""):
 	return response 
 
 
-def initialize_user_session(request, user):
+def initialize_user_session(request, user, next_page):
+	# Requirements check
+	requirements = Requirement.objects.filter(login_requirement_flag=True)
+	user_requirements = UserRequirementProgress.objects.filter(user=user)
+	if user_requirements.count() > 0:
+		# existing user so do nothing with next page
+		pass
+	else:
+		next_page = reverse('user_requirements')
+		for requirement in requirements:
+			UserRequirementProgress.objects.create(user=user, requirement=requirement, status='not_started', updated=timezone.now())
+
 	# Group flags
 	flags = {
 		"administrative_staff": user.groups.filter(name="Administrative Staff").exists(),
