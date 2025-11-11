@@ -185,12 +185,6 @@ def check_for_core(request):
 	return False
 
 
-def set_ma_session(request, context):
-    login(request, request.user)
-    initialize_user_session(request, request.user)
-    return context
-
-
 def csrf_failure(request, reason=""):
 	response = HttpResponseForbidden()
 
