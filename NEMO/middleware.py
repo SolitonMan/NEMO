@@ -17,7 +17,7 @@ class RequirementsRedirectMiddleware:
 			and request.path != reverse('user_requirements')
 		):
 			request.session.pop('force_requirements_redirect', None)
-			return redirect('user_requirements')
+			return redirect(f"{reverse('user_requirements')}?first=1")
 		return self.get_response(request)
 
 

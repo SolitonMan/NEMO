@@ -17,6 +17,11 @@
 {% endblock %}
 {% block content %}
 <h2>Your Requirements</h2>
+{% if request.GET.first == '1' %}
+<div class="alert alert-info" role="alert">
+	Welcome to LEO! We’ve set up your initial requirements. Please review them below.  You can also find information on how to get started in the Things To Do section.
+</div>
+{% endif %}
 <div id="things_to_do" class="panel panel-default">
 	<div class="panel-heading">
 		<h3 class="panel-title">
