@@ -70,7 +70,7 @@ def manage_requirements(request):
 	return render(request, 'requirements/manage_requirements.html', {
 		'tools': tools,
 		'areas': areas,
-		'requirements': requirements,
+		'requirements': requirements.order_by("name"),
 	})
 
 def mark_requirement_completed(user, requirement):
