@@ -20,7 +20,7 @@
 	</select>
 </div>
 <div id="requirements_panel" style="margin-top:30px; display:none;">
-	<form method="post">
+	<form method="post" onsubmit="return on_submit();">
 		{% csrf_token %}
 		<input type="hidden" name="obj_type" id="obj_type">
 		<input type="hidden" name="obj_id" id="obj_id">
@@ -93,7 +93,7 @@
 		if (!val) {
 			document.getElementById("requirements_panel").style.display = "none";
 			return;
-		} 
+		}
 		document.getElementById("requirements_panel").style.display = "";
 		const [type, id] = val.split("_");
 		document.getElementById("obj_type").value = type;
@@ -136,5 +136,13 @@
 			unassigned.appendChild(opt);
 		});
 	});
+
+	function on_submit() {
+		const assigned = document.getElementById("assigned_requirements");
+		for (let i = 0; i < assigned.options.length; i++) {
+			assigned.options[i].selected = true;
+		}
+		return true;
+	}
 </script>
 {% endblock %}
