@@ -75,7 +75,7 @@ def manage_requirements(request):
 
 def mark_requirement_completed(user, requirement):
 	now = timezone.now()
-	retrain_interval = timedelta(days=365)  # or fetch from requirement config
+	retrain_interval = timedelta(days=requirement.retrain_interval_days)  # or fetch from requirement config
 	progress, created = UserRequirementProgress.objects.get_or_create(user=user, requirement=requirement)
 	progress.status = 'completed'
 	progress.completed_on = now

@@ -599,11 +599,13 @@ def create_reservation(request):
 			return HttpResponseBadRequest('An error occurred while attempting to verify the timing of your reservation')
 
 		new_reservation.save()
+		b_conf_update = False
 		for rc in res_conf:
 			if rc is not None:
 				rc.reservation = new_reservation
 				rc.updated = timezone.now()
 				rc.save()
+				b_conf_update = True
 
 		if new_reservation.project is not None and new_reservation.user is not None:
 			if not ReservationProject.objects.filter(reservation=new_reservation).exists():
@@ -677,6 +679,15 @@ def create_reservation(request):
 			email.attach(attachment)
 			create_email_log(email, EmailCategory.GENERAL)
 			email.send()
+
+			if b_conf_update:
+				# send email to tool administrators about the configuration
+				subject = str(tool.name) + ' reservation configuration updated'
+				msg = 'The reservation for the ' + str(tool.name) + ' has been updated with new configuration settings.'
+				recipients = [tool.primary_owner.email] + [u.email for u in tool.backup_owners.all()]
+				email = EmailMessage(subject, msg, 'LEOHelp@psu.edu', recipients, reply_to=['LEOHelp@psu.edu'])
+				create_email_log(email, EmailCategory.GENERAL)
+				email.send()
 
 
 		return HttpResponse()
