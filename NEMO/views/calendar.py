@@ -683,12 +683,11 @@ def create_reservation(request):
 			if b_conf_update:
 				# send email to tool administrators about the configuration
 				subject = str(tool.name) + ' reservation configuration updated'
-				msg = 'The reservation for the ' + str(tool.name) + ' has been updated with new configuration settings.'
+				msg = 'The reservation for the ' + str(tool.name) + ' for ' + str(new_reservation.customers.all().first()) + ' on ' + str(new_reservation.start) + ' has been updated with new configuration settings.'
 				recipients = [tool.primary_owner.email] + [u.email for u in tool.backup_owners.all()]
 				email = EmailMessage(subject, msg, 'LEOHelp@psu.edu', recipients, reply_to=['LEOHelp@psu.edu'])
 				create_email_log(email, EmailCategory.GENERAL)
 				email.send()
-
 
 		return HttpResponse()
 
