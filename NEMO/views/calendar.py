@@ -672,13 +672,21 @@ def create_reservation(request):
 			email.send()
 
 			if b_conf_update:
+				# check if the user wants to be notified of configuration updates	
+				b_send_config_notice = False	
+				mail_setting = UserProfileSetting.objects.get(name="CONFIGURATION_RESERVATION_NOTIFICATION")
+
+				if UserProfile.objects.filter(user=user, setting=mail_setting).exists():
+					setting = UserProfile.objects.get(user=user, setting=mail_setting)
+					b_send_config_notice = bool(int(setting.value))
 				# send email to tool administrators about the configuration
 				subject = str(tool.name) + ' reservation configuration updated'
 				msg = 'The reservation for the ' + str(tool.name) + ' for ' + str(new_reservation.customers.all().first()) + ' on ' + str(new_reservation.start) + ' has been updated with new configuration settings.'
 				recipients = [tool.primary_owner.email] + [u.email for u in tool.backup_owners.all()]
 				email = EmailMessage(subject, msg, 'LEOHelp@psu.edu', recipients, reply_to=['LEOHelp@psu.edu'])
 				create_email_log(email, EmailCategory.GENERAL)
-				email.send()
+				if b_send_config_notice:
+					email.send()
 
 
 		return HttpResponse()
