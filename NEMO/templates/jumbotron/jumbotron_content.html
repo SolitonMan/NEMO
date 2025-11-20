@@ -57,7 +57,7 @@
 					{% for u in usage_events %}
 						<tr style="background:transparent">
 							<td style="background:rgba(255, 255, 255, 0.7)">{{ u.tool }}</td>
-							<td style="background:rgba(255, 255, 255, 0.7)"><span {% if u.operator.is_staff %}class="success-highlight"{% endif %}>{{ u.operator.first_name }} {{ u.operator.last_name }}{% if u.user != u.operator %} on behalf of {{ u.user.first_name }} {{ u.user.last_name }}{% endif %}</span></td>
+							<td style="background:rgba(255, 255, 255, 0.7)"><span {% if u.operator.is_staff %}class="success-highlight"{% endif %}>{{ u.operator.first_name }} {{ u.operator.last_name }}{% if u.user != u.operator %} on behalf of {{ u.usageeventproject_set.first.first_name }} {{ u.usageeventproject_set.first.last_name }}{% endif %}</span></td>
 							<td style="background:rgba(255, 255, 255, 0.7)">{{ u.start|date:"l @ g:i A" }}</td>
 						</tr>
 					{% endfor %}
