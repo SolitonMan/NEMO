@@ -111,6 +111,7 @@ urlpatterns = [
     path('requirements/', requirements_admin.manage_requirements, name='manage_requirements'),
     path('user_requirements/', users.user_requirements, name='user_requirements'),
     path('add_requirement/', requirements_admin.add_requirement, name='add_requirement'),
+    path('check_user_requirements/', requirements_admin.check_user_requirements, name='check_user_requirements'),
     path('requirements/edit/<int:requirement_id>/', requirements_admin.edit_requirement, name='edit_requirement'),
     path('requirements/manage_service_type_requirements/', requirements_admin.manage_service_type_requirements, name='manage_service_type_requirements'),
     path('requirements/service_type_requirements_ajax/', requirements_admin.service_type_requirements_ajax, name='service_type_requirements_ajax'),

@@ -8,9 +8,10 @@ from django.template import Template, Context
 from django.utils import timezone
 from django.utils.dateparse import parse_time, parse_date, parse_datetime
 
-from NEMO.models import Reservation, AreaAccessRecord, ScheduledOutage, PhysicalAccessLevel, Project, User, Tool, ProbationaryQualifications
+from NEMO.models import Reservation, AreaAccessRecord, ScheduledOutage, PhysicalAccessLevel, Project, User, Tool, ProbationaryQualifications, ToolRequirement, AreaRequirement, UserRequirementProgress, Requirement
 from NEMO.utilities import format_datetime
 from NEMO.views.customization import get_customization, get_media_file_contents
+from NEMO.views.requirements_admin import evaluate_requirements
 
 logger = getLogger(__name__)
 
@@ -18,6 +19,11 @@ def check_policy_to_enable_tool(tool, operator, user, project, staff_charge, req
 	"""
 	Check that the user is allowed to enable the tool. Enable the tool if the policy checks pass.
 	"""
+	# Check for requirements fulfillment if the operator is not a staff member
+	if not operator.is_staff:
+		meets, missing = evaluate_requirements(operator, tool)
+		if not meets:
+			return HttpResponseBadRequest("You do not meet the requirements to use this tool.")
 
 	# The tool must be visible to users.
 	if not tool.visible:
@@ -114,6 +120,11 @@ def check_policy_to_enable_tool_for_multi(tool, operator, user, project, request
 	"""
 	Check that the user is allowed to enable the tool. Enable the tool if the policy checks pass.
 	"""
+	# Check for requirements fulfillment if the operator is not a staff member
+	if not operator.is_staff:
+		meets, missing = evaluate_requirements(operator, tool)
+		if not meets:
+			return HttpResponseBadRequest("You do not meet the requirements to use this tool.")
 
 	# The tool must be visible to users.
 	if not tool.visible:
@@ -178,6 +189,12 @@ def check_policy_to_enable_tool_for_multi(tool, operator, user, project, request
 
 
 def check_policy_to_disable_tool(tool, operator, downtime, request):
+	# Check for requirements fulfillment if the operator is not a staff member
+	if not operator.is_staff:
+		meets, missing = evaluate_requirements(operator, tool)
+		if not meets:
+			return HttpResponseBadRequest("You do not meet the requirements to use this tool.")
+
 	# Prevent tool disabling from a user in a different core
 	active_core_id = request.session.get("active_core_id")
 	if str(active_core_id) != "0" and str(active_core_id) != "None":
@@ -206,6 +223,11 @@ def check_policy_to_disable_tool(tool, operator, downtime, request):
 
 def check_policy_to_save_reservation(request, cancelled_reservation, new_reservation, user, explicit_policy_override):
 	""" Check the reservation creation policy and return a list of policy problems """
+	# Check for requirements fulfillment if the operator is not a staff member
+	if not user.is_staff:
+		meets, missing = evaluate_requirements(user, new_reservation.tool)
+		if not meets:
+			return HttpResponseBadRequest("You do not meet the requirements to use this tool.")
 
 	# The function will check all policies. Policy problems are placed in the policy_problems list. overridable is True if the policy problems can be overridden by a staff member.
 	policy_problems = []

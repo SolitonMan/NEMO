@@ -158,3 +158,41 @@ def service_type_requirements_ajax(request):
 		'assigned_details': assigned_details,
 		'all': all_details,
 	})
+
+def evaluate_requirements(user, obj):
+	"""
+	Core logic to determine if a user meets requirements for a Tool or Area.
+	Returns (meets_requirements: bool, missing: list[{'id','name'}])
+	"""
+	if isinstance(obj, Tool):
+		requirements = [tr.requirement for tr in ToolRequirement.objects.filter(tool=obj)]
+	elif isinstance(obj, Area):
+		requirements = [ar.requirement for ar in AreaRequirement.objects.filter(area=obj)]
+	else:
+		raise TypeError("Object must be a Tool or Area")
+	missing = [
+		{'id': r.id, 'name': r.name}
+		for r in requirements
+		if not has_valid_requirement(user, r)
+	]
+	return len(missing) == 0, missing
+
+@login_required
+def check_user_requirements(request):
+	"""
+	Existing AJAX view (unchanged externally).
+	Still reads obj_type & obj_id from request.GET.
+	"""
+	obj_type = request.GET.get('obj_type')
+	obj_id = request.GET.get('obj_id')
+	if obj_type not in ['tool', 'area'] or not obj_id:
+		return JsonResponse({'error': 'Invalid parameters'}, status=400)
+	if obj_type == 'tool':
+		obj = get_object_or_404(Tool, id=obj_id)
+	else:
+		obj = get_object_or_404(Area, id=obj_id)
+	meets, missing = evaluate_requirements(request.user, obj)
+	return JsonResponse({
+		'meets_requirements': meets,
+		'missing_requirements': missing,
+	})
