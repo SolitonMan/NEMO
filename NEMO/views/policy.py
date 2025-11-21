@@ -23,9 +23,9 @@ def check_policy_to_enable_tool(tool, operator, user, project, staff_charge, req
 	if not operator.is_staff:
 		meets, missing = evaluate_requirements(operator, tool)
 		if not meets:
-			msg = "You do not meet the requirements to use this tool.  The following requirements need to be completed:\n"
+			msg = "You do not meet the requirements to use this tool.  The following requirements need to be completed:<br/><br/>"
 			for req in missing:
-				msg += "- {}\n".format(req)
+				msg += "- {}<br/>".format(req['name'])
 			return HttpResponseBadRequest(msg)
 
 	# The tool must be visible to users.
@@ -127,9 +127,9 @@ def check_policy_to_enable_tool_for_multi(tool, operator, user, project, request
 	if not operator.is_staff:
 		meets, missing = evaluate_requirements(operator, tool)
 		if not meets:
-			msg = "You do not meet the requirements to use this tool.  The following requirements need to be completed:\n"
+			msg = "You do not meet the requirements to use this tool.  The following requirements need to be completed:<br/><br/>"
 			for req in missing:
-				msg += "- {}\n".format(req)
+				msg += "- {}<br/>".format(req['name'])
 			return HttpResponseBadRequest(msg)
 
 	# The tool must be visible to users.
@@ -199,9 +199,9 @@ def check_policy_to_disable_tool(tool, operator, downtime, request):
 	if not operator.is_staff:
 		meets, missing = evaluate_requirements(operator, tool)
 		if not meets:
-			msg = "You do not meet the requirements to use this tool.  The following requirements need to be completed:\n"
+			msg = "You do not meet the requirements to use this tool.  The following requirements need to be completed:<br/><br/>"
 			for req in missing:
-				msg += "- {}\n".format(req)
+				msg += "- {}<br/>".format(req['name'])
 			return HttpResponseBadRequest(msg)
 
 	# Prevent tool disabling from a user in a different core
@@ -236,9 +236,9 @@ def check_policy_to_save_reservation(request, cancelled_reservation, new_reserva
 	if not user.is_staff:
 		meets, missing = evaluate_requirements(user, new_reservation.tool)
 		if not meets:
-			msg = "You do not meet the requirements to use this tool.  The following requirements need to be completed:\n"
+			msg = "You do not meet the requirements to use this tool.  The following requirements need to be completed:<br/><br/>"
 			for req in missing:
-				msg += "- {}\n".format(req)
+				msg += "- {}<br/>".format(req['name'])
 			return HttpResponseBadRequest(msg)
 
 	# The function will check all policies. Policy problems are placed in the policy_problems list. overridable is True if the policy problems can be overridden by a staff member.
