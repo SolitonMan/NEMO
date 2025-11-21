@@ -25,7 +25,7 @@ def check_policy_to_enable_tool(tool, operator, user, project, staff_charge, req
 		if not meets:
 			msg = "You do not meet the requirements to use this tool.  The following requirements need to be completed:\n"
 			for req in missing:
-				msg += "- {}\n".format(req.name)
+				msg += "- {}\n".format(req)
 			return HttpResponseBadRequest(msg)
 
 	# The tool must be visible to users.
@@ -129,7 +129,7 @@ def check_policy_to_enable_tool_for_multi(tool, operator, user, project, request
 		if not meets:
 			msg = "You do not meet the requirements to use this tool.  The following requirements need to be completed:\n"
 			for req in missing:
-				msg += "- {}\n".format(req.name)
+				msg += "- {}\n".format(req)
 			return HttpResponseBadRequest(msg)
 
 	# The tool must be visible to users.
@@ -201,7 +201,7 @@ def check_policy_to_disable_tool(tool, operator, downtime, request):
 		if not meets:
 			msg = "You do not meet the requirements to use this tool.  The following requirements need to be completed:\n"
 			for req in missing:
-				msg += "- {}\n".format(req.name)
+				msg += "- {}\n".format(req)
 			return HttpResponseBadRequest(msg)
 
 	# Prevent tool disabling from a user in a different core
@@ -238,7 +238,7 @@ def check_policy_to_save_reservation(request, cancelled_reservation, new_reserva
 		if not meets:
 			msg = "You do not meet the requirements to use this tool.  The following requirements need to be completed:\n"
 			for req in missing:
-				msg += "- {}\n".format(req.name)
+				msg += "- {}\n".format(req)
 			return HttpResponseBadRequest(msg)
 
 	# The function will check all policies. Policy problems are placed in the policy_problems list. overridable is True if the policy problems can be overridden by a staff member.
