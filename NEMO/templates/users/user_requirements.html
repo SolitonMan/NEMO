@@ -22,7 +22,7 @@
 	Welcome to LEO! We've set up your initial requirements. Please review them below.  You can also find information on how to get started in the Things To Do section.
 </div>
 {% endif %}
-<div id="things_to_do" class="panel panel-default">
+<!--<div id="things_to_do" class="panel panel-default">
 	<div class="panel-heading">
 		<h3 class="panel-title">
 			Things To Do
@@ -43,28 +43,22 @@
 			</ul>
 		</div>
 	</div>
-</div>
+</div>-->
 <table class="table">
     <thead>
         <tr>
             <th>Requirement</th>
             <th>Status</th>
-            <th>Expires On</th>
+            <th>Expected completion time</th>
             <th>Resources</th>
         </tr>
     </thead>
     <tbody>
         {% for req in requirements %}
         <tr>
-            <td>{{ req.name }}</td>
-            <td>{{ req.status|title }}</td>
-            <td>
-                {% if req.expires_on %}
-                    {{ req.expires_on|date:"Y-m-d" }}
-                {% else %}
-                    N/A
-                {% endif %}
-            </td>
+            <td><span title="{{ req.description }}">{{ req.name }}</span></td>
+            <td>{{ req.get_status_display }}</td>
+            <td>{{ req.expected_completion_time }}</td>
             <td>
                 {% if req.resource_link %}
                     <a href="{{ req.resource_link }}" target="_blank">{{ req.resource_link }}</a>
