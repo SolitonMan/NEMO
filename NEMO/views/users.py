@@ -18,7 +18,7 @@ from django.views.decorators.http import require_GET, require_http_methods, requ
 from NEMO.admin import record_local_many_to_many_changes, record_active_state
 from NEMO.forms import UserForm
 from NEMO.models import Account, UserRelationship, UserRelationshipType, User, UserProfile, UserProfileSetting, Project, Tool, PhysicalAccessLevel, Reservation, StaffCharge, UsageEvent, AreaAccessRecord, ActivityHistory, ProbationaryQualifications, Sample, UserRequirementProgress, Requirement, AreaRequirement, ToolRequirement
-
+from NEMO.views.requirements_admin import get_status_icon
 
 @staff_member_required(login_url=None)
 @require_http_methods(['GET', 'POST'])
@@ -445,8 +445,9 @@ def user_requirements(request):
 		requirements.append({
 			'name': progress.requirement.name,
 			'description': progress.requirement.description,
-			'status': progress.status,
-			'expires_on': progress.expires_on,
+			'status': get_status_icon(progress.status),
+			'completed_on': progress.completed_on,
+			'expected_completion_time': progress.requirement.expected_completion_time,
 			'resource_link': getattr(progress.requirement, 'resource_link', None),  # If you have a resource_link field
 		})
 	return render(request, 'users/user_requirements.html', {'requirements': requirements})

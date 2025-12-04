@@ -196,3 +196,11 @@ def check_user_requirements(request):
 		'meets_requirements': meets,
 		'missing_requirements': missing,
 	})
+
+def get_status_icon(status):
+	if status == 'completed':
+		return 'glyphicon glyphicon-ok-circle btn-success'  # Completed
+	elif status == 'in_progress':
+		return 'glyphicon glyphicon-time btn-warning'  # In Progress
+	else:
+		return 'glyphicon glyphicon-unchecked'  # Not Started

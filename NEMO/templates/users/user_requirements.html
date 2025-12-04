@@ -46,28 +46,35 @@
 </div>-->
 <table class="table">
     <thead>
-        <tr>
-            <th>Requirement</th>
-            <th>Status</th>
-            <th>Expected completion time</th>
-            <th>Resources</th>
-        </tr>
+		<tr>
+			<th></th>
+			<th>Requirement</th>
+			<th>Resources</th>
+			<th>Estimated Time to Complete</th>
+			<th>Date Completed</th>
+		</tr>
     </thead>
     <tbody>
         {% for req in requirements %}
-        <tr>
-            <td><span title="{{ req.description }}">{{ req.name }}</span></td>
-            <td>{{ req.get_status_display }}</td>
-            <td>{{ req.expected_completion_time }}</td>
-            <td>
-                {% if req.resource_link %}
-                    <a href="{{ req.resource_link }}" target="_blank">{{ req.resource_link }}</a>
-                {% else %}
-                    N/A
-                {% endif %}
-            </td>
-        </tr>
+		<tr>
+			<td><span class="{{ req.status }}"></span></td>
+			<td><span title="{{ req.description }}">{{ req.name }}</span></td>
+			<td>
+				{% if req.resource_link %}
+				<a href="{{ req.resource_link }}" target="_blank">{{ req.resource_link }}</a>
+				{% else %}
+				N/A
+				{% endif %}
+			</td>
+			<td>{{ req.expected_completion_time }}</td>
+			<td>{{ req.completed_on|date:"m/d/Y"|default:"" }}</td>
+		</tr>
         {% endfor %}
     </tbody>
 </table>
+{% if request.GET.first == '1' %}
+<div class="alert alert-info" role="alert">
+	Do you want to become and on site user? <button class="btn btn-success">Yes</button> <button class="btn btn-danger">No</button>
+</div>
+{% endif %}
 {% endblock %}
