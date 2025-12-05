@@ -52,6 +52,7 @@
 			<th>Resources</th>
 			<th>Estimated Time to Complete</th>
 			<th>Date Completed</th>
+			<th></th>
 		</tr>
     </thead>
     <tbody>
@@ -68,6 +69,15 @@
 			</td>
 			<td>{{ req.expected_completion_time }}</td>
 			<td>{{ req.completed_on|date:"m/d/Y"|default:"" }}</td>
+			<td>
+			  {% if not req.automated_update and req.status_value != 'completed' %}
+				<form method="post" action="{% url 'complete_user_requirement' %}">
+				  {% csrf_token %}
+				  <input type="hidden" name="requirement_id" value="{{ req.id }}">
+				  <button type="submit" class="btn btn-primary btn-sm">Mark Completed</button>
+				</form>
+			  {% endif %}
+			</td>
 		</tr>
         {% endfor %}
     </tbody>

@@ -324,6 +324,7 @@ class Requirement(models.Model):
 	updated = models.DateTimeField(null=True)
 	expected_completion_time = models.PositiveIntegerField(default=None, blank=True, null=True, help_text="Expected time to complete this requirement in minutes.")
 	login_requirement_flag = models.BooleanField(default=False, help_text="Checked if this requirement is used during login to see if this is a new user and the requirements are automatically added")
+	automated_update = models.BooleanField(default=False, help_text="Checked if this requirement is automatically updated by an external system")
 
 	def __str__(self):
 		return self.name

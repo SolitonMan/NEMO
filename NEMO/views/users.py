@@ -443,11 +443,14 @@ def user_requirements(request):
 	requirements = []
 	for progress in progress_list:
 		requirements.append({
+			'id': progress.requirement.id,
 			'name': progress.requirement.name,
 			'description': progress.requirement.description,
 			'status': get_status_icon(progress.status),
+			'status_value': progress.status,
 			'completed_on': progress.completed_on,
 			'expected_completion_time': progress.requirement.expected_completion_time,
 			'resource_link': getattr(progress.requirement, 'resource_link', None),  # If you have a resource_link field
+			'automated_update': getattr(progress.requirement, 'automated_update', False),  # If you have an automated_update field
 		})
 	return render(request, 'users/user_requirements.html', {'requirements': requirements})

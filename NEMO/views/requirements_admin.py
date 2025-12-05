@@ -7,6 +7,7 @@ from django.core.mail import send_mail
 from django.http import JsonResponse, HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 from NEMO.models import Tool, Area, Requirement, ToolRequirement, AreaRequirement, UserRequirementProgress, ServiceType
 
 @staff_member_required(login_url=None)
@@ -204,3 +205,22 @@ def get_status_icon(status):
 		return 'glyphicon glyphicon-time btn-warning'  # In Progress
 	else:
 		return 'glyphicon glyphicon-unchecked'  # Not Started
+
+
+@login_required
+@require_POST
+def complete_user_requirement(request):
+    requirement_id = request.POST.get('requirement_id')
+    if not requirement_id:
+        return JsonResponse({'success': False, 'error': 'Missing requirement_id'}, status=400)
+
+    try:
+        progress = UserRequirementProgress.objects.get(user=request.user, requirement_id=requirement_id)
+    except UserRequirementProgress.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Requirement progress not found'}, status=404)
+
+    progress.status = 'completed'
+    progress.completed_on = timezone.now()
+    progress.updated = timezone.now()
+    progress.save()
+    return redirect('user_requirements')
