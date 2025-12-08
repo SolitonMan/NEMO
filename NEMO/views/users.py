@@ -464,6 +464,18 @@ def get_requirement_cores(requirement):
 		cores.add('General')
 	return cores
 
+# Add a small helper
+def _to_text(value):
+	# If bytes, try common encodings; last resort ignore errors
+	if isinstance(value, bytes):
+		for enc in ('utf-8', 'cp1252', 'latin-1'):
+			try:
+				return value.decode(enc)
+			except Exception:
+				pass
+		return value.decode('utf-8', errors='ignore')
+	return value
+
 @login_required
 def user_requirements(request):
 	progress_list = (
@@ -472,26 +484,24 @@ def user_requirements(request):
 		.select_related('requirement')
 	)
 
-	# Flatten to requirement dicts (your existing structure)
 	req_dicts = []
 	for progress in progress_list:
+		r = progress.requirement
 		req_dicts.append({
-			'id': progress.requirement.id,
-			'name': progress.requirement.name,
-			'description': progress.requirement.description,
+			'id': r.id,
+			'name': _to_text(r.name),
+			'description': _to_text(r.description),
 			'status': get_status_icon(progress.status),
 			'status_value': progress.status,
 			'completed_on': progress.completed_on,
-			'expected_completion_time': progress.requirement.expected_completion_time,
-			'resource_link': getattr(progress.requirement, 'resource_link', None),
-			'automated_update': getattr(progress.requirement, 'automated_update', False),
-			# Keep original status value for logic
+			'expected_completion_time': _to_text(getattr(r, 'expected_completion_time', '')),
+			'resource_link': _to_text(getattr(r, 'resource_link', None)),
+			'automated_update': getattr(r, 'automated_update', False),
 		})
 
-	# Group by Core
-	grouped = {}  # core_name -> {'requirements': [...], 'all_completed': bool}
+	grouped = {}
 	for rd in req_dicts:
-		req = Requirement.objects.get(id=rd['id'])  # obtain the model for association lookup
+		req = Requirement.objects.get(id=rd['id'])
 		for core_name in get_requirement_cores(req):
 			if core_name not in grouped:
 				grouped[core_name] = {'requirements': [], 'all_completed': True}
