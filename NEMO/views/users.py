@@ -437,44 +437,34 @@ def get_samples(request):
 	return render(request, 'users/add_sample.html', dictionary)
 
 
-
-# Add this helper near the top or inside user_requirements()
+# Minimal, undecorated helper
 def get_requirement_cores(requirement):
 	cores = set()
 
 	# Tool-based cores
 	for tr in ToolRequirement.objects.filter(requirement=requirement).select_related('tool'):
-		core = getattr(getattr(tr.tool, 'core', None), 'name', None)
-		if core:
-			cores.add(core)
+		tool = tr.tool
+		core_name = getattr(getattr(tool, 'core', None), 'name', None)
+		if core_name:
+			cores.add(core_name)
 
 	# Area-based cores
 	for ar in AreaRequirement.objects.filter(requirement=requirement).select_related('area'):
-		core = getattr(getattr(ar.area, 'core', None), 'name', None)
-		if core:
-			cores.add(core)
+		area = ar.area
+		core_name = getattr(getattr(area, 'core', None), 'name', None)
+		if core_name:
+			cores.add(core_name)
 
-	# ServiceType-based cores (assuming ServiceType has a 'core' relation)
+	# ServiceType-based cores
+	# Query forward via ServiceType.requirements m2m; no reverse name guessing
 	for st in ServiceType.objects.filter(requirements=requirement).select_related('core'):
-		core = getattr(getattr(st, 'core', None), 'name', None)
-		if core:
-			cores.add(core)
+		core_name = getattr(getattr(st, 'core', None), 'name', None)
+		if core_name:
+			cores.add(core_name)
 
 	if not cores:
 		cores.add('General')
 	return cores
-
-# Add a small helper
-def _to_text(value):
-	# If bytes, try common encodings; last resort ignore errors
-	if isinstance(value, bytes):
-		for enc in ('utf-8', 'cp1252', 'latin-1'):
-			try:
-				return value.decode(enc)
-			except Exception:
-				pass
-		return value.decode('utf-8', errors='ignore')
-	return value
 
 @login_required
 def user_requirements(request):
@@ -484,29 +474,35 @@ def user_requirements(request):
 		.select_related('requirement')
 	)
 
+	# Build the same requirement dicts you already use
 	req_dicts = []
 	for progress in progress_list:
 		r = progress.requirement
 		req_dicts.append({
 			'id': r.id,
-			'name': _to_text(r.name),
-			'description': _to_text(r.description),
+			'name': r.name,
+			'description': r.description,
 			'status': get_status_icon(progress.status),
 			'status_value': progress.status,
 			'completed_on': progress.completed_on,
-			'expected_completion_time': _to_text(getattr(r, 'expected_completion_time', '')),
-			'resource_link': _to_text(getattr(r, 'resource_link', None)),
+			'expected_completion_time': getattr(r, 'expected_completion_time', ''),
+			'resource_link': getattr(r, 'resource_link', None),
 			'automated_update': getattr(r, 'automated_update', False),
 		})
 
-	grouped = {}
+	# Group by Core; on any error, default to General
+	grouped = {}  # core_name -> {'requirements': [...], 'all_completed': bool}
 	for rd in req_dicts:
-		req = Requirement.objects.get(id=rd['id'])
-		for core_name in get_requirement_cores(req):
-			if core_name not in grouped:
-				grouped[core_name] = {'requirements': [], 'all_completed': True}
-			grouped[core_name]['requirements'].append(rd)
+		try:
+			req = Requirement.objects.get(id=rd['id'])
+			core_names = get_requirement_cores(req)
+		except Exception:
+			core_names = {'General'}
+
+		for core_name in core_names:
+			bucket = grouped.setdefault(core_name, {'requirements': [], 'all_completed': True})
+			bucket['requirements'].append(rd)
 			if rd['status_value'] != 'completed':
-				grouped[core_name]['all_completed'] = False
+				bucket['all_completed'] = False
 
 	return render(request, 'users/user_requirements.html', {'grouped': grouped})
