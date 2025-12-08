@@ -17,7 +17,7 @@ from django.views.decorators.http import require_GET, require_http_methods, requ
 
 from NEMO.admin import record_local_many_to_many_changes, record_active_state
 from NEMO.forms import UserForm
-from NEMO.models import Account, UserRelationship, UserRelationshipType, User, UserProfile, UserProfileSetting, Project, Tool, PhysicalAccessLevel, Reservation, StaffCharge, UsageEvent, AreaAccessRecord, ActivityHistory, ProbationaryQualifications, Sample, UserRequirementProgress, Requirement, AreaRequirement, ToolRequirement
+from NEMO.models import Account, UserRelationship, UserRelationshipType, User, UserProfile, UserProfileSetting, Project, Tool, PhysicalAccessLevel, Reservation, StaffCharge, UsageEvent, AreaAccessRecord, ActivityHistory, ProbationaryQualifications, Sample, UserRequirementProgress, Requirement, AreaRequirement, ToolRequirement, ServiceType
 from NEMO.views.requirements_admin import get_status_icon
 
 @staff_member_required(login_url=None)
@@ -455,7 +455,7 @@ def get_requirement_cores(requirement):
 			cores.add(core)
 
 	# ServiceType-based cores (assuming ServiceType has a 'core' relation)
-	for st in getattr(requirement, 'servicetype_set', []).all():
+	for st in ServiceType.objects.filter(requirements=requirement).select_related('core'):
 		core = getattr(getattr(st, 'core', None), 'name', None)
 		if core:
 			cores.add(core)
