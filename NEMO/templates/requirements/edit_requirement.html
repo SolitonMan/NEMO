@@ -28,6 +28,10 @@
         <label>Login Requirement</label>
         <input type="checkbox" name="login_requirement_flag" {% if requirement.login_requirement_flag %}checked{% endif %}>
     </div>
+    <div class="form-group">
+        <label>Automated Update</label>
+        <input type="checkbox" name="automated_update" {% if requirement.automated_update %}checked{% endif %}>
+    </div>
     <button type="submit" class="btn btn-primary">Save Requirement</button>
 </form>
 {% endblock %}

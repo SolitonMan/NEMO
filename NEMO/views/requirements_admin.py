@@ -19,6 +19,7 @@ def add_requirement(request):
 		retrain_interval_days = request.POST.get("retrain_interval_days") or 365
 		expected_completion_time = request.POST.get("expected_completion_time")
 		login_requirement_flag = request.POST.get("login_requirement_flag") == 'on'
+		automated_update = request.POST.get("automated_update") == 'on'
 
 		if name:
 			Requirement.objects.create(
@@ -27,7 +28,8 @@ def add_requirement(request):
 				resource_link=resource_link,
 				retrain_interval_days=retrain_interval_days,
 				expected_completion_time=expected_completion_time,
-				login_requirement_flag=login_requirement_flag
+				login_requirement_flag=login_requirement_flag,
+				automated_update=automated_update
 			)
 			return redirect('add_requirement')
 	requirements = Requirement.objects.all().order_by('name')
@@ -43,6 +45,7 @@ def edit_requirement(request, requirement_id):
 		requirement.retrain_interval_days = request.POST.get("retrain_interval_days")
 		requirement.expected_completion_time = request.POST.get("expected_completion_time")
 		requirement.login_requirement_flag = request.POST.get("login_requirement_flag") == 'on'
+		requirement.automated_update = request.POST.get("automated_update") == 'on'
 		requirement.save()
 		return redirect("add_requirement")
 	return render(request, "requirements/edit_requirement.html", {"requirement": requirement})

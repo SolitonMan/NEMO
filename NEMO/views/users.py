@@ -438,11 +438,44 @@ def get_samples(request):
 
 
 @login_required
+# Add this helper near the top or inside user_requirements()
+def get_requirement_cores(requirement):
+	cores = set()
+
+	# Tool-based cores
+	for tr in ToolRequirement.objects.filter(requirement=requirement).select_related('tool'):
+		core = getattr(getattr(tr.tool, 'core', None), 'name', None)
+		if core:
+			cores.add(core)
+
+	# Area-based cores
+	for ar in AreaRequirement.objects.filter(requirement=requirement).select_related('area'):
+		core = getattr(getattr(ar.area, 'core', None), 'name', None)
+		if core:
+			cores.add(core)
+
+	# ServiceType-based cores (assuming ServiceType has a 'core' relation)
+	for st in getattr(requirement, 'servicetype_set', []).all():
+		core = getattr(getattr(st, 'core', None), 'name', None)
+		if core:
+			cores.add(core)
+
+	if not cores:
+		cores.add('General')
+	return cores
+
+@login_required
 def user_requirements(request):
-	progress_list = UserRequirementProgress.objects.filter(user=request.user).select_related('requirement')
-	requirements = []
+	progress_list = (
+		UserRequirementProgress.objects
+		.filter(user=request.user)
+		.select_related('requirement')
+	)
+
+	# Flatten to requirement dicts (your existing structure)
+	req_dicts = []
 	for progress in progress_list:
-		requirements.append({
+		req_dicts.append({
 			'id': progress.requirement.id,
 			'name': progress.requirement.name,
 			'description': progress.requirement.description,
@@ -450,7 +483,20 @@ def user_requirements(request):
 			'status_value': progress.status,
 			'completed_on': progress.completed_on,
 			'expected_completion_time': progress.requirement.expected_completion_time,
-			'resource_link': getattr(progress.requirement, 'resource_link', None),  # If you have a resource_link field
-			'automated_update': getattr(progress.requirement, 'automated_update', False),  # If you have an automated_update field
+			'resource_link': getattr(progress.requirement, 'resource_link', None),
+			'automated_update': getattr(progress.requirement, 'automated_update', False),
+			# Keep original status value for logic
 		})
-	return render(request, 'users/user_requirements.html', {'requirements': requirements})
+
+	# Group by Core
+	grouped = {}  # core_name -> {'requirements': [...], 'all_completed': bool}
+	for rd in req_dicts:
+		req = Requirement.objects.get(id=rd['id'])  # obtain the model for association lookup
+		for core_name in get_requirement_cores(req):
+			if core_name not in grouped:
+				grouped[core_name] = {'requirements': [], 'all_completed': True}
+			grouped[core_name]['requirements'].append(rd)
+			if rd['status_value'] != 'completed':
+				grouped[core_name]['all_completed'] = False
+
+	return render(request, 'users/user_requirements.html', {'grouped': grouped})

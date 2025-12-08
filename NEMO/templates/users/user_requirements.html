@@ -4,87 +4,191 @@
 {% block extrahead %}
 	{% load static %}
 	<style>
-		button[aria-expanded="true"] .toggle-icon::before {	content: "-"; }
+		/* Neutral, colorless tiles */
+		.panel.panel-default {
+			box-shadow: none;
+			border-color: #ddd;
+		}
+		.panel-heading {
+			background-color: #f9f9f9;
+		}
+		/* Optional spacing */
+		.core-group + .core-group {
+			margin-top: 10px;
+		}
+		/* Keep your existing +/- styles in case they’re used elsewhere */
+		button[aria-expanded="true"] .toggle-icon::before { content: "-"; }
 		button[aria-expanded="false"] .toggle-icon::before { content: "+"; }
-
 		button .toggle-icon::before {
 			font-weight: 700;
 			font-size: 1.1em;
 			line-height: 1;
 		}
-
 	</style>
 {% endblock %}
 {% block content %}
 <h2>Your Requirements</h2>
+
 {% if request.GET.first == '1' %}
 <div class="alert alert-info" role="alert">
 	Welcome to LEO! We've set up your initial requirements. Please review them below.  You can also find information on how to get started in the Things To Do section.
 </div>
 {% endif %}
-<!--<div id="things_to_do" class="panel panel-default">
-	<div class="panel-heading">
-		<h3 class="panel-title">
-			Things To Do
-			<button type="button" class="close" data-toggle="collapse" data-target="#things_to_do_body" aria-expanded="true" aria-controls="things_to_do_body">
-				<span class="toggle-icon" aria-hidden="true"></span>
-			</button>
-		</h3>
+
+{# GROUPED VIEW (if provided by the view) #}
+{% if grouped %}
+	<div class="container-fluid">
+		{% for core_name, data in grouped.items %}
+			{% with tile_id="core-"|add:forloop.counter|stringformat:"s" %}
+			<div class="panel panel-default core-group">
+				<div class="panel-heading">
+					<div class="row">
+						<div class="col-xs-10">
+							<strong>{{ core_name }}</strong>
+							<span class="text-muted">({{ data.requirements|length }} requirement{{ data.requirements|length|pluralize }})</span>
+						</div>
+						<div class="col-xs-2 text-right">
+							<a class="group-toggle" role="button"
+							   href="#{{ tile_id }}"
+							   data-toggle="collapse"
+							   data-target="#{{ tile_id }}"
+							   aria-controls="{{ tile_id }}"
+							   aria-expanded="{{ not data.all_completed }}">
+								<span class="glyphicon {% if data.all_completed %}glyphicon-chevron-down{% else %}glyphicon-chevron-up{% endif %}" aria-hidden="true"></span>
+								<span class="sr-only">Toggle {{ core_name }} requirements</span>
+							</a>
+						</div>
+					</div>
+				</div>
+
+				<div id="{{ tile_id }}" class="panel-collapse collapse core-collapse {% if not data.all_completed %}in{% endif %}">
+					<div class="panel-body" style="padding:10px 15px;">
+						<div class="table-responsive">
+							<table class="table">
+								<thead>
+									<tr>
+										<th></th>
+										<th>Requirement</th>
+										<th>Resources</th>
+										<th>Estimated Time to Complete</th>
+										<th>Date Completed</th>
+										<th></th>
+									</tr>
+								</thead>
+								<tbody>
+									{% for req in data.requirements %}
+									<tr>
+										<td><span class="{{ req.status }}"></span></td>
+										<td><span title="{{ req.description }}">{{ req.name }}</span></td>
+										<td>
+											{% if req.resource_link %}
+												<a href="{{ req.resource_link }}" target="_blank">{{ req.resource_link }}</a>
+											{% else %}
+												N/A
+											{% endif %}
+										</td>
+										<td>{{ req.expected_completion_time }}</td>
+										<td>{{ req.completed_on|date:"m/d/Y"|default:"" }}</td>
+										<td>
+										  {% if not req.automated_update and req.status_value != 'completed' %}
+											<form method="post" action="{% url 'complete_user_requirement' %}">
+											  {% csrf_token %}
+											  <input type="hidden" name="requirement_id" value="{{ req.id }}">
+											  <button type="submit" class="btn btn-primary btn-sm">Mark Completed</button>
+											</form>
+										  {% endif %}
+										</td>
+									</tr>
+									{% endfor %}
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+
+			</div>
+			{% endwith %}
+		{% empty %}
+			<div class="alert alert-info" role="alert">No requirements found.</div>
+		{% endfor %}
 	</div>
-	<div id="things_to_do_body" class="panel-collapse collapse in">
-		<div class="panel-body">
-			<p>
-			There are tasks that occur when using LEO that are detailed elsewhere but a quick reference is provided here.
-			</p>
-			<ul>
-				<li>To request training or service for the Materials Characterization Lab (MCL) use the <a href="https://pmd.mri.psu.edu/MRIIntake/" target="_blank">MCL intake form</a>.</li>
-				<li>To request service for the Nanofab use the <a href="https://pmd.mri.psu.edu/MRIIntake/Nanofab" target="_blank">Nanofab intake form</a>.</li>
-				<li>To request training for the Nanofab please refer to their <a href="https://pennstateoffice365.sharepoint.com/sites/MRI-NanofabEPKB" target="_blank">sharepoint page</a> and use the Become a User - Requirements and Training link to find the steps to get training.</li>
-			</ul>
-		</div>
-	</div>
-</div>-->
-<table class="table">
-    <thead>
-		<tr>
-			<th></th>
-			<th>Requirement</th>
-			<th>Resources</th>
-			<th>Estimated Time to Complete</th>
-			<th>Date Completed</th>
-			<th></th>
-		</tr>
-    </thead>
-    <tbody>
-        {% for req in requirements %}
-		<tr>
-			<td><span class="{{ req.status }}"></span></td>
-			<td><span title="{{ req.description }}">{{ req.name }}</span></td>
-			<td>
-				{% if req.resource_link %}
-				<a href="{{ req.resource_link }}" target="_blank">{{ req.resource_link }}</a>
-				{% else %}
-				N/A
-				{% endif %}
-			</td>
-			<td>{{ req.expected_completion_time }}</td>
-			<td>{{ req.completed_on|date:"m/d/Y"|default:"" }}</td>
-			<td>
-			  {% if not req.automated_update and req.status_value != 'completed' %}
-				<form method="post" action="{% url 'complete_user_requirement' %}">
-				  {% csrf_token %}
-				  <input type="hidden" name="requirement_id" value="{{ req.id }}">
-				  <button type="submit" class="btn btn-primary btn-sm">Mark Completed</button>
-				</form>
-			  {% endif %}
-			</td>
-		</tr>
-        {% endfor %}
-    </tbody>
-</table>
+
+{# FALLBACK: ORIGINAL FLAT TABLE (when grouped is not provided) #}
+{% else %}
+	<table class="table">
+		<thead>
+			<tr>
+				<th></th>
+				<th>Requirement</th>
+				<th>Resources</th>
+				<th>Estimated Time to Complete</th>
+				<th>Date Completed</th>
+				<th></th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for req in requirements %}
+			<tr>
+				<td><span class="{{ req.status }}"></span></td>
+				<td><span title="{{ req.description }}">{{ req.name }}</span></td>
+				<td>
+					{% if req.resource_link %}
+					<a href="{{ req.resource_link }}" target="_blank">{{ req.resource_link }}</a>
+					{% else %}
+					N/A
+					{% endif %}
+				</td>
+				<td>{{ req.expected_completion_time }}</td>
+				<td>{{ req.completed_on|date:"m/d/Y"|default:"" }}</td>
+				<td>
+				  {% if not req.automated_update and req.status_value != 'completed' %}
+					<form method="post" action="{% url 'complete_user_requirement' %}">
+					  {% csrf_token %}
+					  <input type="hidden" name="requirement_id" value="{{ req.id }}">
+					  <button type="submit" class="btn btn-primary btn-sm">Mark Completed</button>
+					</form>
+				  {% endif %}
+				</td>
+			</tr>
+			{% empty %}
+			<tr>
+				<td colspan="6">
+					<div class="alert alert-info" role="alert">No requirements found.</div>
+				</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+{% endif %}
+
 {% if request.GET.first == '1' %}
 <div class="alert alert-info" role="alert">
 	Do you want to become and on site user? <button class="btn btn-success">Yes</button> <button class="btn btn-danger">No</button>
 </div>
 {% endif %}
+
+<script>
+	(function () {
+		// Swap chevron direction on expand/collapse
+		var collapses = document.querySelectorAll('.core-collapse');
+		Array.prototype.forEach.call(collapses, function (c) {
+			c.addEventListener('show.bs.collapse', function () {
+				var heading = c.previousElementSibling;
+				if (!heading) return;
+				var icon = heading.querySelector('.group-toggle .glyphicon');
+				if (!icon) return;
+				icon.classList.remove('glyphicon-chevron-down');
+				icon.classList.add('glyphicon-chevron-up');
+			});
+			c.addEventListener('hide.bs.collapse', function () {
+				var heading = c.previousElementSibling;
+				if (!heading) return;
+				var icon = heading.querySelector('.group-toggle .glyphicon');
+				if (!icon) return;
+				icon.classList.remove('glyphicon-chevron-up');
+				icon.classList.add('glyphicon-chevron-down');
+			});
+		});
+	})();
+</script>
 {% endblock %}
