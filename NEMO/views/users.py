@@ -437,7 +437,7 @@ def get_samples(request):
 	return render(request, 'users/add_sample.html', dictionary)
 
 
-@login_required
+
 # Add this helper near the top or inside user_requirements()
 def get_requirement_cores(requirement):
 	cores = set()
