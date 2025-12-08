@@ -53,7 +53,7 @@
 							   data-toggle="collapse"
 							   data-target="#{{ tile_id }}"
 							   aria-controls="{{ tile_id }}"
-							   aria-expanded="{{ not data.all_completed }}">
+							   aria-expanded="{% if data.all_completed %}false{% else %}true{% endif %}">
 								<span class="glyphicon {% if data.all_completed %}glyphicon-chevron-down{% else %}glyphicon-chevron-up{% endif %}" aria-hidden="true"></span>
 								<span class="sr-only">Toggle {{ core_name }} requirements</span>
 							</a>
