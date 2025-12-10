@@ -347,6 +347,30 @@ class AreaRequirement(models.Model):
 	class Meta:
 		unique_together = ('area', 'requirement')
 
+
+class UserServiceRequest(models.Model):
+	user = models.ForeignKey('User', on_delete=models.CASCADE)
+	service_type = models.ForeignKey('ServiceType', on_delete=models.CASCADE, null=True, blank=True)
+	tool = models.ForeignKey('Tool', on_delete=models.CASCADE, null=True, blank=True)
+	created = models.DateTimeField(auto_now_add=True, null=True)
+	updated = models.DateTimeField(null=True, blank=True)
+	status = models.CharField(default='open', max_length=32)
+	description = models.TextField(null=True, blank=True)
+	project = models.ForeignKey('Project', on_delete=models.SET_NULL, null=True, blank=True)
+	pi_user = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, related_name='pi_for_service_request')
+	core = models.ForeignKey('Core', on_delete=models.SET_NULL, null=True, blank=True)
+	case_number = models.CharField(max_length=255, null=True, blank=True)
+
+	class Meta:
+		constraints = [
+			models.CheckConstraint(
+				name="either_tool_or_service",
+				check=~(Q(tool__isnull=True) & Q(service_type__isnull=True)),
+			)
+		]
+
+
+
 class UserRequirementProgress(models.Model):
 	user = models.ForeignKey(User, on_delete=models.CASCADE)
 	requirement = models.ForeignKey('Requirement', on_delete=models.CASCADE)
@@ -367,6 +391,7 @@ class UserRequirementProgress(models.Model):
 	notes = models.TextField(null=True, blank=True)  # Optional: evidence, comments
 	created = models.DateTimeField(auto_now_add=True,null=True, blank=True)
 	updated = models.DateTimeField(null=True, blank=True)
+	service_request = models.ForeignKey('UserServiceRequest', on_delete=models.SET_NULL, null=True, blank=True)
 
 	class Meta:
 		unique_together = ('user', 'requirement')

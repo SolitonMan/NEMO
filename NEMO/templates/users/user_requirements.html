@@ -38,24 +38,24 @@
 {# GROUPED VIEW (if provided by the view) #}
 {% if grouped %}
 	<div class="container-fluid">
-		{% for core_name, data in grouped.items %}
-			{% with tile_id="core-"|add:forloop.counter|stringformat:"s" %}
+	{% if group_order %}
+		{% for group_name in group_order %}
+			{% with data=grouped[group_name] tile_id="group-"|add:forloop.counter %}
 			<div class="panel panel-default core-group">
 				<div class="panel-heading">
 					<div class="row">
 						<div class="col-xs-10">
-							<strong>{{ core_name }}</strong>
+							<strong>{{ group_name }}</strong>
 							<span class="text-muted">({{ data.requirements|length }} requirement{{ data.requirements|length|pluralize }})</span>
 						</div>
 						<div class="col-xs-2 text-right">
 							<a class="group-toggle" role="button"
-							   href="#{{ tile_id }}"
 							   data-toggle="collapse"
 							   data-target="#{{ tile_id }}"
 							   aria-controls="{{ tile_id }}"
 							   aria-expanded="{% if data.all_completed %}false{% else %}true{% endif %}">
 								<span class="glyphicon {% if data.all_completed %}glyphicon-chevron-down{% else %}glyphicon-chevron-up{% endif %}" aria-hidden="true"></span>
-								<span class="sr-only">Toggle {{ core_name }} requirements</span>
+								<span class="sr-only">Toggle {{ group_name }} requirements</span>
 							</a>
 						</div>
 					</div>
@@ -90,13 +90,16 @@
 										<td>{{ req.expected_completion_time }}</td>
 										<td>{{ req.completed_on|date:"m/d/Y"|default:"" }}</td>
 										<td>
-										  {% if not req.automated_update and req.status_value != 'completed' %}
+											{% if not req.automated_update and req.status_value != 'completed' %}
 											<form method="post" action="{% url 'complete_user_requirement' %}">
-											  {% csrf_token %}
-											  <input type="hidden" name="requirement_id" value="{{ req.id }}">
-											  <button type="submit" class="btn btn-primary btn-sm">Mark Completed</button>
+												{% csrf_token %}
+												<input type="hidden" name="requirement_id" value="{{ req.id }}">
+												<button type="submit" class="btn btn-primary btn-sm">Mark Completed</button>
 											</form>
-										  {% endif %}
+											{% endif %}
+											{% if req.automated_update and req.status_value != 'completed' %}
+											<span class="text-muted">Automated Update</span>
+											{% endif %}
 										</td>
 									</tr>
 									{% endfor %}
@@ -108,10 +111,13 @@
 
 			</div>
 			{% endwith %}
-		{% empty %}
-			<div class="alert alert-info" role="alert">No requirements found.</div>
 		{% endfor %}
-	</div>
+	{% else %}
+		{% for group_name, data in grouped.items %}
+			{# same block as above, using grouped.items #}
+		{% endfor %}
+	{% endif %}
+</div>
 
 {# FALLBACK: ORIGINAL FLAT TABLE (when grouped is not provided) #}
 {% else %}

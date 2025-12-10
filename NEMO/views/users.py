@@ -17,7 +17,7 @@ from django.views.decorators.http import require_GET, require_http_methods, requ
 
 from NEMO.admin import record_local_many_to_many_changes, record_active_state
 from NEMO.forms import UserForm
-from NEMO.models import Account, UserRelationship, UserRelationshipType, User, UserProfile, UserProfileSetting, Project, Tool, PhysicalAccessLevel, Reservation, StaffCharge, UsageEvent, AreaAccessRecord, ActivityHistory, ProbationaryQualifications, Sample, UserRequirementProgress, Requirement, AreaRequirement, ToolRequirement, ServiceType
+from NEMO.models import Account, UserRelationship, UserRelationshipType, User, UserProfile, UserProfileSetting, Project, Tool, PhysicalAccessLevel, Reservation, StaffCharge, UsageEvent, AreaAccessRecord, ActivityHistory, ProbationaryQualifications, Sample, UserRequirementProgress, Requirement, AreaRequirement, ToolRequirement, ServiceType, UserServiceRequest
 from NEMO.views.requirements_admin import get_status_icon
 
 @staff_member_required(login_url=None)
@@ -471,38 +471,40 @@ def user_requirements(request):
 	progress_list = (
 		UserRequirementProgress.objects
 		.filter(user=request.user)
-		.select_related('requirement')
+		.select_related('requirement', 'service_request', 'service_request__service_type', 'service_request__tool')
 	)
 
-	# Build the same requirement dicts you already use
-	req_dicts = []
-	for progress in progress_list:
-		r = progress.requirement
-		req_dicts.append({
+	def sr_title(sr):
+		if not sr:
+			return 'General'
+		parts = []
+		if sr.case_number: parts.append(f"Case {sr.case_number}")
+		if sr.service_type: parts.append(sr.service_type.name)
+		if sr.tool: parts.append(sr.tool.name)
+		# Fallbacks
+		title = ' - '.join(parts) if parts else (sr.description or f"Service Request #{sr.id}")
+		return title
+
+	grouped = {}
+	order = []  # keep insertion order for display
+	for p in progress_list:
+		group_name = sr_title(p.service_request)
+		if group_name not in grouped:
+			grouped[group_name] = {'requirements': [], 'all_completed': True}
+			order.append(group_name)
+		r = p.requirement
+		grouped[group_name]['requirements'].append({
 			'id': r.id,
 			'name': r.name,
 			'description': r.description,
-			'status': get_status_icon(progress.status),
-			'status_value': progress.status,
-			'completed_on': progress.completed_on,
+			'status': get_status_icon(p.status),
+			'status_value': p.status,
+			'completed_on': p.completed_on,
 			'expected_completion_time': getattr(r, 'expected_completion_time', ''),
 			'resource_link': getattr(r, 'resource_link', None),
 			'automated_update': getattr(r, 'automated_update', False),
 		})
+		if p.status != 'completed':
+			grouped[group_name]['all_completed'] = False
 
-	# Group by Core; on any error, default to General
-	grouped = {}  # core_name -> {'requirements': [...], 'all_completed': bool}
-	for rd in req_dicts:
-		try:
-			req = Requirement.objects.get(id=rd['id'])
-			core_names = get_requirement_cores(req)
-		except Exception:
-			core_names = {'General'}
-
-		for core_name in core_names:
-			bucket = grouped.setdefault(core_name, {'requirements': [], 'all_completed': True})
-			bucket['requirements'].append(rd)
-			if rd['status_value'] != 'completed':
-				bucket['all_completed'] = False
-
-	return render(request, 'users/user_requirements.html', {'grouped': grouped})
+	return render(request, 'users/user_requirements.html', {'grouped': grouped, 'group_order': order})
