@@ -277,8 +277,7 @@
 		});
 		$(document).on('change', '#choose_core', function (e) {
 			e.preventDefault();
-			var $panel = $('#pnl_choose_core .core-collapse');
-			$panel.collapse('hide');
+			var $panel = $('#pnl_choose_core');
 			$panel.hide();
 			$('#btn_add_service').parent().show();
 		});
