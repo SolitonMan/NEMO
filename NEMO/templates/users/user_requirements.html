@@ -39,34 +39,75 @@
 {% if grouped %}
 	<div class="container-fluid">
 	{% for group_name, data in grouped.items %}
-		<div class="panel panel-default core-group">
-			<div class="panel-heading">
-				<div class="row">
-					<div class="col-xs-10">
-						<strong>{{ group_name }}</strong>
-						<span class="text-muted">({{ data.requirements|length }} requirement{{ data.requirements|length|pluralize }})</span>
-					</div>
-					<div class="col-xs-2 text-right">
-						<button type="button"
-							class="group-toggle btn btn-link"
-							data-toggle="collapse"
-							data-target="#group-{{ forloop.counter }}"
-							aria-controls="group-{{ forloop.counter }}"
-							aria-expanded="{% if data.all_completed %}false{% else %}true{% endif %}">
-							<span class="glyphicon {% if data.all_completed %}glyphicon-chevron-down{% else %}glyphicon-chevron-up{% endif %}" aria-hidden="true"></span>
-							<span class="sr-only">Toggle {{ group_name }} requirements</span>
-						</button>
-					</div>
+	<div class="panel panel-default core-group">
+		<div class="panel-heading">
+			<div class="row">
+				<div class="col-xs-10">
+					<strong>{{ group_name }}</strong>
+					<span class="text-muted">({{ data.requirements|length }} requirement{{ data.requirements|length|pluralize }})</span>
 				</div>
-			</div>
-
-			<div id="group-{{ forloop.counter }}" class="panel-collapse collapse core-collapse {% if not data.all_completed %}in{% endif %}">
-				<div class="panel-body" style="padding:10px 15px;">
-					<!-- table content unchanged -->
+				<div class="col-xs-2 text-right">
+					<button type="button"
+						class="group-toggle btn btn-link"
+						data-toggle="collapse"
+						data-target="#group-{{ forloop.counter }}"
+						aria-controls="group-{{ forloop.counter }}"
+						aria-expanded="{% if data.all_completed %}false{% else %}true{% endif %}">
+						<span class="glyphicon {% if data.all_completed %}glyphicon-chevron-down{% else %}glyphicon-chevron-up{% endif %}" aria-hidden="true"></span>
+						<span class="sr-only">Toggle {{ group_name }} requirements</span>
+					</button>
 				</div>
 			</div>
 		</div>
-	{% endfor %}
+		<div id="group-{{ forloop.counter }}" class="panel-collapse collapse core-collapse {% if not data.all_completed %}in{% endif %}">
+			<div class="panel-body" style="padding:10px 15px;">
+				<div class="table-responsive">
+					<table class="table">
+						<thead>
+							<tr>
+								<th></th>
+								<th>Requirement</th>
+								<th>Resources</th>
+								<th>Estimated Time to Complete</th>
+								<th>Date Completed</th>
+								<th></th>
+							</tr>
+						</thead>
+						<tbody>
+							{% for req in data.requirements %}
+							<tr>
+								<td><span class="{{ req.status }}"></span></td>
+								<td><span title="{{ req.description }}">{{ req.name }}</span></td>
+								<td>
+									{% if req.resource_link %}
+										<a href="{{ req.resource_link }}" target="_blank">{{ req.resource_link }}</a>
+									{% else %}
+										N/A
+									{% endif %}
+								</td>
+								<td>{{ req.expected_completion_time }}</td>
+								<td>{{ req.completed_on|date:"m/d/Y"|default:"" }}</td>
+								<td>
+									{% if not req.automated_update and req.status_value != 'completed' %}
+									<form method="post" action="{% url 'complete_user_requirement' %}">
+										{% csrf_token %}
+										<input type="hidden" name="requirement_id" value="{{ req.id }}">
+										<button type="submit" class="btn btn-primary btn-sm">Mark Completed</button>
+									</form>
+									{% endif %}
+									{% if req.automated_update and req.status_value != 'completed' %}
+									<span class="text-muted">Automated Update</span>
+									{% endif %}
+								</td>
+							</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+{% endfor %}
 </div>
 
 {# FALLBACK: ORIGINAL FLAT TABLE (when grouped is not provided) #}
@@ -125,7 +166,6 @@
 
 <script>
 	(function () {
-		// Swap chevron direction on expand/collapse
 		var collapses = document.querySelectorAll('.core-collapse');
 		Array.prototype.forEach.call(collapses, function (c) {
 			c.addEventListener('show.bs.collapse', function () {
@@ -149,24 +189,17 @@
 </script>
 <script>
 	(function () {
-		// Ensure jQuery & Bootstrap collapse plugin exist
 		var $ = window.jQuery;
-		if (!$) { console.warn('jQuery missing'); return; }
-		if (!$.fn || !$.fn.collapse) { console.warn('Bootstrap collapse plugin missing'); return; }
-
-		// Initialize collapses without auto-toggling
+		if (!$) return;
+		if (!$.fn || !$.fn.collapse) return;
 		$('.core-collapse').collapse({ toggle: false });
-
-		// Fallback manual toggle if data-attrs were ignored
 		$(document).on('click', '.group-toggle', function (e) {
 			e.preventDefault();
-			var target = this.getAttribute('data-target'); // string, not jQuery’s data cache
-			if (!target || target === '#') { return; }
+			var target = this.getAttribute('data-target');
+			if (!target || target === '#') return;
 			var $panel = $(target);
 			if ($panel.length) { $panel.collapse('toggle'); }
 		});
-
-		// Chevron swap using BS3 events
 		$('.core-collapse')
 			.on('show.bs.collapse', function () {
 				var $icon = $(this).prev('.panel-heading').find('.group-toggle .glyphicon');
