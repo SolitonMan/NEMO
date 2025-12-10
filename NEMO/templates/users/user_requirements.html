@@ -48,14 +48,15 @@
 						<span class="text-muted">({{ data.requirements|length }} requirement{{ data.requirements|length|pluralize }})</span>
 					</div>
 					<div class="col-xs-2 text-right">
-						<a class="group-toggle" role="button"
+						<button type="button"
+							class="group-toggle btn btn-link"
 							data-toggle="collapse"
 							data-target="#{{ tile_id }}"
 							aria-controls="{{ tile_id }}"
 							aria-expanded="{% if data.all_completed %}false{% else %}true{% endif %}">
 							<span class="glyphicon {% if data.all_completed %}glyphicon-chevron-down{% else %}glyphicon-chevron-up{% endif %}" aria-hidden="true"></span>
 							<span class="sr-only">Toggle {{ group_name }} requirements</span>
-						</a>
+						</button>
 					</div>
 				</div>
 			</div>
@@ -188,6 +189,21 @@
 				icon.classList.remove('glyphicon-chevron-up');
 				icon.classList.add('glyphicon-chevron-down');
 			});
+		});
+	})();
+	// Explicitly initialize collapses in case auto-init was blocked
+	(function () {
+		var $ = window.jQuery;
+		if (!$ || !$.fn || !$.fn.collapse) return;
+
+		$('.core-collapse').collapse({ toggle: false });
+
+		// Fallback click handler if data- attributes were ignored
+		$(document).on('click', '.group-toggle', function (e) {
+			e.preventDefault();
+			var target = $(this).data('target');
+			if (!target) return;
+			$(target).collapse('toggle');
 		});
 	})();
 </script>
