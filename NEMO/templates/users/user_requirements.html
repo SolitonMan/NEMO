@@ -3,28 +3,35 @@
 {% block title %}Your Requirements{% endblock %}
 {% block extrahead %}
 	{% load static %}
-	<style>
-		/* Neutral, colorless tiles */
-		.panel.panel-default {
-			box-shadow: none;
-			border-color: #ddd;
-		}
-		.panel-heading {
-			background-color: #f9f9f9;
-		}
-		/* Optional spacing */
-		.core-group + .core-group {
-			margin-top: 10px;
-		}
-		/* Keep your existing styles in case they are used elsewhere */
-		button[aria-expanded="true"] .toggle-icon::before { content: "-"; }
-		button[aria-expanded="false"] .toggle-icon::before { content: "+"; }
-		button .toggle-icon::before {
-			font-weight: 700;
-			font-size: 1.1em;
-			line-height: 1;
-		}
-	</style>
+<style>
+	/* Neutral, colorless tiles */
+	.panel.panel-default {
+		box-shadow: none;
+		border-color: #ddd;
+	}
+
+	.panel-heading {
+		background-color: #f9f9f9;
+	}
+	/* Optional spacing */
+	.core-group + .core-group {
+		margin-top: 10px;
+	}
+	/* Keep your existing styles in case they are used elsewhere */
+	button[aria-expanded="true"] .toggle-icon::before {
+		content: "-";
+	}
+
+	button[aria-expanded="false"] .toggle-icon::before {
+		content: "+";
+	}
+
+	button .toggle-icon::before {
+		font-weight: 700;
+		font-size: 1.1em;
+		line-height: 1;
+	}
+</style>
 {% endblock %}
 {% block content %}
 <h2>Your Requirements</h2>
@@ -37,7 +44,7 @@
 
 {# GROUPED VIEW (if provided by the view) #}
 {% if grouped %}
-	<div class="container-fluid">
+<div class="container-fluid">
 	{% for group_name, data in grouped.items %}
 	<div class="panel panel-default core-group">
 		<div class="panel-heading">
@@ -48,11 +55,11 @@
 				</div>
 				<div class="col-xs-2 text-right">
 					<button type="button"
-						class="group-toggle btn btn-link"
-						data-toggle="collapse"
-						data-target="#group-{{ forloop.counter }}"
-						aria-controls="group-{{ forloop.counter }}"
-						aria-expanded="{% if data.all_completed %}false{% else %}true{% endif %}">
+							class="group-toggle btn btn-link"
+							data-toggle="collapse"
+							data-target="#group-{{ forloop.counter }}"
+							aria-controls="group-{{ forloop.counter }}"
+							aria-expanded="{% if data.all_completed %}false{% else %}true{% endif %}">
 						<span class="glyphicon {% if data.all_completed %}glyphicon-chevron-down{% else %}glyphicon-chevron-up{% endif %}" aria-hidden="true"></span>
 						<span class="sr-only">Toggle {{ group_name }} requirements</span>
 					</button>
@@ -80,9 +87,9 @@
 								<td><span title="{{ req.description }}">{{ req.name }}</span></td>
 								<td>
 									{% if req.resource_link %}
-										<a href="{{ req.resource_link }}" target="_blank">{{ req.resource_link }}</a>
+									<a href="{{ req.resource_link }}" target="_blank">{{ req.resource_link }}</a>
 									{% else %}
-										N/A
+									N/A
 									{% endif %}
 								</td>
 								<td>{{ req.expected_completion_time }}</td>
@@ -107,63 +114,113 @@
 			</div>
 		</div>
 	</div>
-{% endfor %}
+	{% endfor %}
 </div>
 
 {# FALLBACK: ORIGINAL FLAT TABLE (when grouped is not provided) #}
 {% else %}
-	<table class="table">
-		<thead>
-			<tr>
-				<th></th>
-				<th>Requirement</th>
-				<th>Resources</th>
-				<th>Estimated Time to Complete</th>
-				<th>Date Completed</th>
-				<th></th>
-			</tr>
-		</thead>
-		<tbody>
-			{% for req in requirements %}
-			<tr>
-				<td><span class="{{ req.status }}"></span></td>
-				<td><span title="{{ req.description }}">{{ req.name }}</span></td>
-				<td>
-					{% if req.resource_link %}
-					<a href="{{ req.resource_link }}" target="_blank">{{ req.resource_link }}</a>
-					{% else %}
-					N/A
-					{% endif %}
-				</td>
-				<td>{{ req.expected_completion_time }}</td>
-				<td>{{ req.completed_on|date:"m/d/Y"|default:"" }}</td>
-				<td>
-				  {% if not req.automated_update and req.status_value != 'completed' %}
-					<form method="post" action="{% url 'complete_user_requirement' %}">
-					  {% csrf_token %}
-					  <input type="hidden" name="requirement_id" value="{{ req.id }}">
-					  <button type="submit" class="btn btn-primary btn-sm">Mark Completed</button>
-					</form>
-				  {% endif %}
-				</td>
-			</tr>
-			{% empty %}
-			<tr>
-				<td colspan="6">
-					<div class="alert alert-info" role="alert">No requirements found.</div>
-				</td>
-			</tr>
-			{% endfor %}
-		</tbody>
-	</table>
+<table class="table">
+	<thead>
+		<tr>
+			<th></th>
+			<th>Requirement</th>
+			<th>Resources</th>
+			<th>Estimated Time to Complete</th>
+			<th>Date Completed</th>
+			<th></th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for req in requirements %}
+		<tr>
+			<td><span class="{{ req.status }}"></span></td>
+			<td><span title="{{ req.description }}">{{ req.name }}</span></td>
+			<td>
+				{% if req.resource_link %}
+				<a href="{{ req.resource_link }}" target="_blank">{{ req.resource_link }}</a>
+				{% else %}
+				N/A
+				{% endif %}
+			</td>
+			<td>{{ req.expected_completion_time }}</td>
+			<td>{{ req.completed_on|date:"m/d/Y"|default:"" }}</td>
+			<td>
+				{% if not req.automated_update and req.status_value != 'completed' %}
+				<form method="post" action="{% url 'complete_user_requirement' %}">
+					{% csrf_token %}
+					<input type="hidden" name="requirement_id" value="{{ req.id }}">
+					<button type="submit" class="btn btn-primary btn-sm">Mark Completed</button>
+				</form>
+				{% endif %}
+			</td>
+		</tr>
+		{% empty %}
+		<tr>
+			<td colspan="6">
+				<div class="alert alert-info" role="alert">No requirements found.</div>
+			</td>
+		</tr>
+		{% endfor %}
+	</tbody>
+</table>
 {% endif %}
+<br/><br/>
 
+<h2>Services</h2>
 {% if request.GET.first == '1' %}
 <div class="alert alert-info" role="alert">
 	Do you want to become and on site user? <button class="btn btn-success">Yes</button> <button class="btn btn-danger">No</button>
 </div>
+{% else %}
+<div class="alert alert-info" role="alert">
+	<button class="btn btn-success" id="btn_add_service">Add a service</button>
+</div>
 {% endif %}
 
+<div class="panel panel-default core-group" id="pnl_choose_core" style="display:none;">
+	<div class="panel-heading">
+		<div class="row">
+			<div class="col-xs-10">
+				<strong><span id="pnl_title">Choose a core</span></strong>
+			</div>
+			<div class="col-xs-2 text-right">
+					
+			</div>
+		</div>
+	</div>
+	<div id="group-temp" class="panel-collapse collapse core-collapse">
+		<div class="panel-body" style="padding:10px 15px;">
+			<div>
+				<select class="form-control" id="choose_core">
+					<option value="">-- Choose a core --</option>
+					<option value="1">Materials Characterization Lab (MCL)</option>
+					<option value="2">Nanofab</option>
+					<option value="4">2DCC</option>
+				</select>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="panel panel-default core-group" id="pnl_template">
+	<div class="panel-heading">
+		<div class="row">
+			<div class="col-xs-10">
+				<strong><span id="pnl_title"></span></strong>
+			</div>
+			<div class="col-xs-2 text-right">
+					
+			</div>
+		</div>
+	</div>
+	<div id="group-temp" class="panel-collapse collapse core-collapse">
+		<div class="panel-body" style="padding:10px 15px;">
+				
+		</div>
+	</div>
+</div>
+{% endblock %}
+{% block extrajs %}
 <script>
 	(function () {
 		var collapses = document.querySelectorAll('.core-collapse');
@@ -209,6 +266,23 @@
 				var $icon = $(this).prev('.panel-heading').find('.group-toggle .glyphicon');
 				$icon.removeClass('glyphicon-chevron-up').addClass('glyphicon-chevron-down');
 			});
+
+		$(document).on('click', '#btn_add_service', function (e) {
+			e.preventDefault();
+			var $panel = $('#pnl_choose_core .core-collapse');
+			if ($panel.length) {
+				$panel.collapse('show');
+			}
+			$('#pnl_choose_core').show();
+			$('#btn_add_service').parent().hide();
+		});
+		$(document).on('change', '#choose_core', function (e) {
+			e.preventDefault();
+			var $panel = $('#pnl_choose_core .core-collapse');
+			$panel.collapse('hide');
+			$panel.hide();
+			$('#btn_add_service').parent().show();
+		});
 	})();
 </script>
 {% endblock %}
