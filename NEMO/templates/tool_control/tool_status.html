@@ -297,7 +297,7 @@
 				<div id="task_{{ t.id }}_details" class="collapse">
 					<span class="grey">
 						This task was created by {{ t.creator }} on {{ t.creation_time }}.
-						{% if user.is_staff %}
+						{% if user.is_staff and 1=0 %}
 						You can <a href="{% url 'task_update_form' t.id %}">update</a> or <a href="{% url 'task_resolution_form' t.id %}">resolve</a> this task.
 						{% endif %}
 						{% if t.force_shutdown %}
