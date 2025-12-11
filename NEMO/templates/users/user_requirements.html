@@ -167,6 +167,8 @@
 <br/><br/>
 
 <h2>Services</h2>
+
+<div class="container-fluid">
 {% if request.GET.first == '1' %}
 <div class="alert alert-info" role="alert">
 	Do you want to become and on site user? <button class="btn btn-success">Yes</button> <button class="btn btn-danger">No</button>
@@ -227,7 +229,15 @@
 				<strong><span id="pnl_title">Materials Characterization Lab Request</span></strong>
 			</div>
 			<div class="col-xs-2 text-right">
-				
+				<button type="button"
+					class="group-toggle btn btn-link"
+					data-toggle="collapse"
+					data-target="#group-mcl"
+					aria-controls="group-mcl"
+					aria-expanded="true">
+				<span class="glyphicon glyphicon-chevron-up" aria-hidden="false"></span>
+				<span class="sr-only">Toggle MCL Requests</span>
+				</button>
 			</div>
 		</div>
 	</div>
@@ -284,7 +294,15 @@
 				<strong><span id="pnl_title">Nanofab Request</span></strong>
 			</div>
 			<div class="col-xs-2 text-right">
-				
+				<button type="button"
+					class="group-toggle btn btn-link"
+					data-toggle="collapse"
+					data-target="#group-nano"
+					aria-controls="group-nano"
+					aria-expanded="true">
+				<span class="glyphicon glyphicon-chevron-up" aria-hidden="false"></span>
+				<span class="sr-only">Toggle Nano Requests</span>
+				</button>
 			</div>
 		</div>
 	</div>
@@ -331,6 +349,8 @@
 			</form>
 		</div>
 	</div>
+</div>
+
 </div>
 <script>
 	(function () {
