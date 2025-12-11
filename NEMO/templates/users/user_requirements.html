@@ -258,10 +258,10 @@
 							</select>
 						</td>
 						<td>
-							{% if request.user.active_projects_count > 0 %}
+							{% if user_projects is not None %}
 							<select name="project_select" class="form-control">
 								<option value="">Please select an option</option>
-								{% for p in request.user.active_projects.all %}
+								{% for p in user_projects %}
 								<option value="{{ p.id }}">{{ p }}</option>
 								{% endfor %}
 							</select>
@@ -317,10 +317,10 @@
 							</select>
 						</td>
 						<td>
-							{% if request.user.active_projects_count > 0 %}
+							{% if user_projects is not None %}
 							<select name="project_select" class="form-control">
 								<option value="">Please select an option</option>
-								{% for p in request.user.active_projects.all %}
+								{% for p in user_projects %}
 								<option value="{{ p.id }}">{{ p }}</option>
 								{% endfor %}
 							</select>

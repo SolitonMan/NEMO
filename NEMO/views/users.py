@@ -467,6 +467,7 @@ def get_requirement_cores(requirement):
 	return cores
 
 @login_required
+@require_http_methods(['GET', 'POST'])
 def user_requirements(request):
 	progress_list = (
 		UserRequirementProgress.objects
@@ -511,5 +512,6 @@ def user_requirements(request):
 	mcl_services = ServiceType.objects.filter(core=mcl_core).order_by('name')
 	nano_core = Core.objects.get(id=2)
 	nano_services = ServiceType.objects.filter(core=nano_core).order_by('name')
+	user_projects = Project.objects.filter(id__in=request.user.active_projects)
 
-	return render(request, 'users/user_requirements.html', {'grouped': grouped, 'group_order': order, 'mcl_services':mcl_services, 'nano_services':nano_services,})
+	return render(request, 'users/user_requirements.html', {'grouped': grouped, 'group_order': order, 'mcl_services':mcl_services, 'nano_services':nano_services, 'user_projects':user_projects})
