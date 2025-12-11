@@ -510,6 +510,6 @@ def user_requirements(request):
 	mcl_core = Core.objects.get(id=1)
 	mcl_services = ServiceType.objects.filter(core=mcl_core).order_by('name')
 	nano_core = Core.objects.get(id=2)
-	nano_services = ServiceType.objects.filter(core=mcl_core).order_by('name')
+	nano_services = ServiceType.objects.filter(core=nano_core).order_by('name')
 
 	return render(request, 'users/user_requirements.html', {'grouped': grouped, 'group_order': order, 'mcl_services':mcl_services, 'nano_services':nano_services,})

@@ -261,7 +261,7 @@
 							{% if request.user.active_projects_count > 0 %}
 							<select name="project_select" class="form-control">
 								<option value="">Please select an option</option>
-								{% for p in request.user.active_projects %}
+								{% for p in request.user.active_projects.all %}
 								<option value="{{ p.id }}">{{ p }}</option>
 								{% endfor %}
 							</select>
@@ -320,7 +320,7 @@
 							{% if request.user.active_projects_count > 0 %}
 							<select name="project_select" class="form-control">
 								<option value="">Please select an option</option>
-								{% for p in request.user.active_projects %}
+								{% for p in request.user.active_projects.all %}
 								<option value="{{ p.id }}">{{ p }}</option>
 								{% endfor %}
 							</select>
