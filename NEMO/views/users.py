@@ -17,7 +17,7 @@ from django.views.decorators.http import require_GET, require_http_methods, requ
 
 from NEMO.admin import record_local_many_to_many_changes, record_active_state
 from NEMO.forms import UserForm
-from NEMO.models import Account, UserRelationship, UserRelationshipType, User, UserProfile, UserProfileSetting, Project, Tool, PhysicalAccessLevel, Reservation, StaffCharge, UsageEvent, AreaAccessRecord, ActivityHistory, ProbationaryQualifications, Sample, UserRequirementProgress, Requirement, AreaRequirement, ToolRequirement, ServiceType, UserServiceRequest
+from NEMO.models import Account, Core, UserRelationship, UserRelationshipType, User, UserProfile, UserProfileSetting, Project, Tool, PhysicalAccessLevel, Reservation, StaffCharge, UsageEvent, AreaAccessRecord, ActivityHistory, ProbationaryQualifications, Sample, UserRequirementProgress, Requirement, AreaRequirement, ToolRequirement, ServiceType, UserServiceRequest
 from NEMO.views.requirements_admin import get_status_icon
 
 @staff_member_required(login_url=None)
@@ -507,4 +507,9 @@ def user_requirements(request):
 		if p.status != 'completed':
 			grouped[group_name]['all_completed'] = False
 
-	return render(request, 'users/user_requirements.html', {'grouped': grouped, 'group_order': order})
+	mcl_core = Core.objects.get(id=1)
+	mcl_services = ServiceType.objects.filter(core=mcl_core).order_by('name')
+	nano_core = Core.objects.get(id=2)
+	nano_services = ServiceType.objects.filter(core=mcl_core).order_by('name')
+
+	return render(request, 'users/user_requirements.html', {'grouped': grouped, 'group_order': order, 'mcl_services':mcl_services, 'nano_services':nano_services,})

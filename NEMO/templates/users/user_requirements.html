@@ -229,19 +229,14 @@
 				<strong><span id="pnl_title">Materials Characterization Lab Request</span></strong>
 			</div>
 			<div class="col-xs-2 text-right">
-				<button type="button"
-					class="group-toggle btn btn-link"
-					data-toggle="collapse"
-					data-target="#group-mcl"
-					aria-controls="group-mcl"
-					aria-expanded="true">
-				<span class="glyphicon glyphicon-chevron-up" aria-hidden="false"></span>
-				<span class="sr-only">Toggle MCL Requests</span>
+				<button type="button" class="group-toggle btn btn-link" data-toggle="collapse" data-target="#group-mcl" aria-controls="group-mcl" aria-expanded="true">
+					<span class="glyphicon glyphicon-chevron-up" aria-hidden="false"></span>
+					<span class="sr-only">Toggle MCL Requests</span>
 				</button>
 			</div>
 		</div>
 	</div>
-	<div id="group-temp" class="panel-collapse collapse core-collapse">
+	<div id="group-mcl" class="panel-collapse collapse core-collapse in">
 		<div class="panel-body" style="padding:10px 15px;">
 			<form method="post">
 			{% csrf_token %}
@@ -286,7 +281,6 @@
 	</div>
 </div>
 
-
 <div class="panel panel-default core-group" id="nano_template" style="display:none;">
 	<div class="panel-heading">
 		<div class="row">
@@ -294,19 +288,14 @@
 				<strong><span id="pnl_title">Nanofab Request</span></strong>
 			</div>
 			<div class="col-xs-2 text-right">
-				<button type="button"
-					class="group-toggle btn btn-link"
-					data-toggle="collapse"
-					data-target="#group-nano"
-					aria-controls="group-nano"
-					aria-expanded="true">
-				<span class="glyphicon glyphicon-chevron-up" aria-hidden="false"></span>
-				<span class="sr-only">Toggle Nano Requests</span>
+				<button type="button" class="group-toggle btn btn-link" data-toggle="collapse" data-target="#group-nano" aria-controls="group-nano" aria-expanded="true">
+					<span class="glyphicon glyphicon-chevron-up" aria-hidden="false"></span>
+					<span class="sr-only">Toggle Nano Requests</span>
 				</button>
 			</div>
 		</div>
 	</div>
-	<div id="group-temp" class="panel-collapse collapse core-collapse">
+	<div id="group-nano" class="panel-collapse collapse core-collapse in">
 		<div class="panel-body" style="padding:10px 15px;">
 			<form method="post">
 			{% csrf_token %}
@@ -341,7 +330,7 @@
 						</td>
 					</tr>
 					<tr>
-						<td><button class="btn btn-success" id="btn_mcl_add_service">Add a service</button></td>
+						<td><button class="btn btn-success" id="btn_nano_add_service">Add a service</button></td>
 						<td><input type="submit" class="btn btn-success" value="Submit" id="btn_nano_submit" /></td>
 					</tr>
 				</tbody>
@@ -419,6 +408,7 @@
 			// load the template for the selected core
 			if (coreId == '1') {
 				$("#mcl_template").show();
+				$('#group-mcl').collapse('show');
 				$("#btn_mcl_submit").on('click', function () {
 					$("#mcl_template").hide();					
 					$('#btn_add_service').parent().show();
@@ -427,6 +417,7 @@
 
 			if (coreId == '2') {
 				$("#nano_template").show();
+				$('#group-nano').collapse('show');
 				$("#btn_nano_submit").on('click', function () {
 					$("#nano_template").hide();					
 					$('#btn_add_service').parent().show();
@@ -443,6 +434,17 @@
 			$newRow.find('select[name="service_select"]').val('');
 			$newRow.find('select[name="project_select"]').val('');
 			$tbody.find('tr.mcl-row').last().after($newRow);
+		});
+
+		$(document).on('click', '#btn_nano_add_service', function (e) {
+			e.preventDefault();
+			var $tbody = $('#nano_request_table tbody');
+			var $templateRow = $tbody.find('tr.nano-row').first();
+			if (!$templateRow.length) return;
+			var $newRow = $templateRow.clone(true, true);
+			$newRow.find('select[name="service_select"]').val('');
+			$newRow.find('select[name="project_select"]').val('');
+			$tbody.find('tr.nano-row').last().after($newRow);
 		});
 	})();
 </script>
