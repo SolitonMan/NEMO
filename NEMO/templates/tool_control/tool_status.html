@@ -303,7 +303,7 @@
 						{% if t.force_shutdown %}
 						The tool will remain shut down until this task is resolved.
 						{% endif %}
-						{% if t.creator.id == user.id %}
+						{% if t.creator.id == user.id and 1=0 %}
 						You may <a href="javascript:$('#cancel_task_{{ t.id }}').submit()">cancel</a> this task if it was mistakenly created.<br>
 						<form id="cancel_task_{{ t.id }}" action="{% url 'cancel_task' t.id %}" method="POST">
 							{% csrf_token %}
