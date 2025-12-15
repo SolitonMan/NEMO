@@ -484,6 +484,21 @@ def user_requirements(request):
 				'project': project,
 				'description': description,
 			})
+
+			# insert into UserServiceRequest for each item
+			svc = ServiceType.objects.get(id=service)
+			proj = Project.objects.get(id=project)
+			UserServiceRequest.objects.create(
+				updated=timezone.now(),
+				status='Open',
+				description=description,
+				core=svc.core,
+				pi_user=proj.owner,
+				project=proj,
+				service_type=svc,
+				user=request.user
+			)
+
 		post_data = rows
 
 	progress_list = (
