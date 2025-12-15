@@ -39,15 +39,17 @@
 	<table class="table table-bordered">
 		<thead>
 			<tr>
-				<th>Parameter</th>
-				<th>Value</th>
+				<th>Service</th>
+				<th>Project</th>
+				<th>Description</th>
 			</tr>
 		</thead>
 		<tbody>
-		{% for key, value in post_data %}
+		{% for row in post_data %}
 			<tr>
-				<td>{{ key }}</td>
-				<td>{{ value }}</td>
+				<td>{{ row.service }}</td>
+				<td>{{ row.project }}</td>
+				<td>{{ row.description }}</td>
 			</tr>
 		{% endfor %}
 		</tbody>

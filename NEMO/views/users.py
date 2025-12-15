@@ -472,8 +472,19 @@ def user_requirements(request):
 
 	post_data = None
 	if request.method == 'POST':
-		# request.POST is a QueryDict; convert to a list of (key, value) pairs
-		post_data = [(k, v) for k, v in request.POST.items()]
+		services = request.POST.getlist('service_select')
+		projects = request.POST.getlist('project_select')
+		descriptions = request.POST.getlist('description')
+
+		# Combine each set into a row
+		rows = []
+		for service, project, description in zip(services, projects, descriptions):
+			rows.append({
+				'service': service,
+				'project': project,
+				'description': description,
+			})
+		post_data = rows
 
 	progress_list = (
 		UserRequirementProgress.objects
