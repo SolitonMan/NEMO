@@ -34,6 +34,29 @@
 </style>
 {% endblock %}
 {% block content %}
+
+{% if post_data %}
+	<table class="table table-bordered">
+		<thead>
+			<tr>
+				<th>Parameter</th>
+				<th>Value</th>
+			</tr>
+		</thead>
+		<tbody>
+		{% for key, value in post_data %}
+			<tr>
+				<td>{{ key }}</td>
+				<td>{{ value }}</td>
+			</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+{% else %}
+	<div class="alert alert-info">No POST data submitted.</div>
+{% endif %}
+
+
 <h2>Your Requirements</h2>
 
 {% if request.GET.first == '1' %}
@@ -245,6 +268,7 @@
 					<tr>
 						<th>Service</th>
 						<th>Project</th>
+						<th>Description</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -269,10 +293,15 @@
 							No project available
 							{% endif %}
 						</td>
+						<td>
+							<textarea class="form-control" rows="3" cols="20" name="description"></textarea>
+						</td>
 					</tr>
 					<tr>
-						<td><button class="btn btn-success" id="btn_mcl_add_service">Add a service</button></td>
-						<td><input type="submit" class="btn btn-success" value="Submit" id="btn_mcl_submit" /></td>
+						<td colspan="3">
+							<button class="btn btn-success" id="btn_mcl_add_service">Add a service</button>
+							<input type="submit" class="btn btn-success" value="Submit" id="btn_mcl_submit" />
+						</td>
 					</tr>
 				</tbody>
 			</table>
@@ -304,6 +333,7 @@
 					<tr>
 						<th>Service</th>
 						<th>Project</th>
+						<th>Description</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -328,10 +358,15 @@
 							No project available
 							{% endif %}
 						</td>
+						<td>
+							<textarea class="form-control" rows="3" cols="20" name="description"></textarea>
+						</td>
 					</tr>
 					<tr>
-						<td><button class="btn btn-success" id="btn_nano_add_service">Add a service</button></td>
-						<td><input type="submit" class="btn btn-success" value="Submit" id="btn_nano_submit" /></td>
+						<td colspan="3">
+							<button class="btn btn-success" id="btn_nano_add_service">Add a service</button>
+							<input type="submit" class="btn btn-success" value="Submit" id="btn_nano_submit" />
+						</td>
 					</tr>
 				</tbody>
 			</table>

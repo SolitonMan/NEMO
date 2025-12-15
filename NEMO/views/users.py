@@ -469,6 +469,12 @@ def get_requirement_cores(requirement):
 @login_required
 @require_http_methods(['GET', 'POST'])
 def user_requirements(request):
+
+	post_data = None
+	if request.method == 'POST':
+		# request.POST is a QueryDict; convert to a list of (key, value) pairs
+		post_data = [(k, v) for k, v in request.POST.items()]
+
 	progress_list = (
 		UserRequirementProgress.objects
 		.filter(user=request.user)
@@ -514,4 +520,4 @@ def user_requirements(request):
 	nano_services = ServiceType.objects.filter(core=nano_core).order_by('name')
 	user_projects = request.user.active_projects
 
-	return render(request, 'users/user_requirements.html', {'grouped': grouped, 'group_order': order, 'mcl_services':mcl_services, 'nano_services':nano_services, 'user_projects':user_projects})
+	return render(request, 'users/user_requirements.html', {'grouped': grouped, 'group_order': order, 'mcl_services':mcl_services, 'nano_services':nano_services, 'user_projects':user_projects, 'post_data':post_data})
