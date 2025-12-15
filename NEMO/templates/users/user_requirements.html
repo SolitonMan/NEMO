@@ -262,7 +262,7 @@
 							<select name="project_select" class="form-control">
 								<option value="">Please select an option</option>
 								{% for p in user_projects %}
-								<option value="{{ p.id }}">{{ p }}</option>
+								<option value="{{ p.id }}">{{ p }} [PI: {{ p.owner.first_name }} {{ p.owner.last_name }} ({{ p.owner.username }})]</option>
 								{% endfor %}
 							</select>
 							{% else %}
@@ -321,7 +321,7 @@
 							<select name="project_select" class="form-control">
 								<option value="">Please select an option</option>
 								{% for p in user_projects %}
-								<option value="{{ p.id }}">{{ p }}</option>
+								<option value="{{ p.id }}">{{ p }} [PI: {{ p.owner.first_name }} {{ p.owner.last_name }} ({{ p.owner.username }})]</option>
 								{% endfor %}
 							</select>
 							{% else %}
