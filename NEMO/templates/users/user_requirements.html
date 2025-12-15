@@ -467,6 +467,7 @@
 			var $newRow = $templateRow.clone(true, true);
 			$newRow.find('select[name="service_select"]').val('');
 			$newRow.find('select[name="project_select"]').val('');
+			$newRow.find('textarea[name="description"]').val('');
 			$tbody.find('tr.mcl-row').last().after($newRow);
 		});
 
@@ -478,6 +479,7 @@
 			var $newRow = $templateRow.clone(true, true);
 			$newRow.find('select[name="service_select"]').val('');
 			$newRow.find('select[name="project_select"]').val('');
+			$newRow.find('textarea[name="description"]').val('');
 			$tbody.find('tr.nano-row').last().after($newRow);
 		});
 	})();
