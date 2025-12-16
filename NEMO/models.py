@@ -359,6 +359,7 @@ class UserServiceRequest(models.Model):
 	project = models.ForeignKey('Project', on_delete=models.SET_NULL, null=True, blank=True)
 	pi_user = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, related_name='pi_for_service_request')
 	core = models.ForeignKey('Core', on_delete=models.SET_NULL, null=True, blank=True)
+	training_request = models.BooleanField(default=False,blank=True);
 	case_number = models.CharField(max_length=255, null=True, blank=True)
 
 	class Meta:

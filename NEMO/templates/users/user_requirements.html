@@ -271,6 +271,7 @@
 						<th>Service</th>
 						<th>Project</th>
 						<th>Description</th>
+						<th>Please train me</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -298,9 +299,13 @@
 						<td>
 							<textarea class="form-control" rows="3" cols="20" name="description"></textarea>
 						</td>
+						<td>
+							<radio name="training_requested" value="Yes" />
+							<radio name="training_requested" value="No" checked />
+						</td>
 					</tr>
 					<tr>
-						<td colspan="3">
+						<td colspan="4">
 							<button class="btn btn-success" id="btn_mcl_add_service">Add a service</button>
 							<input type="submit" class="btn btn-success" value="Submit" id="btn_mcl_submit" />
 						</td>
@@ -336,6 +341,7 @@
 						<th>Service</th>
 						<th>Project</th>
 						<th>Description</th>
+						<th>Please train me</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -363,9 +369,13 @@
 						<td>
 							<textarea class="form-control" rows="3" cols="20" name="description"></textarea>
 						</td>
+						<td>
+							<radio name="training_requested" value="Yes" />
+							<radio name="training_requested" value="No" checked />
+						</td>
 					</tr>
 					<tr>
-						<td colspan="3">
+						<td colspan="4">
 							<button class="btn btn-success" id="btn_nano_add_service">Add a service</button>
 							<input type="submit" class="btn btn-success" value="Submit" id="btn_nano_submit" />
 						</td>
@@ -470,6 +480,7 @@
 			$newRow.find('select[name="service_select"]').val('');
 			$newRow.find('select[name="project_select"]').val('');
 			$newRow.find('textarea[name="description"]').val('');
+			$newRow.find('input[name="training_requested"][value="No"]').prop('checked', true);
 			$tbody.find('tr.mcl-row').last().after($newRow);
 		});
 
@@ -482,6 +493,7 @@
 			$newRow.find('select[name="service_select"]').val('');
 			$newRow.find('select[name="project_select"]').val('');
 			$newRow.find('textarea[name="description"]').val('');
+			$newRow.find('input[name="training_requested"][value="No"]').prop('checked', true);
 			$tbody.find('tr.nano-row').last().after($newRow);
 		});
 	})();
