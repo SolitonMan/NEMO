@@ -475,7 +475,7 @@ def user_requirements(request):
 		services = request.POST.getlist('service_select')
 		projects = request.POST.getlist('project_select')
 		descriptions = request.POST.getlist('description')
-		training_requests = request.POST.getlist('training_request')
+		#training_requests = request.POST.getlist('training_request')
 
 		# Combine each set into a row
 		rows = []
@@ -484,7 +484,7 @@ def user_requirements(request):
 				'service': service,
 				'project': project,
 				'description': description,
-				'training_request': training_request,
+				#'training_request': training_request,
 			})
 
 			# insert into UserServiceRequest for each item
@@ -499,7 +499,7 @@ def user_requirements(request):
 				project=proj,
 				service_type=svc,
 				user=request.user,
-				training_request=(training_request==True)
+				training_request=True
 			)
 
 		post_data = rows
