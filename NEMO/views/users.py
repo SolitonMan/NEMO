@@ -476,7 +476,7 @@ def user_requirements(request):
 		services = request.POST.getlist('service_select')
 		projects = request.POST.getlist('project_select')
 		descriptions = request.POST.getlist('description')
-		training_requests = request.POST.getlist('training_request')
+		training_requests = request.POST.getlist('training_requested')
 
 		# Combine each set into a row
 		rows = []
