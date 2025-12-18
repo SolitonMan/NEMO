@@ -484,7 +484,7 @@
 			$newRow.find('select[name="service_select"]').val('');
 			$newRow.find('select[name="project_select"]').val('');
 			$newRow.find('textarea[name="description"]').val('');
-			$newRow.find('input[name="training_requested"][value="No"]').prop('checked', true);
+			$newRow.find('select[name="training_requested"]').val('');
 			$tbody.find('tr.mcl-row').last().after($newRow);
 		});
 
@@ -497,7 +497,7 @@
 			$newRow.find('select[name="service_select"]').val('');
 			$newRow.find('select[name="project_select"]').val('');
 			$newRow.find('textarea[name="description"]').val('');
-			$newRow.find('input[name="training_requested"][value="No"]').prop('checked', true);
+			$newRow.find('select[name="training_requested"]').val('');
 			$tbody.find('tr.nano-row').last().after($newRow);
 		});
 	})();

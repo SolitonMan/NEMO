@@ -472,6 +472,7 @@ def user_requirements(request):
 
 	post_data = None
 	if request.method == 'POST':
+		print("POST data:", request.POST)
 		services = request.POST.getlist('service_select')
 		projects = request.POST.getlist('project_select')
 		descriptions = request.POST.getlist('description')
