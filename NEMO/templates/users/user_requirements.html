@@ -108,7 +108,7 @@
 						<tbody>
 							{% for req in data.requirements %}
 							<tr>
-								<td><span class="{{ req.status }}"></span></td>
+								<td><span class="{{ req.status }}" title="{{ req.status_value }}"></span></td>
 								<td><span title="{{ req.description }}">{{ req.name }}</span></td>
 								<td>
 									{% if req.resource_link %}
@@ -158,7 +158,7 @@
 	<tbody>
 		{% for req in requirements %}
 		<tr>
-			<td><span class="{{ req.status }}"></span></td>
+			<td><span class="{{ req.status }}" title="{{ req.status_value }}"></span></td>
 			<td><span title="{{ req.description }}">{{ req.name }}</span></td>
 			<td>
 				{% if req.resource_link %}
