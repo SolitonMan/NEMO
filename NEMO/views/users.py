@@ -550,4 +550,11 @@ def user_requirements(request):
 	nano_services = ServiceType.objects.filter(core=nano_core).order_by('name')
 	user_projects = request.user.active_projects
 
-	return render(request, 'users/user_requirements.html', {'grouped': grouped, 'group_order': order, 'mcl_services':mcl_services, 'nano_services':nano_services, 'user_projects':user_projects, 'post_data':post_data})
+	user_service_requests = (
+		UserServiceRequest.objects
+		.filter(user=request.user)
+		.select_related('service_type', 'project', 'core', 'pi_user')
+		.order_by('-updated')
+	)
+
+	return render(request, 'users/user_requirements.html', {'grouped': grouped, 'group_order': order, 'mcl_services':mcl_services, 'nano_services':nano_services, 'user_projects':user_projects, 'post_data':post_data, 'user_service_requests': user_service_requests,})
