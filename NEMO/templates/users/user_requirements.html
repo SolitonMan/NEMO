@@ -204,38 +204,6 @@
 </div>
 {% endif %}
 
-<h2>My Service Requests</h2>
-{% if user_service_requests %}
-	<table class="table table-striped">
-		<thead>
-			<tr>
-				<th>Case Number</th>
-				<th>Service</th>
-				<th>Project</th>
-				<th>Status</th>
-				<th>Description</th>
-				<th>Requested</th>
-				<th>Last Updated</th>
-			</tr>
-		</thead>
-		<tbody>
-		{% for req in user_service_requests %}
-			<tr>
-				<td>{% if req.case_number %}{{ req.case_number }}{% endif %}</td>
-				<td>{{ req.service_type.name }}</td>
-				<td>{{ req.project.name }}</td>
-				<td>{{ req.status }}</td>
-				<td>{{ req.description|default:"-" }}</td>
-				<td>{{ req.created|date:"Y-m-d H:i" }}</td>
-				<td>{{ req.updated|date:"Y-m-d H:i" }}</td>
-			</tr>
-		{% endfor %}
-		</tbody>
-	</table>
-{% else %}
-	<p>No service requests found.</p>
-{% endif %}
-
 <div class="panel panel-default core-group" id="pnl_choose_core" style="display:none;">
 	<div class="panel-heading">
 		<div class="row">
@@ -422,6 +390,38 @@
 		</div>
 	</div>
 </div>
+
+<h2>My Service Requests</h2>
+{% if user_service_requests %}
+	<table class="table table-striped">
+		<thead>
+			<tr>
+				<th>Case Number</th>
+				<th>Service</th>
+				<th>Project</th>
+				<th>Status</th>
+				<th>Description</th>
+				<th>Requested</th>
+				<th>Last Updated</th>
+			</tr>
+		</thead>
+		<tbody>
+		{% for req in user_service_requests %}
+			<tr>
+				<td>{% if req.case_number %}{{ req.case_number }}{% endif %}</td>
+				<td>{{ req.service_type.name }}</td>
+				<td>{{ req.project.name }}</td>
+				<td>{{ req.status }}</td>
+				<td>{{ req.description|default:"-" }}</td>
+				<td>{{ req.created|date:"Y-m-d H:i" }}</td>
+				<td>{{ req.updated|date:"Y-m-d H:i" }}</td>
+			</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+{% else %}
+	<p>No service requests found.</p>
+{% endif %}
 
 </div>
 <script>
