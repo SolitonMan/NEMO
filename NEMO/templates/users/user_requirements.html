@@ -94,7 +94,7 @@
 		<div id="group-{{ forloop.counter }}" class="panel-collapse collapse core-collapse {% if not data.all_completed %}in{% endif %}">
 			<div class="panel-body" style="padding:10px 15px;">
 				<div class="table-responsive">
-					<table class="table">
+					<table class="table table-striped">
 						<thead>
 							<tr>
 								<th></th>
@@ -144,7 +144,7 @@
 
 {# FALLBACK: ORIGINAL FLAT TABLE (when grouped is not provided) #}
 {% else %}
-<table class="table">
+<table class="table table-striped">
 	<thead>
 		<tr>
 			<th></th>
@@ -401,6 +401,7 @@
 				<th>Project</th>
 				<th>Status</th>
 				<th>Description</th>
+				<th>Training Requested</th>
 				<th>Requested</th>
 				<th>Last Updated</th>
 			</tr>
@@ -413,6 +414,7 @@
 				<td>{{ req.project.name }}</td>
 				<td>{{ req.status }}</td>
 				<td>{{ req.description|default:"-" }}</td>
+				<td>{{ req.training_requested }}</td>
 				<td>{{ req.created|date:"Y-m-d H:i" }}</td>
 				<td>{{ req.updated|date:"Y-m-d H:i" }}</td>
 			</tr>
