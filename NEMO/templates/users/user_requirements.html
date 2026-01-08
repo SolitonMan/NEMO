@@ -230,7 +230,7 @@
 				<strong><span id="pnl_title">Choose a core</span></strong>
 			</div>
 			<div class="col-xs-2 text-right">
-					
+				<button type="button" class="btn btn-default btn-sm" id="btn_cancel_choose_core" style="display:inline-block;">Cancel</button>
 			</div>
 		</div>
 	</div>
@@ -273,6 +273,7 @@
 				<strong><span id="pnl_title">Materials Characterization Lab Request</span></strong>
 			</div>
 			<div class="col-xs-2 text-right">
+				<button type="button" class="btn btn-default btn-sm btn-cancel-core-request" data-target="#mcl_template">Cancel</button>
 				<button type="button" class="group-toggle btn btn-link" data-toggle="collapse" data-target="#group-mcl" aria-controls="group-mcl" aria-expanded="true">
 					<span class="glyphicon glyphicon-chevron-up" aria-hidden="false"></span>
 					<span class="sr-only">Toggle MCL Requests</span>
@@ -345,6 +346,7 @@
 				<strong><span id="pnl_title">Nanofab Request</span></strong>
 			</div>
 			<div class="col-xs-2 text-right">
+				<button type="button" class="btn btn-default btn-sm btn-cancel-core-request" data-target="#nano_template">Cancel</button>
 				<button type="button" class="group-toggle btn btn-link" data-toggle="collapse" data-target="#group-nano" aria-controls="group-nano" aria-expanded="true">
 					<span class="glyphicon glyphicon-chevron-up" aria-hidden="false"></span>
 					<span class="sr-only">Toggle Nano Requests</span>
@@ -553,6 +555,21 @@
 			$newRow.find('textarea[name="description"]').val('');
 			$newRow.find('select[name="training_requested"]').val('False');
 			$tbody.find('tr.nano-row').last().after($newRow);
+		});
+		// Cancel button for "Choose a core" panel
+		$(document).on('click', '#btn_cancel_choose_core', function (e) {
+			e.preventDefault();
+			$('#pnl_choose_core').hide();
+			$('#btn_add_service').parent().show();
+		});
+
+		// Cancel button for core request panels
+		$(document).on('click', '.btn-cancel-core-request', function (e) {
+			e.preventDefault();
+			var target = $(this).data('target');
+			$(target).hide();
+			$('#pnl_choose_core').show();
+			$('#pnl_choose_core .core-collapse').collapse('show');
 		});
 	})();
 </script>
