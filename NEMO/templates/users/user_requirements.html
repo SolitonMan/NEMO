@@ -414,7 +414,7 @@
 				<td>{{ req.project.name }}</td>
 				<td>{{ req.status }}</td>
 				<td>{{ req.description|default:"-" }}</td>
-				<td>{{ req.training_requested==True }}</td>
+				<td>{% if req.training_requested %}Yes{% else %}No{% endif %}</td>
 				<td>{{ req.created|date:"Y-m-d H:i" }}</td>
 				<td>{{ req.updated|date:"Y-m-d H:i" }}</td>
 			</tr>
