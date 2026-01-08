@@ -120,12 +120,20 @@
 								<td>{{ req.expected_completion_time }}</td>
 								<td>{{ req.completed_on|date:"m/d/Y"|default:"" }}</td>
 								<td>
-									{% if not req.automated_update and req.status_value != 'completed' %}
-									<form method="post" action="{% url 'complete_user_requirement' %}">
-										{% csrf_token %}
-										<input type="hidden" name="requirement_id" value="{{ req.id }}">
-										<button type="submit" class="btn btn-primary btn-sm">Mark Completed</button>
-									</form>
+									{% if not req.automated_update %}
+										{% if req.status_value == 'completed' %}
+											<form method="post" action="{% url 'unmark_user_requirement' %}">
+												{% csrf_token %}
+												<input type="hidden" name="requirement_id" value="{{ req.id }}">
+												<button type="submit" class="btn btn-warning btn-sm">Unmark Completed</button>
+											</form>
+										{% elif req.status_value != 'completed' %}
+											<form method="post" action="{% url 'complete_user_requirement' %}">
+												{% csrf_token %}
+												<input type="hidden" name="requirement_id" value="{{ req.id }}">
+												<button type="submit" class="btn btn-primary btn-sm">Mark Completed</button>
+											</form>
+										{% endif %}
 									{% endif %}
 									{% if req.automated_update and req.status_value != 'completed' %}
 									<span class="text-muted">Automated Update</span>
@@ -170,12 +178,23 @@
 			<td>{{ req.expected_completion_time }}</td>
 			<td>{{ req.completed_on|date:"m/d/Y"|default:"" }}</td>
 			<td>
-				{% if not req.automated_update and req.status_value != 'completed' %}
-				<form method="post" action="{% url 'complete_user_requirement' %}">
-					{% csrf_token %}
-					<input type="hidden" name="requirement_id" value="{{ req.id }}">
-					<button type="submit" class="btn btn-primary btn-sm">Mark Completed</button>
-				</form>
+				{% if not req.automated_update %}
+					{% if req.status_value == 'completed' %}
+						<form method="post" action="{% url 'unmark_user_requirement' %}">
+							{% csrf_token %}
+							<input type="hidden" name="requirement_id" value="{{ req.id }}">
+							<button type="submit" class="btn btn-warning btn-sm">Unmark Completed</button>
+						</form>
+					{% elif req.status_value != 'completed' %}
+						<form method="post" action="{% url 'complete_user_requirement' %}">
+							{% csrf_token %}
+							<input type="hidden" name="requirement_id" value="{{ req.id }}">
+							<button type="submit" class="btn btn-primary btn-sm">Mark Completed</button>
+						</form>
+					{% endif %}
+				{% endif %}
+				{% if req.automated_update and req.status_value != 'completed' %}
+				<span class="text-muted">Automated Update</span>
 				{% endif %}
 			</td>
 		</tr>
@@ -372,10 +391,11 @@
 							<textarea class="form-control" rows="3" cols="20" name="description"></textarea>
 						</td>
 						<td>
-							<select name="training_requested" class="form-control">
+							<!--select name="training_requested" class="form-control">
 								<option value="True">Yes</option>
 								<option value="False" selected>No</option>
-							</select>
+							</select-->
+							<input type="hidden" name="training_requested" value="True" />
 						</td>
 					</tr>
 					<tr>

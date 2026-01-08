@@ -558,3 +558,24 @@ def user_requirements(request):
 	)
 
 	return render(request, 'users/user_requirements.html', {'grouped': grouped, 'group_order': order, 'mcl_services':mcl_services, 'nano_services':nano_services, 'user_projects':user_projects, 'post_data':post_data, 'user_service_requests': user_service_requests,})
+
+
+@login_required
+@require_POST
+def unmark_user_requirement(request):
+	requirement_id = request.POST.get('requirement_id')
+	if not requirement_id:
+		return JsonResponse({'success': False, 'error': 'Missing requirement_id'}, status=400)
+
+	try:
+		progress = UserRequirementProgress.objects.get(user=request.user, requirement_id=requirement_id)
+	except UserRequirementProgress.DoesNotExist:
+		return JsonResponse({'success': False, 'error': 'Requirement progress not found'}, status=404)
+
+	progress.status = 'not_started'
+	progress.completed_on = None
+	progress.expires_on = None
+	progress.updated = None
+	progress.save()
+	return redirect('user_requirements')
+
