@@ -112,7 +112,7 @@
 								<td><span title="{{ req.description }}">{{ req.name }}</span></td>
 								<td>
 									{% if req.resource_link %}
-									<a href="{{ req.resource_link }}" target="_blank">{{ req.resource_link }}</a>
+									<a href="{{ req.resource_link }}" target="_blank">{{ req.resource_link|truncatechars:25 }}...</a>
 									{% else %}
 									N/A
 									{% endif %}
