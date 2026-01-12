@@ -223,7 +223,7 @@
 </div>
 {% else %}
 <div class="alert alert-info" role="alert">
-	<button class="btn btn-success" id="btn_add_service">Add a service</button>
+	<button class="btn btn-success" id="btn_add_service" type="button">Add a service</button>
 </div>
 {% endif %}
 
@@ -409,10 +409,6 @@
 							<textarea class="form-control" rows="3" cols="20" name="description"></textarea>
 						</td>
 						<td>
-							<!--select name="training_requested" class="form-control">
-								<option value="True">Yes</option>
-								<option value="False" selected>No</option>
-							</select-->
 							<input type="hidden" name="training_requested" value="True" />
 						</td>
 					</tr>
@@ -514,8 +510,6 @@
 (function () {
 	var $ = window.jQuery;
 	if (!$) return;
-	if (!$.fn || !$.fn.collapse) return;
-	$('.core-collapse').collapse({ toggle: false });
 
 	// Remove row handler
 	$(document).on('click', '.btn-remove-row', function (e) {
@@ -528,78 +522,6 @@
 		if ($row.hasClass('nano-row') && $tbody.find('tr.nano-row').length > 1) {
 			$row.remove();
 		}
-	});
-
-	// AJAX form submission for MCL
-	$(document).on('submit', '#mcl_template form', function (e) {
-		e.preventDefault();
-		var $form = $(this);
-		var valid = true;
-		$('#mcl_request_table tbody tr.mcl-row').each(function () {
-			var service = $(this).find('select[name="service_select"]').val();
-			var project = $(this).find('select[name="project_select"]').val();
-			if (!service || !project) {
-				valid = false;
-				$(this).addClass('danger');
-			} else {
-				$(this).removeClass('danger');
-			}
-		});
-		if (!valid) {
-			alert('Please select both a service and a project for each row.');
-			return false;
-		}
-
-		var data = serialize($form, {});
-		ajax_post(
-			$form.attr('action') || window.location.href,
-			data,
-			function (response) {
-				$("#mcl_template").hide();
-				$('#btn_add_service').parent().show();
-				// Optionally update the "My Service Requests" table here
-			},
-			function (xhr) {
-				alert('There was an error submitting your request. Please try again.');
-			}
-		);
-		return false;
-	});
-
-	// AJAX form submission for Nanofab
-	$(document).on('submit', '#nano_template form', function (e) {
-		e.preventDefault();
-		var $form = $(this);
-		var valid = true;
-		$('#nano_request_table tbody tr.nano-row').each(function () {
-			var service = $(this).find('select[name="service_select"]').val();
-			var project = $(this).find('select[name="project_select"]').val();
-			if (!service || !project) {
-				valid = false;
-				$(this).addClass('danger');
-			} else {
-				$(this).removeClass('danger');
-			}
-		});
-		if (!valid) {
-			alert('Please select both a service and a project for each row.');
-			return false;
-		}
-
-		var data = serialize($form, {});
-		ajax_post(
-			$form.attr('action') || window.location.href,
-			data,
-			function (response) {
-				$("#nano_template").hide();
-				$('#btn_add_service').parent().show();
-				// Optionally update the "My Service Requests" table here
-			},
-			function (xhr) {
-				alert('There was an error submitting your request. Please try again.');
-			}
-		);
-		return false;
 	});
 
 	// Add service row handlers
@@ -629,6 +551,74 @@
 		$tbody.find('tr.nano-row').last().after($newRow);
 	});
 
+	// AJAX form submission for MCL
+	$(document).on('submit', '#mcl_template form', function (e) {
+		e.preventDefault();
+		var $form = $(this);
+		var valid = true;
+		$('#mcl_request_table tbody tr.mcl-row').each(function () {
+			var service = $(this).find('select[name="service_select"]').val();
+			var project = $(this).find('select[name="project_select"]').val();
+			if (!service || !project) {
+				valid = false;
+				$(this).addClass('danger');
+			} else {
+				$(this).removeClass('danger');
+			}
+		});
+		if (!valid) {
+			alert('Please select both a service and a project for each row.');
+			return false;
+		}
+		var data = serialize($form, {});
+		ajax_post(
+			$form.attr('action') || window.location.href,
+			data,
+			function (response) {
+				$("#mcl_template").hide();
+				$('#btn_add_service').parent().show();
+			},
+			function (xhr) {
+				alert('There was an error submitting your request. Please try again.');
+			}
+		);
+		return false;
+	});
+
+	// AJAX form submission for Nanofab
+	$(document).on('submit', '#nano_template form', function (e) {
+		e.preventDefault();
+		var $form = $(this);
+		var valid = true;
+		$('#nano_request_table tbody tr.nano-row').each(function () {
+			var service = $(this).find('select[name="service_select"]').val();
+			var project = $(this).find('select[name="project_select"]').val();
+			if (!service || !project) {
+				valid = false;
+				$(this).addClass('danger');
+			} else {
+				$(this).removeClass('danger');
+			}
+		});
+		if (!valid) {
+			alert('Please select both a service and a project for each row.');
+			return false;
+		}
+		var data = serialize($form, {});
+		ajax_post(
+			$form.attr('action') || window.location.href,
+			data,
+			function (response) {
+				$("#nano_template").hide();
+				$('#btn_add_service').parent().show();
+			},
+			function (xhr) {
+				alert('There was an error submitting your request. Please try again.');
+			}
+		);
+		return false;
+	});
+
 	// Cancel button for "Choose a core" panel
 	$(document).on('click', '#btn_cancel_choose_core', function (e) {
 		e.preventDefault();
@@ -645,7 +635,7 @@
 		$('#pnl_choose_core .core-collapse').collapse('show');
 	});
 
-	// Core selection logic (no change)
+	// Core selection logic
 	$(document).on('click', '#btn_add_service', function (e) {
 		e.preventDefault();
 		var $panel = $('#pnl_choose_core .core-collapse');
