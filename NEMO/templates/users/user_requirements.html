@@ -429,6 +429,28 @@
 	</div>
 </div>
 
+<div class="panel panel-default core-group" id="2dcc_template" style="display:none;">
+	<div class="panel-heading">
+		<div class="row">
+			<div class="col-xs-10">
+				<strong><span id="pnl_title">2DCC Request</span></strong>
+			</div>
+			<div class="col-xs-2 text-right">
+				<button type="button" class="btn btn-danger btn-sm btn-cancel-core-request" data-target="#nano_template">Cancel</button>
+				<button type="button" class="group-toggle btn btn-link" data-toggle="collapse" data-target="#group-nano" aria-controls="group-nano" aria-expanded="true">
+					<span class="glyphicon glyphicon-chevron-up" aria-hidden="false"></span>
+					<span class="sr-only">Toggle 2DCC Requests</span>
+				</button>
+			</div>
+		</div>
+	</div>
+	<div id="group-2dcc" class="panel-collapse collapse core-collapse">
+		<div class="panel-body" style="padding:10px 15px;">
+			<span>Please see the <a href="https://www.mri.psu.edu/2d-crystal-consortium/research/user-program">2DCC User Program page</a> to find the option best suited to meeting your needs.</span>
+		</div>
+	</div>
+</div>
+
 <h2>My Service Requests</h2>
 {% if user_service_requests %}
 	<table class="table table-striped">
@@ -545,6 +567,11 @@
 					$('#btn_add_service').parent().show();
 				});
 			}
+
+			if (coreId == '4') {
+				$("#2dcc_template").show();
+				$('#group-2dcc').collapse('show');
+			}
 		});
 
 		$(document).on('click', '#btn_mcl_add_service', function (e) {
@@ -592,9 +619,11 @@
 		$(document).on('click', '.btn-remove-row', function (e) {
 			e.preventDefault();
 			var $row = $(this).closest('tr');
-			// Only remove if more than one row remains
 			var $tbody = $row.closest('tbody');
-			if ($tbody.find('tr.mcl-row').length > 1 || $tbody.find('tr.nano-row').length > 1) {
+			if ($row.hasClass('mcl-row') && $tbody.find('tr.mcl-row').length > 1) {
+				$row.remove();
+			}
+			if ($row.hasClass('nano-row') && $tbody.find('tr.nano-row').length > 1) {
 				$row.remove();
 			}
 		});
@@ -615,7 +644,9 @@
 			if (!valid) {
 				alert('Please select both a service and a project for each row.');
 				e.preventDefault();
+				return false;
 			}
+			// Do not hide the panel or show the add button here; let the server response handle it
 		});
 
 		// Validation for Nanofab submit
@@ -634,8 +665,13 @@
 			if (!valid) {
 				alert('Please select both a service and a project for each row.');
 				e.preventDefault();
+				return false;
 			}
+			// Do not hide the panel or show the add button here; let the server response handle it
 		});
+
+		// Remove any click handler that hides the panel on submit
+		$("#btn_mcl_submit, #btn_nano_submit").off('click');
 	})();
 </script>
 {% endblock %}
