@@ -509,6 +509,7 @@
 		});
 	})();
 </script>
+
 <script>
 (function () {
 	var $ = window.jQuery;
@@ -531,6 +532,7 @@
 
 	// AJAX form submission for MCL
 	$(document).on('submit', '#mcl_template form', function (e) {
+		e.preventDefault();
 		var $form = $(this);
 		var valid = true;
 		$('#mcl_request_table tbody tr.mcl-row').each(function () {
@@ -545,29 +547,28 @@
 		});
 		if (!valid) {
 			alert('Please select both a service and a project for each row.');
-			e.preventDefault();
 			return false;
 		}
-		e.preventDefault(); // Always prevent default form submission
-		var formData = new FormData($form[0]);
+
+		var data = serialize($form, {});
 		ajax_post(
 			$form.attr('action') || window.location.href,
-			formData,
-			function (data) {
+			data,
+			function (response) {
 				$("#mcl_template").hide();
 				$('#btn_add_service').parent().show();
 				// Optionally update the "My Service Requests" table here
 			},
 			function (xhr) {
 				alert('There was an error submitting your request. Please try again.');
-			},
-			{ processData: false, contentType: false }
+			}
 		);
 		return false;
 	});
 
 	// AJAX form submission for Nanofab
 	$(document).on('submit', '#nano_template form', function (e) {
+		e.preventDefault();
 		var $form = $(this);
 		var valid = true;
 		$('#nano_request_table tbody tr.nano-row').each(function () {
@@ -582,23 +583,21 @@
 		});
 		if (!valid) {
 			alert('Please select both a service and a project for each row.');
-			e.preventDefault();
 			return false;
 		}
-		e.preventDefault(); // Always prevent default form submission
-		var formData = new FormData($form[0]);
+
+		var data = serialize($form, {});
 		ajax_post(
 			$form.attr('action') || window.location.href,
-			formData,
-			function (data) {
+			data,
+			function (response) {
 				$("#nano_template").hide();
 				$('#btn_add_service').parent().show();
 				// Optionally update the "My Service Requests" table here
 			},
 			function (xhr) {
 				alert('There was an error submitting your request. Please try again.');
-			},
-			{ processData: false, contentType: false }
+			}
 		);
 		return false;
 	});
