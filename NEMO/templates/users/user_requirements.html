@@ -532,48 +532,114 @@
 				$icon.removeClass('glyphicon-chevron-up').addClass('glyphicon-chevron-down');
 			});
 
-		$(document).on('click', '#btn_add_service', function (e) {
+		// Remove row handler
+		$(document).on('click', '.btn-remove-row', function (e) {
 			e.preventDefault();
-			var $panel = $('#pnl_choose_core .core-collapse');
-			if ($panel.length) {
-				$panel.collapse('show');
+			var $row = $(this).closest('tr');
+			var $tbody = $row.closest('tbody');
+			if ($row.hasClass('mcl-row') && $tbody.find('tr.mcl-row').length > 1) {
+				$row.remove();
 			}
+			if ($row.hasClass('nano-row') && $tbody.find('tr.nano-row').length > 1) {
+				$row.remove();
+			}
+		});
+
+		// AJAX form submission for MCL
+		$(document).on('submit', '#mcl_template form', function (e) {
+			e.preventDefault();
+			var $form = $(this);
+			var valid = true;
+			$('#mcl_request_table tbody tr.mcl-row').each(function () {
+				var service = $(this).find('select[name="service_select"]').val();
+				var project = $(this).find('select[name="project_select"]').val();
+				if (!service || !project) {
+					valid = false;
+					$(this).addClass('danger');
+				} else {
+					$(this).removeClass('danger');
+				}
+			});
+			if (!valid) {
+				alert('Please select both a service and a project for each row.');
+				return false;
+			}
+
+			// Use FormData to support multiple rows
+			var formData = new FormData($form[0]);
+			ajax_post(
+				$form.attr('action') || window.location.href,
+				formData,
+				function (data) {
+					// Success: Hide panel, show add button, optionally refresh part of the page
+					$("#mcl_template").hide();
+					$('#btn_add_service').parent().show();
+					// Optionally, update the "My Service Requests" table here using data from the response
+					// For example: $('#my_service_requests_container').html(data.updated_table_html);
+				},
+				function (xhr) {
+					// Failure: Show error, keep panel open
+					alert('There was an error submitting your request. Please try again.');
+				},
+				{ processData: false, contentType: false }
+			);
+			return false;
+		});
+
+		// AJAX form submission for Nanofab
+		$(document).on('submit', '#nano_template form', function (e) {
+			e.preventDefault();
+			var $form = $(this);
+			var valid = true;
+			$('#nano_request_table tbody tr.nano-row').each(function () {
+				var service = $(this).find('select[name="service_select"]').val();
+				var project = $(this).find('select[name="project_select"]').val();
+				if (!service || !project) {
+					valid = false;
+					$(this).addClass('danger');
+				} else {
+					$(this).removeClass('danger');
+				}
+			});
+			if (!valid) {
+				alert('Please select both a service and a project for each row.');
+				return false;
+			}
+
+			var formData = new FormData($form[0]);
+			ajax_post(
+				$form.attr('action') || window.location.href,
+				formData,
+				function (data) {
+					$("#nano_template").hide();
+					$('#btn_add_service').parent().show();
+					// Optionally update the "My Service Requests" table here
+				},
+				function (xhr) {
+					alert('There was an error submitting your request. Please try again.');
+				},
+				{ processData: false, contentType: false }
+			);
+			return false;
+		});
+
+		// Cancel button for "Choose a core" panel
+		$(document).on('click', '#btn_cancel_choose_core', function (e) {
+			e.preventDefault();
+			$('#pnl_choose_core').hide();
+			$('#btn_add_service').parent().show();
+		});
+
+		// Cancel button for core request panels
+		$(document).on('click', '.btn-cancel-core-request', function (e) {
+			e.preventDefault();
+			var target = $(this).data('target');
+			$(target).hide();
 			$('#pnl_choose_core').show();
-			$('#btn_add_service').parent().hide();
-		});
-		$(document).on('change', '#choose_core', function (e) {
-			e.preventDefault();
-			var $panel = $('#pnl_choose_core');
-			$panel.hide();
-
-			var coreId = this.value;
-			if (!coreId) return;
-
-			// load the template for the selected core
-			if (coreId == '1') {
-				$("#mcl_template").show();
-				$('#group-mcl').collapse('show');
-				$("#btn_mcl_submit").on('click', function () {
-					$("#mcl_template").hide();					
-					$('#btn_add_service').parent().show();
-				});
-			}
-
-			if (coreId == '2') {
-				$("#nano_template").show();
-				$('#group-nano').collapse('show');
-				$("#btn_nano_submit").on('click', function () {
-					$("#nano_template").hide();					
-					$('#btn_add_service').parent().show();
-				});
-			}
-
-			if (coreId == '4') {
-				$("#2dcc_template").show();
-				$('#group-2dcc').collapse('show');
-			}
+			$('#pnl_choose_core .core-collapse').collapse('show');
 		});
 
+		// Add service row handlers (no change)
 		$(document).on('click', '#btn_mcl_add_service', function (e) {
 			e.preventDefault();
 			var $tbody = $('#mcl_request_table tbody');
@@ -599,79 +665,38 @@
 			$newRow.find('select[name="training_requested"]').val('False');
 			$tbody.find('tr.nano-row').last().after($newRow);
 		});
-		// Cancel button for "Choose a core" panel
-		$(document).on('click', '#btn_cancel_choose_core', function (e) {
-			e.preventDefault();
-			$('#pnl_choose_core').hide();
-			$('#btn_add_service').parent().show();
-		});
 
-		// Cancel button for core request panels
-		$(document).on('click', '.btn-cancel-core-request', function (e) {
+		// Core selection logic (no change)
+		$(document).on('click', '#btn_add_service', function (e) {
 			e.preventDefault();
-			var target = $(this).data('target');
-			$(target).hide();
+			var $panel = $('#pnl_choose_core .core-collapse');
+			if ($panel.length) {
+				$panel.collapse('show');
+			}
 			$('#pnl_choose_core').show();
-			$('#pnl_choose_core .core-collapse').collapse('show');
+			$('#btn_add_service').parent().hide();
 		});
-
-		// Remove row handler
-		$(document).on('click', '.btn-remove-row', function (e) {
+		$(document).on('change', '#choose_core', function (e) {
 			e.preventDefault();
-			var $row = $(this).closest('tr');
-			var $tbody = $row.closest('tbody');
-			if ($row.hasClass('mcl-row') && $tbody.find('tr.mcl-row').length > 1) {
-				$row.remove();
+			var $panel = $('#pnl_choose_core');
+			$panel.hide();
+
+			var coreId = this.value;
+			if (!coreId) return;
+
+			if (coreId == '1') {
+				$("#mcl_template").show();
+				$('#group-mcl').collapse('show');
 			}
-			if ($row.hasClass('nano-row') && $tbody.find('tr.nano-row').length > 1) {
-				$row.remove();
+			if (coreId == '2') {
+				$("#nano_template").show();
+				$('#group-nano').collapse('show');
+			}
+			if (coreId == '4') {
+				$("#2dcc_template").show();
+				$('#group-2dcc').collapse('show');
 			}
 		});
-
-		// Validation for MCL submit
-		$(document).on('submit', '#mcl_template form', function (e) {
-			var valid = true;
-			$('#mcl_request_table tbody tr.mcl-row').each(function () {
-				var service = $(this).find('select[name="service_select"]').val();
-				var project = $(this).find('select[name="project_select"]').val();
-				if (!service || !project) {
-					valid = false;
-					$(this).addClass('danger');
-				} else {
-					$(this).removeClass('danger');
-				}
-			});
-			if (!valid) {
-				alert('Please select both a service and a project for each row.');
-				e.preventDefault();
-				return false;
-			}
-			// Do not hide the panel or show the add button here; let the server response handle it
-		});
-
-		// Validation for Nanofab submit
-		$(document).on('submit', '#nano_template form', function (e) {
-			var valid = true;
-			$('#nano_request_table tbody tr.nano-row').each(function () {
-				var service = $(this).find('select[name="service_select"]').val();
-				var project = $(this).find('select[name="project_select"]').val();
-				if (!service || !project) {
-					valid = false;
-					$(this).addClass('danger');
-				} else {
-					$(this).removeClass('danger');
-				}
-			});
-			if (!valid) {
-				alert('Please select both a service and a project for each row.');
-				e.preventDefault();
-				return false;
-			}
-			// Do not hide the panel or show the add button here; let the server response handle it
-		});
-
-		// Remove any click handler that hides the panel on submit
-		$("#btn_mcl_submit, #btn_nano_submit").off('click');
 	})();
 </script>
 {% endblock %}
