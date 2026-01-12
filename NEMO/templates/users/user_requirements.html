@@ -39,30 +39,6 @@
 {% endblock %}
 {% block content %}
 
-{% if post_data %}
-	<table class="table table-bordered">
-		<thead>
-			<tr>
-				<th>Service</th>
-				<th>Project</th>
-				<th>Description</th>
-			</tr>
-		</thead>
-		<tbody>
-		{% for row in post_data %}
-			<tr>
-				<td>{{ row.service }}</td>
-				<td>{{ row.project }}</td>
-				<td>{{ row.description }}</td>
-			</tr>
-		{% endfor %}
-		</tbody>
-	</table>
-{% else %}
-	<div class="alert alert-info">No POST data submitted.</div>
-{% endif %}
-
-
 <h2>Your Requirements</h2>
 
 {% if request.GET.first == '1' %}
@@ -577,6 +553,7 @@
 			function (response) {
 				$("#mcl_template").hide();
 				$('#btn_add_service').parent().show();
+				alert('Your request has been submitted');
 			},
 			function (xhr) {
 				alert('There was an error submitting your request. Please try again.');
@@ -611,6 +588,7 @@
 			function (response) {
 				$("#nano_template").hide();
 				$('#btn_add_service').parent().show();
+				alert('Your request has been submitted');
 			},
 			function (xhr) {
 				alert('There was an error submitting your request. Please try again.');
@@ -630,7 +608,8 @@
 	$(document).on('click', '.btn-cancel-core-request', function (e) {
 		e.preventDefault();
 		var target = $(this).data('target');
-		$(target).hide();
+		$(target).hide(); 
+		$('#choose_core').val('');
 		$('#pnl_choose_core').show();
 		$('#pnl_choose_core .core-collapse').collapse('show');
 	});
