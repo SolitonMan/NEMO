@@ -459,27 +459,21 @@
 
 </div>
 <script>
-	(function () {
-		var collapses = document.querySelectorAll('.core-collapse');
-		Array.prototype.forEach.call(collapses, function (c) {
-			c.addEventListener('show.bs.collapse', function () {
-				var heading = c.previousElementSibling;
-				if (!heading) return;
-				var icon = heading.querySelector('.group-toggle .glyphicon');
-				if (!icon) return;
-				icon.classList.remove('glyphicon-chevron-down');
-				icon.classList.add('glyphicon-chevron-up');
-			});
-			c.addEventListener('hide.bs.collapse', function () {
-				var heading = c.previousElementSibling;
-				if (!heading) return;
-				var icon = heading.querySelector('.group-toggle .glyphicon');
-				if (!icon) return;
-				icon.classList.remove('glyphicon-chevron-up');
-				icon.classList.add('glyphicon-chevron-down');
-			});
+(function () {
+	var $ = window.jQuery;
+	if (!$) return;
+
+	// Use jQuery's event system for Bootstrap collapse events
+	$('.core-collapse')
+		.on('show.bs.collapse', function () {
+			var $icon = $(this).prev('.panel-heading').find('.group-toggle .glyphicon');
+			$icon.removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-up');
+		})
+		.on('hide.bs.collapse', function () {
+			var $icon = $(this).prev('.panel-heading').find('.group-toggle .glyphicon');
+			$icon.removeClass('glyphicon-chevron-up').addClass('glyphicon-chevron-down');
 		});
-	})();
+})();
 </script>
 
 <script>
