@@ -31,6 +31,10 @@
 		font-size: 1.1em;
 		line-height: 1;
 	}
+
+	tr.danger {
+		background-color: #f2dede;
+	}
 </style>
 {% endblock %}
 {% block content %}
@@ -288,6 +292,7 @@
 			<table class="table" id="mcl_request_table">
 				<thead>
 					<tr>
+						<th></th>
 						<th>Service</th>
 						<th>Project</th>
 						<th>Description</th>
@@ -296,6 +301,11 @@
 				</thead>
 				<tbody>
 					<tr class="mcl-row">
+						<td>
+							<button type="button" class="btn btn-danger btn-xs btn-remove-row" title="Remove row">
+								<span aria-hidden="true">&times;</span>
+							</button>
+						</td>
 						<td>
 							<select name="service_select" class="form-control">
 								<option value="">Please select an option</option>
@@ -361,14 +371,20 @@
 			<table class="table" id="nano_request_table">
 				<thead>
 					<tr>
+						<th></th>
 						<th>Service</th>
 						<th>Project</th>
 						<th>Description</th>
-						<th>Please train me</th>
+						<th></th>
 					</tr>
 				</thead>
 				<tbody>
 					<tr class="nano-row">
+						<td>
+							<button type="button" class="btn btn-danger btn-xs btn-remove-row" title="Remove row">
+								<span aria-hidden="true">&times;</span>
+							</button>
+						</td>
 						<td>
 							<select name="service_select" class="form-control">
 								<option value="">Please select an option</option>
@@ -570,6 +586,55 @@
 			$(target).hide();
 			$('#pnl_choose_core').show();
 			$('#pnl_choose_core .core-collapse').collapse('show');
+		});
+
+		// Remove row handler
+		$(document).on('click', '.btn-remove-row', function (e) {
+			e.preventDefault();
+			var $row = $(this).closest('tr');
+			// Only remove if more than one row remains
+			var $tbody = $row.closest('tbody');
+			if ($tbody.find('tr.mcl-row').length > 1 || $tbody.find('tr.nano-row').length > 1) {
+				$row.remove();
+			}
+		});
+
+		// Validation for MCL submit
+		$(document).on('submit', '#mcl_template form', function (e) {
+			var valid = true;
+			$('#mcl_request_table tbody tr.mcl-row').each(function () {
+				var service = $(this).find('select[name="service_select"]').val();
+				var project = $(this).find('select[name="project_select"]').val();
+				if (!service || !project) {
+					valid = false;
+					$(this).addClass('danger');
+				} else {
+					$(this).removeClass('danger');
+				}
+			});
+			if (!valid) {
+				alert('Please select both a service and a project for each row.');
+				e.preventDefault();
+			}
+		});
+
+		// Validation for Nanofab submit
+		$(document).on('submit', '#nano_template form', function (e) {
+			var valid = true;
+			$('#nano_request_table tbody tr.nano-row').each(function () {
+				var service = $(this).find('select[name="service_select"]').val();
+				var project = $(this).find('select[name="project_select"]').val();
+				if (!service || !project) {
+					valid = false;
+					$(this).addClass('danger');
+				} else {
+					$(this).removeClass('danger');
+				}
+			});
+			if (!valid) {
+				alert('Please select both a service and a project for each row.');
+				e.preventDefault();
+			}
 		});
 	})();
 </script>
