@@ -275,8 +275,10 @@
 						<th></th>
 						<th>Service</th>
 						<th>Project</th>
-						<th>Description</th>
 						<th>Please train me</th>
+					</tr>
+					<tr>
+						<th colspan="4">Description</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -307,13 +309,15 @@
 							{% endif %}
 						</td>
 						<td>
-							<textarea class="form-control" rows="3" cols="20" name="description"></textarea>
-						</td>
-						<td>
 							<select name="training_requested" class="form-control">
 								<option value="True">Yes</option>
 								<option value="False" selected>No</option>
 							</select>
+						</td>
+					</tr>
+					<tr class="mcl-row">
+						<td>
+							<textarea class="form-control" rows="3" cols="20" name="description"></textarea>
 						</td>
 					</tr>
 					<tr>
@@ -502,14 +506,17 @@
 	$(document).on('click', '#btn_mcl_add_service', function (e) {
 		e.preventDefault();
 		var $tbody = $('#mcl_request_table tbody');
-		var $templateRow = $tbody.find('tr.mcl-row').first();
-		if (!$templateRow.length) return;
-		var $newRow = $templateRow.clone(true, true);
-		$newRow.find('select[name="service_select"]').val('');
-		$newRow.find('select[name="project_select"]').val('');
-		$newRow.find('textarea[name="description"]').val('');
-		$newRow.find('select[name="training_requested"]').val('False');
-		$tbody.find('tr.mcl-row').last().after($newRow);
+		var $templateRow1 = $tbody.find('tr.mcl-row').first();
+		var $templateRow2 = $templateRow1.next();
+		if (!$templateRow1.length) return;
+		var $newRow1 = $templateRow1.clone(true, true);
+		var $newRow2 = $templateRow2.clone(true, true);
+		$newRow1.find('select[name="service_select"]').val('');
+		$newRow1.find('select[name="project_select"]').val('');
+		$newRow1.find('select[name="training_requested"]').val('False');
+		$newRow2.find('textarea[name="description"]').val('');
+		$tbody.find('tr.mcl-row').last().after($newRow1);
+		$tbody.find('tr.mcl-row').last().after($newRow2);
 	});
 
 	$(document).on('click', '#btn_nano_add_service', function (e) {
