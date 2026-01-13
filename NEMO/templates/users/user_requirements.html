@@ -492,7 +492,8 @@
 		e.preventDefault();
 		var $row = $(this).closest('tr');
 		var $tbody = $row.closest('tbody');
-		if ($row.hasClass('mcl-row') && $tbody.find('tr.mcl-row').length > 1) {
+		if ($row.hasClass('mcl-row') && $tbody.find('tr.mcl-row').length > 2) {
+			$row.next().remove();
 			$row.remove();
 		}
 		if ($row.hasClass('nano-row') && $tbody.find('tr.nano-row').length > 1) {
