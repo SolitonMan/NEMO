@@ -579,3 +579,56 @@ def unmark_user_requirement(request):
 	progress.save()
 	return redirect('user_requirements')
 
+
+@login_required
+@require_http_methods(['GET', 'POST'])
+def user_requests(request):
+
+	if request.method == 'POST':
+
+		services = request.POST.getlist('service_select')
+		projects = request.POST.getlist('project_select')
+		descriptions = request.POST.getlist('description')
+		training_requests = request.POST.getlist('training_requested')
+
+		# Combine each set into a row
+		rows = []
+		for service, project, description, training_request in zip(services, projects, descriptions, training_requests):
+			rows.append({
+				'service': service,
+				'project': project,
+				'description': description,
+				'training_request': training_request,
+			})
+
+			# insert into UserServiceRequest for each item
+			svc = ServiceType.objects.get(id=service)
+			proj = Project.objects.get(id=project)
+			UserServiceRequest.objects.create(
+				updated=timezone.now(),
+				status='Open',
+				description=description,
+				core=svc.core,
+				pi_user=proj.owner,
+				project=proj,
+				service_type=svc,
+				user=request.user,
+				training_request=training_request
+			)
+
+		post_data = rows
+
+	mcl_core = Core.objects.get(id=1)
+	mcl_services = ServiceType.objects.filter(core=mcl_core).order_by('name')
+	nano_core = Core.objects.get(id=2)
+	nano_services = ServiceType.objects.filter(core=nano_core).order_by('name')
+	user_projects = request.user.active_projects
+
+	user_service_requests = (
+		UserServiceRequest.objects
+		.filter(user=request.user)
+		.select_related('service_type', 'project', 'core', 'pi_user')
+		.order_by('-updated')
+	)
+
+	return render(request, 'users/user_requests.html', {'mcl_services':mcl_services, 'nano_services':nano_services, 'user_projects':user_projects, 'user_service_requests': user_service_requests,})

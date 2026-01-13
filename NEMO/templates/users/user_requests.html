@@ -1,0 +1,503 @@
+{% extends 'base.html' %}
+{% load custom_tags_and_filters %}
+{% block title %}Your Requirements{% endblock %}
+{% block extrahead %}
+	{% load static %}
+<style>
+	/* Neutral, colorless tiles */
+	.panel.panel-default {
+		box-shadow: none;
+		border-color: #ddd;
+	}
+
+	.panel-heading {
+		background-color: #f9f9f9;
+	}
+	/* Optional spacing */
+	.core-group + .core-group {
+		margin-top: 10px;
+	}
+	/* Keep your existing styles in case they are used elsewhere */
+	button[aria-expanded="true"] .toggle-icon::before {
+		content: "-";
+	}
+
+	button[aria-expanded="false"] .toggle-icon::before {
+		content: "+";
+	}
+
+	button .toggle-icon::before {
+		font-weight: 700;
+		font-size: 1.1em;
+		line-height: 1;
+	}
+
+	tr.danger {
+		background-color: #f2dede;
+	}
+</style>
+{% endblock %}
+{% block content %}
+
+<h2>Your Requests</h2>
+
+<div class="container-fluid">
+{% if request.GET.first == '1' %}
+<div class="alert alert-info" role="alert">
+	Do you want to become and on site user? <button class="btn btn-success">Yes</button> <button class="btn btn-danger">No</button>
+</div>
+{% else %}
+<div class="alert alert-info" role="alert">
+	<button class="btn btn-success" id="btn_add_service" type="button">Submit a request</button>
+</div>
+{% endif %}
+
+<div class="panel panel-default core-group" id="pnl_choose_core" style="display:none;">
+	<div class="panel-heading">
+		<div class="row">
+			<div class="col-xs-10">
+				<strong><span id="pnl_title">Choose a core</span></strong>
+			</div>
+			<div class="col-xs-2 text-right">
+				<button type="button" class="btn btn-danger btn-sm" id="btn_cancel_choose_core" style="display:inline-block;">Cancel</button>
+			</div>
+		</div>
+	</div>
+	<div id="group-temp" class="panel-collapse collapse core-collapse">
+		<div class="panel-body" style="padding:10px 15px;">
+			<div>
+				<select class="form-control" id="choose_core">
+					<option value="">-- Choose a core --</option>
+					<option value="1">Materials Characterization Lab (MCL)</option>
+					<option value="2">Nanofab</option>
+					<option value="4">2DCC</option>
+				</select>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="panel panel-default core-group" id="pnl_template" style="display:none;">
+	<div class="panel-heading">
+		<div class="row">
+			<div class="col-xs-10">
+				<strong><span id="pnl_title"></span></strong>
+			</div>
+			<div class="col-xs-2 text-right">
+					
+			</div>
+		</div>
+	</div>
+	<div id="group-temp" class="panel-collapse collapse core-collapse">
+		<div class="panel-body" style="padding:10px 15px;">
+				
+		</div>
+	</div>
+</div>
+
+<div class="panel panel-default core-group" id="mcl_template" style="display:none;">
+	<div class="panel-heading">
+		<div class="row">
+			<div class="col-xs-10">
+				<strong><span id="pnl_title">Materials Characterization Lab Request</span></strong>
+			</div>
+			<div class="col-xs-2 text-right">
+				<button type="button" class="btn btn-danger btn-sm btn-cancel-core-request" data-target="#mcl_template">Cancel</button>
+				<button type="button" class="group-toggle btn btn-link" data-toggle="collapse" data-target="#group-mcl" aria-controls="group-mcl" aria-expanded="true">
+					<span class="glyphicon glyphicon-chevron-up" aria-hidden="false"></span>
+					<span class="sr-only">Toggle MCL Requests</span>
+				</button>
+			</div>
+		</div>
+	</div>
+	<div id="group-mcl" class="panel-collapse collapse core-collapse in">
+		<div class="panel-body" style="padding:10px 15px;">
+			<form method="post">
+			{% csrf_token %}
+			<table class="table" id="mcl_request_table">
+				<thead>
+					<tr>
+						<th></th>
+						<th>Service</th>
+						<th>Project</th>
+						<th>Please train me</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr class="mcl-row">
+						<td>
+							<button type="button" class="btn btn-danger btn-xs btn-remove-row" title="Remove row">
+								<span aria-hidden="true">&times;</span>
+							</button>
+						</td>
+						<td>
+							<select name="service_select" class="form-control">
+								<option value="">Please select an option</option>
+								{% for opt in mcl_services %}
+								<option value="{{ opt.id }}">{{ opt.name }}</option>
+								{% endfor %}
+							</select>
+						</td>
+						<td>
+							{% if user_projects is not None %}
+							<select name="project_select" class="form-control">
+								<option value="">Please select an option</option>
+								{% for p in user_projects %}
+								<option value="{{ p.id }}">{{ p }} [PI: {{ p.owner.first_name }} {{ p.owner.last_name }} ({{ p.owner.username }})]</option>
+								{% endfor %}
+							</select>
+							{% else %}
+							No project available
+							{% endif %}
+						</td>
+						<td>
+							<select name="training_requested" class="form-control">
+								<option value="True">Yes</option>
+								<option value="False" selected>No</option>
+							</select>
+						</td>
+					</tr>
+					<tr class="mcl-row">
+						<td colspan="4">
+							<label for="description">Description</label>
+							<textarea class="form-control" rows="5" name="description"></textarea>
+						</td>
+					</tr>
+					<tr>
+						<td colspan="3">
+							<button class="btn btn-success" id="btn_mcl_add_service" type="button">Add item</button>
+						</td>
+						<td>
+							<button type="submit" class="btn btn-success" id="btn_mcl_submit">Submit</button>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			</form>
+		</div>
+	</div>
+</div>
+
+<div class="panel panel-default core-group" id="nano_template" style="display:none;">
+	<div class="panel-heading">
+		<div class="row">
+			<div class="col-xs-10">
+				<strong><span id="pnl_title">Nanofab Request</span></strong>
+			</div>
+			<div class="col-xs-2 text-right">
+				<button type="button" class="btn btn-danger btn-sm btn-cancel-core-request" data-target="#nano_template">Cancel</button>
+				<button type="button" class="group-toggle btn btn-link" data-toggle="collapse" data-target="#group-nano" aria-controls="group-nano" aria-expanded="true">
+					<span class="glyphicon glyphicon-chevron-up" aria-hidden="false"></span>
+					<span class="sr-only">Toggle Nano Requests</span>
+				</button>
+			</div>
+		</div>
+	</div>
+	<div id="group-nano" class="panel-collapse collapse core-collapse in">
+		<div class="panel-body" style="padding:10px 15px;">
+			<form method="post">
+			{% csrf_token %}
+			<table class="table" id="nano_request_table">
+				<thead>
+					<tr>
+						<th></th>
+						<th>Service</th>
+						<th>Project</th>
+						<th>Description</th>
+						<th></th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr class="nano-row">
+						<td>
+							<button type="button" class="btn btn-danger btn-xs btn-remove-row" title="Remove row">
+								<span aria-hidden="true">&times;</span>
+							</button>
+						</td>
+						<td>
+							<select name="service_select" class="form-control">
+								<option value="">Please select an option</option>
+								{% for opt in nano_services %}
+								<option value="{{ opt.id }}">{{ opt.name }}</option>
+								{% endfor %}
+							</select>
+						</td>
+						<td>
+							{% if user_projects is not None %}
+							<select name="project_select" class="form-control">
+								<option value="">Please select an option</option>
+								{% for p in user_projects %}
+								<option value="{{ p.id }}">{{ p }} [PI: {{ p.owner.first_name }} {{ p.owner.last_name }} ({{ p.owner.username }})]</option>
+								{% endfor %}
+							</select>
+							{% else %}
+							No project available
+							{% endif %}
+						</td>
+						<td>
+							<textarea class="form-control" rows="3" cols="20" name="description"></textarea>
+						</td>
+						<td>
+							<input type="hidden" name="training_requested" value="True" />
+						</td>
+					</tr>
+					<tr>
+						<td colspan="3">
+							<button class="btn btn-success" id="btn_nano_add_service" type="button">Add a service</button>
+						</td>
+						<td>
+							<button type="submit" class="btn btn-success" id="btn_nano_submit">Submit</button>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			</form>
+		</div>
+	</div>
+</div>
+
+<div class="panel panel-default core-group" id="2dcc_template" style="display:none;">
+	<div class="panel-heading">
+		<div class="row">
+			<div class="col-xs-10">
+				<strong><span id="pnl_title">2DCC Request</span></strong>
+			</div>
+			<div class="col-xs-2 text-right">
+				<button type="button" class="btn btn-danger btn-sm btn-cancel-core-request" data-target="#2dcc_template">Cancel</button>
+				<button type="button" class="group-toggle btn btn-link" data-toggle="collapse" data-target="#group-2dcc" aria-controls="group-2dcc" aria-expanded="true">
+					<span class="glyphicon glyphicon-chevron-up" aria-hidden="false"></span>
+					<span class="sr-only">Toggle 2DCC Requests</span>
+				</button>
+			</div>
+		</div>
+	</div>
+	<div id="group-2dcc" class="panel-collapse collapse core-collapse">
+		<div class="panel-body" style="padding:10px 15px;">
+			<span>Please see the <a href="https://www.mri.psu.edu/2d-crystal-consortium/research/user-program" target="_blank">2DCC User Program page</a> to find the option best suited to meeting your needs.</span>
+		</div>
+	</div>
+</div>
+
+<h2>My Service Requests</h2>
+{% if user_service_requests %}
+	<table class="table table-striped">
+		<thead>
+			<tr>
+				<th>Case Number</th>
+				<th>Service</th>
+				<th>Project</th>
+				<th>Status</th>
+				<th>Description</th>
+				<th>Training Requested</th>
+				<th>Requested</th>
+				<th>Last Updated</th>
+			</tr>
+		</thead>
+		<tbody>
+		{% for req in user_service_requests %}
+			<tr>
+				<td>{% if req.case_number %}{{ req.case_number }}{% endif %}</td>
+				<td>{{ req.service_type.name }}</td>
+				<td>{{ req.project.name }}</td>
+				<td>{{ req.status }}</td>
+				<td>{{ req.description|default:"-" }}</td>
+				<td>{% if req.training_request %}Yes{% else %}No{% endif %}</td>
+				<td>{{ req.created|date:"Y-m-d H:i" }}</td>
+				<td>{{ req.updated|date:"Y-m-d H:i" }}</td>
+			</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+{% else %}
+	<p>No service requests found.</p>
+{% endif %}
+
+</div>
+<script>
+(function () {
+	var $ = window.jQuery;
+	if (!$) return;
+
+	// Use jQuery's event system for Bootstrap collapse events
+	$('.core-collapse')
+		.on('show.bs.collapse', function () {
+			var $icon = $(this).prev('.panel-heading').find('.group-toggle .glyphicon');
+			$icon.removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-up');
+		})
+		.on('hide.bs.collapse', function () {
+			var $icon = $(this).prev('.panel-heading').find('.group-toggle .glyphicon');
+			$icon.removeClass('glyphicon-chevron-up').addClass('glyphicon-chevron-down');
+		});
+})();
+</script>
+
+<script>
+(function () {
+	var $ = window.jQuery;
+	if (!$) return;
+
+	// Remove row handler
+	$(document).on('click', '.btn-remove-row', function (e) {
+		e.preventDefault();
+		var $row = $(this).closest('tr');
+		var $tbody = $row.closest('tbody');
+		if ($row.hasClass('mcl-row') && $tbody.find('tr.mcl-row').length > 2) {
+			$row.next().remove();
+			$row.remove();
+		}
+		if ($row.hasClass('nano-row') && $tbody.find('tr.nano-row').length > 1) {
+			$row.remove();
+		}
+	});
+
+	// Add service row handlers
+	$(document).on('click', '#btn_mcl_add_service', function (e) {
+		e.preventDefault();
+		var $tbody = $('#mcl_request_table tbody');
+		var $templateRow1 = $tbody.find('tr.mcl-row').first();
+		var $templateRow2 = $templateRow1.next();
+		if (!$templateRow1.length) return;
+		var $newRow1 = $templateRow1.clone(true, true);
+		var $newRow2 = $templateRow2.clone(true, true);
+		$newRow1.find('select[name="service_select"]').val('');
+		$newRow1.find('select[name="project_select"]').val('');
+		$newRow1.find('select[name="training_requested"]').val('False');
+		$newRow2.find('textarea[name="description"]').val('');
+		$tbody.find('tr.mcl-row').last().after($newRow1);
+		$tbody.find('tr.mcl-row').last().after($newRow2);
+	});
+
+	$(document).on('click', '#btn_nano_add_service', function (e) {
+		e.preventDefault();
+		var $tbody = $('#nano_request_table tbody');
+		var $templateRow = $tbody.find('tr.nano-row').first();
+		if (!$templateRow.length) return;
+		var $newRow = $templateRow.clone(true, true);
+		$newRow.find('select[name="service_select"]').val('');
+		$newRow.find('select[name="project_select"]').val('');
+		$newRow.find('textarea[name="description"]').val('');
+		$newRow.find('select[name="training_requested"]').val('False');
+		$tbody.find('tr.nano-row').last().after($newRow);
+	});
+
+	// AJAX form submission for MCL
+	$(document).on('submit', '#mcl_template form', function (e) {
+		e.preventDefault();
+		var $form = $(this);
+		var valid = true;
+		$('#mcl_request_table tbody tr.mcl-row').each(function () {
+			var service = $(this).find('select[name="service_select"]').val();
+			var project = $(this).find('select[name="project_select"]').val();
+			if (!service || !project) {
+				valid = false;
+				$(this).addClass('danger');
+			} else {
+				$(this).removeClass('danger');
+			}
+		});
+		if (!valid) {
+			alert('Please select both a service and a project for each row.');
+			return false;
+		}
+		var data = serialize($form, {});
+		ajax_post(
+			$form.attr('action') || window.location.href,
+			data,
+			function (response) {
+				$("#mcl_template").hide();
+				$('#btn_add_service').parent().show();
+				alert('Your request has been submitted');
+			},
+			function (xhr) {
+				alert('There was an error submitting your request. Please try again.');
+			}
+		);
+		return false;
+	});
+
+	// AJAX form submission for Nanofab
+	$(document).on('submit', '#nano_template form', function (e) {
+		e.preventDefault();
+		var $form = $(this);
+		var valid = true;
+		$('#nano_request_table tbody tr.nano-row').each(function () {
+			var service = $(this).find('select[name="service_select"]').val();
+			var project = $(this).find('select[name="project_select"]').val();
+			if (!service || !project) {
+				valid = false;
+				$(this).addClass('danger');
+			} else {
+				$(this).removeClass('danger');
+			}
+		});
+		if (!valid) {
+			alert('Please select both a service and a project for each row.');
+			return false;
+		}
+		var data = serialize($form, {});
+		ajax_post(
+			$form.attr('action') || window.location.href,
+			data,
+			function (response) {
+				$("#nano_template").hide();
+				$('#btn_add_service').parent().show();
+				alert('Your request has been submitted');
+			},
+			function (xhr) {
+				alert('There was an error submitting your request. Please try again.');
+			}
+		);
+		return false;
+	});
+
+	// Cancel button for "Choose a core" panel
+	$(document).on('click', '#btn_cancel_choose_core', function (e) {
+		e.preventDefault();
+		$('#pnl_choose_core').hide();
+		$('#btn_add_service').parent().show();
+	});
+
+	// Cancel button for core request panels
+	$(document).on('click', '.btn-cancel-core-request', function (e) {
+		e.preventDefault();
+		var target = $(this).data('target');
+		$(target).hide(); 
+		$('#choose_core').val('');
+		$('#pnl_choose_core').show();
+		$('#pnl_choose_core .core-collapse').collapse('show');
+	});
+
+	// Core selection logic
+	$(document).on('click', '#btn_add_service', function (e) {
+		e.preventDefault();
+		var $panel = $('#pnl_choose_core .core-collapse');
+		if ($panel.length) {
+			$panel.collapse('show');
+		}
+		$('#pnl_choose_core').show();
+		$('#btn_add_service').parent().hide();
+	});
+	$(document).on('change', '#choose_core', function (e) {
+		e.preventDefault();
+		var $panel = $('#pnl_choose_core');
+		$panel.hide();
+
+		var coreId = this.value;
+		if (!coreId) return;
+
+		if (coreId == '1') {
+			$("#mcl_template").show();
+			$('#group-mcl').collapse('show');
+		}
+		if (coreId == '2') {
+			$("#nano_template").show();
+			$('#group-nano').collapse('show');
+		}
+		if (coreId == '4') {
+			$("#2dcc_template").show();
+			$('#group-2dcc').collapse('show');
+		}
+	});
+})();
+</script>
+{% endblock %}
