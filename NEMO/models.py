@@ -318,13 +318,14 @@ class Requirement(models.Model):
 	name = models.CharField(max_length=255)
 	description = models.TextField(blank=True)
 	resource_link = models.URLField(blank=True, null=True)  # Optional: link to training/resource
-	retrain_interval_days = models.PositiveIntegerField(default=365, blank=True, null=True)  # Days until expiration
+	retrain_interval_days = models.PositiveIntegerField(default=0, blank=True, null=True)  # Days until expiration
 	notification_interval = models.PositiveIntegerField(default=7, blank=True, null=True)  # After status update how many days until notification
 	created = models.DateTimeField(auto_now_add=True,null=True)
 	updated = models.DateTimeField(null=True)
 	expected_completion_time = models.PositiveIntegerField(default=None, blank=True, null=True, help_text="Expected time to complete this requirement in minutes.")
 	login_requirement_flag = models.BooleanField(default=False, help_text="Checked if this requirement is used during login to see if this is a new user and the requirements are automatically added")
 	automated_update = models.BooleanField(default=False, help_text="Checked if this requirement is automatically updated by an external system")
+	prerequisites = models.TextField(blank=True)
 
 	def __str__(self):
 		return self.name

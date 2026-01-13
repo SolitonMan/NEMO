@@ -18,6 +18,10 @@
         <input type="url" name="resource_link" class="form-control">
     </div>
     <div class="form-group">
+        <label>Prerequisites</label>
+        <textarea name="prerequisites" class="form-control"></textarea>
+    </div>
+    <div class="form-group">
         <label>Retrain Interval (days)</label>
         <input type="number" name="retrain_interval_days" class="form-control" value="365">
     </div>
@@ -44,6 +48,7 @@
 		<th>Name</th>
 		<th>Description</th>
 		<th>Resource Link</th>
+		<th>Prerequisittes</th>
 		<th>Retrain Interval (days)</th>
 		<th>Expected Completion Time (minutes)</th>
 	</tr>
@@ -62,6 +67,7 @@
 			No resource link
 			{% endif %}
 		</td>
+		<td>{{ req.prerequisites }}</td>
 		<td>
 			{{ req.retrain_interval_days }}
 		</td>
@@ -70,7 +76,7 @@
 		</td>
 	</tr>
 	{% empty %}
-	<tr><td colspan="5">No requirements found.</td></tr>
+	<tr><td colspan="6">No requirements found.</td></tr>
 	{% endfor %}
 </table>
 {% endblock %}

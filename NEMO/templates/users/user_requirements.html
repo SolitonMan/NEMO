@@ -80,6 +80,7 @@
 								<th></th>
 								<th>Requirement</th>
 								<th>Resources</th>
+								<th>Prerequisites</th>
 								<th>Estimated Time to Complete</th>
 								<th>Date Completed</th>
 								<th></th>
@@ -97,6 +98,7 @@
 									N/A
 									{% endif %}
 								</td>
+								<td>{{ req.prerequisites }}</td>
 								<td>{{ req.expected_completion_time }}</td>
 								<td>{{ req.completed_on|date:"m/d/Y"|default:"" }}</td>
 								<td>
@@ -138,6 +140,7 @@
 			<th></th>
 			<th>Requirement</th>
 			<th>Resources</th>
+			<th>Prerequisites</th>
 			<th>Estimated Time to Complete</th>
 			<th>Date Completed</th>
 			<th></th>
@@ -155,6 +158,7 @@
 				N/A
 				{% endif %}
 			</td>
+			<td>{{ req.prerequisites }}</td>
 			<td>{{ req.expected_completion_time }}</td>
 			<td>{{ req.completed_on|date:"m/d/Y"|default:"" }}</td>
 			<td>
@@ -180,7 +184,7 @@
 		</tr>
 		{% empty %}
 		<tr>
-			<td colspan="6">
+			<td colspan="7">
 				<div class="alert alert-info" role="alert">No requirements found.</div>
 			</td>
 		</tr>

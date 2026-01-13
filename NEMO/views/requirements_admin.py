@@ -20,6 +20,7 @@ def add_requirement(request):
 		expected_completion_time = request.POST.get("expected_completion_time")
 		login_requirement_flag = request.POST.get("login_requirement_flag") == 'on'
 		automated_update = request.POST.get("automated_update") == 'on'
+		prerequisites = request.POST.get("prerequisites")
 
 		if name:
 			Requirement.objects.create(
@@ -29,7 +30,8 @@ def add_requirement(request):
 				retrain_interval_days=retrain_interval_days,
 				expected_completion_time=expected_completion_time,
 				login_requirement_flag=login_requirement_flag,
-				automated_update=automated_update
+				automated_update=automated_update,
+				prerequisites=prerequisites
 			)
 			return redirect('add_requirement')
 	requirements = Requirement.objects.all().order_by('name')
