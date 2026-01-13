@@ -10,11 +10,15 @@
     </div>
     <div class="form-group">
         <label>Description</label>
-        <textarea name="description" class="form-control">{{ requirement.description }}</textarea>
+        <textarea name="description" class="form-control">{% if requirement.description is not None %}{{ requirement.description }}{% endif %}</textarea>
     </div>
     <div class="form-group">
         <label>Resource Link</label>
         <input type="url" name="resource_link" class="form-control" value="{{ requirement.resource_link }}">
+    </div>
+    <div class="form-group">
+        <label>Prerequisites</label>
+        <textarea name="prerequisites" class="form-control">{% if requirement.prerequisites is not None %}{{ requirement.prerequisites }}{% endif %}</textarea>
     </div>
     <div class="form-group">
         <label>Retrain Interval (days)</label>

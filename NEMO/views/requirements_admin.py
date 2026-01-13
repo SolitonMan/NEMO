@@ -44,6 +44,7 @@ def edit_requirement(request, requirement_id):
 		requirement.name = request.POST.get("name")
 		requirement.description = request.POST.get("description")
 		requirement.resource_link = request.POST.get("resource_link")
+		requirement.prerequisites = request.POST.get("prerequisites")
 		requirement.retrain_interval_days = request.POST.get("retrain_interval_days")
 		requirement.expected_completion_time = request.POST.get("expected_completion_time")
 		requirement.login_requirement_flag = request.POST.get("login_requirement_flag") == 'on'
