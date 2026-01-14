@@ -278,7 +278,7 @@
 	</div>
 </div>
 
-<h2>My Service Requests</h2>
+<h2>My Requests</h2>
 {% if user_service_requests %}
 	<table class="table table-striped">
 		<thead>
@@ -389,8 +389,10 @@
 			var service = $(this).find('select[name="service_select"]').val();
 			var project = $(this).find('select[name="project_select"]').val();
 			if (!service || !project) {
-				valid = false;
-				$(this).addClass('danger');
+				if ($(this).find('textarea[name="description"]').length == 0) {
+					valid = false;
+					$(this).addClass('danger');
+				}
 			} else {
 				$(this).removeClass('danger');
 			}
