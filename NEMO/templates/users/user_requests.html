@@ -284,7 +284,8 @@
 		<thead>
 			<tr>
 				<th>Case Number</th>
-				<th>Service</th>
+				<th>Contact</th>
+				<th>Request Type</th>
 				<th>Project</th>
 				<th>Status</th>
 				<th>Description</th>
@@ -297,6 +298,7 @@
 		{% for req in user_service_requests %}
 			<tr>
 				<td>{% if req.case_number %}{{ req.case_number }}{% endif %}</td>
+				<td>{% if req.owner %}{{ req.owner }}{% endif %}</td>
 				<td>{{ req.service_type.name }}</td>
 				<td>{{ req.project.name }}</td>
 				<td>{{ req.status }}</td>

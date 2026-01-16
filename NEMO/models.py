@@ -362,6 +362,7 @@ class UserServiceRequest(models.Model):
 	core = models.ForeignKey('Core', on_delete=models.SET_NULL, null=True, blank=True)
 	case_number = models.CharField(max_length=255, null=True, blank=True)
 	training_request = models.BooleanField(default=False,blank=True)
+	owner = models.CharField(default=None, null=True, blank=True, max_length=255)
 
 	class Meta:
 		constraints = [
