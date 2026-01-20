@@ -382,10 +382,10 @@ function updateNanoRowNames() {
 		if (!$templateRow1.length) return;
 		var $newRow1 = $templateRow1.clone(true, true);
 		var $newRow2 = $templateRow2.clone(true, true);
-		$newRow1.find('select[name="service_select"]').val('');
-		$newRow1.find('select[name="project_select"]').val('');
-		$newRow1.find('select[name="training_requested"]').val('False');
-		$newRow2.find('textarea[name="description"]').val('');
+		$newRow1.find('select[name="service_select[0]"]').val('');
+		$newRow1.find('select[name="project_select[0]"]').val('');
+		$newRow1.find('select[name="training_requested[0]"]').val('False');
+		$newRow2.find('textarea[name="description[0]"]').val('');
 		$tbody.find('tr.mcl-row').last().after($newRow1);
 		$tbody.find('tr.mcl-row').last().after($newRow2);
 		updateMclRowNames();
@@ -397,10 +397,10 @@ function updateNanoRowNames() {
 		var $templateRow = $tbody.find('tr.nano-row').first();
 		if (!$templateRow.length) return;
 		var $newRow = $templateRow.clone(true, true);
-		$newRow.find('select[name="service_select"]').val('');
-		$newRow.find('select[name="project_select"]').val('');
-		$newRow.find('textarea[name="description"]').val('');
-		$newRow.find('select[name="training_requested"]').val('False');
+		$newRow.find('select[name="service_select[0]"]').val('');
+		$newRow.find('select[name="project_select[0]"]').val('');
+		$newRow.find('textarea[name="description[0]"]').val('');
+		$newRow.find('select[name="training_requested[0]"]').val('False');
 		$tbody.find('tr.nano-row').last().after($newRow);
 		updateNanoRowNames();
 	});
@@ -410,11 +410,11 @@ function updateNanoRowNames() {
 		e.preventDefault();
 		var $form = $(this);
 		var valid = true;
-		$('#mcl_request_table tbody tr.mcl-row').each(function () {
-			var service = $(this).find('select[name="service_select"]').val();
-			var project = $(this).find('select[name="project_select"]').val();
+		$('#mcl_request_table tbody tr.mcl-row').each(function (index) {
+			var service = $(this).find('select[name="service_select[' + index + ']"]').val();
+			var project = $(this).find('select[name="project_select[' + index + ']"]').val();
 			if (!service || !project) {
-				if ($(this).find('textarea[name="description"]').length == 0) {
+				if ($(this).find('textarea[name="description[' + (index - 1) + ']"]').length == 0) {
 					valid = false;
 					$(this).addClass('danger');
 				}
@@ -448,8 +448,8 @@ function updateNanoRowNames() {
 		var $form = $(this);
 		var valid = true;
 		$('#nano_request_table tbody tr.nano-row').each(function () {
-			var service = $(this).find('select[name="service_select"]').val();
-			var project = $(this).find('select[name="project_select"]').val();
+			var service = $(this).find('select[name="service_select[' + index + ']"]').val();
+			var project = $(this).find('select[name="project_select[' + index + ']"]').val();
 			if (!service || !project) {
 				valid = false;
 				$(this).addClass('danger');
