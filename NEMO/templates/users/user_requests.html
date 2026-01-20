@@ -131,7 +131,7 @@
 							</button>
 						</td>
 						<td>
-							<select name="service_select" class="form-control">
+							<select name="service_select[0]" class="form-control">
 								<option value="">Please select an option</option>
 								{% for opt in mcl_services %}
 								<option value="{{ opt.id }}">{{ opt.name }}</option>
@@ -140,7 +140,7 @@
 						</td>
 						<td>
 							{% if user_projects is not None %}
-							<select name="project_select" class="form-control">
+							<select name="project_select[0]" class="form-control">
 								<option value="">Please select an option</option>
 								{% for p in user_projects %}
 								<option value="{{ p.id }}">{{ p }} [PI: {{ p.owner.first_name }} {{ p.owner.last_name }} ({{ p.owner.username }})]</option>
@@ -151,7 +151,7 @@
 							{% endif %}
 						</td>
 						<td>
-							<select name="training_requested" class="form-control">
+							<select name="training_requested[0]" class="form-control">
 								<option value="True">Yes</option>
 								<option value="False" selected>No</option>
 							</select>
@@ -160,7 +160,7 @@
 					<tr class="mcl-row">
 						<td colspan="4">
 							<label for="description">Description</label>
-							<textarea class="form-control" rows="5" name="description"></textarea>
+							<textarea class="form-control" rows="5" name="description[0]"></textarea>
 						</td>
 					</tr>
 					<tr>
@@ -334,6 +334,25 @@
 </script>
 
 <script>
+function updateMclRowNames() {
+    $('#mcl_request_table tbody tr.mcl-row').each(function(index) {
+        $(this).find('select[name^="service_select"]').attr('name', 'service_select[' + index + ']');
+        $(this).find('select[name^="project_select"]').attr('name', 'project_select[' + index + ']');
+        $(this).find('select[name^="training_requested"]').attr('name', 'training_requested[' + index + ']');
+    });
+    $('#mcl_request_table tbody tr.mcl-row').next('tr').each(function(index) {
+        $(this).find('textarea[name^="description"]').attr('name', 'description[' + index + ']');
+    });
+}
+
+function updateNanoRowNames() {
+    $('#nano_request_table tbody tr.nano-row').each(function(index) {
+        $(this).find('select[name^="service_select"]').attr('name', 'service_select[' + index + ']');
+        $(this).find('select[name^="project_select"]').attr('name', 'project_select[' + index + ']');
+        $(this).find('textarea[name^="description"]').attr('name', 'description[' + index + ']');
+        $(this).find('input[name^="training_requested"]').attr('name', 'training_requested[' + index + ']');
+    });
+}
 (function () {
 	var $ = window.jQuery;
 	if (!$) return;
@@ -350,6 +369,8 @@
 		if ($row.hasClass('nano-row') && $tbody.find('tr.nano-row').length > 1) {
 			$row.remove();
 		}
+		updateMclRowNames();
+		updateNanoRowNames();
 	});
 
 	// Add service row handlers
@@ -367,6 +388,7 @@
 		$newRow2.find('textarea[name="description"]').val('');
 		$tbody.find('tr.mcl-row').last().after($newRow1);
 		$tbody.find('tr.mcl-row').last().after($newRow2);
+		updateMclRowNames();
 	});
 
 	$(document).on('click', '#btn_nano_add_service', function (e) {
@@ -380,6 +402,7 @@
 		$newRow.find('textarea[name="description"]').val('');
 		$newRow.find('select[name="training_requested"]').val('False');
 		$tbody.find('tr.nano-row').last().after($newRow);
+		updateNanoRowNames();
 	});
 
 	// AJAX form submission for MCL
