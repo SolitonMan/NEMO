@@ -93,7 +93,7 @@
 								<td><span title="{{ req.description }}">{{ req.name }}</span></td>
 								<td>
 									{% if req.resource_link %}
-									<a href="{{ req.resource_link }}" title="{{ req.resource_link }}" target="_blank">{{ req.resource_link|truncatechars:25 }}...</a>
+									<a href="{{ req.resource_link }}" title="{{ req.resource_link }}" target="_blank">{{ req.resource_link_name }}</a>
 									{% else %}
 									N/A
 									{% endif %}
@@ -153,7 +153,7 @@
 			<td><span title="{{ req.description }}">{{ req.name }}</span></td>
 			<td>
 				{% if req.resource_link %}
-				<a href="{{ req.resource_link }}" title="{{ req.resource_link }}" target="_blank">{{ req.resource_link|truncatechars:25 }}...</a>
+				<a href="{{ req.resource_link }}" title="{{ req.resource_link }}" target="_blank">{{ req.resource_link_name }}</a>
 				{% else %}
 				N/A
 				{% endif %}
