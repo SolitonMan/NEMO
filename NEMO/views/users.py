@@ -626,9 +626,16 @@ def user_requests(request):
 	nano_services = ServiceType.objects.filter(core=nano_core).order_by('name')
 	user_projects = request.user.active_projects
 
+	owner_first_name_subquery = User.objects.filter(email=OuterRef('owner')).values('first_name')[:1]
+	owner_last_name_subquery = User.objects.filter(email=OuterRef('owner')).values('last_name')[:1]
+
 	user_service_requests = (
 		UserServiceRequest.objects
 		.filter(user=request.user)
+		.annotate(
+			owner_first_name=Subquery(owner_first_name_subquery),
+			owner_last_name=Subquery(owner_last_name_subquery)
+		)
 		.select_related('service_type', 'project', 'core', 'pi_user')
 		.order_by('-updated')
 	)
