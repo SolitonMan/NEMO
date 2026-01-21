@@ -539,6 +539,7 @@ def user_requirements(request):
 			'completed_on': p.completed_on,
 			'expected_completion_time': getattr(r, 'expected_completion_time', ''),
 			'resource_link': getattr(r, 'resource_link', None),
+			'resource_link_name': getattr(r, 'resource_link_name', None),
 			'automated_update': getattr(r, 'automated_update', False),
 		})
 		if p.status != 'completed':
