@@ -16,6 +16,7 @@ def add_requirement(request):
 		name = request.POST.get("name")
 		description = request.POST.get("description")
 		resource_link = request.POST.get("resource_link")
+		resource_link_name = request.POST.get("resource_link_name")
 		retrain_interval_days = request.POST.get("retrain_interval_days") or 365
 		expected_completion_time = request.POST.get("expected_completion_time")
 		login_requirement_flag = request.POST.get("login_requirement_flag") == 'on'
@@ -27,6 +28,7 @@ def add_requirement(request):
 				name=name,
 				description=description,
 				resource_link=resource_link,
+				resource_link_name=resource_link_name,
 				retrain_interval_days=retrain_interval_days,
 				expected_completion_time=expected_completion_time,
 				login_requirement_flag=login_requirement_flag,
@@ -44,6 +46,7 @@ def edit_requirement(request, requirement_id):
 		requirement.name = request.POST.get("name")
 		requirement.description = request.POST.get("description")
 		requirement.resource_link = request.POST.get("resource_link")
+		requirement.resource_link_name = request.POST.get("resource_link_name")
 		requirement.prerequisites = request.POST.get("prerequisites")
 		requirement.retrain_interval_days = request.POST.get("retrain_interval_days")
 		requirement.expected_completion_time = request.POST.get("expected_completion_time")
