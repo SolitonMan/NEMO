@@ -541,6 +541,7 @@ def user_requirements(request):
 			'resource_link': getattr(r, 'resource_link', None),
 			'resource_link_name': getattr(r, 'resource_link_name', None),
 			'automated_update': getattr(r, 'automated_update', False),
+			'prerequisites': getattr(r, 'prerequisites', False),
 		})
 		if p.status != 'completed':
 			grouped[group_name]['all_completed'] = False
