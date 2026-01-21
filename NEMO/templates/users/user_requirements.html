@@ -92,7 +92,7 @@
 								<td><span class="{{ req.status }}" title="{{ req.status_value }}"></span></td>
 								<td><span title="{{ req.description }}">{{ req.name }}</span></td>
 								<td>
-									{% if req.resource_link %}
+									{% if req.resource_link and req.resource_link != 'NULL' %}
 									<a href="{{ req.resource_link }}" title="{{ req.resource_link }}" target="_blank">{{ req.resource_link_name }}</a>
 									{% else %}
 									N/A
@@ -152,7 +152,7 @@
 			<td><span class="{{ req.status }}" title="{{ req.status_value }}"></span></td>
 			<td><span title="{{ req.description }}">{{ req.name }}</span></td>
 			<td>
-				{% if req.resource_link %}
+				{% if req.resource_link and req.resource_link != 'NULL' %}
 				<a href="{{ req.resource_link }}" title="{{ req.resource_link }}" target="_blank">{{ req.resource_link_name }}</a>
 				{% else %}
 				N/A
