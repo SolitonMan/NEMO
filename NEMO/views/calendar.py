@@ -1756,3 +1756,124 @@ def sequential_tool_schedule(request):
 	return render(request, "calendar/sequential_tool_schedule.html", {
 		"formset": formset,
 	})
+
+@login_required
+def tool_training_schedule(request):
+	tools = Tool.objects.filter(visible=True, operational=True).order_by('name')
+	available_slots = []
+	errors = []
+	selected_tool_id = request.GET.get("tool_id")
+
+	if selected_tool_id:
+		try:
+			tool = Tool.objects.get(id=selected_tool_id)
+			owner = tool.primary_owner
+			user = request.user
+
+			# Collect calendar URLs
+			user_url = user.user_shareable_calendar_link
+			owner_url = owner.user_shareable_calendar_link
+
+			# Fetch busy events for user and owner
+			def fetch_busy(url):
+				events = []
+				if url:
+					try:
+						resp = requests.get(url, timeout=10)
+						resp.raise_for_status()
+						cal = Calendar.from_ical(resp.text)
+						for component in cal.walk():
+							if component.name == "VEVENT":
+								event = Event.from_ical(component.to_ical())
+								dtstart = event.get('dtstart')
+								dtend = event.get('dtend')
+								if dtstart and dtend:
+									start = dtstart.dt if hasattr(dtstart, 'dt') else dtstart
+									end = dtend.dt if hasattr(dtend, 'dt') else dtend
+									events.append({"start": ensure_datetime(start), "end": ensure_datetime(end)})
+					except Exception as e:
+						errors.append(f"Failed to load calendar: {e}")
+				return events
+
+			user_busy = fetch_busy(user_url)
+			owner_busy = fetch_busy(owner_url)
+
+			# Tool reservations
+			tool_busy = [
+				{"start": ensure_datetime(r.start), "end": ensure_datetime(r.end)}
+				for r in Reservation.objects.filter(tool=tool, cancelled=False, missed=False, shortened=False)
+			]
+
+			# Find common free slots (30 min, next 2 weeks, max 3)
+			now = timezone.now()
+			window_start = now
+			window_end = now + timedelta(days=14)
+			slot_duration = 30  # minutes
+
+			events_grouped = [tool_busy, user_busy, owner_busy]
+			available_slots = find_available_slots(events_grouped, slot_duration, window_start, window_end, max_results=3)
+			available_slots = [
+				{
+					"start": s.strftime("%m/%d/%Y %I:%M %p"),
+					"end": e.strftime("%m/%d/%Y %I:%M %p")
+				}
+				for s, e in available_slots
+			]
+		except Tool.DoesNotExist:
+			errors.append("Selected tool not found.")
+
+	return render(request, "tool/tool_training_schedule.html", {
+		"tools": tools,
+		"available_slots": available_slots,
+		"errors": errors,
+		"selected_tool_id": selected_tool_id,
+	})
+
+@login_required
+@require_POST
+def book_training_slot(request):
+	tool_id = request.POST.get("tool_id")
+	start_str = request.POST.get("start")
+	end_str = request.POST.get("end")
+	user = request.user
+
+	try:
+		tool = Tool.objects.get(id=tool_id)
+		owner = tool.primary_owner
+		start = datetime.datetime.strptime(start_str, "%m/%d/%Y %I:%M %p").replace(tzinfo=UTC)
+		end = datetime.datetime.strptime(end_str, "%m/%d/%Y %I:%M %p").replace(tzinfo=UTC)
+
+		# Create reservation
+		reservation = Reservation.objects.create(
+			user=user,
+			creator=user,
+			tool=tool,
+			start=start,
+			end=end,
+			created=timezone.now(),
+			updated=timezone.now(),
+			title="Training Session"
+		)
+
+		# Send calendar invites to user and owner
+		attachment = create_ics_for_reservation(request, reservation, False)
+		for recipient in [user, owner]:
+			email = EmailMessage(
+				subject=f"Training Reservation for {tool.name}",
+				body=f"You have been scheduled for training on {tool.name} from {start} to {end}.",
+				from_email="LEOHelp@psu.edu",
+				to=[recipient.email],
+				reply_to=["LEOHelp@psu.edu"]
+			)
+			email.attach(attachment)
+			create_email_log(email, EmailCategory.GENERAL)
+			email.send()
+
+		return redirect("tool_training_schedule")  # or show a success message
+	except Exception as e:
+		return render(request, "tool/tool_training_schedule.html", {
+			"tools": Tool.objects.filter(visible=True, operational=True).order_by('name'),
+			"errors": [str(e)],
+			"available_slots": [],
+			"selected_tool_id": tool_id,
+		})

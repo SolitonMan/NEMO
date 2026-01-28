@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Schedule Tool Training</h2>
+<form method="get" id="tool-select-form">
+	<div class="form-group">
+		<label for="tool_id">Select Tool for Training:</label>
+		<select name="tool_id" id="tool_id" class="form-control" required>
+			<option value="">-- Select Tool --</option>
+			{% for tool in tools %}
+				<option value="{{ tool.id }}" {% if tool.id|stringformat:"s" == selected_tool_id %}selected{% endif %}>{{ tool.name }}</option>
+			{% endfor %}
+		</select>
+	</div>
+	<button type="submit" class="btn btn-primary">Show Available Slots</button>
+</form>
+
+{% if available_slots %}
+	<h3>Available Training Slots</h3>
+	<table class="table">
+		<thead>
+			<tr>
+				<th>Start</th>
+				<th>End</th>
+				<th>Action</th>
+			</tr>
+		</thead>
+		<tbody>
+		{% for slot in available_slots %}
+			<tr>
+				<td>{{ slot.start }}</td>
+				<td>{{ slot.end }}</td>
+				<td>
+					<form method="post" action="{% url 'book_training_slot' %}">
+						{% csrf_token %}
+						<input type="hidden" name="tool_id" value="{{ selected_tool_id }}">
+						<input type="hidden" name="start" value="{{ slot.start }}">
+						<input type="hidden" name="end" value="{{ slot.end }}">
+						<button type="submit" class="btn btn-success">Reserve</button>
+					</form>
+				</td>
+			</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+{% endif %}
+
+{% if errors %}
+	<div class="alert alert-danger">
+		<ul>
+		{% for error in errors %}
+			<li>{{ error }}</li>
+		{% endfor %}
+		</ul>
+	</div>
+{% endif %}
+{% endblock %}
