@@ -1822,7 +1822,7 @@ def tool_training_schedule(request):
 		except Tool.DoesNotExist:
 			errors.append("Selected tool not found.")
 
-	return render(request, "tool/tool_training_schedule.html", {
+	return render(request, "tool_control/tool_training_schedule.html", {
 		"tools": tools,
 		"available_slots": available_slots,
 		"errors": errors,
@@ -1871,7 +1871,7 @@ def book_training_slot(request):
 
 		return redirect("tool_training_schedule")  # or show a success message
 	except Exception as e:
-		return render(request, "tool/tool_training_schedule.html", {
+		return render(request, "tool_control/tool_training_schedule.html", {
 			"tools": Tool.objects.filter(visible=True, operational=True).order_by('name'),
 			"errors": [str(e)],
 			"available_slots": [],
