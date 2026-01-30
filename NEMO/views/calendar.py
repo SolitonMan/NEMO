@@ -14,6 +14,7 @@ from dateutil.tz import gettz, UTC
 from icalendar.prop import vDDDLists
 
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.postgres.aggregates import ArrayAgg
@@ -1898,7 +1899,11 @@ def book_training_slot(request):
 			create_email_log(email, EmailCategory.GENERAL)
 			email.send()
 
-		return redirect("tool_training_schedule")  # or show a success message
+		messages.success(
+			request,
+			f"Successful reservation for {tool.name} on {start_local.strftime('%A, %B %d, %Y at %I:%M %p')}"
+		)
+		return redirect("tool_training_schedule") 
 	except Exception as e:
 		return render(request, "tool_control/tool_training_schedule.html", {
 			"tools": Tool.objects.filter(visible=True, operational=True).order_by('name'),
