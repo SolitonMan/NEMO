@@ -1697,7 +1697,7 @@ def find_available_slots(list_of_events, duration_minutes, window_start, window_
 
 	# 3. Find slots of required duration within business hours
 	slots = []
-	delta = datetime.timedelta(minutes=duration_minutes)
+	delta = datetime.timedelta(minutes=int(duration_minutes))
 	step = datetime.timedelta(minutes=15)
 	for s, e in common_free:
 		slot_start = s
