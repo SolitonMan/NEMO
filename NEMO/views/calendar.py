@@ -1766,7 +1766,7 @@ def tool_training_schedule(request):
 	duration = request.GET.get("duration")
 	tool = None
 	owner = None
-	user = None
+	user = request.user
 
 	if selected_tool_id:
 		try:
@@ -1836,7 +1836,7 @@ def tool_training_schedule(request):
 		"selected_tool_id": selected_tool_id,
 		"tool": tool,
 		"owner": owner,
-		"user": user,
+		"tool_user": user,
 	})
 
 @login_required
