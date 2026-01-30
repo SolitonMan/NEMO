@@ -1763,6 +1763,10 @@ def tool_training_schedule(request):
 	available_slots = []
 	errors = []
 	selected_tool_id = request.GET.get("tool_id")
+	duration = request.GET.get("duration")
+	tool = None
+	owner = None
+	user = None
 
 	if selected_tool_id:
 		try:
@@ -1808,7 +1812,10 @@ def tool_training_schedule(request):
 			now = timezone.now()
 			window_start = now
 			window_end = now + timedelta(days=14)
-			slot_duration = 30  # minutes
+			if duration:
+				slot_duration = duration
+			else:
+				slot_duration = 30  # minutes
 
 			events_grouped = [tool_busy, user_busy, owner_busy]
 			available_slots = find_available_slots(events_grouped, slot_duration, window_start, window_end, max_results=3)
@@ -1827,6 +1834,9 @@ def tool_training_schedule(request):
 		"available_slots": available_slots,
 		"errors": errors,
 		"selected_tool_id": selected_tool_id,
+		"tool": tool,
+		"owner": owner,
+		"user": user,
 	})
 
 @login_required

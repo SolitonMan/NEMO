@@ -10,14 +10,31 @@
 				<option value="{{ tool.id }}" {% if tool.id|stringformat:"s" == selected_tool_id %}selected{% endif %}>{{ tool.name }}</option>
 			{% endfor %}
 		</select>
+		<br/><br/>
+		<label for="duration">How long do you need (minutes)?:</label>
+		<input class="form-control" name="duration" type="number" min="1" step="1" value="" />
 	</div>
 	<button type="submit" class="btn btn-primary">Show Available Slots</button>
 </form>
 
 {% if available_slots %}
 	<h3>Available Training Slots</h3>
+	
 	<table class="table">
 		<thead>
+			<tr>
+				<th colspan="3">
+				{% if tool %}
+					Tool: {{ tool.name }}<br/>
+				{% endif %}
+				{% if owner %}
+					Owner: {{ owner.get_full_name }}<br/>
+				{% endif %}
+				{% if user %}
+					User: {{ user.get_full_name }}<br/>
+				{% endif %}
+				</th>
+			</tr>
 			<tr>
 				<th>Start</th>
 				<th>End</th>
@@ -27,8 +44,8 @@
 		<tbody>
 		{% for slot in available_slots %}
 			<tr>
-				<td>{{ slot.start }}</td>
-				<td>{{ slot.end }}</td>
+				<td>{{ slot.start|date:"l" }}, {{ slot.start }}</td>
+				<td>{{ slot.end|date:"l" }}, {{ slot.end }}</td>
 				<td>
 					<form method="post" action="{% url 'book_training_slot' %}">
 						{% csrf_token %}
