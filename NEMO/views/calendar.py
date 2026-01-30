@@ -1810,9 +1810,14 @@ def tool_training_schedule(request):
 			]
 
 			# Find common free slots (30 min, next 2 weeks, max 3)
-			now = timezone.now()
-			window_start = now
-			window_end = now + timedelta(days=14)
+			earliest_date_str = request.GET.get("earliest_date")
+			if earliest_date_str:
+				local_tz = pytz.timezone(settings.TIME_ZONE)
+				earliest_date = datetime.datetime.strptime(earliest_date_str, "%Y-%m-%d")
+				window_start = local_tz.localize(earliest_date)
+			else:
+				window_start = timezone.now()
+			window_end = window_start + timedelta(days=14)
 			if duration:
 				slot_duration = duration
 			else:
