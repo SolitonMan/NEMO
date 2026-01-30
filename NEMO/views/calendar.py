@@ -1862,9 +1862,10 @@ def book_training_slot(request):
 			tool=tool,
 			start=start,
 			end=end,
+			short_notice=False,
 			created=timezone.now(),
 			updated=timezone.now(),
-			title="Training Session"
+			title="Training Session for " + str(user.get_full_name()) + " on " + str(tool.name)
 		)
 
 		# Send calendar invites to user and owner
