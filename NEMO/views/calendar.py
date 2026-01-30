@@ -7,6 +7,7 @@ from re import match, search
 
 import requests
 import datetime
+import pytz
 from icalendar import Calendar, Event
 from dateutil.rrule import rrulestr
 from dateutil.tz import gettz, UTC
@@ -1852,8 +1853,18 @@ def book_training_slot(request):
 	try:
 		tool = Tool.objects.get(id=tool_id)
 		owner = tool.primary_owner
-		start = datetime.datetime.strptime(start_str, "%m/%d/%Y %I:%M %p").replace(tzinfo=UTC)
-		end = datetime.datetime.strptime(end_str, "%m/%d/%Y %I:%M %p").replace(tzinfo=UTC)
+		local_tz = pytz.timezone(settings.TIME_ZONE)
+
+		start_naive = datetime.datetime.strptime(start_str, "%m/%d/%Y %I:%M %p")
+		end_naive = datetime.datetime.strptime(end_str, "%m/%d/%Y %I:%M %p")
+
+		# Localize to the project's timezone
+		start_local = local_tz.localize(start_naive)
+		end_local = local_tz.localize(end_naive)
+
+		# Convert to UTC (if needed, Django will do this if USE_TZ=True)
+		start = start_local.astimezone(pytz.UTC)
+		end = end_local.astimezone(pytz.UTC)
 
 		# Create reservation
 		reservation = Reservation.objects.create(
