@@ -44,8 +44,8 @@
 		<tbody>
 		{% for slot in available_slots %}
 			<tr>
-				<td>{{ slot.start|date:"l" }}, {{ slot.start }}</td>
-				<td>{{ slot.end|date:"l" }}, {{ slot.end }}</td>
+				<td>{{ slot.start_full|date:"l" }}, {{ slot.start }}</td>
+				<td>{{ slot.end_full|date:"l" }}, {{ slot.end }}</td>
 				<td>
 					<form method="post" action="{% url 'book_training_slot' %}">
 						{% csrf_token %}

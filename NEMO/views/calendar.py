@@ -1822,7 +1822,9 @@ def tool_training_schedule(request):
 			available_slots = [
 				{
 					"start": s.strftime("%m/%d/%Y %I:%M %p"),
-					"end": e.strftime("%m/%d/%Y %I:%M %p")
+					"end": e.strftime("%m/%d/%Y %I:%M %p"),
+					"start_full": s,
+					"end_full": e,
 				}
 				for s, e in available_slots
 			]
