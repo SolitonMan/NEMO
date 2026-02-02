@@ -110,7 +110,7 @@
 												<button type="submit" class="btn btn-warning btn-sm">Unmark Completed</button>
 											</form>
 										{% elif req.status_value != 'completed' %}
-											<form method="post" action="{% url 'complete_user_requirement' %}" onsubmit="return function () { if (prompt('Please enter your username: ({{ request.user.username }})') == '{{ request.user.username }}') { return true; } }; return false;">
+											<form method="post" action="{% url 'complete_user_requirement' %}" onsubmit="return function () { if (prompt('Please enter your username: ({{ request.user.username }})') == '{{ request.user.username }}') { return true; } return false; };">
 												{% csrf_token %}
 												<input type="hidden" name="requirement_id" value="{{ req.id }}">
 												<button type="submit" class="btn btn-primary btn-sm">Mark Completed</button>
