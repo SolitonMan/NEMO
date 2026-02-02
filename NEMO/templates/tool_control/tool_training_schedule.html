@@ -19,7 +19,7 @@
 		</select>
 		<br/><br/>
 		<label for="duration">How long do you need (minutes)?:</label>
-		<input class="form-control" name="duration" type="number" min="1" step="1" value="" />
+		<input class="form-control" name="duration" type="number" min="1" step="1" value="30" />
 		<br/><br/>
 		<label for="earliest_date">Earliest date training is wanted (optional - leave blank for soonest available):</label>
 		<input class="form-control" name="earliest_date" type="date" value="{{ request.GET.earliest_date|default_if_none:'' }}">
