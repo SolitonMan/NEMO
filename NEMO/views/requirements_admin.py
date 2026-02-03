@@ -8,6 +8,7 @@ from django.http import JsonResponse, HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.views.decorators.http import require_POST
+from NEMO.forms import ServiceTypeForm
 from NEMO.models import Tool, Area, Requirement, ToolRequirement, AreaRequirement, UserRequirementProgress, ServiceType
 
 @staff_member_required(login_url=None)
@@ -233,3 +234,32 @@ def complete_user_requirement(request):
     progress.updated = timezone.now()
     progress.save()
     return redirect('user_requirements')
+
+
+@staff_member_required
+def service_type_list(request):
+	service_types = ServiceType.objects.all().order_by('name')
+	return render(request, 'requirements/service_type_list.html', {'service_types': service_types})
+
+@staff_member_required
+def service_type_add(request):
+	if request.method == 'POST':
+		form = ServiceTypeForm(request.POST)
+		if form.is_valid():
+			form.save()
+			return redirect('service_type_list')
+	else:
+		form = ServiceTypeForm()
+	return render(request, 'requirements/service_type_form.html', {'form': form, 'is_edit': False})
+
+@staff_member_required
+def service_type_edit(request, pk):
+	service_type = get_object_or_404(ServiceType, pk=pk)
+	if request.method == 'POST':
+		form = ServiceTypeForm(request.POST, instance=service_type)
+		if form.is_valid():
+			form.save()
+			return redirect('service_type_list')
+	else:
+		form = ServiceTypeForm(instance=service_type)
+	return render(request, 'requirements/service_type_form.html', {'form': form, 'is_edit': True, 'service_type': service_type})

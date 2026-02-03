@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Service Types</h2>
+<form method="get" action="{% url 'service_type_edit' 0 %}">
+	<div class="form-group">
+		<label for="service_type_select">Edit Service Type:</label>
+		<select id="service_type_select" name="pk" class="form-control" onchange="if(this.value) window.location.href='{% url 'service_type_edit' '0' %}'.replace('0', this.value);">
+			<option value="">-- Select Service Type --</option>
+			{% for st in service_types %}
+				<option value="{{ st.id }}">{{ st.name }}</option>
+			{% endfor %}
+		</select>
+	</div>
+</form>
+<a href="{% url 'service_type_add' %}" class="btn btn-success">Add New Service Type</a>
+<table class="table table-striped mt-3">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Active</th>
+			<th>Core</th>
+			<th>Principle Assignee</th>
+			<th>Secondary Assignee</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for st in service_types %}
+		<tr>
+			<td>{{ st.name }}</td>
+			<td>{{ st.active|yesno:"Yes,No" }}</td>
+			<td>{{ st.core }}</td>
+			<td>{{ st.principle_assignee }}</td>
+			<td>{{ st.secondary_assignee }}</td>
+		</tr>
+		{% endfor %}
+	</tbody>
+</table>
+{% endblock %}

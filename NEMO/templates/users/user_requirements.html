@@ -104,7 +104,7 @@
 								<td>
 									{% if not req.automated_update %}
 										{% if req.status_value == 'completed' %}
-											<form method="post" action="{% url 'unmark_user_requirement' %}" onsubmit="return confirm('Please confirm that you with to mark the requirement {{ req.name }} as incomplete.  Once you make this change you will have to sign again to mark it completed.');">
+											<form method="post" action="{% url 'unmark_user_requirement' %}" onsubmit="return confirm('Please confirm that you wish to mark the requirement {{ req.name }} as incomplete.  Once you make this change you will have to sign again to mark it completed.');">
 												{% csrf_token %}
 												<input type="hidden" name="requirement_id" value="{{ req.id }}">
 												<button type="submit" class="btn btn-warning btn-sm">Unmark Completed</button>

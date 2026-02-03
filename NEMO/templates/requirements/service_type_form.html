@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>{% if is_edit %}Edit{% else %}Add{% endif %} Service Type</h2>
+<form method="post">
+	{% csrf_token %}
+	{{ form.as_p }}
+	<button type="submit" class="btn btn-primary">{% if is_edit %}Save Changes{% else %}Add Service Type{% endif %}</button>
+	<a href="{% url 'service_type_list' %}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}

@@ -9,7 +9,7 @@ from django.forms.utils import ErrorDict
 from django.utils import timezone
 from django.utils.dateparse import parse_time, parse_date, parse_datetime
 
-from NEMO.models import Account, Alert, Comment, Consumable, ConsumableWithdraw, Project, SafetyIssue, Sample, ScheduledOutage, Task, TaskCategory, Tool, User, ConsumableOrder, ConsumableOrderItem
+from NEMO.models import Account, Alert, Comment, Consumable, ConsumableWithdraw, Project, SafetyIssue, Sample, ScheduledOutage, Task, TaskCategory, Tool, User, ConsumableOrder, ConsumableOrderItem, Core, ServiceType
 from NEMO.utilities import bootstrap_primary_color, format_datetime
 
 logger = getLogger(__name__)
@@ -386,3 +386,18 @@ class ToolDurationForm(forms.Form):
 	duration = forms.IntegerField(min_value=1, label="Duration (minutes)")
 
 ToolDurationFormSet = forms.formset_factory(ToolDurationForm, extra=1, min_num=1, validate_min=True)
+
+class ServiceTypeForm(forms.ModelForm):
+	class Meta:
+		model = ServiceType
+		fields = [
+			'name',
+			'description',
+			'active',
+			'core',
+			'principle_assignee',
+			'secondary_assignee',
+		]
+		widgets = {
+			'description': forms.Textarea(attrs={'rows': 3}),
+		}
