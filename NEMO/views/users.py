@@ -615,7 +615,9 @@ def user_requests(request):
 				project=proj,
 				service_type=svc,
 				user=request.user,
-				training_request=training_request
+				training_request=training_request,
+				owner=svc.principle_assignee.get_full_name(),
+				assignee=svc.principle_assignee
 			)
 
 		post_data = rows
