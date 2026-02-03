@@ -364,7 +364,7 @@ class UserServiceRequest(models.Model):
 	case_number = models.CharField(max_length=255, null=True, blank=True)
 	training_request = models.BooleanField(default=False,blank=True)
 	owner = models.CharField(default=None, null=True, blank=True, max_length=255)
-	assignee = models.ForeignKey('User', on_delete=models.CASCADE, null=True, blank=True)
+	assignee = models.ForeignKey('User', on_delete=models.CASCADE, null=True, blank=True, related_name='service_assignee')
 
 	class Meta:
 		constraints = [
