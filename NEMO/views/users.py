@@ -616,7 +616,7 @@ def user_requests(request):
 				service_type=svc,
 				user=request.user,
 				training_request=training_request,
-				owner=svc.principle_assignee.get_full_name(),
+				owner=svc.principle_assignee.email,
 				assignee=svc.principle_assignee
 			)
 
