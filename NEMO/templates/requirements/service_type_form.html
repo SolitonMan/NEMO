@@ -24,4 +24,17 @@
 		</div>
 	</div>
 </form>
+<script type="text/javascript">
+$(document).ready(function () {
+	$('form.form-horizontal :input').each(function () {
+		var $el = $(this);
+		var type = $el.attr('type');
+		// Exclude radio, checkbox, button, submit, hidden
+		if (type !== 'radio' && type !== 'checkbox' && type !== 'button' && type !== 'submit' && type !== 'hidden') {
+			$el.addClass('form-control');
+		}
+	});
+});
+</script>
+
 {% endblock %}
