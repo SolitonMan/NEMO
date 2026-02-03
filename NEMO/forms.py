@@ -401,3 +401,9 @@ class ServiceTypeForm(forms.ModelForm):
 		widgets = {
 			'description': forms.Textarea(attrs={'rows': 3}),
 		}
+
+	def __init__(self, *args, **kwargs):
+		super().__init__(*args, **kwargs)
+		active_staff = User.objects.filter(is_active=True, is_staff=True).order_by('first_name', 'last_name')
+		self.fields['principle_assignee'].queryset = active_staff
+		self.fields['secondary_assignee'].queryset = active_staff
