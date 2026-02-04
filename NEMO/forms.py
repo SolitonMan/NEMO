@@ -9,7 +9,7 @@ from django.forms.utils import ErrorDict
 from django.utils import timezone
 from django.utils.dateparse import parse_time, parse_date, parse_datetime
 
-from NEMO.models import Account, Alert, Comment, Consumable, ConsumableWithdraw, Project, SafetyIssue, Sample, ScheduledOutage, Task, TaskCategory, Tool, User, ConsumableOrder, ConsumableOrderItem, Core, ServiceType
+from NEMO.models import Account, Alert, Comment, Consumable, ConsumableWithdraw, Project, SafetyIssue, Sample, ScheduledOutage, Task, TaskCategory, Tool, User, ConsumableOrder, ConsumableOrderItem, Core, ServiceType, UserServiceRequest
 from NEMO.utilities import bootstrap_primary_color, format_datetime
 
 logger = getLogger(__name__)
@@ -407,3 +407,23 @@ class ServiceTypeForm(forms.ModelForm):
 		active_staff = User.objects.filter(is_active=True, is_staff=True).order_by('first_name', 'last_name')
 		self.fields['principle_assignee'].queryset = active_staff
 		self.fields['secondary_assignee'].queryset = active_staff
+
+
+class UserServiceRequestEditForm(forms.ModelForm):
+	project = forms.ModelChoiceField(queryset=Project.objects.none(), required=False)
+	tool = forms.ModelChoiceField(queryset=Tool.objects.none(), required=False, widget=forms.Select(attrs={'class': 'searchable-select'}))
+	assignee = forms.ModelChoiceField(queryset=User.objects.none(), required=False)
+	training_request = forms.BooleanField(required=False)
+
+	class Meta:
+		model = UserServiceRequest
+		fields = ['description', 'project', 'assignee', 'training_request', 'tool']
+
+	def __init__(self, *args, **kwargs):
+		user_projects = kwargs.pop('user_projects', Project.objects.none())
+		tools = kwargs.pop('tools', Tool.objects.none())
+		staff_members = kwargs.pop('staff_members', User.objects.none())
+		super().__init__(*args, **kwargs)
+		self.fields['project'].queryset = user_projects
+		self.fields['tool'].queryset = tools
+		self.fields['assignee'].queryset = staff_members

@@ -162,6 +162,9 @@
                                                 {% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
                                                 {% navigation_url 'resources' 'Resources' %}
                                                 {% endif %}
+												{% if user.is_staff %}
+												{% navigation_url 'staff_service_requests' 'Service Requests from Users' %}
+												{% endif %}
                                                 {% if user.is_superuser %}
                                                 {% navigation_url 'service_type_list' 'Service Type Management' %}
                                                 {% endif %}
