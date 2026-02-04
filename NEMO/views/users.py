@@ -16,7 +16,7 @@ from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from NEMO.admin import record_local_many_to_many_changes, record_active_state
-from NEMO.forms import UserForm
+from NEMO.forms import UserForm, UserServiceRequestEditForm
 from NEMO.models import Account, Core, UserRelationship, UserRelationshipType, User, UserProfile, UserProfileSetting, Project, Tool, PhysicalAccessLevel, Reservation, StaffCharge, UsageEvent, AreaAccessRecord, ActivityHistory, ProbationaryQualifications, Sample, UserRequirementProgress, Requirement, AreaRequirement, ToolRequirement, ServiceType, UserServiceRequest
 from NEMO.views.requirements_admin import get_status_icon
 
@@ -643,3 +643,54 @@ def user_requests(request):
 	)
 
 	return render(request, 'users/user_requests.html', {'mcl_services':mcl_services, 'nano_services':nano_services, 'user_projects':user_projects, 'user_service_requests': user_service_requests,})
+
+
+@login_required
+def staff_service_requests(request):
+	staff_user = request.user
+	open_requests = UserServiceRequest.objects.filter(
+		assignee=staff_user,
+		status__iexact='open'
+	).select_related('project', 'user', 'service_type', 'tool').order_by('-created')
+
+	closed_requests = UserServiceRequest.objects.filter(
+		assignee=staff_user,
+		status__iexact='closed'
+	).select_related('project', 'user', 'service_type', 'tool').order_by('-updated')[:5]
+
+	if request.method == 'POST':
+		req_id = request.POST.get('request_id')
+		action = request.POST.get('action')
+		service_request = get_object_or_404(UserServiceRequest, id=req_id, assignee=staff_user)
+		if action == 'resolve' and service_request.status.lower() == 'open':
+			service_request.status = 'closed'
+			service_request.save()
+		elif action == 'reopen' and service_request.status.lower() == 'closed':
+			service_request.status = 'open'
+			service_request.save()
+		return redirect('staff_service_requests')
+
+	return render(request, 'users/staff_service_requests.html', {
+		'open_requests': open_requests,
+		'closed_requests': closed_requests,
+	})
+
+@login_required
+def edit_service_request(request, pk):
+	service_request = get_object_or_404(UserServiceRequest, pk=pk)
+	user_projects = service_request.user.projects.all()
+	tools = Tool.objects.filter(visible=True)
+	staff_members = User.objects.filter(is_staff=True, is_active=True)
+
+	if request.method == 'POST':
+		form = UserServiceRequestEditForm(request.POST, instance=service_request, user_projects=user_projects, tools=tools, staff_members=staff_members)
+		if form.is_valid():
+			form.save()
+			return redirect('staff_service_requests')
+	else:
+		form = UserServiceRequestEditForm(instance=service_request, user_projects=user_projects, tools=tools, staff_members=staff_members)
+
+	return render(request, 'users/edit_service_request.html', {
+		'form': form,
+		'service_request': service_request,
+	})
