@@ -325,14 +325,14 @@ if settings.ALLOW_CONDITIONAL_URLS:
 		path('history/<str:item_type>/<int:item_id>/', history.history, name='history'),
 
 		# Work Orders
-		path('work_orders/', work_orders.work_orders, name='work_orders'),
-		path('save_work_order/', work_orders.add_work_order, name='save_work_order'),
-		path('create_work_order/', work_orders.create_work_order, name='create_work_order'),
-		path('delete_work_order/<int:work_order_id>/', work_orders.delete_work_order, name='delete_work_order'),
-		path('work_order_transactions/<int:work_order_id>/', work_orders.work_order_transactions, name='work_order_transactions'),
-		path('add_work_order_transaction/<int:work_order_id>/<int:content_type_id>/<int:object_id>/', work_orders.add_work_order_transaction, name='add_work_order_transaction'),
-		path('remove_work_order_transaction/<int:work_order_transaction_id>/', work_orders.remove_work_order_transaction, name='remove_work_order_transaction'),
-		path('update_work_order_status/<int:work_order_id>/<int:status_id>/', work_orders.update_work_order_status, name='update_work_order_status'),
+		path('work_orders/', landing.landing, name='work_orders'),
+		path('save_work_order/', landing.landing, name='save_work_order'),
+		path('create_work_order/', landing.landing, name='create_work_order'),
+		path('delete_work_order/<int:work_order_id>/', landing.landing, name='delete_work_order'),
+		path('work_order_transactions/<int:work_order_id>/', landing.landing, name='work_order_transactions'),
+		path('add_work_order_transaction/<int:work_order_id>/<int:content_type_id>/<int:object_id>/', landing.landing, name='add_work_order_transaction'),
+		path('remove_work_order_transaction/<int:work_order_transaction_id>/', landing.landing, name='remove_work_order_transaction'),
+		path('update_work_order_status/<int:work_order_id>/<int:status_id>/', landing.landing, name='update_work_order_status'),
 
 		# Remote work
 		path('remote_work/', remote_work.remote_work, name='remote_work'),

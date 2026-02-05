@@ -183,9 +183,6 @@
                                                 {% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
                                                 {% navigation_url 'users' 'Users' %}
                                                 {% endif %}
-                                                {% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
-                                                {% navigation_url 'work_orders' 'Work Orders' %}
-                                                {% endif %}
                                         </ul>
                                 </li>
                                 {% endif %}
