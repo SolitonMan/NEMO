@@ -313,7 +313,7 @@
 				<td colspan="10">
 					<strong>Requirements for this request:</strong>
 					<ul>
-					{% for r in request_requirements.get:req.id %}
+					{% for r in request_requirements.get_item:req.id %}
 						<li>
 							{{ r.name }}: 
 							{% if r.has_progress %}
