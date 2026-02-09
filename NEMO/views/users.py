@@ -645,8 +645,24 @@ def user_requests(request):
 		.select_related('service_type', 'project', 'core', 'pi_user')
 		.order_by('-updated')
 	)
+	# Build requirements/progress mapping
+	request_requirements = {}
+	for req in user_service_requests:
+	# Get requirements for this service type
+		requirements = req.service_type.requirements.all()
+		req_list = []
+		for r in requirements:
+			progress = UserRequirementProgress.objects.filter(user=request.user, requirement=r).first()
+			req_list.append({
+				'id': r.id,
+				'name': r.name,
+				'description': r.description,
+				'has_progress': progress is not None,
+				'status': progress.status if progress else None,
+			})
+		request_requirements[req.id] = req_list
 
-	return render(request, 'users/user_requests.html', {'mcl_services':mcl_services, 'nano_services':nano_services, 'user_projects':user_projects, 'user_service_requests': user_service_requests,})
+	return render(request, 'users/user_requests.html', {'mcl_services':mcl_services, 'nano_services':nano_services, 'user_projects':user_projects, 'user_service_requests': user_service_requests,'request_requirements': request_requirements,})
 
 def add_requirements_and_recursive_requests(user, service_type, project, description, training_request, processed_service_types=None):
 	if processed_service_types is None:
