@@ -76,6 +76,10 @@ def landing(request):
 		if User.objects.filter(pi_delegates=request.user).exists():
 			user_delegate = True
 
+	open_requirements = False
+	if UserServiceRequest.objects.filter(user=request.user).exclude(status='completed').exists():
+		open_requirements = True
+
 
 	dictionary = {
 		'now': timezone.now(),
@@ -94,6 +98,7 @@ def landing(request):
 		'sc_count': sc_count,
 		'ar_count': ar_count,
 		'cw_count': cw_count,
+		'open_requirements': open_requirements,
 	}
 	return render(request, 'landing.html', dictionary)
 
