@@ -606,6 +606,9 @@ def user_requests(request):
 			# insert into UserServiceRequest for each item
 			svc = ServiceType.objects.get(id=service)
 			proj = Project.objects.get(id=project)
+			# Only add requirements and recursive requests if not MCL
+			if svc.core.name != 'Materials Characterization Lab':
+				add_requirements_and_recursive_requests(request.user, svc, proj, description, training_request)
 			UserServiceRequest.objects.create(
 				updated=timezone.now(),
 				status='Open',
@@ -643,6 +646,43 @@ def user_requests(request):
 	)
 
 	return render(request, 'users/user_requests.html', {'mcl_services':mcl_services, 'nano_services':nano_services, 'user_projects':user_projects, 'user_service_requests': user_service_requests,})
+
+def add_requirements_and_recursive_requests(user, service_type, project, description, training_request, processed_service_types=None):
+	if processed_service_types is None:
+		processed_service_types = set()
+	# Prevent infinite recursion
+	if service_type.id in processed_service_types:
+		return
+	processed_service_types.add(service_type.id)
+
+	# Get requirements for this service type
+	requirements = service_type.requirements.all()
+	for requirement in requirements:
+		# Add requirement if not already present
+		if not UserRequirementProgress.objects.filter(user=user, requirement=requirement).exists():
+			UserRequirementProgress.objects.create(user=user, requirement=requirement, status='not_started')
+			# Check for ServiceType with same name as requirement
+			matching_service_types = ServiceType.objects.filter(name=requirement.name).exclude(core__name='Materials Characterization Lab')
+			for matching_service_type in matching_service_types:
+				# Check if user already has a request for this service type
+				if not UserServiceRequest.objects.filter(user=user, service_type=matching_service_type).exists():
+					# Recursively add request and requirements
+					UserServiceRequest.objects.create(
+						updated=timezone.now(),
+						status='Open',
+						description=f"Auto-generated request for requirement '{requirement.name}'",
+						core=matching_service_type.core,
+						pi_user=project.owner,
+						project=project,
+						service_type=matching_service_type,
+						user=user,
+						training_request=training_request,
+						owner=matching_service_type.principle_assignee.email,
+						assignee=matching_service_type.principle_assignee
+					)
+					add_requirements_and_recursive_requests(
+						user, matching_service_type, project, description, training_request, processed_service_types
+					)
 
 
 @login_required
