@@ -316,10 +316,10 @@
 					<strong>Requirements for this request:</strong>
 					<ul>
 					{% for r in request_requirements|get_item:req.id %}
-						<li>
+						<li style="background-color: {% if r.status == 'Not Started' %}#ff9999{% else % }#99ff99{% endif %};">
 							{{ r.name }}: 
 							{% if r.has_progress %}
-								Status: {{ r.status|default:"Not Started" }}
+								Status: <b>{{ r.status|default:"Not Started" }}</b>
 							{% else %}
 								Not assigned
 							{% endif %}

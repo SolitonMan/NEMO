@@ -659,7 +659,7 @@ def user_requests(request):
 				'name': r.name,
 				'description': r.description,
 				'has_progress': progress is not None,
-				'status': progress.status if progress else None,
+				'status': progress.get_status_display() if progress else None,
 			})
 		request_requirements[req.id] = req_list
 
