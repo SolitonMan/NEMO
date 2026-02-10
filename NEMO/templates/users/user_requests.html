@@ -316,7 +316,7 @@
 					<strong>Requirements for this request:</strong>
 					<ul>
 					{% for r in request_requirements|get_item:req.id %}
-						<li {% if r.status == 'Not Started' %}style="background-color: #ff9999;"{% else % }style="background-color: #99ff99;"{% endif %}>
+						<li {% if r.status == 'Not Started' %}style="background-color: #ff9999;"{% else %}style="background-color: #99ff99;"{% endif %}>
 							{{ r.name }}: 
 							{% if r.has_progress %}
 								Status: <b>{{ r.status|default:"Not Started" }}</b>
