@@ -82,6 +82,7 @@
 								<th>Resources</th>
 								<th>Prerequisites</th>
 								<th>Estimated Time to Complete</th>
+								<th>Date Added</th>
 								<th>Date Completed</th>
 								<th></th>
 							</tr>
@@ -99,7 +100,8 @@
 									{% endif %}
 								</td>
 								<td>{{ req.prerequisites }}</td>
-								<td>{{ req.expected_completion_time }}</td>
+								<td>{% if req.expected_completion_time %}{{ req.expected_completion_time }}{% endif %}</td>
+								<td>{{ req.created|date:"m/d/Y"|default:"" }}</td>
 								<td>{{ req.completed_on|date:"m/d/Y"|default:"" }}</td>
 								<td>
 									{% if not req.automated_update %}

@@ -30,7 +30,7 @@
     </div>
     <div class="form-group">
         <label>Expected completion time (minutes)</label>
-        <input type="number" name="expected_completion_time" class="form-control" value="{{ requirement.expected_completion_time }}">
+        <input type="number" name="expected_completion_time" class="form-control" value="{% if requirement.expected_completion_time %}{{ requirement.expected_completion_time }}{% endif %}">
     </div>
     <div class="form-group">
         <label>Requirement Assigned at First Login</label>

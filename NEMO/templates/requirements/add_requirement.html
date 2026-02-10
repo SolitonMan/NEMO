@@ -76,7 +76,7 @@
 			{{ req.retrain_interval_days }}
 		</td>
 		<td>
-			{{ req.expected_completion_time }}
+			{% if req.expected_completion_time %}{{ req.expected_completion_time }}{% endif %}
 		</td>
 	</tr>
 	{% empty %}
