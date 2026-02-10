@@ -59,6 +59,7 @@
 			<th>Resources</th>
 			<th>Prerequisites</th>
 			<th>Estimated Time</th>
+			<th></th>
 		</tr>
 	</thead>
 	<tbody>
@@ -78,9 +79,29 @@
 			</td>
 			<td>{{ req.prerequisites }}</td>
 			<td>{% if req.expected_completion_time %}{{ req.expected_completion_time }}{% endif %}</td>
+			<td>
+				{% if not req.automated_update %}
+					{% if req.status_value == 'Completed' %}
+						<form method="post" action="{% url 'unmark_user_requirement' %}" onsubmit="return confirm('Please confirm that you wish to mark the requirement {{ req.name }} as incomplete.  Once you make this change you will have to sign again to mark it completed.');">
+							{% csrf_token %}
+							<input type="hidden" name="requirement_id" value="{{ req.id }}">
+							<button type="submit" class="btn btn-warning btn-sm">Unmark Completed</button>
+						</form>
+					{% elif req.status_value != 'Completed' %}
+						<form method="post" action="{% url 'complete_user_requirement' %}" onsubmit="return prompt('Please enter your username ({{ request.user.username }}) to indicate you have completed the requirement - {{ req.name }}') == '{{ request.user.username }}';">
+							{% csrf_token %}
+							<input type="hidden" name="requirement_id" value="{{ req.id }}">
+							<button type="submit" class="btn btn-primary btn-sm">Mark Completed</button>
+						</form>
+					{% endif %}
+				{% endif %}
+				{% if req.automated_update and req.status_value != 'Completed' %}
+					<span class="text-muted">Automated Update</span>
+				{% endif %}
+			</td>
 		</tr>
 		<tr class="requirement-details-row" data-req-id="{{ req.id }}" style="display:none;">
-			<td colspan="7">
+			<td colspan="9">
 				<strong>Related Service Request:</strong>
 				{% if req.main_service_request %}
 					<div>
