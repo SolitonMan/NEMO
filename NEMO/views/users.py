@@ -536,6 +536,7 @@ def user_requirements(request):
 			'description': r.description,
 			'status': get_status_icon(p.status),
 			'status_value': p.status,
+			'created': p.created,
 			'completed_on': p.completed_on,
 			'expected_completion_time': getattr(r, 'expected_completion_time', ''),
 			'resource_link': getattr(r, 'resource_link', None),
