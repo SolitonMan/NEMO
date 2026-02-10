@@ -54,6 +54,7 @@
 			<th></th>
 			<th>Requirement</th>
 			<th>Status</th>
+			<th>Added</th>
 			<th>Completed On</th>
 			<th>Resources</th>
 			<th>Prerequisites</th>
@@ -62,10 +63,11 @@
 	</thead>
 	<tbody>
 	{% for req in requirements_table %}
-		<tr class="requirement-row" data-req-id="{{ req.id }}" style="cursor: pointer; background-color:{% if req.status_value == 'Not Started' %}#ffcccc{% else %}#ccffcc{% endif %};">
+		<tr class="requirement-row" data-req-id="{{ req.id }}" style="cursor: pointer; background-color:{% if req.status_value == 'Not Started' %}#ffcccc{% endif %}{% if req.status_value == 'Completed' %}#ccffcc{% endif %}{% if req.status_value == 'In Progress' %}#ffffcc{% endif %};">
 			<td><span class="glyphicon glyphicon-plus"></span></td>
 			<td>{{ req.name }}</td>
 			<td>{{ req.status_value|default:"Not Started" }}</td>
+			<td>{{ req.created|date:"m/d/Y"|default:"" }}</td>
 			<td>{{ req.completed_on|date:"m/d/Y"|default:"" }}</td>
 			<td>
 				{% if req.resource_link and req.resource_link != 'NULL' %}

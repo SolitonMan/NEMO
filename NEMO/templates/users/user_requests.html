@@ -316,7 +316,7 @@
 					<strong>Requirements for this request:</strong>
 					<ul>
 					{% for r in request_requirements|get_item:req.id %}
-						<li style="background-color: {% if r.status == 'Not Started' %}#ffcccc{% else %}#ccffcc{% endif %}; margin: 3px 3px 3px 3px;">
+						<li style="background-color: {% if r.status == 'Not Started' %}#ffcccc{% endif %}{% if r.status == 'Completed' %}#ccffcc{% endif %}{% if r.status == 'In Progress' %}#ffffcc{% endif %}; margin: 3px 3px 3px 3px;">
 							{{ r.name }}: 
 							{% if r.has_progress %}
 								Status: <b>{{ r.status|default:"Not Started" }}</b>
@@ -444,6 +444,7 @@
 				$("#mcl_template").hide();
 				$('#btn_add_service').parent().show();
 				alert('Your request has been submitted');
+				location.reload();
 			},
 			function (xhr) {
 				alert('There was an error submitting your request. Please try again.');
@@ -479,6 +480,7 @@
 				$("#nano_template").hide();
 				$('#btn_add_service').parent().show();
 				alert('Your request has been submitted');
+				location.reload();
 			},
 			function (xhr) {
 				alert('There was an error submitting your request. Please try again.');
