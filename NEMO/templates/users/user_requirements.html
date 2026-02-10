@@ -62,7 +62,7 @@
 	</thead>
 	<tbody>
 	{% for req in requirements_table %}
-		<tr class="requirement-row" data-req-id="{{ req.id }}" style="cursor:pointer;">
+		<tr class="requirement-row" data-req-id="{{ req.id }}" style="cursor: pointer; background-color:{% if req.status_value == 'Not Started' %}#ffcccc{% else %}#ccffcc{% endif %};">
 			<td><span class="glyphicon glyphicon-plus"></span></td>
 			<td>{{ req.name }}</td>
 			<td>{{ req.status_value|default:"Not Started" }}</td>
