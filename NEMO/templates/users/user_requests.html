@@ -283,6 +283,7 @@
 	<table class="table table-striped">
 		<thead>
 			<tr>
+				<th></th>
 				<th>Core</th>
 				<th>Case Number</th>
 				<th>Contact</th>
@@ -298,6 +299,7 @@
 		<tbody>
 		{% for req in user_service_requests %}
 			<tr class="request-row" data-request-id="{{ req.id }}" style="cursor:pointer;">
+				<td><span class="glyphicon glyphicon-plus"></span></td>
 				<td>{{ req.service_type.core.name }}</td>
 				<td>{% if req.case_number %}{{ req.case_number }}{% endif %}</td>
 				<td>{% if req.owner %}<a href="mailto:{{ req.owner }}">{{ req.owner_first_name }} {{ req.owner_last_name }}</a>{% endif %}</td>
@@ -310,7 +312,7 @@
 				<td>{{ req.updated|date:"Y-m-d H:i" }}</td>
 			</tr>
 			<tr class="requirements-row" data-request-id="{{ req.id }}" style="display:none;">
-				<td colspan="10">
+				<td colspan="11">
 					<strong>Requirements for this request:</strong>
 					<ul>
 					{% for r in request_requirements|get_item:req.id %}
@@ -357,7 +359,10 @@
 	$(document).on('click', '.request-row', function () {
 		var reqId = $(this).data('request-id');
 		var $detailsRow = $('.requirements-row[data-request-id="' + reqId + '"]');
+		var $icon = $(this).find('.glyphicon');
+		var isOpen = $detailsRow.is(':visible');
 		$detailsRow.toggle();
+		$icon.toggleClass('glyphicon-plus glyphicon-minus');
 	});
 })();
 </script>
