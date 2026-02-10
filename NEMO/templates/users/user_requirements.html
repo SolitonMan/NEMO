@@ -47,152 +47,68 @@
 </div>
 {% endif %}
 
-{# GROUPED VIEW (if provided by the view) #}
-{% if grouped %}
-<div class="container-fluid">
-	{% for group_name, data in grouped.items %}
-	<div class="panel panel-default core-group">
-		<div class="panel-heading">
-			<div class="row">
-				<div class="col-xs-10">
-					<strong>{{ group_name }}</strong>
-					<span class="text-muted">({{ data.requirements|length }} requirement{{ data.requirements|length|pluralize }})</span>
-				</div>
-				<div class="col-xs-2 text-right">
-					<button type="button"
-							class="group-toggle btn btn-link"
-							data-toggle="collapse"
-							data-target="#group-{{ forloop.counter }}"
-							aria-controls="group-{{ forloop.counter }}"
-							aria-expanded="{% if data.all_completed %}false{% else %}true{% endif %}">
-						<span class="glyphicon {% if data.all_completed %}glyphicon-chevron-down{% else %}glyphicon-chevron-up{% endif %}" aria-hidden="true"></span>
-						<span class="sr-only">Toggle {{ group_name }} requirements</span>
-					</button>
-				</div>
-			</div>
-		</div>
-		<div id="group-{{ forloop.counter }}" class="panel-collapse collapse core-collapse {% if not data.all_completed %}in{% endif %}">
-			<div class="panel-body" style="padding:10px 15px;">
-				<div class="table-responsive">
-					<table class="table table-striped">
-						<thead>
-							<tr>
-								<th></th>
-								<th>Requirement</th>
-								<th>Resources</th>
-								<th>Prerequisites</th>
-								<th>Estimated Time to Complete</th>
-								<th>Date Added</th>
-								<th>Date Completed</th>
-								<th></th>
-							</tr>
-						</thead>
-						<tbody>
-							{% for req in data.requirements %}
-							<tr>
-								<td><span class="{{ req.status }}" title="{{ req.status_value }}"></span></td>
-								<td><span title="{{ req.description }}">{{ req.name }}</span></td>
-								<td>
-									{% if req.resource_link and req.resource_link != 'NULL' %}
-									<a href="{{ req.resource_link }}" title="{{ req.resource_link }}" target="_blank">{{ req.resource_link_name }}</a>
-									{% else %}
-									N/A
-									{% endif %}
-								</td>
-								<td>{{ req.prerequisites }}</td>
-								<td>{% if req.expected_completion_time %}{{ req.expected_completion_time }}{% endif %}</td>
-								<td>{{ req.created|date:"m/d/Y"|default:"" }}</td>
-								<td>{{ req.completed_on|date:"m/d/Y"|default:"" }}</td>
-								<td>
-									{% if not req.automated_update %}
-										{% if req.status_value == 'completed' %}
-											<form method="post" action="{% url 'unmark_user_requirement' %}" onsubmit="return confirm('Please confirm that you wish to mark the requirement {{ req.name }} as incomplete.  Once you make this change you will have to sign again to mark it completed.');">
-												{% csrf_token %}
-												<input type="hidden" name="requirement_id" value="{{ req.id }}">
-												<button type="submit" class="btn btn-warning btn-sm">Unmark Completed</button>
-											</form>
-										{% elif req.status_value != 'completed' %}
-											<form method="post" action="{% url 'complete_user_requirement' %}" onsubmit="return prompt('Please enter your username ({{ request.user.username }}) to indicate you have completed the requirement - {{ req.name }}') == '{{ request.user.username }}';">
-												{% csrf_token %}
-												<input type="hidden" name="requirement_id" value="{{ req.id }}">
-												<button type="submit" class="btn btn-primary btn-sm">Mark Completed</button>
-											</form>
-										{% endif %}
-									{% endif %}
-									{% if req.automated_update and req.status_value != 'completed' %}
-									<span class="text-muted">Automated Update</span>
-									{% endif %}
-								</td>
-							</tr>
-							{% endfor %}
-						</tbody>
-					</table>
-				</div>
-			</div>
-		</div>
-	</div>
-	{% endfor %}
-</div>
-
-{# FALLBACK: ORIGINAL FLAT TABLE (when grouped is not provided) #}
-{% else %}
 <table class="table table-striped">
 	<thead>
 		<tr>
 			<th></th>
 			<th>Requirement</th>
+			<th>Status</th>
+			<th>Completed On</th>
 			<th>Resources</th>
 			<th>Prerequisites</th>
-			<th>Estimated Time to Complete</th>
-			<th>Date Completed</th>
-			<th></th>
+			<th>Estimated Time</th>
 		</tr>
 	</thead>
 	<tbody>
-		{% for req in requirements %}
-		<tr>
-			<td><span class="{{ req.status }}" title="{{ req.status_value }}"></span></td>
-			<td><span title="{{ req.description }}">{{ req.name }}</span></td>
+	{% for req in requirements_table %}
+		<tr class="requirement-row" data-req-id="{{ req.id }}" style="cursor:pointer;">
+			<td><span class="glyphicon glyphicon-plus"></span></td>
+			<td>{{ req.name }}</td>
+			<td>{{ req.status_value|default:"Not Started" }}</td>
+			<td>{{ req.completed_on|date:"m/d/Y"|default:"" }}</td>
 			<td>
 				{% if req.resource_link and req.resource_link != 'NULL' %}
-				<a href="{{ req.resource_link }}" title="{{ req.resource_link }}" target="_blank">{{ req.resource_link_name }}</a>
+					<a href="{{ req.resource_link }}" target="_blank">{{ req.resource_link_name }}</a>
 				{% else %}
-				N/A
+					N/A
 				{% endif %}
 			</td>
 			<td>{{ req.prerequisites }}</td>
-			<td>{{ req.expected_completion_time }}</td>
-			<td>{{ req.completed_on|date:"m/d/Y"|default:"" }}</td>
-			<td>
-				{% if not req.automated_update %}
-					{% if req.status_value == 'completed' %}
-						<form method="post" action="{% url 'unmark_user_requirement' %}">
-							{% csrf_token %}
-							<input type="hidden" name="requirement_id" value="{{ req.id }}">
-							<button type="submit" class="btn btn-warning btn-sm">Unmark Completed</button>
-						</form>
-					{% elif req.status_value != 'completed' %}
-						<form method="post" action="{% url 'complete_user_requirement' %}">
-							{% csrf_token %}
-							<input type="hidden" name="requirement_id" value="{{ req.id }}">
-							<button type="submit" class="btn btn-primary btn-sm">Mark Completed</button>
-						</form>
-					{% endif %}
-				{% endif %}
-				{% if req.automated_update and req.status_value != 'completed' %}
-				<span class="text-muted">Automated Update</span>
-				{% endif %}
-			</td>
+			<td>{% if req.expected_completion_time %}{{ req.expected_completion_time }}{% endif %}</td>
 		</tr>
-		{% empty %}
-		<tr>
+		<tr class="requirement-details-row" data-req-id="{{ req.id }}" style="display:none;">
 			<td colspan="7">
-				<div class="alert alert-info" role="alert">No requirements found.</div>
+				<strong>Related Service Request:</strong>
+				{% if req.main_service_request %}
+					<div>
+						<b>{{ req.main_service_request.service_type.name }}</b>
+						(Project: {{ req.main_service_request.project.name }}, Status: {{ req.main_service_request.status }})
+						<br>
+						Description: {{ req.main_service_request.description|default:"-" }}
+					</div>
+				{% else %}
+					<div>No direct service request associated.</div>
+				{% endif %}
+				<hr>
+				<strong>Other Service Requests depending on this requirement:</strong>
+				<ul>
+				{% for sr in req.other_service_requests %}
+					<li>
+						<b>{{ sr.service_type.name }}</b>
+						(Project: {{ sr.project.name }}, Status: {{ sr.status }})
+						<br>
+						Description: {{ sr.description|default:"-" }}
+					</li>
+				{% empty %}
+					<li>None</li>
+				{% endfor %}
+				</ul>
 			</td>
 		</tr>
-		{% endfor %}
+	{% endfor %}
 	</tbody>
 </table>
+
 {% endif %}
 </div>
 <script>
@@ -210,6 +126,14 @@
 			var $icon = $(this).prev('.panel-heading').find('.group-toggle .glyphicon');
 			$icon.removeClass('glyphicon-chevron-up').addClass('glyphicon-chevron-down');
 		});
+
+	$(document).on('click', '.requirement-row', function () {
+		var reqId = $(this).data('req-id');
+		var $detailsRow = $('.requirement-details-row[data-req-id="' + reqId + '"]');
+		var $icon = $(this).find('.glyphicon');
+		$detailsRow.toggle();
+		$icon.toggleClass('glyphicon-plus glyphicon-minus');
+	});
 })();
 </script>
 

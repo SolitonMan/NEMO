@@ -511,6 +511,33 @@ def user_requirements(request):
 		.select_related('requirement', 'service_request', 'service_request__service_type', 'service_request__tool')
 	)
 
+	requirements_table = []
+	for p in progress_list:
+		# The main service request for this requirement (may be None)
+		main_sr = p.service_request
+		# All other service requests for this user that depend on this requirement
+		other_srs = (
+			UserServiceRequest.objects
+			.filter(user=request.user, service_type__requirements=p.requirement)
+			.exclude(id=main_sr.id if main_sr else None)
+			.distinct()
+		)
+		requirements_table.append({
+			'id': p.requirement.id,
+			'name': p.requirement.name,
+			'description': p.requirement.description,
+			'status': get_status_icon(p.status),
+			'status_value': p.status,
+			'completed_on': p.completed_on,
+			'expected_completion_time': getattr(p.requirement, 'expected_completion_time', ''),
+			'resource_link': getattr(p.requirement, 'resource_link', None),
+			'resource_link_name': getattr(p.requirement, 'resource_link_name', None),
+			'automated_update': getattr(p.requirement, 'automated_update', False),
+			'prerequisites': getattr(p.requirement, 'prerequisites', False),
+			'main_service_request': main_sr,
+			'other_service_requests': list(other_srs),
+		})
+
 	def sr_title(sr):
 		if not sr:
 			return 'General'
@@ -560,7 +587,7 @@ def user_requirements(request):
 		.order_by('-updated')
 	)
 
-	return render(request, 'users/user_requirements.html', {'grouped': grouped, 'group_order': order, 'mcl_services':mcl_services, 'nano_services':nano_services, 'user_projects':user_projects, 'post_data':post_data, 'user_service_requests': user_service_requests,})
+	return render(request, 'users/user_requirements.html', {'grouped': grouped, 'group_order': order, 'mcl_services':mcl_services, 'nano_services':nano_services, 'user_projects':user_projects, 'post_data':post_data, 'user_service_requests': user_service_requests, 'requirements_table': requirements_table,})
 
 
 @login_required
