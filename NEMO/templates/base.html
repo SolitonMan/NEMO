@@ -19,6 +19,30 @@
 		body {
 			display: none !important;
 		}
+		.dropdown-submenu {
+			position: relative;
+		}
+		.dropdown-submenu > .dropdown-menu {
+			top: 0;
+			left: 100%;
+			margin-top: -1px;
+		}
+		.dropdown-submenu > a:after {
+			display: block;
+			content: " ";
+			float: right;
+			width: 0;
+			height: 0;
+			border-color: transparent;
+			border-style: solid;
+			border-width: 5px 0 5px 5px;
+			border-left-color: #ccc;
+			margin-top: 5px;
+			margin-right: -10px;
+		}
+		.dropdown-submenu:hover > .dropdown-menu {
+			display: block;
+		}
 	</style>
 	<script type="text/javascript">
 		if (self === top) {
@@ -56,7 +80,15 @@
 	<!-- DataTables JS -->
 	<script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
 
-
+	<script>
+	$(function(){
+		$('.dropdown-submenu a').on("click", function(e){
+			$(this).next('ul').toggle();
+			e.stopPropagation();
+			e.preventDefault();
+		});
+	});
+	</script>
 	{% block extrahead %}{% endblock %}
 
 	<title>{% block title %}LEO - Laboratory Equipment Operations{% endblock %}</title>
@@ -90,7 +122,7 @@
 								{% navigation_url 'samples' 'Samples' %}
 								{% navigation_url 'user_requests' 'Requests' %}
 								{% navigation_url 'user_requirements' 'My Requirements' %}
-								{% navigation_url 'requirements_dashboard' 'Requirements Dashboard' %}
+								{% navigation_url 'requirements_dashboard' 'Requirements Reference' %}
 <li><a href="{% url 'status_dashboard' %}">Status dashboard</a></li>
                                 {% if request.session.pi or user_delegate %}
                                 {% if not request.session.technical_staff %}
@@ -148,21 +180,17 @@
                                                 {% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
                                                 {% navigation_url 'qualifications' 'Qualifications' %}
                                                 {% endif %}
-												<li class="dropdown">
-													<a href="#" class="dropdown-toggle" data-toggle="dropdown">Requirements<b class="caret"></b></a>
+												<li class="dropdown-submenu">
+													<a href="#" class="dropdown-toggle" data-toggle="dropdown">Requirements</a>
 													<ul class="dropdown-menu">
-													{% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
-													{% navigation_url 'add_requirement' 'Requirements Management' %}
-													{% endif %}
-													{% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
-													{% navigation_url 'manage_requirements' 'Requirements - Assign to Tool or Area' %}
-													{% endif %}
-													{% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
-													{% navigation_url 'manage_service_type_requirements' 'Requirements - Assign to Service Type' %}
-													{% endif %}
-													{% if user.is_superuser %}
-													{% navigation_url 'service_type_list' 'Service Type Management' %}
-													{% endif %}
+														{% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
+															{% navigation_url 'add_requirement' 'Requirements Management' %}
+															{% navigation_url 'manage_requirements' 'Requirements - Assign to Tool or Area' %}
+															{% navigation_url 'manage_service_type_requirements' 'Requirements - Assign to Service Type' %}
+														{% endif %}
+														{% if user.is_superuser %}
+															{% navigation_url 'service_type_list' 'Service Type Management' %}
+														{% endif %}
 													</ul>
 												</li>
                                                 {% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}

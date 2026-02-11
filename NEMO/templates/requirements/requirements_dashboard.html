@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Requirements Dashboard{% endblock %}
+{% block title %}Requirements Reference{% endblock %}
 {% block extrahead %}
 	{% load static %}
 	<style>
@@ -228,7 +228,7 @@
 				}
 				html += '</p>';
 			} else {
-				html += '<p>My progress on this requirement: <span class="text-muted">Not started</span></p>';
+				html += '<p>My progress on this requirement: <b>Not assigned</b></p>';
 			}
 		}
 		$('#requirement-details-content').html(html);
