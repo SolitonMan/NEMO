@@ -9,7 +9,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 from NEMO.forms import ServiceTypeForm
-from NEMO.models import Tool, Area, Requirement, ToolRequirement, AreaRequirement, UserRequirementProgress, ServiceType
+from NEMO.models import Tool, Area, Requirement, ToolRequirement, AreaRequirement, UserRequirementProgress, ServiceType, UserServiceRequest, Core
 
 @staff_member_required(login_url=None)
 def add_requirement(request):
@@ -263,3 +263,83 @@ def service_type_edit(request, pk):
 	else:
 		form = ServiceTypeForm(instance=service_type)
 	return render(request, 'requirements/service_type_form.html', {'form': form, 'is_edit': True, 'service_type': service_type})
+
+
+@login_required
+def requirements_dashboard(request):
+	# Group items by core
+	grouped_items = []
+	for core in Core.objects.all().order_by('name'):
+		group = {
+			'core': core,
+			'service_types': list(ServiceType.objects.filter(core=core).order_by('name').values('id', 'name', 'category')),
+			'tools': list(Tool.objects.filter(core_id=core).order_by('name').values('id', 'name', 'category')),
+			'areas': list(Area.objects.filter(core_id=core).order_by('name').values('id', 'name')),
+		}
+		grouped_items.append(group)
+
+	# Build requirements_by_item mapping
+	requirements_by_item = {}
+	requirements_data = {}
+	# Helper to add requirements to mapping
+	def add_reqs(item_type, item_id, reqs, is_direct):
+		key = f"{item_type}-{item_id}"
+		if key not in requirements_by_item:
+			requirements_by_item[key] = []
+		for req in reqs:
+			requirements_by_item[key].append({
+				'id': req.id,
+				'name': req.name,
+				'is_direct': is_direct,
+			})
+			# Store requirement details for right panel
+			if req.id not in requirements_data:
+				requirements_data[req.id] = {
+					'name': req.name,
+					'description': req.description,
+					'resource_link': req.resource_link,
+					'resource_link_name': req.resource_link_name,
+				}
+
+	# ServiceTypes
+	for st in ServiceType.objects.all():
+		direct_reqs = st.requirements.all()
+		add_reqs('service_type', st.id, direct_reqs, True)
+		# Recursively add requirements for service types with the same name as a requirement
+		for req in direct_reqs:
+			recursive_sts = ServiceType.objects.filter(name=req.name).exclude(id=st.id)
+			for rec_st in recursive_sts:
+				add_reqs('service_type', st.id, rec_st.requirements.all(), False)
+
+	# Tools
+	for tool in Tool.objects.all():
+		direct_reqs = [tr.requirement for tr in tool.toolrequirement_set.select_related('requirement')]
+		add_reqs('tool', tool.id, direct_reqs, True)
+		# Inherited from service types
+		for st in tool.service_types.all():
+			add_reqs('tool', tool.id, st.requirements.all(), False)
+
+	# Areas
+	for area in Area.objects.all():
+		direct_reqs = [ar.requirement for ar in area.arearequirement_set.select_related('requirement')]
+		add_reqs('area', area.id, direct_reqs, True)
+		# Inherited from service types
+		for st in ServiceType.objects.filter(requirements__arearequirement__area=area).distinct():
+			add_reqs('area', area.id, st.requirements.all(), False)
+
+	# User progress
+	user_progress = {}
+	for up in UserRequirementProgress.objects.filter(user=request.user):
+		user_progress[up.requirement_id] = {
+			'status': up.status,
+			'status_display': up.get_status_display(),
+			'completed_on': up.completed_on.strftime('%Y-%m-%d') if up.completed_on else None,
+		}
+
+	context = {
+		'grouped_items': grouped_items,
+		'requirements_by_item': json.dumps(requirements_by_item),
+		'user_progress': json.dumps(user_progress),
+		'requirements_data': json.dumps(requirements_data),
+	}
+	return render(request, 'requirements/requirements_dashboard.html', context)

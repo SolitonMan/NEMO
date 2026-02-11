@@ -89,7 +89,8 @@
 								</li>
 								{% navigation_url 'samples' 'Samples' %}
 								{% navigation_url 'user_requests' 'Requests' %}
-								{% navigation_url 'user_requirements' 'Requirements' %}
+								{% navigation_url 'user_requirements' 'My Requirements' %}
+								{% navigation_url 'requirements_dashboard' 'Requirements Dashboard' %}
 <li><a href="{% url 'status_dashboard' %}">Status dashboard</a></li>
                                 {% if request.session.pi or user_delegate %}
                                 {% if not request.session.technical_staff %}
@@ -147,27 +148,29 @@
                                                 {% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
                                                 {% navigation_url 'qualifications' 'Qualifications' %}
                                                 {% endif %}
-                                                {% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
-                                                {% navigation_url 'remote_work' 'Transaction validation' %}
-                                                {% endif %}
-                                                {% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
-                                                {% navigation_url 'manage_requirements' 'Requirements - Assign to Tool or Area' %}
-                                                {% endif %}
-                                                {% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
-                                                {% navigation_url 'manage_service_type_requirements' 'Requirements - Assign to Service Type' %}
-                                                {% endif %}
-                                                {% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
-                                                {% navigation_url 'add_requirement' 'Requirements Management' %}
-                                                {% endif %}
+												<li class="dropdown">
+													<a href="#" class="dropdown-toggle" data-toggle="dropdown">Requirements<b class="caret"></b></a>
+													<ul class="dropdown-menu">
+													{% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
+													{% navigation_url 'add_requirement' 'Requirements Management' %}
+													{% endif %}
+													{% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
+													{% navigation_url 'manage_requirements' 'Requirements - Assign to Tool or Area' %}
+													{% endif %}
+													{% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
+													{% navigation_url 'manage_service_type_requirements' 'Requirements - Assign to Service Type' %}
+													{% endif %}
+													{% if user.is_superuser %}
+													{% navigation_url 'service_type_list' 'Service Type Management' %}
+													{% endif %}
+													</ul>
+												</li>
                                                 {% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
                                                 {% navigation_url 'resources' 'Resources' %}
                                                 {% endif %}
 												{% if user.is_staff %}
 												{% navigation_url 'staff_service_requests' 'Service Requests from Users' %}
 												{% endif %}
-                                                {% if user.is_superuser %}
-                                                {% navigation_url 'service_type_list' 'Service Type Management' %}
-                                                {% endif %}
                                                 {% if request.session.core_admin or request.session.technical_staff or user.is_superuser %}
                                                 {% navigation_url 'staff_charges' 'Staff charges' %}
                                                 {% endif %}
@@ -176,6 +179,9 @@
                                                 {% endif %}
                                                 {% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
                                                 {% navigation_url 'tools' 'Tools' %}
+                                                {% endif %}
+                                                {% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
+                                                {% navigation_url 'remote_work' 'Transaction validation' %}
                                                 {% endif %}
                                                 {% if request.session.core_admin or request.session.technical_staff or user.is_superuser %}
                                                 {% navigation_url 'create_usage_event' 'Usage events' %}

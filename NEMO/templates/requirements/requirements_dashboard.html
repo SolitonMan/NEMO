@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+{% block title %}Requirements Dashboard{% endblock %}
+{% block extrahead %}
+	{% load static %}
+	<style>
+		#dashboard-container {
+			display: flex;
+			flex-direction: row;
+			gap: 20px;
+			margin-top: 20px;
+		}
+		.dashboard-section {
+			flex: 1 1 0;
+			background: #f9f9f9;
+			border: 1px solid #ddd;
+			border-radius: 4px;
+			padding: 15px;
+			min-width: 250px;
+			max-width: 400px;
+			overflow-y: auto;
+			height: 600px;
+		}
+		.dashboard-section h4 {
+			margin-top: 0;
+		}
+		.dashboard-list {
+			list-style: none;
+			padding-left: 0;
+			margin-bottom: 0;
+		}
+		.dashboard-list li {
+			padding: 6px 8px;
+			cursor: pointer;
+			border-radius: 3px;
+		}
+		.dashboard-list li.selected, .dashboard-list li:hover {
+			background: #e0eaff;
+		}
+		.dashboard-list .group-label {
+			font-weight: bold;
+			margin-top: 10px;
+			margin-bottom: 2px;
+			color: #555;
+		}
+		#item-filter {
+			margin-bottom: 10px;
+			width: 100%;
+		}
+		.requirement-inherited {
+			font-style: italic;
+			color: #888;
+		}
+		.requirement-direct {
+			font-weight: bold;
+		}
+	</style>
+{% endblock %}
+{% block content %}
+
+<h2>Requirements Dashboard</h2>
+<p>
+	This dashboard allows you to explore all requirements for tools, service types, and areas you may interact with. 
+	Use the filter to quickly find an item, then view its requirements and your current progress.
+</p>
+
+<div id="dashboard-container">
+	<!-- Left: Item selection -->
+	<div class="dashboard-section" id="dashboard-items">
+		<h4>Items</h4>
+		<input type="text" id="item-filter" placeholder="Filter items...">
+		<ul class="dashboard-list" id="item-list">
+			{% for group in grouped_items %}
+				<li class="group-label">{{ group.core.name }}</li>
+				{% if group.service_types %}
+					<li class="group-label" style="font-weight:normal;">Service Types</li>
+					{% for st in group.service_types %}
+						<li class="item-option" data-type="service_type" data-id="{{ st.id }}">
+							{{ st.name }}
+							{% if st.category %}<span class="text-muted">({{ st.category }})</span>{% endif %}
+						</li>
+					{% endfor %}
+				{% endif %}
+				{% if group.tools %}
+					<li class="group-label" style="font-weight:normal;">Tools</li>
+					{% for tool in group.tools %}
+						<li class="item-option" data-type="tool" data-id="{{ tool.id }}">
+							{{ tool.name }}
+							{% if tool.category %}<span class="text-muted">({{ tool.category }})</span>{% endif %}
+						</li>
+					{% endfor %}
+				{% endif %}
+				{% if group.areas %}
+					<li class="group-label" style="font-weight:normal;">Areas</li>
+					{% for area in group.areas %}
+						<li class="item-option" data-type="area" data-id="{{ area.id }}">
+							{{ area.name }}
+						</li>
+					{% endfor %}
+				{% endif %}
+			{% endfor %}
+		</ul>
+	</div>
+
+	<!-- Middle: Requirements for selected item -->
+	<div class="dashboard-section" id="dashboard-requirements">
+		<h4>Requirements</h4>
+		<ul class="dashboard-list" id="requirement-list">
+			<li class="text-muted">Select an item to view requirements.</li>
+		</ul>
+	</div>
+
+	<!-- Right: Requirement details -->
+	<div class="dashboard-section" id="dashboard-details">
+		<h4>Requirement Details</h4>
+		<div id="requirement-details-content" class="text-muted">
+			Select a requirement to view details.
+		</div>
+	</div>
+</div>
+
+<script>
+(function () {
+	var $ = window.jQuery;
+	if (!$) return;
+
+	// --- Item filter ---
+	$('#item-filter').on('input', function () {
+		var filter = $(this).val().toLowerCase();
+		$('#item-list .item-option').each(function () {
+			var text = $(this).text().toLowerCase();
+			$(this).toggle(text.indexOf(filter) !== -1);
+		});
+		// Always show group labels
+		$('#item-list .group-label').show();
+	});
+
+	// --- Item selection ---
+	var requirementsByItem = {{ requirements_by_item|safe }};
+	var userProgress = {{ user_progress|safe }};
+	var requirementsData = {{ requirements_data|safe }};
+
+	$('#item-list').on('click', '.item-option', function () {
+		$('#item-list .item-option').removeClass('selected');
+		$(this).addClass('selected');
+		var type = $(this).data('type');
+		var id = $(this).data('id');
+		var key = type + '-' + id;
+		var reqs = requirementsByItem[key] || [];
+		var $list = $('#requirement-list');
+		$list.empty();
+		if (reqs.length === 0) {
+			$list.append('<li class="text-muted">No requirements for this item.</li>');
+			$('#requirement-details-content').html('Select a requirement to view details.');
+			return;
+		}
+		// Group direct/inherited
+		var direct = reqs.filter(r => r.is_direct);
+		var inherited = reqs.filter(r => !r.is_direct);
+		if (direct.length) {
+			$list.append('<li class="group-label">Direct Requirements</li>');
+			direct.forEach(function (r) {
+				$list.append('<li class="requirement-option requirement-direct" data-req-id="' + r.id + '">' + r.name + '</li>');
+			});
+		}
+		if (inherited.length) {
+			$list.append('<li class="group-label">Inherited/Recursive Requirements</li>');
+			inherited.forEach(function (r) {
+				$list.append('<li class="requirement-option requirement-inherited" data-req-id="' + r.id + '">' + r.name + '</li>');
+			});
+		}
+		$('#requirement-details-content').html('Select a requirement to view details.');
+	});
+
+	// --- Requirement selection ---
+	$('#requirement-list').on('click', '.requirement-option', function () {
+		$('#requirement-list .requirement-option').removeClass('selected');
+		$(this).addClass('selected');
+		var reqId = $(this).data('req-id');
+		var req = requirementsData[reqId];
+		var progress = userProgress[reqId];
+		var html = '';
+		if (!req) {
+			html = '<span class="text-muted">Requirement details not found.</span>';
+		} else {
+			html += '<h5>' + req.name + '</h5>';
+			html += '<p>' + (req.description || '<span class="text-muted">No description.</span>') + '</p>';
+			if (req.resource_link) {
+				html += '<p>Resource: <a href="' + req.resource_link + '" target="_blank">' + (req.resource_link_name || req.resource_link) + '</a></p>';
+			}
+			if (progress) {
+				html += '<p>Status: <b>' + (progress.status_display || progress.status) + '</b>';
+				if (progress.completed_on) {
+					html += '<br>Completed: ' + progress.completed_on;
+				}
+				html += '</p>';
+			} else {
+				html += '<p>Status: <span class="text-muted">Not started</span></p>';
+			}
+		}
+		$('#requirement-details-content').html(html);
+	});
+})();
+</script>
+{% endblock %}
