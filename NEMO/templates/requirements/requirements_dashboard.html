@@ -191,13 +191,13 @@
 		var direct = reqs.filter(r => r.is_direct);
 		var inherited = reqs.filter(r => !r.is_direct);
 		if (direct.length) {
-			$list.append('<li class="group-label">Direct Requirements</li>');
+			$list.append('<li class="group-label-0">Direct Requirements</li>');
 			direct.forEach(function (r) {
 				$list.append('<li class="requirement-option requirement-direct" data-req-id="' + r.id + '">' + r.name + '</li>');
 			});
 		}
 		if (inherited.length) {
-			$list.append('<li class="group-label">Inherited/Recursive Requirements</li>');
+			$list.append('<li class="group-label-0">Inherited/Recursive Requirements</li>');
 			inherited.forEach(function (r) {
 				$list.append('<li class="requirement-option requirement-inherited" data-req-id="' + r.id + '">' + r.name + '</li>');
 			});
@@ -216,8 +216,8 @@
 		if (!req) {
 			html = '<span class="text-muted">Requirement details not found.</span>';
 		} else {
-			html += '<h5>' + req.name + '</h5>';
-			html += '<p>' + (req.description || '<span class="text-muted">No description.</span>') + '</p>';
+			html += '<h4>' + req.name + '</h4>';
+			html += '<p>Description: ' + (req.description || '<span class="text-muted">No description.</span>') + '</p>';
 			if (req.resource_link) {
 				html += '<p>Resource: <a href="' + req.resource_link + '" target="_blank">' + (req.resource_link_name || req.resource_link) + '</a></p>';
 			}
@@ -228,7 +228,7 @@
 				}
 				html += '</p>';
 			} else {
-				html += '<p>Status: <span class="text-muted">Not started</span></p>';
+				html += '<p>My progress on this requirement: <span class="text-muted">Not started</span></p>';
 			}
 		}
 		$('#requirement-details-content').html(html);
