@@ -55,6 +55,13 @@
 			margin-left: 40px;
 			color: #555;
 		}
+		#item-filter-container {
+			position: sticky;
+			top: 0;
+			background: #f9f9f9;
+			z-index: 2;
+			padding-bottom: 10px;
+		}
 		#item-filter {
 			margin-bottom: 10px;
 			width: 100%;
@@ -79,8 +86,10 @@
 <div id="dashboard-container">
 	<!-- Left: Item selection -->
 	<div class="dashboard-section" id="dashboard-items">
-		<h4>Items</h4>
-		<input type="text" id="item-filter" placeholder="Filter items...">
+		<div id="item-filter-container">
+			<h4>Items</h4>
+			<input type="text" id="item-filter" placeholder="Filter items...">
+		</div>
 		<ul class="dashboard-list" id="item-list">
 			{% for group in grouped_items %}
 				<li class="group-label-0">{{ group.core.name }}</li>
