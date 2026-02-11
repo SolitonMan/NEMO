@@ -23,25 +23,28 @@
 			position: relative;
 		}
 		.dropdown-submenu > .dropdown-menu {
+			display: none;
+			position: absolute;
 			top: 0;
 			left: 100%;
 			margin-top: -1px;
-		}
-		.dropdown-submenu > a:after {
-			display: block;
-			content: " ";
-			float: right;
-			width: 0;
-			height: 0;
-			border-color: transparent;
-			border-style: solid;
-			border-width: 5px 0 5px 5px;
-			border-left-color: #ccc;
-			margin-top: 5px;
-			margin-right: -10px;
+			border-radius: 0 6px 6px 6px;
 		}
 		.dropdown-submenu:hover > .dropdown-menu {
 			display: block;
+		}
+		.dropdown-submenu > a:after {
+			display: inline-block;
+			content: " ";
+			border-top: 5px solid transparent;
+			border-bottom: 5px solid transparent;
+			border-left: 5px solid #333;
+			margin-left: 8px;
+			vertical-align: middle;
+		}
+		.dropdown-submenu:hover > a,
+		.dropdown-submenu:focus > a {
+			background-color: #f5f5f5;
 		}
 	</style>
 	<script type="text/javascript">
@@ -181,7 +184,7 @@
                                                 {% navigation_url 'qualifications' 'Qualifications' %}
                                                 {% endif %}
 												<li class="dropdown-submenu">
-													<a href="#" class="dropdown-toggle" data-toggle="dropdown">Requirements</a>
+													<a href="#">Requirements ></a>
 													<ul class="dropdown-menu">
 														{% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
 															{% navigation_url 'add_requirement' 'Requirements Management' %}
