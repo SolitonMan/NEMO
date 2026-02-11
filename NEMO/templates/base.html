@@ -189,7 +189,7 @@
                                                 {% navigation_url 'qualifications' 'Qualifications' %}
                                                 {% endif %}
 												<li class="dropdown-submenu">
-													<a href="#">Requirements ></a>
+													<a href="#">Requirements</a>
 													<ul class="dropdown-menu">
 														{% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
 															{% navigation_url 'add_requirement' 'Requirements Management' %}
