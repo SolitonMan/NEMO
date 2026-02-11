@@ -272,7 +272,7 @@ def requirements_dashboard(request):
 	for core in Core.objects.all().order_by('name'):
 		group = {
 			'core': core,
-			'service_types': list(ServiceType.objects.filter(core=core).order_by('name').values('id', 'name', 'category')),
+			'service_types': list(ServiceType.objects.filter(core=core).order_by('name').values('id', 'name')),
 			'tools': list(Tool.objects.filter(core_id=core).order_by('name').values('id', 'name', 'category')),
 			'areas': list(Area.objects.filter(core_id=core).order_by('name').values('id', 'name')),
 		}
