@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+{% load custom_tags_and_filters %}
+{% block title %}Your Requirements (Mobile){% endblock %}
+{% block extrahead %}
+	{% load static %}
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<style>
+		.requirement-panel {
+			margin-bottom: 1em;
+			border-radius: 6px;
+			box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+			border: 1px solid #e0e0e0;
+		}
+		.requirement-header {
+			padding: 1em;
+			background: #f9f9f9;
+			border-bottom: 1px solid #eee;
+			cursor: pointer;
+			display: table;
+			width: 100%;
+		}
+		.requirement-title {
+			font-size: 1.1em;
+			font-weight: 600;
+			display: table-cell;
+			vertical-align: middle;
+			width: 80%;
+		}
+		.status-badge {
+			font-size: 0.95em;
+			padding: 0.3em 0.8em;
+			border-radius: 1em;
+			color: #fff;
+			margin-right: 0.5em;
+			display: inline-block;
+		}
+		.status-not-started { background: #f44336; }
+		.status-in-progress { background: #ff9800; }
+		.status-completed { background: #4caf50; }
+		.status-unknown { background: #9e9e9e; }
+		.requirement-toggle {
+			display: table-cell;
+			vertical-align: middle;
+			width: 20%;
+			text-align: right;
+		}
+		.requirement-details {
+			padding: 1em;
+			display: none;
+			background: #fff;
+		}
+		.card-actions {
+			margin-top: 0.7em;
+		}
+		@media (max-width: 600px) {
+			.requirement-header, .requirement-details {
+				padding: 0.7em;
+			}
+			.requirement-title {
+				font-size: 1em;
+			}
+		}
+	</style>
+{% endblock %}
+{% block content %}
+
+<h3 class="mb-3">Your Requirements</h3>
+
+<div class="container-fluid" style="padding-left:0;padding-right:0;">
+	{% for req in requirements_table %}
+		<div class="requirement-panel panel panel-default" id="req-card-{{ req.id }}">
+			<div class="requirement-header" data-toggle="collapse" data-target="#details-{{ req.id }}">
+				<span class="status-badge
+					{% if req.status_value == 'Not Started' %}status-not-started
+					{% elif req.status_value == 'In Progress' %}status-in-progress
+					{% elif req.status_value == 'Completed' %}status-completed
+					{% else %}status-unknown{% endif %}">
+					{{ req.status_value|default:"Not Started" }}
+				</span>
+				<span class="requirement-title">{{ req.name }}</span>
+				<span class="requirement-toggle">
+					<span class="glyphicon glyphicon-chevron-down"></span>
+				</span>
+			</div>
+			<div class="requirement-details panel-collapse collapse" id="details-{{ req.id }}">
+				<div>
+					<strong>Description:</strong> {{ req.description|default:"-" }}
+				</div>
+				<div>
+					<strong>Added:</strong> {{ req.created|date:"m/d/Y"|default:"" }}
+					&nbsp;|&nbsp;
+					<strong>Completed:</strong> {{ req.completed_on|date:"m/d/Y"|default:"" }}
+				</div>
+				<div>
+					<strong>Resources:</strong>
+					{% if req.resource_link and req.resource_link != 'NULL' %}
+						<a href="{{ req.resource_link }}" target="_blank">{{ req.resource_link_name }}</a>
+					{% else %}
+						N/A
+					{% endif %}
+				</div>
+				<div>
+					<strong>Prerequisites:</strong> {{ req.prerequisites|default:"None" }}
+				</div>
+				<div>
+					<strong>Estimated Time:</strong> {{ req.expected_completion_time|default:"-" }}
+				</div>
+				<hr>
+				<div>
+					<strong>Related Service Request:</strong>
+					{% if req.main_service_request %}
+						<div>
+							<b>{{ req.main_service_request.service_type.name }}</b>
+							(Project: {{ req.main_service_request.project.name }}, Status: {{ req.main_service_request.status }})<br>
+							Description: {{ req.main_service_request.description|default:"-" }}
+						</div>
+					{% else %}
+						<div>No direct service request associated.</div>
+					{% endif %}
+				</div>
+				<div>
+					<strong>Other Service Requests:</strong>
+					<ul style="margin-bottom:0.5em;">
+					{% for sr in req.other_service_requests %}
+						<li>
+							<b>{{ sr.service_type.name }}</b>
+							(Project: {{ sr.project.name }}, Status: {{ sr.status }})<br>
+							Description: {{ sr.description|default:"-" }}
+						</li>
+					{% empty %}
+						<li>None</li>
+					{% endfor %}
+					</ul>
+				</div>
+				<div class="card-actions">
+					{% if not req.automated_update %}
+						{% if req.status_value == 'Completed' %}
+							<form method="post" action="{% url 'unmark_user_requirement' %}" style="display:inline;" onsubmit="return confirm('Please confirm that you wish to mark the requirement {{ req.name }} as incomplete.  Once you make this change you will have to sign again to mark it completed.');">
+								{% csrf_token %}
+								<input type="hidden" name="requirement_id" value="{{ req.id }}">
+								<button type="submit" class="btn btn-warning btn-block btn-sm">Unmark Completed</button>
+							</form>
+						{% elif req.status_value != 'Completed' %}
+							<form method="post" action="{% url 'complete_user_requirement' %}" style="display:inline;" onsubmit="return prompt('Please enter your username ({{ request.user.username }}) to indicate you have completed the requirement - {{ req.name }}') == '{{ request.user.username }}';">
+								{% csrf_token %}
+								<input type="hidden" name="requirement_id" value="{{ req.id }}">
+								<button type="submit" class="btn btn-primary btn-block btn-sm">Mark Completed</button>
+							</form>
+						{% endif %}
+					{% endif %}
+					{% if req.automated_update and req.status_value != 'Completed' %}
+						<span class="text-muted">Automated Update</span>
+					{% endif %}
+				</div>
+			</div>
+		</div>
+	{% endfor %}
+</div>
+
+<script>
+(function () {
+	var $ = window.jQuery;
+	if (!$) return;
+
+	$('.requirement-header').on('click', function () {
+		var $header = $(this);
+		var $icon = $header.find('.glyphicon');
+		var $details = $header.closest('.requirement-panel').find('.requirement-details');
+		$details.collapse('toggle');
+		// Toggle chevron direction
+		if ($details.hasClass('in')) {
+			$icon.removeClass('glyphicon-chevron-up').addClass('glyphicon-chevron-down');
+		} else {
+			$icon.removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-up');
+		}
+	});
+
+	$('.requirement-details').on('show.bs.collapse', function () {
+		$(this).closest('.requirement-panel').find('.glyphicon').removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-up');
+	});
+	$('.requirement-details').on('hide.bs.collapse', function () {
+		$(this).closest('.requirement-panel').find('.glyphicon').removeClass('glyphicon-chevron-up').addClass('glyphicon-chevron-down');
+	});
+})();
+</script>
+
+{% endblock %}

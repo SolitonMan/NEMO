@@ -11,6 +11,7 @@ from django.core.paginator import Paginator
 from django.db.models import Q, OuterRef, Subquery
 from django.http import HttpResponseBadRequest, HttpResponseRedirect, JsonResponse, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
@@ -470,6 +471,9 @@ def get_requirement_cores(requirement):
 @require_http_methods(['GET', 'POST'])
 def user_requirements(request):
 
+	if request.device == 'mobile':
+		return redirect(reverse('mobile_user_requirements'))
+
 	post_data = None
 	if request.method == 'POST':
 		print("POST data:", request.POST)
@@ -780,4 +784,46 @@ def edit_service_request(request, pk):
 	return render(request, 'users/edit_service_request.html', {
 		'form': form,
 		'service_request': service_request,
+	})
+
+
+@login_required
+@require_http_methods(['GET'])
+def mobile_user_requirements(request):
+	# Gather user requirement progress
+	progress_list = (
+		UserRequirementProgress.objects
+		.filter(user=request.user)
+		.select_related('requirement', 'service_request', 'service_request__service_type', 'service_request__tool')
+		.order_by('requirement__name')
+	)
+
+	requirements_table = []
+	for p in progress_list:
+		main_sr = p.service_request
+		other_srs = (
+			UserServiceRequest.objects
+			.filter(user=request.user, service_type__requirements=p.requirement)
+			.exclude(id=main_sr.id if main_sr else None)
+			.distinct()
+		)
+		requirements_table.append({
+			'id': p.requirement.id,
+			'name': p.requirement.name,
+			'description': p.requirement.description,
+			'status': p.status,
+			'status_value': p.get_status_display(),
+			'created': p.created,
+			'completed_on': p.completed_on,
+			'expected_completion_time': getattr(p.requirement, 'expected_completion_time', ''),
+			'resource_link': getattr(p.requirement, 'resource_link', None),
+			'resource_link_name': getattr(p.requirement, 'resource_link_name', None),
+			'automated_update': getattr(p.requirement, 'automated_update', False),
+			'prerequisites': getattr(p.requirement, 'prerequisites', False),
+			'main_service_request': main_sr,
+			'other_service_requests': list(other_srs),
+		})
+
+	return render(request, 'users/mobile_user_requirements.html', {
+		'requirements_table': requirements_table,
 	})
