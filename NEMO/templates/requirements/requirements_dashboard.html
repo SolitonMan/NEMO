@@ -107,7 +107,7 @@
 					{% if group.service_types %}
 						<li class="group-label-1" style="font-weight:normal;">Service Types</li>
 						{% for st in group.service_types %}
-							<li class="item-option" data-type="service_type" data-id="{{ st.id }}">
+							<li class="item-option" data-type="service_type" data-id="{{ st.id }}" data-name="{{ st.name }}">
 								{{ st.name }}
 							</li>
 						{% endfor %}
@@ -115,7 +115,7 @@
 					{% if group.tools %}
 						<li class="group-label-1" style="font-weight:normal;">Tools</li>
 						{% for tool in group.tools %}
-							<li class="item-option" data-type="tool" data-id="{{ tool.id }}">
+							<li class="item-option" data-type="tool" data-id="{{ tool.id }}" data-name="{{ tool.name }}">
 								{{ tool.name }}
 								{% if tool.category %}<span class="text-muted">({{ tool.category }})</span>{% endif %}
 							</li>
@@ -124,7 +124,7 @@
 					{% if group.areas %}
 						<li class="group-label-1" style="font-weight:normal;">Areas</li>
 						{% for area in group.areas %}
-							<li class="item-option" data-type="area" data-id="{{ area.id }}">
+							<li class="item-option" data-type="area" data-id="{{ area.id }}" data-name="{{ area.name }}">
 								{{ area.name }}
 							</li>
 						{% endfor %}
@@ -178,12 +178,13 @@
 		$(this).addClass('selected');
 		var type = $(this).data('type');
 		var id = $(this).data('id');
+		var itemName = $(this).data('name');
 		var key = type + '-' + id;
 		var reqs = requirementsByItem[key] || [];
 		var $list = $('#requirement-list');
 		$list.empty();
 		if (reqs.length === 0) {
-			$list.append('<li class="text-muted">No requirements for this item.</li>');
+			$list.append('<li class="text-muted">No requirements have been assigned for ' + $('<div>').text(itemName).html() + '.</li>');
 			$('#requirement-details-content').html('Select a requirement to view details.');
 			return;
 		}
@@ -191,7 +192,7 @@
 		var direct = reqs.filter(r => r.is_direct);
 		var inherited = reqs.filter(r => !r.is_direct);
 		if (direct.length) {
-			$list.append('<li class="group-label-0">Direct Requirements</li>');
+			$list.append('<li class="group-label-0">Direct Requirements for ' + $('<div>').text(itemName).html() + '</li>');
 			direct.forEach(function (r) {
 				$list.append('<li class="requirement-option requirement-direct" data-req-id="' + r.id + '">' + r.name + '</li>');
 			});
