@@ -509,6 +509,7 @@ def user_requirements(request):
 		UserRequirementProgress.objects
 		.filter(user=request.user)
 		.select_related('requirement', 'service_request', 'service_request__service_type', 'service_request__tool')
+		.order_by('requirement__name')
 	)
 
 	requirements_table = []
