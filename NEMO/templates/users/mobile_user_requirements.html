@@ -164,22 +164,20 @@
 
 	$('.requirement-header').on('click', function () {
 		var $header = $(this);
-		var $icon = $header.find('.glyphicon');
 		var $details = $header.closest('.requirement-panel').find('.requirement-details');
 		$details.collapse('toggle');
-		// Toggle chevron direction
-		if ($details.hasClass('in')) {
-			$icon.removeClass('glyphicon-chevron-up').addClass('glyphicon-chevron-down');
-		} else {
-			$icon.removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-up');
-		}
+		// Remove icon toggle here; let collapse events handle it
 	});
 
 	$('.requirement-details').on('show.bs.collapse', function () {
-		$(this).closest('.requirement-panel').find('.glyphicon').removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-up');
+		$(this).closest('.requirement-panel').find('.glyphicon')
+			.removeClass('glyphicon-chevron-down')
+			.addClass('glyphicon-chevron-up');
 	});
 	$('.requirement-details').on('hide.bs.collapse', function () {
-		$(this).closest('.requirement-panel').find('.glyphicon').removeClass('glyphicon-chevron-up').addClass('glyphicon-chevron-down');
+		$(this).closest('.requirement-panel').find('.glyphicon')
+			.removeClass('glyphicon-chevron-up')
+			.addClass('glyphicon-chevron-down');
 	});
 })();
 </script>
