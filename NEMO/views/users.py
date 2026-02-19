@@ -654,8 +654,7 @@ def user_requests(request):
 				assignee=svc.principle_assignee
 			)
 			# Only add requirements and recursive requests if not MCL
-			if svc.core.id != 1:
-				add_requirements_and_recursive_requests(new_service, request.user, svc, proj, description, training_request)
+			add_requirements_and_recursive_requests(new_service, request.user, svc, proj, description, training_request)
 
 		post_data = rows
 

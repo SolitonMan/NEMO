@@ -292,6 +292,7 @@
 				<th>Status</th>
 				<th>Description</th>
 				<th>Training Requested</th>
+				<th>Training Approved</th>
 				<th>Requested</th>
 				<th>Last Updated</th>
 			</tr>
@@ -308,11 +309,12 @@
 				<td>{{ req.status }}</td>
 				<td>{{ req.description|default:"-" }}</td>
 				<td>{% if req.training_request %}Yes{% else %}No{% endif %}</td>
+				<td>{% if req.training_approved %}Yes{% else %}No{% endif %}</td>
 				<td>{{ req.created|date:"Y-m-d H:i" }}</td>
 				<td>{{ req.updated|date:"Y-m-d H:i" }}</td>
 			</tr>
 			<tr class="requirements-row" data-request-id="{{ req.id }}" style="display:none;">
-				<td colspan="11">
+				<td colspan="12">
 					<strong>Requirements for this request:</strong>
 					<ul>
 					{% for r in request_requirements|get_item:req.id %}
