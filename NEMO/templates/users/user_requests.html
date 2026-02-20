@@ -306,7 +306,7 @@
 							<div style="display: flex; align-items: center; min-width: 120px;">
 								<div class="progress" style="flex: 1 1 auto; margin-bottom: 0; height: 18px; margin-right: 8px;">
 									<div class="progress-bar" role="progressbar"
-										style="width: {% if total > 0 %}{{ completed|floatformat:2|divisibleby:total|floatformat:0 }}{% else %}0{% endif %}%;"
+										style="width: {% if total > 0 %}{{ completed|floatformat:2|divided_by:total|floatformat:2 }}{% else %}0{% endif %}%;"
 										aria-valuenow="{{ completed }}" aria-valuemin="0" aria-valuemax="{{ total }}">
 									</div>
 								</div>
