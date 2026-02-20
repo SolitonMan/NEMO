@@ -303,12 +303,16 @@
 				<td>
 					{% with reqs=request_requirements|get_item:req.id %}
 						{% with total=reqs|length completed=reqs|completed_count %}
-							<div style="width:100px;">
-								<div class="progress" style="margin-bottom:0;">
-									<div class="progress-bar" role="progressbar" style="width:{{ completed|divisibleby:total|floatformat:0 }}%;" aria-valuenow="{{ completed }}" aria-valuemin="0" aria-valuemax="{{ total }}">
-										{{ completed }}/{{ total }}
+							<div style="display: flex; align-items: center; min-width: 120px;">
+								<div class="progress" style="flex: 1 1 auto; margin-bottom: 0; height: 18px; margin-right: 8px;">
+									<div class="progress-bar" role="progressbar"
+										style="width: {% if total > 0 %}{{ completed|floatformat:2|divisibleby:total|floatformat:0 }}{% else %}0{% endif %}%;"
+										aria-valuenow="{{ completed }}" aria-valuemin="0" aria-valuemax="{{ total }}">
 									</div>
 								</div>
+								<span style="white-space: nowrap; font-size: 12px;">
+									{{ completed }}/{{ total }}
+								</span>
 							</div>
 						{% endwith %}
 					{% endwith %}
