@@ -210,3 +210,6 @@ def get_content_data(work_order_transaction):
 	return content_data
 
 
+@register.filter
+def completed_count(reqs):
+	return len([r for r in reqs if r.status == 'Completed'])

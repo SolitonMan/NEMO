@@ -283,37 +283,55 @@
 		<thead>
 			<tr>
 				<th></th>
-				<th>Case Number</th>
-				<th>Contact</th>
-				<th>Core</th>
 				<th>Request Type</th>
+				<th>Core</th>
 				<th>Project</th>
 				<th>Status</th>
-				<th>Description</th>
-				<th>Training Requested</th>
-				<th>Training Approved</th>
 				<th>Requested</th>
-				<th>Last Updated</th>
+				<th>Progress</th>
 			</tr>
 		</thead>
 		<tbody>
 		{% for req in user_service_requests %}
 			<tr class="request-row" data-request-id="{{ req.id }}" style="cursor:pointer;">
 				<td><span class="glyphicon glyphicon-chevron-right"></span></td>
-				<td>{% if req.case_number %}{{ req.case_number }}{% endif %}</td>
-				<td>{% if req.owner %}<a href="mailto:{{ req.owner }}">{{ req.owner_first_name }} {{ req.owner_last_name }}</a>{% endif %}</td>
-				<td>{{ req.service_type.core.name }}</td>
 				<td>{{ req.service_type.name }}</td>
+				<td>{{ req.service_type.core.name }}</td>
 				<td>{{ req.project.name }}</td>
 				<td>{{ req.status }}</td>
-				<td>{{ req.description|default:"-" }}</td>
-				<td>{% if req.training_request %}Yes{% else %}No{% endif %}</td>
-				<td>{% if req.training_approved %}Yes{% else %}No{% endif %}</td>
 				<td>{{ req.created|date:"Y-m-d H:i" }}</td>
-				<td>{{ req.updated|date:"Y-m-d H:i" }}</td>
+				<td>
+					{% with reqs=request_requirements|get_item:req.id %}
+						{% with total=reqs|length completed=reqs|completed_count %}
+							<div style="width:100px;">
+								<div class="progress" style="margin-bottom:0;">
+									<div class="progress-bar" role="progressbar" style="width:{{ completed|divisibleby:total|floatformat:0 }}%;" aria-valuenow="{{ completed }}" aria-valuemin="0" aria-valuemax="{{ total }}">
+										{{ completed }}/{{ total }}
+									</div>
+								</div>
+							</div>
+						{% endwith %}
+					{% endwith %}
+				</td>
 			</tr>
 			<tr class="requirements-row" data-request-id="{{ req.id }}" style="display:none;">
-				<td colspan="12">
+				<td colspan="7">
+					<!-- Introductory details -->
+					<div>
+						<strong>Case Number:</strong> {{ req.case_number|default:"-" }}<br>
+						<strong>Contact:</strong>
+						{% if req.owner %}
+							<a href="mailto:{{ req.owner }}">{{ req.owner_first_name }} {{ req.owner_last_name }}</a>
+						{% else %}
+							-
+						{% endif %}
+						<br>
+						<strong>Description:</strong> {{ req.description|default:"-" }}<br>
+						<strong>Training Requested:</strong> {% if req.training_request %}Yes{% else %}No{% endif %}<br>
+						<strong>Training Approved:</strong> {% if req.training_approved %}Yes{% else %}No{% endif %}<br>
+						<strong>Last Updated:</strong> {{ req.updated|date:"Y-m-d H:i" }}
+					</div>
+					<hr>
 					<strong>Requirements for this request:</strong>
 					<ul>
 					{% for r in request_requirements|get_item:req.id %}
