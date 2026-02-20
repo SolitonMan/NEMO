@@ -339,10 +339,10 @@
 					<strong>Requirements for this request:</strong>
 					<ul>
 					{% for r in request_requirements|get_item:req.id %}
-						<li style="background-color: {% if r.status == 'Not Started' %}#ffcccc{% endif %}{% if r.status == 'Completed' %}#ccffcc{% endif %}{% if r.status == 'In Progress' %}#ffffcc{% endif %}; margin: 3px 3px 3px 3px;">
+						<li style="margin: 3px 3px 3px 3px;">
 							{{ r.name }}: 
 							{% if r.has_progress %}
-								Status: <b>{{ r.status|default:"Not Started" }}</b>
+								Status: <b style="background-color: {% if r.status == 'Not Started' %}#ffcccc{% endif %}{% if r.status == 'Completed' %}#ccffcc{% endif %}{% if r.status == 'In Progress' %}#ffffcc{% endif %}; ">{{ r.status|default:"Not Started" }}</b>
 							{% else %}
 								Not assigned
 							{% endif %}
