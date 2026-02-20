@@ -47,7 +47,7 @@
 	Do you want to become and on site user? <button class="btn btn-success">Yes</button> <button class="btn btn-danger">No</button>
 </div>
 {% else %}
-<div class="alert alert-info" role="alert">
+<div>
 	<button class="btn btn-success" id="btn_add_service" type="button">Submit a request</button>
 </div>
 {% endif %}
@@ -278,7 +278,6 @@
 	</div>
 </div>
 
-<h2>My Requests</h2>
 {% if user_service_requests %}
 	<table class="table table-striped">
 		<thead>
@@ -300,7 +299,7 @@
 		<tbody>
 		{% for req in user_service_requests %}
 			<tr class="request-row" data-request-id="{{ req.id }}" style="cursor:pointer;">
-				<td><span class="glyphicon glyphicon-plus"></span></td>
+				<td><span class="glyphicon glyphicon-chevron-right"></span></td>
 				<td>{% if req.case_number %}{{ req.case_number }}{% endif %}</td>
 				<td>{% if req.owner %}<a href="mailto:{{ req.owner }}">{{ req.owner_first_name }} {{ req.owner_last_name }}</a>{% endif %}</td>
 				<td>{{ req.service_type.core.name }}</td>
@@ -364,7 +363,7 @@
 		var $icon = $(this).find('.glyphicon');
 		var isOpen = $detailsRow.is(':visible');
 		$detailsRow.toggle();
-		$icon.toggleClass('glyphicon-plus glyphicon-minus');
+		$icon.toggleClass('glyphicon-chevron-right glyphicon-chevron-down');
 	});
 })();
 </script>
