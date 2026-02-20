@@ -213,3 +213,10 @@ def get_content_data(work_order_transaction):
 @register.filter
 def completed_count(reqs):
 	return len([r for r in reqs if r.get('status') == 'Completed'])
+
+@register.filter
+def divided_by(value, arg):
+	try:
+		return float(value) / float(arg) * 100
+	except (ValueError, ZeroDivisionError, TypeError):
+		return 0
