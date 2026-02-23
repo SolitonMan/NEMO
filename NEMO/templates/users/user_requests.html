@@ -337,22 +337,26 @@
 					</div>
 					<hr>
 					<strong>Requirements for this request:</strong>
-					<ul>
+					<table class="table">
 					{% for r in request_requirements|get_item:req.id %}
-						<li style="margin: 3px 3px 3px 3px;">
-							{{ r.name }}: 
+						<tr style="margin: 3px 3px 3px 3px;">
+							<td>{{ r.name }}</td>
+							<td>
 							{% if r.has_progress %}
 								Status: <b style="background-color: {% if r.status == 'Not Started' %}#ffcccc{% endif %}{% if r.status == 'Completed' %}#ccffcc{% endif %}{% if r.status == 'In Progress' %}#ffffcc{% endif %}; ">{{ r.status|default:"Not Started" }}</b>
 							{% else %}
 								Not assigned
 							{% endif %}
-							<br>
-							<small>{{ r.description }}</small>
-						</li>
+							</td>
+							<td>{{ r.description }}</td>
+							<td><a href="{{ r.resource_link }}">{{ r.resource_link_name }}</a></td>
+							<td>{{ r.expected_completion_time }}</td>
+							<td>{{ r.prerequisites }}</td>
+						</tr>
 					{% empty %}
-						<li>No requirements for this request.</li>
+						<tr><td>No requirements for this request.</td></tr>
 					{% endfor %}
-					</ul>
+					</table>
 				</td>
 			</tr>
 		{% endfor %}

@@ -692,6 +692,10 @@ def user_requests(request):
 				'description': r.description,
 				'has_progress': progress is not None,
 				'status': progress.get_status_display() if progress else None,
+				'resource_link_name': r.resource_link_name,
+				'resource_link': r.resource_link,
+				'expected_completion_time': r.expected_completion_time,
+				'prerequisites': r.prerequisites,
 			})
 		request_requirements[req.id] = req_list
 
