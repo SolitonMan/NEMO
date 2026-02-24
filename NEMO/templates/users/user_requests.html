@@ -175,17 +175,17 @@
 						<tbody>
 					{% for r in request_requirements|get_item:req.id %}
 						<tr style="margin: 3px 3px 3px 3px;">
-							<td>{{ r.name }}</td>
-							<td>
+							<td style="width:20%;">{{ r.name }}</td>
+							<td style="width:10%;">
 							{% if r.has_progress %}
 								<span style="font-weight:bold; font-size: 10pt; border-radius: 12px; background-color: {% if r.status == 'Not Started' %}#ffcccc{% endif %}{% if r.status == 'Completed' %}#ccffcc{% endif %}{% if r.status == 'In Progress' %}#ffffcc{% endif %};">{{ r.status|default:"Not Started" }}</span>
 							{% else %}
 								Not assigned
 							{% endif %}
 							</td>
-							<td>{{ r.description }}</td>
-							<td><a href="{{ r.resource_link }}">{{ r.resource_link_name }}</a></td>
-							<td>{{ r.expected_completion_time }}</td>
+							<td style="width:35%;">{{ r.description }}</td>
+							<td style="width:25%;"><a href="{{ r.resource_link }}">{{ r.resource_link_name }}</a></td>
+							<td style="width:5%;">{{ r.expected_completion_time }}</td>
 							<td>{{ r.prerequisites }}</td>
 						</tr>
 					{% empty %}
