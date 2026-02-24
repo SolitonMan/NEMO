@@ -626,7 +626,7 @@ def user_requests(request):
 		projects = request.POST.getlist('project_select')
 		descriptions = request.POST.getlist('description')
 		training_requests = request.POST.getlist('training_requested')
-		include__auto_include = request.POST.get('auto_include') == True
+		include__auto_include = request.POST.get('auto_include') == 'True'
 
 		# Combine each set into a row
 		rows = []
