@@ -362,10 +362,10 @@
 		{% for req in user_service_requests %}
 			<tr class="request-row" data-request-id="{{ req.id }}" style="cursor:pointer;">
 				<td><span class="glyphicon glyphicon-chevron-right"></span></td>
-				<td>{{ req.service_type.name }}</td>
+				<td><span style="font-weight: bold;">{{ req.service_type.name }}</span></td>
 				<td>{{ req.service_type.core.name }}</td>
 				<td>{{ req.project.name }}</td>
-				<td>{{ req.status }}</td>
+				<td><span style="background-color: {% if r.status == 'Not Started' %}#ffcccc{% endif %}{% if r.status == 'Completed' %}#ccffcc{% endif %}{% if r.status == 'In Progress' %}#ffffcc{% endif %};">{{ req.status }}</span></td>
 				<td>{{ req.created|date:"Y-m-d H:i" }}</td>
 				<td>
 					{% with reqs=request_requirements|get_item:req.id %}
@@ -405,12 +405,23 @@
 					<hr>
 					<strong>Requirements for this request:</strong>
 					<table class="table">
+						<thead>
+							<tr>
+								<th>Requirement</th>
+								<th>Status</th>
+								<th>Description</th>
+								<th>Resources</th>
+								<th>Est.</th>
+								<th>Prerequisites</th>
+							</tr>
+						</thead>
+						<tbody>
 					{% for r in request_requirements|get_item:req.id %}
 						<tr style="margin: 3px 3px 3px 3px;">
 							<td>{{ r.name }}</td>
 							<td>
 							{% if r.has_progress %}
-								Status: <b style="background-color: {% if r.status == 'Not Started' %}#ffcccc{% endif %}{% if r.status == 'Completed' %}#ccffcc{% endif %}{% if r.status == 'In Progress' %}#ffffcc{% endif %}; ">{{ r.status|default:"Not Started" }}</b>
+								<span style="font-weight:bold; font-size: 10pt; border-radius: 12px; background-color: {% if r.status == 'Not Started' %}#ffcccc{% endif %}{% if r.status == 'Completed' %}#ccffcc{% endif %}{% if r.status == 'In Progress' %}#ffffcc{% endif %};">{{ r.status|default:"Not Started" }}</span>
 							{% else %}
 								Not assigned
 							{% endif %}
@@ -423,6 +434,7 @@
 					{% empty %}
 						<tr><td>No requirements for this request.</td></tr>
 					{% endfor %}
+						</tbody>
 					</table>
 				</td>
 			</tr>
