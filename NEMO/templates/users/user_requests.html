@@ -344,8 +344,19 @@
 		</div>
 	</div>
 </div>
-
+<br/><br/>
 {% if user_service_requests %}
+	<div style="margin-bottom: 16px;">
+		<label style="font-weight: bold; margin-right: 8px;">Show:</label>
+		<div class="btn-group btn-group-toggle" data-toggle="buttons">
+			<label class="btn btn-default active" id="toggle-training">
+				<input type="radio" name="toggle" autocomplete="off" checked> Training
+			</label>
+			<label class="btn btn-default" id="toggle-service">
+				<input type="radio" name="toggle" autocomplete="off"> Service
+			</label>
+		</div>
+	</div>
 	<table class="table table-striped">
 		<thead>
 			<tr>
@@ -360,7 +371,7 @@
 		</thead>
 		<tbody>
 		{% for req in user_service_requests %}
-			<tr class="request-row" data-request-id="{{ req.id }}" style="cursor:pointer;">
+			<tr class="request-row" data-request-id="{{ req.id }}" data-training-request="{{ req.training_request }}" style="cursor:pointer;">
 				<td><span class="glyphicon glyphicon-chevron-right"></span></td>
 				<td><span style="font-weight: bold;">{{ req.service_type.name }}</span></td>
 				<td>{{ req.service_type.core.name }}</td>
@@ -721,6 +732,41 @@
 			}
 		);
 	});
+})();
+</script>
+
+<script>
+(function () {
+	var $ = window.jQuery;
+	if (!$) return;
+
+	function filterRequests(showTraining) {
+		$('.request-row').each(function () {
+			var isTraining = $(this).data('training-request') === true || $(this).data('training-request') === 'True' || $(this).data('training-request') === 'true';
+			if (showTraining ? isTraining : !isTraining) {
+				$(this).show();
+				$('.requirements-row[data-request-id="' + $(this).data('request-id') + '"]').show();
+			} else {
+				$(this).hide();
+				$('.requirements-row[data-request-id="' + $(this).data('request-id') + '"]').hide();
+			}
+		});
+	}
+
+	$('#toggle-training').on('click', function () {
+		$('#toggle-training').addClass('active');
+		$('#toggle-service').removeClass('active');
+		filterRequests(true);
+	});
+
+	$('#toggle-service').on('click', function () {
+		$('#toggle-service').addClass('active');
+		$('#toggle-training').removeClass('active');
+		filterRequests(false);
+	});
+
+	// Initial filter: show training requests
+	filterRequests(true);
 })();
 </script>
 {% endblock %}
