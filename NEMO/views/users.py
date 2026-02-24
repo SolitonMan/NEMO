@@ -626,6 +626,7 @@ def user_requests(request):
 		projects = request.POST.getlist('project_select')
 		descriptions = request.POST.getlist('description')
 		training_requests = request.POST.getlist('training_requested')
+		include__auto_include = request.POST.get('auto_include') == True
 
 		# Combine each set into a row
 		rows = []
@@ -654,7 +655,7 @@ def user_requests(request):
 				assignee=svc.principle_assignee
 			)
 			# Only add requirements and recursive requests if not MCL
-			add_requirements_and_recursive_requests(new_service, request.user, svc, proj, description, training_request)
+			add_requirements_and_recursive_requests(new_service, request.user, svc, proj, description, training_request, include__auto_include)
 
 		post_data = rows
 
@@ -701,7 +702,7 @@ def user_requests(request):
 
 	return render(request, 'users/user_requests.html', {'mcl_services':mcl_services, 'nano_services':nano_services, 'user_projects':user_projects, 'user_service_requests': user_service_requests,'request_requirements': request_requirements,})
 
-def add_requirements_and_recursive_requests(service, user, service_type, project, description, training_request, processed_service_types=None):
+def add_requirements_and_recursive_requests(service, user, service_type, project, description, training_request, auto_include, processed_service_types=None):
 	if processed_service_types is None:
 		processed_service_types = set()
 	# Prevent infinite recursion
@@ -716,7 +717,7 @@ def add_requirements_and_recursive_requests(service, user, service_type, project
 		if not UserRequirementProgress.objects.filter(user=user, requirement=requirement).exists():
 			UserRequirementProgress.objects.create(user=user, requirement=requirement, status='not_started', service_request=service)
 			# Check for ServiceType with same name as requirement
-			matching_service_types = ServiceType.objects.filter(name=requirement.name).exclude(core__name='Materials Characterization Lab')
+			matching_service_types = ServiceType.objects.filter(name=requirement.name, auto_include=auto_include)
 			for matching_service_type in matching_service_types:
 				# Check if user already has a request for this service type
 				if not UserServiceRequest.objects.filter(user=user, service_type=matching_service_type).exists():
@@ -735,7 +736,7 @@ def add_requirements_and_recursive_requests(service, user, service_type, project
 						assignee=matching_service_type.principle_assignee
 					)
 					add_requirements_and_recursive_requests(
-						new_service, user, matching_service_type, project, description, training_request, processed_service_types
+						new_service, user, matching_service_type, project, description, training_request, auto_include, processed_service_types
 					)
 
 

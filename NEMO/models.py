@@ -2221,6 +2221,7 @@ class ServiceType(models.Model):
 	requirements = models.ManyToManyField('Requirement', blank=True, related_name='service_type_requirements')
 	created = models.DateTimeField(null=True, blank=True, default=timezone.now)
 	updated = models.DateTimeField(null=True, blank=True)
+	auto_include = models.BooleanField(default=False)
 
 	def __str__(self):
 		return self.name
