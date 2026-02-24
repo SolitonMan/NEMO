@@ -600,8 +600,8 @@
 		$('#pnl_choose_core .core-collapse').collapse('show');
 	});
 
-	// Core selection logic
-	$(document).on('click', '#btn_add_service', function (e) {
+	// Core selection logic  --  short-circuiting this behavior for new wizard
+	$(document).on('click', '#btn_add_service_OLD', function (e) {
 		e.preventDefault();
 		var $panel = $('#pnl_choose_core .core-collapse');
 		if ($panel.length) {
