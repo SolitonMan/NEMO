@@ -735,7 +735,10 @@ def user_requests(request):
 			'other_service_requests': list(other_srs),
 		})
 
-	return render(request, 'users/user_requests.html', {'mcl_services':mcl_services, 'nano_services':nano_services, 'user_projects':user_projects, 'user_service_requests': user_service_requests,'request_requirements': request_requirements, 'requirements_table':requirements_table, })
+	if request.device == 'mobile':
+		return render(request, 'users/mobile_user_requests.html', {'mcl_services':mcl_services, 'nano_services':nano_services, 'user_projects':user_projects, 'user_service_requests': user_service_requests,'request_requirements': request_requirements, 'requirements_table':requirements_table, })
+	else:
+		return render(request, 'users/user_requests.html', {'mcl_services':mcl_services, 'nano_services':nano_services, 'user_projects':user_projects, 'user_service_requests': user_service_requests,'request_requirements': request_requirements, 'requirements_table':requirements_table, })
 
 def add_requirements_and_recursive_requests(service, user, service_type, project, description, training_request, auto_include, processed_service_types=None):
 	if processed_service_types is None:

@@ -1,0 +1,423 @@
+{% extends 'base.html' %}
+{% load custom_tags_and_filters %}
+{% block title %}Your Requests{% endblock %}
+{% block extrahead %}
+	{% load static %}
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+	<style>
+		.toggle-bar {
+			margin-bottom: 1rem;
+			display: flex;
+			justify-content: space-around;
+		}
+		.toggle-bar .btn {
+			flex: 1 1 0;
+			margin: 0 2px;
+		}
+		.card + .card {
+			margin-top: 1rem;
+		}
+		.card-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+		}
+		.card-header .chevron {
+			font-size: 1.2em;
+		}
+		.card-body {
+			padding: 0.75rem 1rem;
+		}
+		@media (min-width: 576px) {
+			.toggle-bar {
+				max-width: 400px;
+				margin-left: auto;
+				margin-right: auto;
+			}
+		}
+	</style>
+{% endblock %}
+{% block content %}
+
+<h3 class="text-center">Requests</h3>
+
+<div class="container-fluid">
+
+	<!-- Toggle Bar -->
+	<div class="toggle-bar btn-group btn-group-toggle" data-toggle="buttons">
+		<label class="btn btn-outline-primary active" id="toggle-training">
+			<input type="radio" name="toggle" autocomplete="off" checked> Training
+		</label>
+		<label class="btn btn-outline-primary" id="toggle-service">
+			<input type="radio" name="toggle" autocomplete="off"> Service
+		</label>
+		<label class="btn btn-outline-primary" id="toggle-requirements">
+			<input type="radio" name="toggle" autocomplete="off"> Requirements
+		</label>
+	</div>
+
+	<!-- Submit Request Button -->
+	<div class="mb-3 text-center">
+		<button class="btn btn-success btn-lg" id="btn_add_service" type="button" data-toggle="modal" data-target="#requestWizardModal">Submit a request</button>
+	</div>
+
+	<!-- Requests Cards -->
+	<div id="requests-cards-container">
+		{% for req in user_service_requests %}
+		<div class="card request-card" data-request-id="{{ req.id }}" data-training-request="{{ req.training_request }}">
+			<div class="card-header" style="cursor:pointer;">
+				<div>
+					<strong>{{ req.service_type.name }}</strong>
+					<br>
+					<small>{{ req.service_type.core.name }} | {{ req.project.name }}</small>
+				</div>
+				<span class="chevron">&#9654;</span>
+			</div>
+			<div class="card-body" style="display:none;">
+				<div>
+					<strong>Status:</strong> {{ req.status }}<br>
+					<strong>Requested:</strong> {{ req.created|date:"Y-m-d H:i" }}<br>
+					<strong>Progress:</strong>
+					{% with reqs=request_requirements|get_item:req.id %}
+						{% with total=reqs|length completed=reqs|completed_count %}
+							<div class="progress" style="height: 18px;">
+								<div class="progress-bar" role="progressbar"
+									style="width: {% if total > 0 %}{{ completed|floatformat:2|divided_by:total|floatformat:2 }}{% else %}0{% endif %}%;"
+									aria-valuenow="{{ completed }}" aria-valuemin="0" aria-valuemax="{{ total }}">
+								</div>
+							</div>
+							<span>{{ completed }}/{{ total }}</span>
+						{% endwith %}
+					{% endwith %}
+				</div>
+				<hr>
+				<div>
+					<strong>Description:</strong> {{ req.description|default:"-" }}<br>
+					<strong>Training Requested:</strong> {% if req.training_request %}Yes{% else %}No{% endif %}<br>
+					<strong>Training Approved:</strong> {% if req.training_approved %}Yes{% else %}No{% endif %}<br>
+					<strong>Last Updated:</strong> {{ req.updated|date:"Y-m-d H:i" }}
+				</div>
+				<hr>
+				<strong>Requirements:</strong>
+				<ul class="list-group">
+					{% for r in request_requirements|get_item:req.id %}
+					<li class="list-group-item d-flex justify-content-between align-items-center">
+						<span>
+							<strong>{{ r.name }}</strong>
+							<br>
+							<small>{{ r.description }}</small>
+						</span>
+						<span class="badge badge-pill"
+							style="background-color: {% if r.status == 'Not Started' %}#ffcccc{% elif r.status == 'Completed' %}#ccffcc{% elif r.status == 'In Progress' %}#ffffcc{% endif %};">
+							{{ r.status|default:"Not Started" }}
+						</span>
+					</li>
+					{% empty %}
+					<li class="list-group-item">No requirements for this request.</li>
+					{% endfor %}
+				</ul>
+			</div>
+		</div>
+		{% endfor %}
+		{% if not user_service_requests %}
+			<p class="text-center">No service requests found.</p>
+		{% endif %}
+	</div>
+
+	<!-- Requirements Cards -->
+	<div id="requirements-cards-container" style="display:none;">
+		{% for req in requirements_table %}
+		<div class="card mb-2">
+			<div class="card-body">
+				<div class="d-flex justify-content-between align-items-center">
+					<strong>{{ req.name }}</strong>
+					<span class="badge badge-pill"
+						style="background-color:{% if req.status_value == 'Not Started' %}#ffcccc{% elif req.status_value == 'Completed' %}#ccffcc{% elif req.status_value == 'In Progress' %}#ffffcc{% endif %};">
+						{{ req.status_value|default:"Not Started" }}
+					</span>
+				</div>
+				<div><small>{{ req.description }}</small></div>
+				<div class="mt-2">
+					<small>
+						<strong>Added:</strong> {{ req.created|date:"m/d/Y"|default:"" }}<br>
+						<strong>Completed On:</strong> {{ req.completed_on|date:"m/d/Y"|default:"" }}<br>
+						<strong>Resources:</strong>
+						{% if req.resource_link and req.resource_link != 'NULL' %}
+							<a href="{{ req.resource_link }}" target="_blank">{{ req.resource_link_name }}</a>
+						{% else %}
+							N/A
+						{% endif %}<br>
+						<strong>Prerequisites:</strong> {{ req.prerequisites }}<br>
+						<strong>Estimated Time:</strong> {% if req.expected_completion_time %}{{ req.expected_completion_time }}{% endif %}
+					</small>
+				</div>
+				<div class="mt-2">
+					{% if not req.automated_update %}
+						{% if req.status_value == 'Completed' %}
+							<form method="post" action="{% url 'unmark_user_requirement' %}" onsubmit="return confirm('Please confirm that you wish to mark the requirement {{ req.name }} as incomplete.  Once you make this change you will have to sign again to mark it completed.');">
+								{% csrf_token %}
+								<input type="hidden" name="requirement_id" value="{{ req.id }}">
+								<button type="submit" class="btn btn-warning btn-sm btn-block">Unmark Completed</button>
+							</form>
+						{% elif req.status_value != 'Completed' %}
+							<form method="post" action="{% url 'complete_user_requirement' %}" onsubmit="return prompt('Please enter your username ({{ request.user.username }}) to indicate you have completed the requirement - {{ req.name }}') == '{{ request.user.username }}';">
+								{% csrf_token %}
+								<input type="hidden" name="requirement_id" value="{{ req.id }}">
+								<button type="submit" class="btn btn-primary btn-sm btn-block">Mark Completed</button>
+							</form>
+						{% endif %}
+					{% endif %}
+					{% if req.automated_update and req.status_value != 'Completed' %}
+						<span class="text-muted">Automated Update</span>
+					{% endif %}
+				</div>
+			</div>
+		</div>
+		{% endfor %}
+		{% if not requirements_table %}
+			<p class="text-center">No requirements found.</p>
+		{% endif %}
+	</div>
+
+	<!-- Request Wizard Modal (reuse your existing modal code here) -->
+	
+	<!-- Request Wizard Modal -->
+	<div class="modal fade" id="requestWizardModal" tabindex="-1" role="dialog" aria-labelledby="requestWizardLabel" aria-hidden="true">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<form id="requestWizardForm" method="post">
+					{% csrf_token %}
+					<input type="hidden" name="auto_include" value="True" />
+					<div class="modal-header">
+						<h4 class="modal-title" id="requestWizardLabel">Submit a Request</h4>
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+							<span aria-hidden="true">&times;</span>
+						</button>
+					</div>
+					<div class="modal-body">
+						<!-- Step 1: Core Selection -->
+						<div class="wizard-step" id="wizardStepCore">
+							<label for="wizard_choose_core">Choose a core:</label>
+							<select class="form-control" id="wizard_choose_core" name="choose_core">
+								<option value="">-- Choose a core --</option>
+								<option value="1">Materials Characterization Lab (MCL)</option>
+								<option value="2">Nanofab</option>
+								<!--<option value="4">2DCC</option>-->
+							</select>
+						</div>
+						<!-- Step 2: Service Selection -->
+						<div class="wizard-step" id="wizardStepService" style="display:none;">
+							<label for="wizard_service_select">Choose a service:</label>
+							<select class="form-control" id="wizard_service_select" name="service_select">
+								<option value="">-- Choose a service --</option>
+								<!-- Options will be populated dynamically -->
+							</select>
+						</div>
+						<!-- Step 3: Project Selection -->
+						<div class="wizard-step" id="wizardStepProject" style="display:none;">
+							<label for="wizard_project_select">Choose a project:</label>
+							<select class="form-control" id="wizard_project_select" name="project_select">
+								<option value="">-- Choose a project --</option>
+								{% if user_projects is not None %}
+									{% for p in user_projects %}
+										<option value="{{ p.id }}">{{ p }} [PI: {{ p.owner.first_name }} {{ p.owner.last_name }} ({{ p.owner.username }})]</option>
+									{% endfor %}
+								{% else %}
+									<option value="">No project available</option>
+								{% endif %}
+							</select>
+						</div>
+						<!-- Step 4: Training & Description -->
+						<div class="wizard-step" id="wizardStepTraining" style="display:none;">
+							<!-- Training select (shown for non-Nanofab) -->
+							<div id="wizard_training_select_group">
+								<label for="wizard_training_requested">Training requested?</label>
+								<select class="form-control" id="wizard_training_requested" name="training_requested">
+									<option value="True">Yes</option>
+									<option value="False" selected>No</option>
+								</select>
+							</div>
+							<!-- Hidden input for Nanofab -->
+							<input type="hidden" id="wizard_training_hidden" name="training_requested" value="True" style="display:none;" />
+							<label for="wizard_description" style="margin-top:10px;">Description</label>
+							<textarea class="form-control" id="wizard_description" name="description" rows="4"></textarea>
+						</div>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-secondary" id="wizardPrevBtn" style="display:none;">Previous</button>
+						<button type="button" class="btn btn-primary" id="wizardNextBtn">Next</button>
+						<button type="submit" class="btn btn-success" id="wizardSubmitBtn" style="display:none;">Submit</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+<script>
+(function () {
+	var $ = window.jQuery;
+	if (!$) return;
+
+	// Wizard state
+	var wizardStep = 0;
+	var coreServices = {
+		"1": [{ id: "{{ mcl_services.0.id }}", name: "{{ mcl_services.0.name }}" }{% for opt in mcl_services|slice:"1:" %}, { id: "{{ opt.id }}", name: "{{ opt.name }}" }{% endfor %}],
+		"2": [{ id: "{{ nano_services.0.id }}", name: "{{ nano_services.0.name }}" }{% for opt in nano_services|slice:"1:" %}, { id: "{{ opt.id }}", name: "{{ opt.name }}" }{% endfor %}],
+		"4": []
+	};
+
+	function showStep(step) {
+		$('.wizard-step').hide();
+		$('#wizardStepCore').toggle(step === 0);
+		$('#wizardStepService').toggle(step === 1);
+		$('#wizardStepProject').toggle(step === 2);
+		$('#wizardStepTraining').toggle(step === 3);
+
+		$('#wizardPrevBtn').toggle(step > 0);
+		$('#wizardNextBtn').toggle(step < 3);
+		$('#wizardSubmitBtn').toggle(step === 3);
+
+		if (step === 3) {
+			updateTrainingField();
+		}
+	}
+
+	function updateTrainingField() {
+		var core = $('#wizard_choose_core').val();
+		if (core === "2") { // Nanofab
+			$('#wizard_training_select_group').hide();
+			$('#wizard_training_select_group select').prop('disabled', true);
+			$('#wizard_training_hidden').show().prop('disabled', false);
+		} else {
+			$('#wizard_training_select_group').show();
+			$('#wizard_training_select_group select').prop('disabled', false);
+			$('#wizard_training_hidden').hide().prop('disabled', true);
+		}
+	}
+
+	$('#requestWizardModal').on('show.bs.modal', function () {
+		wizardStep = 0;
+		showStep(wizardStep);
+		$('#requestWizardForm')[0].reset();
+		$('#wizard_service_select').empty().append('<option value="">-- Choose a service --</option>');
+	});
+
+	$('#wizardNextBtn').on('click', function () {
+		// Validation per step
+		if (wizardStep === 0) {
+			var core = $('#wizard_choose_core').val();
+			if (!core) { alert('Please select a core.'); return; }
+			// Populate services
+			var services = coreServices[core] || [];
+			var $serviceSelect = $('#wizard_service_select');
+			$serviceSelect.empty().append('<option value="">-- Choose a service --</option>');
+			services.forEach(function (s) {
+				$serviceSelect.append('<option value="' + s.id + '">' + s.name + '</option>');
+			});
+			updateTrainingField(); // <-- Add this line
+		}
+		if (wizardStep === 1) {
+			if (!$('#wizard_service_select').val()) { alert('Please select a service.'); return; }
+		}
+		if (wizardStep === 2) {
+			if (!$('#wizard_project_select').val()) { alert('Please select a project.'); return; }
+		}
+		wizardStep++;
+		showStep(wizardStep);
+	});
+
+	$('#wizardPrevBtn').on('click', function () {
+		wizardStep--;
+		showStep(wizardStep);
+	});
+
+	$('#requestWizardForm').on('submit', function (e) {
+		e.preventDefault();
+		var data = $(this).serialize();
+		ajax_post(
+			$(this).attr('action') || window.location.href,
+			data,
+			function (response) {
+				$('#requestWizardModal').modal('hide');
+				alert('Your request has been submitted');
+				location.reload();
+			},
+			function (xhr) {
+				alert('There was an error submitting your request. Please try again.');
+			}
+		);
+	});
+})();
+</script>
+<script>
+(function () {
+	var $ = window.jQuery;
+	if (!$) return;
+
+	// Toggle logic
+	function showRequests() {
+		$('#requests-cards-container').show();
+		$('#requirements-cards-container').hide();
+	}
+	function showRequirements() {
+		$('#requests-cards-container').hide();
+		$('#requirements-cards-container').show();
+	}
+	$('#toggle-training').on('click', function () {
+		$('#toggle-training').addClass('active');
+		$('#toggle-service').removeClass('active');
+		$('#toggle-requirements').removeClass('active');
+		showRequests();
+		filterRequests(true);
+	});
+	$('#toggle-service').on('click', function () {
+		$('#toggle-service').addClass('active');
+		$('#toggle-training').removeClass('active');
+		$('#toggle-requirements').removeClass('active');
+		showRequests();
+		filterRequests(false);
+	});
+	$('#toggle-requirements').on('click', function () {
+		$('#toggle-requirements').addClass('active');
+		$('#toggle-training').removeClass('active');
+		$('#toggle-service').removeClass('active');
+		showRequirements();
+	});
+
+	// Filter requests by training/service
+	function filterRequests(showTraining) {
+		$('.request-card').each(function () {
+			var isTraining = $(this).data('training-request') === true || $(this).data('training-request') === 'True' || $(this).data('training-request') === 'true';
+			if (showTraining ? isTraining : !isTraining) {
+				$(this).show();
+			} else {
+				$(this).hide();
+			}
+			// Always collapse card body on filter
+			$(this).find('.card-body').hide();
+			$(this).find('.chevron').html('&#9654;');
+		});
+	}
+	// Initial state
+	showRequests();
+	filterRequests(true);
+
+	// Expand/collapse card details
+	$(document).on('click', '.request-card .card-header', function () {
+		var $card = $(this).closest('.request-card');
+		var $body = $card.find('.card-body');
+		var $chevron = $(this).find('.chevron');
+		if ($body.is(':visible')) {
+			$body.slideUp(150);
+			$chevron.html('&#9654;');
+		} else {
+			$body.slideDown(150);
+			$chevron.html('&#9660;');
+		}
+	});
+})();
+</script>
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}
