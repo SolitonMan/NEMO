@@ -72,11 +72,16 @@
 					</div>
 					<!-- Step 4: Training & Description -->
 					<div class="wizard-step" id="wizardStepTraining" style="display:none;">
-						<label for="wizard_training_requested">Training requested?</label>
-						<select class="form-control" id="wizard_training_requested" name="training_requested">
-							<option value="True">Yes</option>
-							<option value="False" selected>No</option>
-						</select>
+						<!-- Training select (shown for non-Nanofab) -->
+						<div id="wizard_training_select_group">
+							<label for="wizard_training_requested">Training requested?</label>
+							<select class="form-control" id="wizard_training_requested" name="training_requested">
+								<option value="True">Yes</option>
+								<option value="False" selected>No</option>
+							</select>
+						</div>
+						<!-- Hidden input for Nanofab -->
+						<input type="hidden" id="wizard_training_hidden" name="training_requested" value="True" style="display:none;" />
 						<label for="wizard_description" style="margin-top:10px;">Description</label>
 						<textarea class="form-control" id="wizard_description" name="description" rows="4"></textarea>
 					</div>
@@ -290,6 +295,21 @@
 		$('#wizardPrevBtn').toggle(step > 0);
 		$('#wizardNextBtn').toggle(step < 3);
 		$('#wizardSubmitBtn').toggle(step === 3);
+
+		if (step === 3) {
+			updateTrainingField();
+		}
+	}
+
+	function updateTrainingField() {
+		var core = $('#wizard_choose_core').val();
+		if (core === "2") { // Nanofab
+			$('#wizard_training_select_group').hide();
+			$('#wizard_training_hidden').show();
+		} else {
+			$('#wizard_training_select_group').show();
+			$('#wizard_training_hidden').hide();
+		}
 	}
 
 	$('#requestWizardModal').on('show.bs.modal', function () {
@@ -311,6 +331,7 @@
 			services.forEach(function (s) {
 				$serviceSelect.append('<option value="' + s.id + '">' + s.name + '</option>');
 			});
+			updateTrainingField(); // <-- Add this line
 		}
 		if (wizardStep === 1) {
 			if (!$('#wizard_service_select').val()) { alert('Please select a service.'); return; }
