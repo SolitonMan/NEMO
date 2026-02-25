@@ -305,10 +305,12 @@
 		var core = $('#wizard_choose_core').val();
 		if (core === "2") { // Nanofab
 			$('#wizard_training_select_group').hide();
-			$('#wizard_training_hidden').show();
+			$('#wizard_training_select_group select').prop('disabled', true);
+			$('#wizard_training_hidden').show().prop('disabled', false);
 		} else {
 			$('#wizard_training_select_group').show();
-			$('#wizard_training_hidden').hide();
+			$('#wizard_training_select_group select').prop('disabled', false);
+			$('#wizard_training_hidden').hide().prop('disabled', true);
 		}
 	}
 
