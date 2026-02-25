@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'base_free.html' %}
 {% load custom_tags_and_filters %}
 {% block title %}Your Requests{% endblock %}
 {% block extrahead %}
@@ -254,6 +254,9 @@
 		</div>
 	</div>
 </div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 (function () {
 	var $ = window.jQuery;
@@ -418,6 +421,4 @@
 	});
 })();
 </script>
-<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
 {% endblock %}

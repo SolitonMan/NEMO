@@ -1,0 +1,289 @@
+{% load static %}
+{% load custom_tags_and_filters %}
+{% load widget_tweaks %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	{# This meta-tag forcefully disables 'compatibility mode' in Internet Explorer because it causes rendering problems. #}
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+	<meta http-equiv="Pragma" content="no-cache">
+	<meta http-equiv="Expires" content="0">
+	<meta charset="UTF-8">
+	<meta name="application-name" content="Laboratory Equipment Operations (LEO)">
+	<meta name="author" content="Center for Nanoscale Science and Technology">
+	<meta name="description" content="LEO allows laboratory users to make tool reservations, control access to tools in the laboratory, and streamline logistics and communication">
+	<meta name="keywords" content="laboratory, logistics, operations, nano-technology, nano-fabrication, reservation, tool control, status">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+ 
+
+	{# Snippet to prevent clickjacking. Taken from https://www.codemagi.com/blog/post/194 #}
+	<style id="antiClickjack">
+		body {
+			display: none !important;
+		}
+	</style>
+	<style>
+		.dropdown-submenu {
+			position: relative;
+		}
+		.dropdown-submenu > .dropdown-menu {
+			display: none;
+			position: absolute;
+			top: 66%;
+			left: 220px;
+			margin-top: -1px;
+			border-radius: 0 6px 6px 6px;
+		}
+		.dropdown-submenu:hover > .dropdown-menu {
+			display: block;
+		}
+		.dropdown-submenu > a:after {
+			display: inline-block;
+			content: " ";
+			border-top: 5px solid transparent;
+			border-bottom: 5px solid transparent;
+			border-left: 5px solid #333;
+			margin-left: 8px;
+			vertical-align: middle;
+		}
+		.dropdown-submenu:hover > a,
+		.dropdown-submenu:focus > a {
+			background-color: #f5f5f5;
+		}
+	</style>
+	<script type="text/javascript">
+		if (self === top) {
+			var antiClickjack = document.getElementById("antiClickjack");
+			antiClickjack.parentNode.removeChild(antiClickjack);
+		}
+		else
+			top.location = self.location;
+	</script>
+
+	{% if device == 'mobile' %}
+	<script>
+	$(function(){
+		$('.dropdown-submenu a').on("click", function(e){
+			$(this).next('ul').toggle();
+			e.stopPropagation();
+			e.preventDefault();
+		});
+	});
+	</script>
+	{% endif %}
+
+	{% block extrahead %}{% endblock %}
+
+	<title>{% block title %}LEO - Laboratory Equipment Operations{% endblock %}</title>
+</head>
+<body>
+<div style="display:none" id="temp_holding_element"></div>
+<nav class="navbar navbar-default navbar-static-top"{% if device != "mobile" %} style="width: 100%;"{% endif %}>
+	<div class="container"{% if device != "mobile" %} style="width: 90%;"{% endif %}>
+		<div class="navbar-header">
+			<button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#nemo-navigation">
+				<span class="icon-bar"></span>
+				<span class="icon-bar"></span>
+				<span class="icon-bar"></span>
+			</button>
+			<a class="navbar-brand" href="{% url 'landing' %}">LEO</a>
+		</div>
+		<div class="navbar-collapse collapse" id="nemo-navigation">
+                        <ul class="nav navbar-nav">
+                                <li><a href="{% url 'calendar' %}">Calendar</a></li>
+                                <li><a href="{% url 'tool_control' %}">Tool control</a></li>
+                                {% if user.physical_access_levels.all|length > 0 %}
+                                <li><a href="{% url 'new_area_access_customer' request.user.id %}">Area Access</a></li>
+                                {% endif %}
+								<li class="dropdown">
+									<a href="#" class="dropdown-toggle" data-toggle="dropdown">Supplies <b class="caret"></b></a>
+									<ul class="dropdown-menu">
+									{% navigation_url 'create_order' 'Order Supplies' %}
+                                    <li><a href="{% url 'order_list' 1 %}">My Orders</a></li>
+									</ul>
+								</li>
+								{% navigation_url 'samples' 'Samples' %}
+								{% navigation_url 'user_requests' 'Requests' %}
+								{% navigation_url 'requirements_dashboard' 'Requirements Reference' %}
+<li><a href="{% url 'status_dashboard' %}">Status dashboard</a></li>
+                                {% if request.session.pi or user_delegate %}
+                                {% if not request.session.technical_staff %}
+                                {% navigation_url 'accounts_and_projects' 'Projects' %}
+                                {% endif %}
+                                {% endif %}
+
+                                {% if user.is_staff %}
+                                <li class="dropdown">
+                                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">Administration <b class="caret"></b></a>
+                                        <ul class="dropdown-menu">
+                                                {# The navigation_url tag will display the item if the URL name can be reversed. #}
+                                                {# This allows items to be easily removed from the public facing version of NEMO. #}
+                                                {% if user.is_superuser %}
+                                                {% navigation_url 'check_url' 'URL Checker' %}
+                                                {% endif %}
+                                                {% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
+                                                {% navigation_url 'abuse' 'Abuse' %}
+                                                {% endif %}
+                                                {% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
+                                                {% navigation_url 'alerts' 'Alerts' %}
+                                                {% endif %}
+                                                {% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
+                                                {% navigation_url 'area_access' 'Area access' %}
+                                                {% endif %}
+                                                {% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
+                                                {% navigation_url 'configuration_agenda' 'Configuration agenda' %}
+                                                {% endif %}
+                                                {% if user.is_superuser %}
+                                                {% navigation_url 'customization' 'Customization' %}
+                                                {% endif %}
+                                                {% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or user.is_superuser %}
+                                                {% navigation_url 'admin:index' 'Detailed administration' %}
+                                                {% endif %}
+                                                {% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
+                                                {% navigation_url 'email_broadcast' 'Email' %}
+                                                {% endif %}
+                                                {% if request.session.administrative_staff or request.user.is_superuser %}
+                                                {% navigation_url 'interlocks' 'Interlocks' %}
+                                                {% endif %}
+                                                {% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
+                                                {% navigation_url 'maintenance' 'Maintenance' %}
+                                                {% endif %}
+											    {% navigation_url 'tool_training_schedule' 'Tool Training Scheduler' %}
+											    {% navigation_url 'multi_calendar' 'Multi calendar' %}
+											    {% navigation_url 'sequential_tool_schedule' 'Process Scheduling' %}
+                                                {% navigation_url 'create_notification_scheme' 'Notification Schemes' %}
+                                                <li><a href="{% url 'order_list' 0 %}">Orders</a></li>
+                                                {% if user.is_superuser %}
+                                                {% navigation_url 'delegates' 'PI Delegates' %}
+                                                {% endif %}
+                                                {% if request.session.pi or request.session.administrative_staff or request.session.financial_admin or user.is_superuser or user.is_staff %}
+                                                {% navigation_url 'accounts_and_projects' 'Projects' %}
+                                                {% endif %}
+                                                {% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
+                                                {% navigation_url 'qualifications' 'Qualifications' %}
+                                                {% endif %}
+												<li class="dropdown-submenu">
+													<a href="#">Requirements</a>
+													<ul class="dropdown-menu">
+														{% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
+															{% navigation_url 'add_requirement' 'Requirements Management' %}
+															{% navigation_url 'manage_requirements' 'Requirements - Assign to Tool or Area' %}
+															{% navigation_url 'manage_service_type_requirements' 'Requirements - Assign to Service Type' %}
+														{% endif %}
+														{% if user.is_superuser %}
+															{% navigation_url 'service_type_list' 'Service Type Management' %}
+														{% endif %}
+													</ul>
+												</li>
+                                                {% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
+                                                {% navigation_url 'resources' 'Resources' %}
+                                                {% endif %}
+												{% if user.is_staff %}
+												{% navigation_url 'staff_service_requests' 'Service Requests from Users' %}
+												{% endif %}
+                                                {% if request.session.core_admin or request.session.technical_staff or user.is_superuser %}
+                                                {% navigation_url 'staff_charges' 'Staff charges' %}
+                                                {% endif %}
+                                                {% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
+                                                {% navigation_url 'consumables' 'Supplies' %}
+                                                {% endif %}
+                                                {% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
+                                                {% navigation_url 'tools' 'Tools' %}
+                                                {% endif %}
+                                                {% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
+                                                {% navigation_url 'remote_work' 'Transaction validation' %}
+                                                {% endif %}
+                                                {% if request.session.core_admin or request.session.technical_staff or user.is_superuser %}
+                                                {% navigation_url 'create_usage_event' 'Usage events' %}
+                                                {% endif %}
+                                                {% if request.session.administrative_staff or request.session.core_admin or request.session.financial_admin or request.session.technical_staff or user.is_superuser %}
+                                                {% navigation_url 'users' 'Users' %}
+                                                {% endif %}
+                                        </ul>
+                                </li>
+                                {% endif %}
+                                {% if logout_allowed %}
+                                <li class="visible-xs"><a href="{% url 'logout' %}">Logout</a></li>
+                                {% endif %}
+                                <li><a href="mailto:LEOHelp@psu.edu">Report a problem</a></li>
+                        </ul>
+			<div  class="nav-tweak">
+			<ul class="nav-tweak nav navbar-nav navbar-right hidden-xs">
+				{% if user.is_staff and user.charging_staff_time %}
+				{% with user.get_staff_charge as staff_charge %}
+					<li class="hidden-sm">
+						<p class="navbar-text" style="font-weight: normal;">
+							<a id="staff_charge_link" href="{% url 'staff_charges' %}" style="color:red; text-decoration: none" data-toggle="tooltip" data-placement="bottom" title="You are charging staff time to {{ staff_charge.customers.all.0 }} {% if staff_charge.customers.all.count > 1 %}and others{% endif %} on the project {{ staff_charge.projects.all.0.project_number }} since {{ staff_charge.start }}. {% if staff_charge.core_id_override is not None and staff_charge.core_id_override != 0 %} These charges are being made for {{ staff_charge.core_id_override_name }} {% if staff_charge.credit_cost_collector_override is not None and staff_charge.credit_cost_collector_override != 0%} and being credited to {{ staff_charge.credit_cost_collector_override_name }}.{% endif %}{% endif %}">
+								Staff time ({{ staff_charge.projects.all.0.project_number }}{% if staff_charge.core_id_override is not None and staff_charge.core_id_override != 0 %} for {{ staff_charge.core_id_override_name }}{% elif staff_charge.credit_cost_collector_override is not None and staff_charge.credit_cost_collector_override != 0%} for {{ staff_charge.credit_cost_collector_override_name }}{% else %} for {{ user.credit_cost_collector.core.name }}{% endif %}) 
+							</a>
+						</p>
+						<script>
+							$("#staff_charge_link").tooltip();
+						</script>
+					</li>
+				{% endwith %}
+				{% endif %}
+				{% if user.active_projects.count == 0 %}
+				<li class="hidden-sm"><p class="navbar-text">Welcome, {{ user.first_name }}</p></li>
+				{% else %}
+				<li class="hidden-sm"><p class="navbar-text"><a title="Click here to edit your profile" href="{% url 'user_profile' user.id %}">Welcome, {{ user.first_name }}</a></p></li>
+				{% endif %}
+				{% if logout_allowed %}
+					<li><a href="{% url 'logout' %}">Logout</a></li>
+				{% endif %}
+			</ul>
+			</div>
+		</div>
+	</div>
+</nav>
+{% block body %}
+    <div class="body-container">
+        <div class="container">
+            {% block content %}{% endblock %}
+        </div>
+        {% block extra_whitespace %}
+            <!--div style="height: 200px"></div-->
+        {% endblock %}
+    </div>
+    <!-- Version -->
+    <!--footer class="page-footer">
+        {% app_version as app_version %}
+        <div class="container">
+            {% if app_version %}v {% app_version %}{% else %}&nbsp;{% endif %}
+        </div>
+    </footer-->
+{% endblock %}
+
+{# This division is used to display dialog messages via Bootstrap. #}
+<div class="modal fade" id="dialog" tabindex="-10" role="dialog">
+	<div class="modal-dialog">
+		<div class="modal-content {% if device != 'mobile' %}modal-center{% else %}modal-center-mobile{% endif %}">
+		</div>
+	</div>
+</div>
+
+<div class="modal fade" id="sample_dialog" tabindex="-2" role="dialog">
+	<div class="modal-dialog">
+		<div class="modal-content {% if device != 'mobile' %}modal-center{% else %}modal-center-mobile{% endif %}">
+		</div>
+	</div>
+</div>
+
+<script>
+	function csrf_token()
+	{
+		return '{{ csrf_token }}';
+	}
+	{# Add a global AJAX completion callback if sessions are able to timeout. #}
+	{# When an AJAX request receives an HTTP 403 (unauthorized) reply the user is #}
+	{# sent to the logoff page, which then redirects them back to the login page. #}
+	{% if logout_allowed %}
+		$(document).ajaxComplete(navigate_to_login_on_session_expiration);
+	{% endif %}
+
+</script>
+
+</body>
+</html>
