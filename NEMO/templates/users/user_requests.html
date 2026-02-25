@@ -45,7 +45,7 @@
 							<option value="">-- Choose a core --</option>
 							<option value="1">Materials Characterization Lab (MCL)</option>
 							<option value="2">Nanofab</option>
-							<option value="4">2DCC</option>
+							<!--<option value="4">2DCC</option>-->
 						</select>
 					</div>
 					<!-- Step 2: Service Selection -->
@@ -101,8 +101,12 @@
 			<label class="btn btn-default" id="toggle-service">
 				<input type="radio" name="toggle" autocomplete="off"> Service
 			</label>
+			<label class="btn btn-default" id="toggle-requirements">
+				<input type="radio" name="toggle" autocomplete="off"> Requirements
+			</label>
 		</div>
 	</div>
+	<div id="requests-table-container">
 	<table class="table table-striped">
 		<thead>
 			<tr>
@@ -198,9 +202,68 @@
 		{% endfor %}
 		</tbody>
 	</table>
+	</div>
 {% else %}
 	<p>No service requests found.</p>
 {% endif %}
+
+
+<div id="requirements-table-container" style="display:none;">
+	<table class="table table-striped">
+		<thead>
+			<tr>
+				<th>Requirement</th>
+				<th>Status</th>
+				<th>Added</th>
+				<th>Completed On</th>
+				<th>Resources</th>
+				<th>Prerequisites</th>
+				<th>Estimated Time</th>
+				<th></th>
+			</tr>
+		</thead>
+		<tbody>
+		{% for req in requirements_table %}
+			<tr>
+				<td>{{ req.name }}</td>
+				<td><span style="font-weight: bold; font-size: 10pt; border-radius: 12px; background-color:{% if req.status_value == 'Not Started' %}#ffcccc{% endif %}{% if req.status_value == 'Completed' %}#ccffcc{% endif %}{% if req.status_value == 'In Progress' %}#ffffcc{% endif %};">{{ req.status_value|default:"Not Started" }}</span></td>
+				<td>{{ req.created|date:"m/d/Y"|default:"" }}</td>
+				<td>{{ req.completed_on|date:"m/d/Y"|default:"" }}</td>
+				<td>
+					{% if req.resource_link and req.resource_link != 'NULL' %}
+						<a href="{{ req.resource_link }}" target="_blank">{{ req.resource_link_name }}</a>
+					{% else %}
+						N/A
+					{% endif %}
+				</td>
+				<td>{{ req.prerequisites }}</td>
+				<td>{% if req.expected_completion_time %}{{ req.expected_completion_time }}{% endif %}</td>
+				<td>
+					{% if not req.automated_update %}
+						{% if req.status_value == 'Completed' %}
+							<form method="post" action="{% url 'unmark_user_requirement' %}" onsubmit="return confirm('Please confirm that you wish to mark the requirement {{ req.name }} as incomplete.  Once you make this change you will have to sign again to mark it completed.');">
+								{% csrf_token %}
+								<input type="hidden" name="requirement_id" value="{{ req.id }}">
+								<button type="submit" class="btn btn-warning btn-sm">Unmark Completed</button>
+							</form>
+						{% elif req.status_value != 'Completed' %}
+							<form method="post" action="{% url 'complete_user_requirement' %}" onsubmit="return prompt('Please enter your username ({{ request.user.username }}) to indicate you have completed the requirement - {{ req.name }}') == '{{ request.user.username }}';">
+								{% csrf_token %}
+								<input type="hidden" name="requirement_id" value="{{ req.id }}">
+								<button type="submit" class="btn btn-primary btn-sm">Mark Completed</button>
+							</form>
+						{% endif %}
+					{% endif %}
+					{% if req.automated_update and req.status_value != 'Completed' %}
+						<span class="text-muted">Automated Update</span>
+					{% endif %}
+				</td>
+			</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+</div>
+
 
 </div>
 
@@ -288,6 +351,7 @@
 	var $ = window.jQuery;
 	if (!$) return;
 
+	// Filter and expand/collapse logic for requests table
 	function filterRequests(showTraining) {
 		$('.request-row').each(function () {
 			var isTraining = $(this).data('training-request') === true || $(this).data('training-request') === 'True' || $(this).data('training-request') === 'true';
@@ -305,27 +369,48 @@
 		});
 	}
 
+	function showRequestsTable() {
+		$('#requests-table-container').show();
+		$('#requirements-table-container').hide();
+	}
+
+	function showRequirementsTable() {
+		$('#requests-table-container').hide();
+		$('#requirements-table-container').show();
+	}
+
 	$('#toggle-training').on('click', function () {
 		$('#toggle-training').addClass('active');
 		$('#toggle-service').removeClass('active');
+		$('#toggle-requirements').removeClass('active');
+		showRequestsTable();
 		filterRequests(true);
 	});
 
 	$('#toggle-service').on('click', function () {
 		$('#toggle-service').addClass('active');
 		$('#toggle-training').removeClass('active');
+		$('#toggle-requirements').removeClass('active');
+		showRequestsTable();
 		filterRequests(false);
 	});
 
+	$('#toggle-requirements').on('click', function () {
+		$('#toggle-requirements').addClass('active');
+		$('#toggle-training').removeClass('active');
+		$('#toggle-service').removeClass('active');
+		showRequirementsTable();
+	});
+
 	// Initial filter: show training requests
+	showRequestsTable();
 	filterRequests(true);
 
+	// Row-by-row expand/collapse
 	$(document).on('click', '.request-row', function () {
 		var reqId = $(this).data('request-id');
 		var $detailsRow = $('.requirements-row[data-request-id="' + reqId + '"]');
 		var $icon = $(this).find('.glyphicon');
-		var isOpen = $detailsRow.is(':visible');
-		// Only toggle if the row is visible (not filtered out)
 		if ($(this).is(':visible')) {
 			$detailsRow.toggle();
 			$icon.toggleClass('glyphicon-chevron-right glyphicon-chevron-down');
