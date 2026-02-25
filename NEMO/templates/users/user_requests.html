@@ -230,7 +230,7 @@
 		<tbody>
 		{% for req in requirements_table %}
 			<tr>
-				<td>{{ req.name }}</td>
+				<td><span style="font-weight: bold;">{{ req.name }}</span></td>
 				<td><span style="font-weight: bold; font-size: 10pt; border-radius: 12px; background-color:{% if req.status_value == 'Not Started' %}#ffcccc{% endif %}{% if req.status_value == 'Completed' %}#ccffcc{% endif %}{% if req.status_value == 'In Progress' %}#ffffcc{% endif %};">{{ req.status_value|default:"Not Started" }}</span></td>
 				<td>{{ req.created|date:"m/d/Y"|default:"" }}</td>
 				<td>{{ req.completed_on|date:"m/d/Y"|default:"" }}</td>
