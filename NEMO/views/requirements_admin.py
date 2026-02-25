@@ -235,7 +235,7 @@ def complete_user_requirement(request):
     progress.completed_on = timezone.now()
     progress.updated = timezone.now()
     progress.save()
-    return redirect('user_requirements')
+    return redirect('user_requests')
 
 
 @staff_member_required

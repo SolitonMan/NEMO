@@ -613,7 +613,7 @@ def unmark_user_requirement(request):
 	progress.expires_on = None
 	progress.updated = None
 	progress.save()
-	return redirect('user_requirements')
+	return redirect('user_requests')
 
 
 @login_required
