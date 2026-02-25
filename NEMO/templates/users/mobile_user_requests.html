@@ -1,195 +1,232 @@
-{% extends 'base_free.html' %}
+{% extends 'base.html' %}
 {% load custom_tags_and_filters %}
-{% block title %}Your Requests{% endblock %}
+{% block title %}Your Requests (Mobile){% endblock %}
 {% block extrahead %}
 	{% load static %}
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-
-	<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
-	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+	<link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.css' %}">
 	<style>
-		.toggle-bar {
-			margin-bottom: 1rem;
-			display: flex;
-			justify-content: space-around;
+		.request-card {
+			margin-bottom: 16px;
+			border-radius: 6px;
+			box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+			border: 1px solid #e3e3e3;
+			padding: 12px;
+			background: #fff;
+			cursor: pointer;
 		}
-		.toggle-bar .btn {
-			flex: 1 1 0;
-			margin: 0 2px;
-		}
-		.card + .card {
-			margin-top: 1rem;
-		}
-		.card-header {
+		.request-header {
+			font-weight: bold;
+			font-size: 16px;
+			margin-bottom: 8px;
 			display: flex;
 			justify-content: space-between;
 			align-items: center;
 		}
-		.card-header .chevron {
-			font-size: 1.2em;
+		.request-status {
+			border-radius: 12px;
+			padding: 2px 8px;
+			font-size: 12px;
+			display: inline-block;
 		}
-		.card-body {
-			padding: 0.75rem 1rem;
+		.progress {
+			height: 12px;
+			margin-bottom: 0;
 		}
-		@media (min-width: 576px) {
-			.toggle-bar {
-				max-width: 400px;
-				margin-left: auto;
-				margin-right: auto;
+		.details-section {
+			margin-top: 10px;
+			display: none;
+		}
+		.toggle-btn-group {
+			margin-bottom: 16px;
+			width: 100%;
+			display: flex;
+			justify-content: center;
+		}
+		.toggle-btn-group .btn {
+			flex: 1 1 0;
+			border-radius: 0;
+		}
+		@media (max-width: 600px) {
+			.request-header {
+				font-size: 15px;
+			}
+			.request-card {
+				padding: 8px;
 			}
 		}
 	</style>
 {% endblock %}
 {% block content %}
 
-<h3 class="text-center">Requests</h3>
-
 <div class="container-fluid">
-
-	<!-- Toggle Bar -->
-	<div class="toggle-bar btn-group btn-group-toggle" data-toggle="buttons">
-		<label class="btn btn-outline-primary active" id="toggle-training">
-			<input type="radio" name="toggle" autocomplete="off" checked> Training
-		</label>
-		<label class="btn btn-outline-primary" id="toggle-service">
-			<input type="radio" name="toggle" autocomplete="off"> Service
-		</label>
-		<label class="btn btn-outline-primary" id="toggle-requirements">
-			<input type="radio" name="toggle" autocomplete="off"> Requirements
-		</label>
+	<h3 style="margin-top: 12px;">Your Requests</h3>
+	<div class="toggle-btn-group btn-group btn-group-toggle" data-toggle="buttons">
+		<button class="btn btn-default active" id="toggle-training">Training</button>
+		<button class="btn btn-default" id="toggle-service">Service</button>
+		<button class="btn btn-default" id="toggle-requirements">Requirements</button>
+	</div>
+	<div>
+		<button class="btn btn-success btn-block" id="btn_add_service" type="button" data-toggle="modal" data-target="#requestWizardModal" style="margin-bottom: 16px;">Submit a request</button>
 	</div>
 
-	<!-- Submit Request Button -->
-	<div class="mb-3 text-center">
-		<button class="btn btn-success btn-lg" id="btn_add_service" type="button" data-toggle="modal" data-target="#requestWizardModal">Submit a request</button>
-	</div>
-
-	<!-- Requests Cards -->
-	<div id="requests-cards-container">
+	<!-- Training/Service Requests List -->
+	<div id="requests-list-container">
 		{% for req in user_service_requests %}
-		<div class="card request-card" data-request-id="{{ req.id }}" data-training-request="{{ req.training_request }}">
-			<div class="card-header" style="cursor:pointer;">
-				<div>
-					<strong>{{ req.service_type.name }}</strong>
-					<br>
-					<small>{{ req.service_type.core.name }} | {{ req.project.name }}</small>
+			<div class="request-card"
+				data-request-id="{{ req.id }}"
+				data-training-request="{{ req.training_request|yesno:'true,false' }}">
+				<div class="request-header">
+					<span>
+						{{ req.service_type.name }}
+					</span>
+					<span class="request-status"
+						style="background-color:
+							{% if req.status == 'Not Started' %}#ffcccc{% endif %}
+							{% if req.status == 'Completed' %}#ccffcc{% endif %}
+							{% if req.status == 'In Progress' %}#ffffcc{% endif %};">
+						{{ req.status }}
+					</span>
+					<span class="glyphicon glyphicon-chevron-right"></span>
 				</div>
-				<span class="chevron">&#9654;</span>
-			</div>
-			<div class="card-body" style="display:none;">
 				<div>
-					<strong>Status:</strong> {{ req.status }}<br>
+					<strong>Core:</strong> {{ req.service_type.core.name }}<br>
+					<strong>Project:</strong> {{ req.project.name }}<br>
 					<strong>Requested:</strong> {{ req.created|date:"Y-m-d H:i" }}<br>
-					<strong>Progress:</strong>
+					<strong>Training:</strong> {% if req.training_request %}Yes{% else %}No{% endif %}
+				</div>
+				<div style="margin-top: 8px;">
 					{% with reqs=request_requirements|get_item:req.id %}
 						{% with total=reqs|length completed=reqs|completed_count %}
-							<div class="progress" style="height: 18px;">
-								<div class="progress-bar" role="progressbar"
-									style="width: {% if total > 0 %}{{ completed|floatformat:2|divided_by:total|floatformat:2 }}{% else %}0{% endif %}%;"
-									aria-valuenow="{{ completed }}" aria-valuemin="0" aria-valuemax="{{ total }}">
+							<div style="display: flex; align-items: center;">
+								<div class="progress" style="flex: 1 1 auto; margin-right: 8px;">
+									<div class="progress-bar" role="progressbar"
+										style="width: {% if total > 0 %}{{ completed|floatformat:2|divided_by:total|floatformat:2 }}{% else %}0{% endif %}%;"
+										aria-valuenow="{{ completed }}" aria-valuemin="0" aria-valuemax="{{ total }}">
+									</div>
 								</div>
+								<span style="font-size: 12px;">{{ completed }}/{{ total }}</span>
 							</div>
-							<span>{{ completed }}/{{ total }}</span>
 						{% endwith %}
 					{% endwith %}
 				</div>
-				<hr>
-				<div>
-					<strong>Description:</strong> {{ req.description|default:"-" }}<br>
-					<strong>Training Requested:</strong> {% if req.training_request %}Yes{% else %}No{% endif %}<br>
-					<strong>Training Approved:</strong> {% if req.training_approved %}Yes{% else %}No{% endif %}<br>
-					<strong>Last Updated:</strong> {{ req.updated|date:"Y-m-d H:i" }}
+				<div class="details-section" id="details-{{ req.id }}">
+					<hr>
+					<div>
+						<strong>Case Number:</strong> {{ req.case_number|default:"-" }}<br>
+						<strong>Contact:</strong>
+						{% if req.owner %}
+							<a href="mailto:{{ req.owner }}">{{ req.owner_first_name }} {{ req.owner_last_name }}</a>
+						{% else %}
+							-
+						{% endif %}
+						<br>
+						<strong>Description:</strong> {{ req.description|default:"-" }}<br>
+						<strong>Training Approved:</strong> {% if req.training_approved %}Yes{% else %}No{% endif %}<br>
+						<strong>Last Updated:</strong> {{ req.updated|date:"Y-m-d H:i" }}
+					</div>
+					<hr>
+					<strong>Requirements:</strong>
+					{% with reqs=request_requirements|get_item:req.id %}
+						{% if reqs %}
+							<ul style="padding-left: 18px;">
+								{% for r in reqs %}
+									<li>
+										<span style="font-weight: bold;">{{ r.name }}</span>
+										<span class="request-status"
+											style="background-color:
+												{% if r.status == 'Not Started' %}#ffcccc{% endif %}
+												{% if r.status == 'Completed' %}#ccffcc{% endif %}
+												{% if r.status == 'In Progress' %}#ffffcc{% endif %};">
+											{{ r.status|default:"Not Started" }}
+										</span>
+										<br>
+										<span style="font-size: 12px;">
+											{{ r.description }}<br>
+											{% if r.resource_link %}
+												<a href="{{ r.resource_link }}" target="_blank">{{ r.resource_link_name }}</a>
+											{% endif %}
+											{% if r.expected_completion_time %}
+												&nbsp;Est: {{ r.expected_completion_time }}
+											{% endif %}
+											{% if r.prerequisites %}
+												&nbsp;Prereq: {{ r.prerequisites }}
+											{% endif %}
+										</span>
+									</li>
+								{% endfor %}
+							</ul>
+						{% else %}
+							<p>No requirements for this request.</p>
+						{% endif %}
+					{% endwith %}
 				</div>
-				<hr>
-				<strong>Requirements:</strong>
-				<ul class="list-group">
-					{% for r in request_requirements|get_item:req.id %}
-					<li class="list-group-item d-flex justify-content-between align-items-center">
-						<span>
-							<strong>{{ r.name }}</strong>
-							<br>
-							<small>{{ r.description }}</small>
-						</span>
-						<span class="badge badge-pill"
-							style="background-color: {% if r.status == 'Not Started' %}#ffcccc{% elif r.status == 'Completed' %}#ccffcc{% elif r.status == 'In Progress' %}#ffffcc{% endif %};">
-							{{ r.status|default:"Not Started" }}
-						</span>
-					</li>
-					{% empty %}
-					<li class="list-group-item">No requirements for this request.</li>
-					{% endfor %}
-				</ul>
 			</div>
-		</div>
 		{% endfor %}
-		{% if not user_service_requests %}
-			<p class="text-center">No service requests found.</p>
-		{% endif %}
 	</div>
 
-	<!-- Requirements Cards -->
-	<div id="requirements-cards-container" style="display:none;">
-		{% for req in requirements_table %}
-		<div class="card mb-2">
-			<div class="card-body">
-				<div class="d-flex justify-content-between align-items-center">
-					<strong>{{ req.name }}</strong>
-					<span class="badge badge-pill"
-						style="background-color:{% if req.status_value == 'Not Started' %}#ffcccc{% elif req.status_value == 'Completed' %}#ccffcc{% elif req.status_value == 'In Progress' %}#ffffcc{% endif %};">
-						{{ req.status_value|default:"Not Started" }}
-					</span>
-				</div>
-				<div><small>{{ req.description }}</small></div>
-				<div class="mt-2">
-					<small>
-						<strong>Added:</strong> {{ req.created|date:"m/d/Y"|default:"" }}<br>
-						<strong>Completed On:</strong> {{ req.completed_on|date:"m/d/Y"|default:"" }}<br>
-						<strong>Resources:</strong>
+	<!-- Requirements Table -->
+	<div id="requirements-table-container" style="display:none;">
+		<table class="table table-striped">
+			<thead>
+				<tr>
+					<th>Requirement</th>
+					<th>Status</th>
+					<th>Added</th>
+					<th>Completed On</th>
+					<th>Resources</th>
+					<th>Prerequisites</th>
+					<th>Estimated Time</th>
+					<th></th>
+				</tr>
+			</thead>
+			<tbody>
+			{% for req in requirements_table %}
+				<tr>
+					<td><span style="font-weight: bold;">{{ req.name }}</span></td>
+					<td><span style="font-weight: bold; font-size: 10pt; border-radius: 12px; background-color:{% if req.status_value == 'Not Started' %}#ffcccc{% endif %}{% if req.status_value == 'Completed' %}#ccffcc{% endif %}{% if req.status_value == 'In Progress' %}#ffffcc{% endif %};">{{ req.status_value|default:"Not Started" }}</span></td>
+					<td>{{ req.created|date:"m/d/Y"|default:"" }}</td>
+					<td>{{ req.completed_on|date:"m/d/Y"|default:"" }}</td>
+					<td>
 						{% if req.resource_link and req.resource_link != 'NULL' %}
 							<a href="{{ req.resource_link }}" target="_blank">{{ req.resource_link_name }}</a>
 						{% else %}
 							N/A
-						{% endif %}<br>
-						<strong>Prerequisites:</strong> {{ req.prerequisites }}<br>
-						<strong>Estimated Time:</strong> {% if req.expected_completion_time %}{{ req.expected_completion_time }}{% endif %}
-					</small>
-				</div>
-				<div class="mt-2">
-					{% if not req.automated_update %}
-						{% if req.status_value == 'Completed' %}
-							<form method="post" action="{% url 'unmark_user_requirement' %}" onsubmit="return confirm('Please confirm that you wish to mark the requirement {{ req.name }} as incomplete.  Once you make this change you will have to sign again to mark it completed.');">
-								{% csrf_token %}
-								<input type="hidden" name="requirement_id" value="{{ req.id }}">
-								<button type="submit" class="btn btn-warning btn-sm btn-block">Unmark Completed</button>
-							</form>
-						{% elif req.status_value != 'Completed' %}
-							<form method="post" action="{% url 'complete_user_requirement' %}" onsubmit="return prompt('Please enter your username ({{ request.user.username }}) to indicate you have completed the requirement - {{ req.name }}') == '{{ request.user.username }}';">
-								{% csrf_token %}
-								<input type="hidden" name="requirement_id" value="{{ req.id }}">
-								<button type="submit" class="btn btn-primary btn-sm btn-block">Mark Completed</button>
-							</form>
 						{% endif %}
-					{% endif %}
-					{% if req.automated_update and req.status_value != 'Completed' %}
-						<span class="text-muted">Automated Update</span>
-					{% endif %}
-				</div>
-			</div>
-		</div>
-		{% endfor %}
-		{% if not requirements_table %}
-			<p class="text-center">No requirements found.</p>
-		{% endif %}
+					</td>
+					<td>{{ req.prerequisites }}</td>
+					<td>{% if req.expected_completion_time %}{{ req.expected_completion_time }}{% endif %}</td>
+					<td>
+						{% if not req.automated_update %}
+							{% if req.status_value == 'Completed' %}
+								<form method="post" action="{% url 'unmark_user_requirement' %}" onsubmit="return confirm('Please confirm that you wish to mark the requirement {{ req.name }} as incomplete.  Once you make this change you will have to sign again to mark it completed.');">
+									{% csrf_token %}
+									<input type="hidden" name="requirement_id" value="{{ req.id }}">
+									<button type="submit" class="btn btn-warning btn-sm">Unmark Completed</button>
+								</form>
+							{% elif req.status_value != 'Completed' %}
+								<form method="post" action="{% url 'complete_user_requirement' %}" onsubmit="return prompt('Please enter your username ({{ request.user.username }}) to indicate you have completed the requirement - {{ req.name }}') == '{{ request.user.username }}';">
+									{% csrf_token %}
+									<input type="hidden" name="requirement_id" value="{{ req.id }}">
+									<button type="submit" class="btn btn-primary btn-sm">Mark Completed</button>
+								</form>
+							{% endif %}
+						{% endif %}
+						{% if req.automated_update and req.status_value != 'Completed' %}
+							<span class="text-muted">Automated Update</span>
+						{% endif %}
+					</td>
+				</tr>
+			{% endfor %}
+			</tbody>
+		</table>
 	</div>
 
-	<!-- Request Wizard Modal (reuse your existing modal code here) -->
-	
 	<!-- Request Wizard Modal -->
 	<div class="modal fade" id="requestWizardModal" tabindex="-1" role="dialog" aria-labelledby="requestWizardLabel" aria-hidden="true">
 		<div class="modal-dialog" role="document">
 			<div class="modal-content">
-				<form id="requestWizardForm" method="post" action="{% url 'user_requests' %}">
+				<form id="requestWizardForm" method="post">
 					{% csrf_token %}
 					<input type="hidden" name="auto_include" value="True" />
 					<div class="modal-header">
@@ -257,12 +294,77 @@
 		</div>
 	</div>
 </div>
+
+<script src="{% static 'jquery.js' %}"></script>
+<script src="{% static 'bootstrap/js/bootstrap.js' %}"></script>
 <script>
 (function () {
 	var $ = window.jQuery;
 	if (!$) return;
 
-	// Wizard state
+	// Tab switching logic
+	function filterRequests(showTraining) {
+		$('.request-card').each(function () {
+			var isTraining = $(this).data('training-request') === true || $(this).data('training-request') === 'True' || $(this).data('training-request') === 'true';
+			if (showTraining ? isTraining : !isTraining) {
+				$(this).show();
+				$(this).find('.details-section').hide();
+				$(this).find('.glyphicon').removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-right');
+			} else {
+				$(this).hide();
+				$(this).find('.details-section').hide();
+			}
+		});
+	}
+
+	function showRequestsList() {
+		$('#requests-list-container').show();
+		$('#requirements-table-container').hide();
+	}
+
+	function showRequirementsTable() {
+		$('#requests-list-container').hide();
+		$('#requirements-table-container').show();
+	}
+
+	$('#toggle-training').on('click', function () {
+		$('#toggle-training').addClass('active');
+		$('#toggle-service').removeClass('active');
+		$('#toggle-requirements').removeClass('active');
+		showRequestsList();
+		filterRequests(true);
+	});
+
+	$('#toggle-service').on('click', function () {
+		$('#toggle-service').addClass('active');
+		$('#toggle-training').removeClass('active');
+		$('#toggle-requirements').removeClass('active');
+		showRequestsList();
+		filterRequests(false);
+	});
+
+	$('#toggle-requirements').on('click', function () {
+		$('#toggle-requirements').addClass('active');
+		$('#toggle-training').removeClass('active');
+		$('#toggle-service').removeClass('active');
+		showRequirementsTable();
+	});
+
+	// Initial filter: show training requests
+	showRequestsList();
+	filterRequests(true);
+
+	// Expand/collapse details for each request card
+	$(document).on('click', '.request-card', function (e) {
+		// Prevent toggling if clicking on a button inside the card
+		if ($(e.target).is('button') || $(e.target).is('a') || $(e.target).closest('form').length) return;
+		var $details = $(this).find('.details-section');
+		var $icon = $(this).find('.glyphicon');
+		$details.toggle();
+		$icon.toggleClass('glyphicon-chevron-right glyphicon-chevron-down');
+	});
+
+	// Wizard logic (copied from user_requests.html)
 	var wizardStep = 0;
 	var coreServices = {
 		"1": [{ id: "{{ mcl_services.0.id }}", name: "{{ mcl_services.0.name }}" }{% for opt in mcl_services|slice:"1:" %}, { id: "{{ opt.id }}", name: "{{ opt.name }}" }{% endfor %}],
@@ -318,7 +420,7 @@
 			services.forEach(function (s) {
 				$serviceSelect.append('<option value="' + s.id + '">' + s.name + '</option>');
 			});
-			updateTrainingField(); // <-- Add this line
+			updateTrainingField();
 		}
 		if (wizardStep === 1) {
 			if (!$('#wizard_service_select').val()) { alert('Please select a service.'); return; }
@@ -350,74 +452,6 @@
 				alert('There was an error submitting your request. Please try again.');
 			}
 		);
-	});
-})();
-</script>
-<script>
-(function () {
-	var $ = window.jQuery;
-	if (!$) return;
-
-	// Toggle logic
-	function showRequests() {
-		$('#requests-cards-container').show();
-		$('#requirements-cards-container').hide();
-	}
-	function showRequirements() {
-		$('#requests-cards-container').hide();
-		$('#requirements-cards-container').show();
-	}
-	$('#toggle-training').on('click', function () {
-		$('#toggle-training').addClass('active');
-		$('#toggle-service').removeClass('active');
-		$('#toggle-requirements').removeClass('active');
-		showRequests();
-		filterRequests(true);
-	});
-	$('#toggle-service').on('click', function () {
-		$('#toggle-service').addClass('active');
-		$('#toggle-training').removeClass('active');
-		$('#toggle-requirements').removeClass('active');
-		showRequests();
-		filterRequests(false);
-	});
-	$('#toggle-requirements').on('click', function () {
-		$('#toggle-requirements').addClass('active');
-		$('#toggle-training').removeClass('active');
-		$('#toggle-service').removeClass('active');
-		showRequirements();
-	});
-
-	// Filter requests by training/service
-	function filterRequests(showTraining) {
-		$('.request-card').each(function () {
-			var isTraining = $(this).data('training-request') === true || $(this).data('training-request') === 'True' || $(this).data('training-request') === 'true';
-			if (showTraining ? isTraining : !isTraining) {
-				$(this).show();
-			} else {
-				$(this).hide();
-			}
-			// Always collapse card body on filter
-			$(this).find('.card-body').hide();
-			$(this).find('.chevron').html('&#9654;');
-		});
-	}
-	// Initial state
-	showRequests();
-	filterRequests(true);
-
-	// Expand/collapse card details
-	$(document).on('click', '.request-card .card-header', function () {
-		var $card = $(this).closest('.request-card');
-		var $body = $card.find('.card-body');
-		var $chevron = $(this).find('.chevron');
-		if ($body.is(':visible')) {
-			$body.slideUp(150);
-			$chevron.html('&#9654;');
-		} else {
-			$body.slideDown(150);
-			$chevron.html('&#9660;');
-		}
 	});
 })();
 </script>
