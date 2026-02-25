@@ -62,17 +62,10 @@
 			top.location = self.location;
 	</script>
 
-	{% if device == 'mobile' %}
-	<script>
-	$(function(){
-		$('.dropdown-submenu a').on("click", function(e){
-			$(this).next('ul').toggle();
-			e.stopPropagation();
-			e.preventDefault();
-		});
-	});
-	</script>
-	{% endif %}
+
+	{# NEMO #}
+	<script type="text/javascript" src="{% static "nemo.js" %}"></script>
+	<link rel="stylesheet" type="text/css" href="{% static "nemo.css" %}" />
 
 	{% block extrahead %}{% endblock %}
 
