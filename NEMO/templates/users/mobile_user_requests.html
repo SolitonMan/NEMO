@@ -186,7 +186,7 @@
 	<div class="modal fade" id="requestWizardModal" tabindex="-1" role="dialog" aria-labelledby="requestWizardLabel" aria-hidden="true">
 		<div class="modal-dialog" role="document">
 			<div class="modal-content">
-				<form id="requestWizardForm" method="post">
+				<form id="requestWizardForm" method="post" action="{% url 'user_requests' %}">
 					{% csrf_token %}
 					<input type="hidden" name="auto_include" value="True" />
 					<div class="modal-header">
