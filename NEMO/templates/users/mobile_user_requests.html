@@ -165,61 +165,61 @@
 		{% endfor %}
 	</div>
 
-	<!-- Requirements Table -->
+	<!-- Requirements List (Mobile Friendly) -->
 	<div id="requirements-table-container" style="display:none;">
-		<table class="table table-striped">
-			<thead>
-				<tr>
-					<th>Requirement</th>
-					<th>Status</th>
-					<th>Added</th>
-					<th>Completed On</th>
-					<th>Resources</th>
-					<th>Prerequisites</th>
-					<th>Estimated Time</th>
-					<th></th>
-				</tr>
-			</thead>
-			<tbody>
-			{% for req in requirements_table %}
-				<tr>
-					<td><span style="font-weight: bold;">{{ req.name }}</span></td>
-					<td><span style="font-weight: bold; font-size: 10pt; border-radius: 12px; background-color:{% if req.status_value == 'Not Started' %}#ffcccc{% endif %}{% if req.status_value == 'Completed' %}#ccffcc{% endif %}{% if req.status_value == 'In Progress' %}#ffffcc{% endif %};">{{ req.status_value|default:"Not Started" }}</span></td>
-					<td>{{ req.created|date:"m/d/Y"|default:"" }}</td>
-					<td>{{ req.completed_on|date:"m/d/Y"|default:"" }}</td>
-					<td>
-						{% if req.resource_link and req.resource_link != 'NULL' %}
-							<a href="{{ req.resource_link }}" target="_blank">{{ req.resource_link_name }}</a>
-						{% else %}
-							N/A
-						{% endif %}
-					</td>
-					<td>{{ req.prerequisites }}</td>
-					<td>{% if req.expected_completion_time %}{{ req.expected_completion_time }}{% endif %}</td>
-					<td>
-						{% if not req.automated_update %}
-							{% if req.status_value == 'Completed' %}
-								<form method="post" action="{% url 'unmark_user_requirement' %}" onsubmit="return confirm('Please confirm that you wish to mark the requirement {{ req.name }} as incomplete.  Once you make this change you will have to sign again to mark it completed.');">
-									{% csrf_token %}
-									<input type="hidden" name="requirement_id" value="{{ req.id }}">
-									<button type="submit" class="btn btn-warning btn-sm">Unmark Completed</button>
-								</form>
-							{% elif req.status_value != 'Completed' %}
-								<form method="post" action="{% url 'complete_user_requirement' %}" onsubmit="return prompt('Please enter your username ({{ request.user.username }}) to indicate you have completed the requirement - {{ req.name }}') == '{{ request.user.username }}';">
-									{% csrf_token %}
-									<input type="hidden" name="requirement_id" value="{{ req.id }}">
-									<button type="submit" class="btn btn-primary btn-sm">Mark Completed</button>
-								</form>
+		{% if requirements_table %}
+			<div>
+				{% for req in requirements_table %}
+					<div class="request-card" style="margin-bottom: 12px;">
+						<div class="request-header" style="font-size:15px;">
+							<span>{{ req.name }}</span>
+							<span class="request-status"
+								style="background-color:
+									{% if req.status_value == 'Not Started' %}#ffcccc{% endif %}
+									{% if req.status_value == 'Completed' %}#ccffcc{% endif %}
+									{% if req.status_value == 'In Progress' %}#ffffcc{% endif %};">
+								{{ req.status_value|default:"Not Started" }}
+							</span>
+						</div>
+						<div style="font-size:13px;">
+							<strong>Added:</strong> {{ req.created|date:"m/d/Y"|default:"" }}<br>
+							<strong>Completed On:</strong> {{ req.completed_on|date:"m/d/Y"|default:"" }}<br>
+							<strong>Resources:</strong>
+							{% if req.resource_link and req.resource_link != 'NULL' %}
+								<a href="{{ req.resource_link }}" target="_blank">{{ req.resource_link_name }}</a>
+							{% else %}
+								N/A
 							{% endif %}
-						{% endif %}
-						{% if req.automated_update and req.status_value != 'Completed' %}
-							<span class="text-muted">Automated Update</span>
-						{% endif %}
-					</td>
-				</tr>
-			{% endfor %}
-			</tbody>
-		</table>
+							<br>
+							<strong>Prerequisites:</strong> {{ req.prerequisites|default:"-" }}<br>
+							<strong>Estimated Time:</strong> {{ req.expected_completion_time|default:"-" }}
+						</div>
+						<div style="margin-top:10px;">
+							{% if not req.automated_update %}
+								{% if req.status_value == 'Completed' %}
+									<form method="post" action="{% url 'unmark_user_requirement' %}" style="display:inline;" onsubmit="return confirm('Please confirm that you wish to mark the requirement {{ req.name }} as incomplete.  Once you make this change you will have to sign again to mark it completed.');">
+										{% csrf_token %}
+										<input type="hidden" name="requirement_id" value="{{ req.id }}">
+										<button type="submit" class="btn btn-warning btn-xs btn-block">Unmark Completed</button>
+									</form>
+								{% elif req.status_value != 'Completed' %}
+									<form method="post" action="{% url 'complete_user_requirement' %}" style="display:inline;" onsubmit="return prompt('Please enter your username ({{ request.user.username }}) to indicate you have completed the requirement - {{ req.name }}') == '{{ request.user.username }}';">
+										{% csrf_token %}
+										<input type="hidden" name="requirement_id" value="{{ req.id }}">
+										<button type="submit" class="btn btn-primary btn-xs btn-block">Mark Completed</button>
+									</form>
+								{% endif %}
+							{% endif %}
+							{% if req.automated_update and req.status_value != 'Completed' %}
+								<span class="text-muted">Automated Update</span>
+							{% endif %}
+						</div>
+					</div>
+				{% endfor %}
+			</div>
+		{% else %}
+			<p>No requirements found.</p>
+		{% endif %}
 	</div>
 
 	<!-- Request Wizard Modal -->
