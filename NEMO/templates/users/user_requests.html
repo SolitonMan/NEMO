@@ -97,19 +97,22 @@
 </div>
 <br/><br/>
 {% if user_service_requests %}
-	<div style="margin-bottom: 16px;">
-		<label style="font-weight: bold; margin-right: 8px;">Show:</label>
-		<div class="btn-group btn-group-toggle" data-toggle="buttons">
-			<label class="btn btn-default active" id="toggle-training">
-				<input type="radio" name="toggle" autocomplete="off" checked> Training
-			</label>
-			<label class="btn btn-default" id="toggle-service">
-				<input type="radio" name="toggle" autocomplete="off"> Service
-			</label>
-			<label class="btn btn-default" id="toggle-requirements">
-				<input type="radio" name="toggle" autocomplete="off"> Requirements
-			</label>
+	<div style="margin-bottom: 16px; width: 100%; display: flex; align-items: center; justify-content: space-between;">
+		<div>
+			<label style="font-weight: bold; margin-right: 8px;">Show:</label>
+			<div class="btn-group btn-group-toggle" data-toggle="buttons">
+				<label class="btn btn-default active" id="toggle-training">
+					<input type="radio" name="toggle" autocomplete="off" checked> Training
+				</label>
+				<label class="btn btn-default" id="toggle-service">
+					<input type="radio" name="toggle" autocomplete="off"> Service
+				</label>
+			</div>
 		</div>
+		<!-- Requirements Management button pushed right and styled -->
+		<label class="btn btn-default" id="toggle-requirements" style="background-color: #1a237e; color: #fff; font-weight: bold;">
+			<input type="radio" name="toggle" autocomplete="off"> Requirements Management
+		</label>
 	</div>
 	<div id="requests-table-container">
 	<table class="table table-striped">
@@ -175,8 +178,7 @@
 							<tr>
 								<th>Requirement</th>
 								<th>Status</th>
-								<th>Description</th>
-								<th>Resources</th>
+								<th>Complete this requirement</th>
 								<th>Est.</th>
 								<th>Prerequisites</th>
 							</tr>
@@ -192,7 +194,6 @@
 								Not assigned
 							{% endif %}
 							</td>
-							<td style="width:35%;">{{ r.description }}</td>
 							<td style="width:25%;"><a href="{{ r.resource_link }}" target="_blank">{{ r.resource_link_name }}</a></td>
 							<td style="width:5%;">{{ r.expected_completion_time }}</td>
 							<td>{{ r.prerequisites }}</td>
@@ -221,7 +222,7 @@
 				<th>Status</th>
 				<th>Added</th>
 				<th>Completed On</th>
-				<th>Resources</th>
+				<th>Complete this requirement</th>
 				<th>Prerequisites</th>
 				<th>Estimated Time</th>
 				<th></th>
