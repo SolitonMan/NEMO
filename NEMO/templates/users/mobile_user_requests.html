@@ -41,7 +41,9 @@
 			margin-bottom: 16px;
 			width: 100%;
 			display: flex;
-			justify-content: center;
+			flex-direction: column;
+			align-items: stretch;
+			gap: 8px;
 		}
 		.toggle-btn-group .btn {
 			flex: 1 1 0;
@@ -73,19 +75,35 @@
 			border: none;
 			box-shadow: none;
 		}
+
+		.btn-row {
+			display: flex;
+			width: 100%;
+		}
+
+		.btn-row .btn {
+			flex: 1 1 0;
+			border-radius: 0;
+		}
+
+		.btn-row .btn.btn-requirements {
+			flex: 1 1 100%;
+			width: 100%;
+			border-radius: 4px;
+		}
 	</style>
 {% endblock %}
 {% block content %}
 
 <div class="container-fluid">
 	<h3 style="margin-top: 12px;">Your Requests</h3>
-	<div class="toggle-btn-group btn-group btn-group-toggle" data-toggle="buttons">
-		<div>
-		<button class="btn btn-default active" id="toggle-training">Training</button>
-		<button class="btn btn-default" id="toggle-service">Service</button>
+	<div class="toggle-btn-group">
+		<div class="btn-row">
+			<button class="btn btn-default active" id="toggle-training">Training</button>
+			<button class="btn btn-default" id="toggle-service">Service</button>
 		</div>
-		<div>
-		<button class="btn btn-requirements" id="toggle-requirements">Requirements Management</button>
+		<div class="btn-row">
+			<button class="btn btn-requirements btn-block" id="toggle-requirements">Requirements Management</button>
 		</div>
 	</div>
 	<div>
