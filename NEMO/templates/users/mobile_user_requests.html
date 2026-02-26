@@ -55,6 +55,24 @@
 				padding: 8px;
 			}
 		}
+
+		.btn-requirements {
+			background-color: rgb(51, 122, 183) !important;
+			background-image: linear-gradient(rgb(51, 122, 183) 0%, rgb(38, 90, 136) 100%);
+			background-repeat: repeat-x;
+			border: 0.66667px solid rgb(36, 85, 128);
+			color: #fff !important;
+			font-weight: bold;
+			border: none;
+			box-shadow: none;
+		}
+
+		.btn-requirements:hover, .btn-requirements.active, .btn-requirements:focus {
+			background-color: #283593 !important;
+			color: #fff !important;
+			border: none;
+			box-shadow: none;
+		}
 	</style>
 {% endblock %}
 {% block content %}
@@ -63,8 +81,8 @@
 	<h3 style="margin-top: 12px;">Your Requests</h3>
 	<div class="toggle-btn-group btn-group btn-group-toggle" data-toggle="buttons">
 		<button class="btn btn-default active" id="toggle-training">Training</button>
-		<button class="btn btn-default" id="toggle-service">Service</button>
-		<button class="btn btn-default" id="toggle-requirements">Requirements</button>
+		<button class="btn btn-default" id="toggle-service">Service</button><br/>
+		<button class="btn btn-requirements" id="toggle-requirements">Requirements Management</button>
 	</div>
 	<div>
 		<button class="btn btn-success btn-block" id="btn_add_service" type="button" data-toggle="modal" data-target="#requestWizardModal" style="margin-bottom: 16px;">Submit a request</button>
