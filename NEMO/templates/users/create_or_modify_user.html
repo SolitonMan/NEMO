@@ -320,19 +320,64 @@
 		{% if request.user.is_staff %}
 		<div class="form-group">
 			<label class="control-label col-sm-2">Requirements</label>
-			<div class="col-sm-4">
-				{% for req in requirements %}
-					<div class="checkbox">
-						<label>
-							<input type="checkbox" name="requirements" value="{{ req.id }}"
-								{% if req.id in assigned_requirements %}checked{% endif %}>
-							{{ req.name }}
-							{% if req.description %}<span class="text-muted">({{ req.description }})</span>{% endif %}
-						</label>
+			<div class="col-sm-8">
+				<div class="row">
+					<div class="col-sm-5">
+						<label>Available requirements</label>
+						<select id="available_requirements" multiple size="8" class="form-control">
+							{% for req in requirements %}
+								{% if req.id not in assigned_requirements %}
+									<option value="{{ req.id }}">
+										{{ req.name }}{% if req.description %} ({{ req.description }}){% endif %}
+									</option>
+								{% endif %}
+							{% endfor %}
+						</select>
 					</div>
-				{% endfor %}
+					<div class="col-sm-2 text-center" style="margin-top: 40px;">
+						<button type="button" class="btn btn-default" id="add_requirement">&gt;&gt;</button><br><br>
+						<button type="button" class="btn btn-default" id="remove_requirement">&lt;&lt;</button>
+					</div>
+					<div class="col-sm-5">
+						<label>Assigned requirements</label>
+						<select id="assigned_requirements" name="requirements" multiple size="8" class="form-control">
+							{% for req in requirements %}
+								{% if req.id in assigned_requirements %}
+									<option value="{{ req.id }}">
+										{{ req.name }}{% if req.description %} ({{ req.description }}){% endif %}
+									</option>
+								{% endif %}
+							{% endfor %}
+						</select>
+					</div>
+				</div>
 			</div>
 		</div>
+		<script>
+		(function() {
+			var $ = window.jQuery;
+			if (!$) return;
+
+			$('#add_requirement').on('click', function() {
+				$('#available_requirements option:selected').each(function() {
+					$('#assigned_requirements').append($(this).clone());
+					$(this).remove();
+				});
+			});
+
+			$('#remove_requirement').on('click', function() {
+				$('#assigned_requirements option:selected').each(function() {
+					$('#available_requirements').append($(this).clone());
+					$(this).remove();
+				});
+			});
+
+			// On form submit, select all assigned requirements so they are posted
+			$('#user_form').on('submit', function() {
+				$('#assigned_requirements option').prop('selected', true);
+			});
+		})();
+		</script>
 		{% endif %}
 
 		<div class="form-group">
