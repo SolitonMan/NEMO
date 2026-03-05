@@ -191,7 +191,7 @@
 						<strong>Description:</strong> {{ req.description|default:"-" }}<br>
 						<strong>Training Requested:</strong> {% if req.training_request %}Yes{% else %}No{% endif %}<br>
 						<strong>Training Approved:</strong> {% if req.training_approved %}Yes{% else %}No{% endif %}<br>
-						<strong>Last Updated:</strong> {{ req.updated|date:"Y-m-d H:i" }}
+						<strong>Last Updated:</strong> {{ req.updated|date:"Y-m-d H:i" }}<br><br>
 
 						{% if req.core_id == 2 and req.status != 'cancelled' and req.status != 'completed' %}
 						<button class="btn btn-danger btn-sm" onclick="showCancelModal({{ request.id }})">Cancel Request</button>
@@ -329,17 +329,17 @@ function showCancelModal(requestId) {
 }
 
 document.getElementById('confirmCancelBtn').onclick = function() {
-  const reason = document.getElementById('cancelReason').value;
-  fetch(`/user_service_request/${currentRequestId}/cancel/`, {
+  var reason = document.getElementById('cancelReason').value;
+  fetch('/user_service_request/' + currentRequestId + '/cancel/', {
     method: 'POST',
     headers: {
       'X-CSRFToken': '{{ csrf_token }}',
       'Content-Type': 'application/x-www-form-urlencoded'
     },
-    body: `reason=${encodeURIComponent(reason)}`
+    body: 'reason=' + encodeURIComponent(reason)
   })
-  .then(response => response.json())
-  .then(data => {
+  .then(function(response) { return response.json(); })
+  .then(function(data) {
     $('#cancelRequestModal').modal('hide');
     if (data.success) {
       location.reload();
