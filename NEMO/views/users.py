@@ -869,3 +869,22 @@ def mobile_user_requirements(request):
 	return render(request, 'users/mobile_user_requirements.html', {
 		'requirements_table': requirements_table,
 	})
+
+
+@login_required
+def cancel_user_service_request(request, request_id):
+	if request.method != "POST":
+		return HttpResponseBadRequest("Invalid method")
+	try:
+		usr = UserServiceRequest.objects.get(pk=request_id)
+		if usr.core_id != 2:
+			return JsonResponse({'error': 'Not a Nanofab request'}, status=403)
+		if usr.status == 'cancelled' or usr.status == 'completed':
+			return JsonResponse({'error': 'Request already cancelled or completed'}, status=400)
+		usr.cancelled_by = request.user
+		usr.cancellation_reason = request.POST.get('reason', '')
+		usr.status = 'cancelled'
+		usr.save()
+		return JsonResponse({'success': True})
+	except UserServiceRequest.DoesNotExist:
+		return JsonResponse({'error': 'Request not found'}, status=404)

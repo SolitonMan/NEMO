@@ -127,6 +127,7 @@ urlpatterns = [
 	path('staff/service-requests/<int:pk>/edit/', users.edit_service_request, name='edit_service_request'),
 	path('requirements_dashboard/', requirements_admin.requirements_dashboard, name='requirements_dashboard'),
 	path('mobile/requirements/', users.mobile_user_requirements, name='mobile_user_requirements'),
+	path('user_service_request/<int:request_id>/cancel/', users.cancel_user_service_request, name='cancel_user_service_request'),
 
 	# Qualifications:
 	path('qualifications/', qualifications.qualifications, name='qualifications'),

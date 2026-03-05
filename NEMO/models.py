@@ -366,6 +366,8 @@ class UserServiceRequest(models.Model):
 	training_approved = models.BooleanField(default=False,blank=True)
 	owner = models.CharField(default=None, null=True, blank=True, max_length=255)
 	assignee = models.ForeignKey('User', on_delete=models.CASCADE, null=True, blank=True, related_name='service_assignee')
+	cancelled_by = models.ForeignKey('User', on_delete=models.CASCADE, null=True, blank=True, related_name='usr_cancelled_by')
+	cancellation_reason = models.TextField(null=True, blank=True)
 
 	class Meta:
 		constraints = [
