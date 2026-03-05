@@ -194,7 +194,7 @@
 						<strong>Last Updated:</strong> {{ req.updated|date:"Y-m-d H:i" }}<br><br>
 
 						{% if req.core_id == 2 and req.status != 'cancelled' and req.status != 'completed' %}
-						<button class="btn btn-danger btn-sm" onclick="showCancelModal({{ request.id }})">Cancel Request</button>
+						<button class="btn btn-danger btn-sm" onclick="showCancelModal({{ req.id }})">Cancel Request</button>
 						{% endif %}
 					</div>
 					<hr>
