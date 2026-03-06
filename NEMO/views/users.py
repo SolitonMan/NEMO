@@ -671,7 +671,7 @@ def user_requests(request):
 
 	user_service_requests = (
 		UserServiceRequest.objects
-		.filter(user=request.user)
+		.filter(user=request.user,status='Open')
 		.annotate(
 			owner_first_name=Subquery(owner_first_name_subquery),
 			owner_last_name=Subquery(owner_last_name_subquery)
@@ -879,11 +879,11 @@ def cancel_user_service_request(request, request_id):
 		usr = UserServiceRequest.objects.get(pk=request_id)
 		if usr.core_id != 2:
 			return JsonResponse({'error': 'Not a Nanofab request'}, status=403)
-		if usr.status == 'cancelled' or usr.status == 'completed':
+		if usr.status == 'Cancelled' or usr.status == 'Completed':
 			return JsonResponse({'error': 'Request already cancelled or completed'}, status=400)
 		usr.cancelled_by = request.user
 		usr.cancellation_reason = request.POST.get('reason', '')
-		usr.status = 'cancelled'
+		usr.status = 'Cancelled'
 		usr.save()
 		return JsonResponse({'success': True})
 	except UserServiceRequest.DoesNotExist:
