@@ -745,7 +745,7 @@ def user_requests(request):
 			.exclude(id=main_sr.id if main_sr else None)
 			.distinct()
 		)
-		if not ServiceType.objects.filter(name=p.requirement_name).exists():
+		if not ServiceType.objects.filter(name=p.requirement.name).exists():
 			requirements_table.append({
 				'id': p.requirement.id,
 				'name': p.requirement.name,
