@@ -675,7 +675,7 @@ def user_requests(request):
 
 	user_service_requests = (
 		UserServiceRequest.objects
-		.filter(user=request.user,status='Open')
+		.filter(user=request.user, status='Open')
 		.annotate(
 			owner_first_name=Subquery(owner_first_name_subquery),
 			owner_last_name=Subquery(owner_last_name_subquery)
@@ -684,12 +684,22 @@ def user_requests(request):
 		.order_by('-updated')
 	)
 
-	user_service_requests = user_service_requests.exclude(service_type__name__in=[
-		r.name for r in Requirement.objects.all() if is_recursive_requirement(r)
-	])
+	# Exclude service requests that are for placeholder/recursive requirements
+	placeholder_req_names = set(
+		Requirement.objects.filter(
+			name__in=ServiceType.objects.values_list('name', flat=True)
+		).values_list('name', flat=True)
+	)
+	user_service_requests = user_service_requests.exclude(service_type__name__in=placeholder_req_names)
 
-	# Build requirements/progress mapping	
-	service_type_names = set(ServiceType.objects.values_list('name', flat=True))
+	# Build a set of placeholder requirement IDs for robust filtering
+	placeholder_req_ids = set(
+		Requirement.objects.filter(
+			name__in=ServiceType.objects.values_list('name', flat=True)
+		).values_list('id', flat=True)
+	)
+
+	# Build requirements/progress mapping
 	request_requirements = {}
 	for req in user_service_requests:
 		# Get requirements for this service type
@@ -701,6 +711,8 @@ def user_requests(request):
 		leaf_requirements = list({r.id: r for r in leaf_requirements}.values())
 		req_list = []
 		for r in leaf_requirements:
+			if r.id in placeholder_req_ids:
+				continue  # Skip placeholder requirements
 			progress = UserRequirementProgress.objects.filter(user=request.user, requirement=r).first()
 			req_list.append({
 				'id': r.id,
@@ -714,12 +726,6 @@ def user_requests(request):
 				'prerequisites': r.prerequisites,
 			})
 		request_requirements[req.id] = req_list
-
-	for req_id, reqs in request_requirements.items():
-		# Filter out requirements whose name matches a ServiceType name (placeholders)
-		request_requirements[req_id] = [
-			r for r in reqs if r['name'] not in service_type_names
-		]
 
 	progress_list = (
 		UserRequirementProgress.objects
@@ -757,9 +763,23 @@ def user_requests(request):
 		})
 
 	if request.device == 'mobile':
-		return render(request, 'users/mobile_user_requests.html', {'mcl_services':mcl_services, 'nano_services':nano_services, 'user_projects':user_projects, 'user_service_requests': user_service_requests,'request_requirements': request_requirements, 'requirements_table':requirements_table, })
+		return render(request, 'users/mobile_user_requests.html', {
+			'mcl_services': mcl_services,
+			'nano_services': nano_services,
+			'user_projects': user_projects,
+			'user_service_requests': user_service_requests,
+			'request_requirements': request_requirements,
+			'requirements_table': requirements_table,
+		})
 	else:
-		return render(request, 'users/user_requests.html', {'mcl_services':mcl_services, 'nano_services':nano_services, 'user_projects':user_projects, 'user_service_requests': user_service_requests,'request_requirements': request_requirements, 'requirements_table':requirements_table, })
+		return render(request, 'users/user_requests.html', {
+			'mcl_services': mcl_services,
+			'nano_services': nano_services,
+			'user_projects': user_projects,
+			'user_service_requests': user_service_requests,
+			'request_requirements': request_requirements,
+			'requirements_table': requirements_table,
+		})
 
 def add_requirements_and_recursive_requests(service, user, service_type, project, description, training_request, auto_include, processed_service_types=None):
 	if processed_service_types is None:
