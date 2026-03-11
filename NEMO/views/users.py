@@ -745,22 +745,23 @@ def user_requests(request):
 			.exclude(id=main_sr.id if main_sr else None)
 			.distinct()
 		)
-		requirements_table.append({
-			'id': p.requirement.id,
-			'name': p.requirement.name,
-			'description': p.requirement.description,
-			'status': get_status_icon(p.status),
-			'status_value': p.get_status_display(),
-			'created': p.created,
-			'completed_on': p.completed_on,
-			'expected_completion_time': getattr(p.requirement, 'expected_completion_time', ''),
-			'resource_link': getattr(p.requirement, 'resource_link', None),
-			'resource_link_name': getattr(p.requirement, 'resource_link_name', None),
-			'automated_update': getattr(p.requirement, 'automated_update', False),
-			'prerequisites': getattr(p.requirement, 'prerequisites', False),
-			'main_service_request': main_sr,
-			'other_service_requests': list(other_srs),
-		})
+		if not ServiceType.objects.filter(name=p.requirement_name).exists():
+			requirements_table.append({
+				'id': p.requirement.id,
+				'name': p.requirement.name,
+				'description': p.requirement.description,
+				'status': get_status_icon(p.status),
+				'status_value': p.get_status_display(),
+				'created': p.created,
+				'completed_on': p.completed_on,
+				'expected_completion_time': getattr(p.requirement, 'expected_completion_time', ''),
+				'resource_link': getattr(p.requirement, 'resource_link', None),
+				'resource_link_name': getattr(p.requirement, 'resource_link_name', None),
+				'automated_update': getattr(p.requirement, 'automated_update', False),
+				'prerequisites': getattr(p.requirement, 'prerequisites', False),
+				'main_service_request': main_sr,
+				'other_service_requests': list(other_srs),
+			})
 
 	if request.device == 'mobile':
 		return render(request, 'users/mobile_user_requests.html', {
