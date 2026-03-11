@@ -683,7 +683,9 @@ def user_requests(request):
 		.select_related('service_type', 'project', 'core', 'pi_user')
 		.order_by('-updated')
 	)
-	# Build requirements/progress mapping
+
+	# Build requirements/progress mapping	
+	service_type_names = set(ServiceType.objects.values_list('name', flat=True))
 	request_requirements = {}
 	for req in user_service_requests:
 		# Get requirements for this service type
@@ -712,6 +714,12 @@ def user_requests(request):
 	user_service_requests = user_service_requests.exclude(service_type__name__in=[
 		r.name for r in Requirement.objects.all() if is_recursive_requirement(r)
 	])
+
+	for req_id, reqs in request_requirements.items():
+		# Filter out requirements whose name matches a ServiceType name (placeholders)
+		request_requirements[req_id] = [
+			r for r in reqs if r['name'] not in service_type_names
+		]
 
 	progress_list = (
 		UserRequirementProgress.objects
