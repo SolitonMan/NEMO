@@ -85,7 +85,7 @@
 							<option value="">-- Choose a project --</option>
 							{% if user_projects is not None %}
 								{% for p in user_projects %}
-									<option value="{{ p.id }}"><b>[PI: {{ p.owner.first_name }} {{ p.owner.last_name }} ({{ p.owner.username }})]</b> {{ p }}</option>
+									<option value="{{ p.id }}">[PI: {{ p.owner.first_name }} {{ p.owner.last_name }} ({{ p.owner.username }})]  -  {{ p }}</option>
 								{% endfor %}
 							{% else %}
 								<option value="">No project available</option>

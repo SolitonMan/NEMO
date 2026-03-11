@@ -659,6 +659,10 @@ def user_requests(request):
 
 		post_data = rows
 
+	def is_recursive_requirement(requirement):
+		# Returns True if this requirement is a recursive/placeholder
+		return ServiceType.objects.filter(name=requirement.name, requirements__isnull=False).exclude(requirements=requirement).exists()
+
 	requirement_names = set(Requirement.objects.values_list('name', flat=True))
 	mcl_core = Core.objects.get(id=1)
 	mcl_services = ServiceType.objects.filter(core=mcl_core).exclude(name__in=requirement_names).order_by('name')
@@ -682,10 +686,15 @@ def user_requests(request):
 	# Build requirements/progress mapping
 	request_requirements = {}
 	for req in user_service_requests:
-	# Get requirements for this service type
+		# Get requirements for this service type
 		requirements = req.service_type.requirements.all()
-		req_list = []
+		leaf_requirements = []
 		for r in requirements:
+			leaf_requirements.extend(get_leaf_requirements(r))
+		# Remove duplicates
+		leaf_requirements = list({r.id: r for r in leaf_requirements}.values())
+		req_list = []
+		for r in leaf_requirements:
 			progress = UserRequirementProgress.objects.filter(user=request.user, requirement=r).first()
 			req_list.append({
 				'id': r.id,
@@ -699,6 +708,10 @@ def user_requests(request):
 				'prerequisites': r.prerequisites,
 			})
 		request_requirements[req.id] = req_list
+
+	user_service_requests = user_service_requests.exclude(service_type__name__in=[
+		r.name for r in Requirement.objects.all() if is_recursive_requirement(r)
+	])
 
 	progress_list = (
 		UserRequirementProgress.objects
@@ -888,3 +901,29 @@ def cancel_user_service_request(request, request_id):
 		return JsonResponse({'success': True})
 	except UserServiceRequest.DoesNotExist:
 		return JsonResponse({'error': 'Request not found'}, status=404)
+
+
+def get_leaf_requirements(requirement, seen=None):
+	"""
+	Recursively expand requirements, skipping recursive/placeholder requirements,
+	and return only the leaf requirements.
+	"""
+	if seen is None:
+		seen = set()
+	if requirement.id in seen:
+		return []
+	seen.add(requirement.id)
+
+	# Check if this requirement is recursive (has a ServiceType with the same name and requirements)
+	service_types = ServiceType.objects.filter(name=requirement.name)
+	leafs = []
+	is_recursive = False
+	for st in service_types:
+		child_reqs = st.requirements.exclude(id=requirement.id)
+		if child_reqs.exists():
+			is_recursive = True
+			for child in child_reqs:
+				leafs.extend(get_leaf_requirements(child, seen))
+	if not is_recursive:
+		leafs.append(requirement)
+	return leafs
