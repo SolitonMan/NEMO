@@ -684,6 +684,10 @@ def user_requests(request):
 		.order_by('-updated')
 	)
 
+	user_service_requests = user_service_requests.exclude(service_type__name__in=[
+		r.name for r in Requirement.objects.all() if is_recursive_requirement(r)
+	])
+
 	# Build requirements/progress mapping	
 	service_type_names = set(ServiceType.objects.values_list('name', flat=True))
 	request_requirements = {}
@@ -710,10 +714,6 @@ def user_requests(request):
 				'prerequisites': r.prerequisites,
 			})
 		request_requirements[req.id] = req_list
-
-	user_service_requests = user_service_requests.exclude(service_type__name__in=[
-		r.name for r in Requirement.objects.all() if is_recursive_requirement(r)
-	])
 
 	for req_id, reqs in request_requirements.items():
 		# Filter out requirements whose name matches a ServiceType name (placeholders)
