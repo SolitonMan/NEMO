@@ -123,7 +123,7 @@ def login_user(request, context=None):
 		except:
 			next_page = reverse('landing')
 		if request.session.pop('force_requirements_redirect', False):
-			return HttpResponseRedirect(reverse('user_requirements'))
+			return HttpResponseRedirect(reverse('user_requests'))
 		return HttpResponseRedirect(next_page)
 
 	dictionary = {
@@ -146,7 +146,7 @@ def login_user(request, context=None):
 	initialize_user_session(request, user, next_page)
 
 	if request.session.pop('force_requirements_redirect', False):
-		return HttpResponseRedirect(reverse('user_requirements'))
+		return HttpResponseRedirect(reverse('user_requests'))
 
 	try:
 		resolve(next_page)
