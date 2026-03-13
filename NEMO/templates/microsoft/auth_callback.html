@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Authentication Complete</title>
+</head>
+<body>
+	<script type="text/javascript">
+		(function() {
+			if (window.opener) {
+				window.opener.postMessage({ microsoft_auth: {{ message|safe }} }, window.location.origin);
+				window.close();
+			}
+		})();
+	</script>
+	<p>Authentication complete. You may close this window.</p>
+</body>
+</html>
