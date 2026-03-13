@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Authentication Complete</title>
+</head>
+<body>
+	<script type="text/javascript">
+		(function() {
+			// You can add more data if needed
+			window.opener.postMessage(
+				{ microsoft_auth: { success: true } },
+				window.location.origin
+			);
+			window.close();
+		})();
+	</script>
+	<p>Authentication complete. You may close this window.</p>
+</body>
+</html>
