@@ -34,6 +34,7 @@ urlpatterns = [
 	path('login/', authentication.login_user, name='login'),
 	path('logout/', authentication.logout_user, name='logout'),
 	path('choose_core/', authentication.choose_core, name='choose_core'),
+	path('post_login_redirect/', authentication.post_login_redirect, name='post_login_redirect'),
 
 	# Create a notification scheme
 	path('create_notification_scheme/', notifications.notification_scheme_tool_action, name='create_notification_scheme'),

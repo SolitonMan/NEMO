@@ -263,3 +263,10 @@ def initialize_user_session(request, user, next_page):
 		request.session['force_requirements_redirect'] = True
 
 	return next_page
+
+
+@require_GET
+def post_login_redirect(request):
+	if request.session.pop('force_requirements_redirect', False):
+		return HttpResponseRedirect(reverse('user_requests'))
+	return HttpResponseRedirect(reverse('landing'))
