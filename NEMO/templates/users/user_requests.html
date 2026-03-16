@@ -118,7 +118,6 @@
 	</div>
 </div>
 <br/><br/>
-{% if user_service_requests %}
 	<div style="margin-bottom: 16px; width: 100%; display: flex; align-items: center; justify-content: space-between;">
 		<div>
 			<label style="font-weight: bold; margin-right: 8px;">Show:</label>
@@ -136,6 +135,7 @@
 			<input type="radio" name="toggle" autocomplete="off"> Requirements Management
 		</label>
 	</div>
+{% if user_service_requests %}
 	<div id="requests-table-container">
 	<table class="table table-striped">
 		<thead>
