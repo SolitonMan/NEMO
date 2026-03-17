@@ -18,7 +18,7 @@ from ldap3.core.exceptions import LDAPBindError, LDAPExceptionError
 from NEMO.models import User, Requirement, UserRequirementProgress
 from NEMO.views.customization import get_media_file_contents
 
-from microsoft_auth.models import MicrosoftAccount
+#from microsoft_auth.models import MicrosoftAccount
 
 
 class RemoteUserAuthenticationBackend(RemoteUserBackend):
