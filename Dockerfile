@@ -19,7 +19,9 @@ RUN pip install pytz
 
 RUN apt-get update && apt-get install -y --no-install-recommends git && rm -rf /var/lib/apt/lists/*
 # Install entra_auth
-RUN pip install --no-cache-dir -v git+https://github.com/dms117/entra_auth.git@master 2>&1 | head -100
+RUN pip install --no-cache-dir git+https://github.com/dms117/entra_auth.git@master
+RUN python -c "import entra_auth; print('entra_auth location:', entra_auth.__file__)"
+RUN pip show entra_auth
 
 # Install PostgreSQL support
 #RUN pip install psycopg2-binary
