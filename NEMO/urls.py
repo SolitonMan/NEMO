@@ -14,7 +14,7 @@ from NEMO.views import (
 	maintenance, mobile, notifications, usage, news, qualifications, remote_work, requirements_admin, resources, safety, samples, sidebar,
 	staff_charges, status_dashboard, tasks, tool_control, training, tutorials, users, work_orders
 )
-from microsoft_auth.views import AuthenticateCallbackView
+#from microsoft_auth.views import AuthenticateCallbackView
 
 # REST API URLs
 router = routers.DefaultRouter()
@@ -31,12 +31,9 @@ router.register(r'scheduled_outages', api.ScheduledOutageViewSet)
 urlpatterns = [
 	path('admin/', admin.site.urls),
 	# Authentication & error pages:
-	path(
-		'valid/from-auth-redirect/',
-		AuthenticateCallbackView.as_view(),
-		name='from-auth-redirect'
-	),
-	path('valid/', include('microsoft_auth.urls', namespace='microsoft')),
+	#path('valid/from-auth-redirect/',AuthenticateCallbackView.as_view(),name='from-auth-redirect'),
+	#path('valid/', include('microsoft_auth.urls', namespace='microsoft')),
+	path("entra/", include("entra_auth.urls")),
 	path('login/', authentication.login_user, name='login'),
 	path('logout/', authentication.logout_user, name='logout'),
 	path('choose_core/', authentication.choose_core, name='choose_core'),

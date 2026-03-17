@@ -15,7 +15,12 @@ RUN pip install python-memcached
 RUN pip install pytz
 
 # Install django_microsoft_auth
-RUN pip install django_microsoft_auth
+#RUN pip install django_microsoft_auth
+
+
+# Install entra_auth
+RUN pip install msal requests
+RUN pip install entra_auth
 
 # Install PostgreSQL support
 #RUN pip install psycopg2-binary
