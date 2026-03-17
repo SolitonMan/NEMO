@@ -5,8 +5,8 @@ from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.contrib.auth.models import Permission
 from django.utils import timezone
 
-from microsoft_auth.models import MicrosoftAccount
-from microsoft_auth.admin import MicrosoftAccountAdmin
+#from microsoft_auth.models import MicrosoftAccount
+#from microsoft_auth.admin import MicrosoftAccountAdmin
 
 from NEMO.actions import lock_selected_interlocks, synchronize_with_tool_usage, unlock_selected_interlocks
 from NEMO.models import Account, ActivityHistory, Alert, Area, AreaAccessRecord, AreaAccessRecordProject, AreaRequirement, BillingType, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableOrder, ConsumableOrderItem, ConsumableUnit, ConsumableCategory, ConsumableType, ConsumableWithdraw, ContactInformation, ContactInformationCategory, ContestTransaction, ContestTransactionData, ContestTransactionNewData, Core, CreditCostCollector, Customization, Door, EmailLog, GlobalFlag, Interlock, InterlockCard, InterlockType, LandingPageChoice, LockBilling, MembershipHistory, News, Notification, NsfCategory, Organization, OrganizationType, PhysicalAccessLevel, PhysicalAccessLog, Project, Project2DCC, Requirement, Reservation, ReservationConfiguration, ReservationProject, Resource, ResourceCategory, SafetyIssue, Sample, ScheduledOutage, ScheduledOutageCategory, ServiceType, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskHistory, TaskStatus, Tool, ToolRequirement, TrainingSession, UsageEvent, UsageEventProject, User, UserType, UserProfile, UserProfileSetting, UserRequirementProgress
@@ -243,15 +243,15 @@ class ToolAdmin(admin.ModelAdmin):
 
 
 #@register(MicrosoftAccount)
-class UpdatedMicrosoftAccountAdmin(MicrosoftAccountAdmin):
-	list_display = ('id', 'microsoft_id', 'user')
-	search_fields = ('microsoft_id', 'user__username', 'user__last_name', 'user__first_name')
+#class UpdatedMicrosoftAccountAdmin(MicrosoftAccountAdmin):
+#	list_display = ('id', 'microsoft_id', 'user')
+#	search_fields = ('microsoft_id', 'user__username', 'user__last_name', 'user__first_name')
+#
+#	def has_delete_permission(self, request, obj=None):
+#		return False
 
-	def has_delete_permission(self, request, obj=None):
-		return False
-
-admin.site.unregister(MicrosoftAccount)
-admin.site.register(MicrosoftAccount, UpdatedMicrosoftAccountAdmin)
+#admin.site.unregister(MicrosoftAccount)
+#admin.site.register(MicrosoftAccount, UpdatedMicrosoftAccountAdmin)
 
 @register(TrainingSession)
 class TrainingSessionAdmin(admin.ModelAdmin):
