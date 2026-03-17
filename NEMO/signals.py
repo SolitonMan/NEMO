@@ -1,9 +1,12 @@
+from django.contrib.auth import get_user_model
+from django.contrib.auth.signals import user_logged_in
 from django.db.models.signals import post_save, pre_save, pre_delete, post_delete
 from django.dispatch import receiver
 from django.utils import timezone, dateformat
 
 from NEMO.models import Reservation, User, UsageEvent, NotificationSchemeToolAction, Tool, ScheduledOutage
 from NEMO.utilities import send_mail
+from NEMO.views.authentication import post_login_redirect, initialize_user_session
 from NEMO.views.customization import get_media_file_contents
 
 
@@ -32,6 +35,13 @@ def new_user_account_created(sender, instance, created, **kwargs):
 		# send e welcome message
 		msg = get_media_file_contents("new_user_email.htm")
 		send_mail("Welcome to LEO", msg, "LEOHelp@psu.edu", [str(instance.email)])
+
+
+@receiver(user_logged_in)
+def post_login_handler(sender, request, user, **kwargs):
+	# check if this is the first login to run "account creation" logic
+	if user.last_login is None: 
+		post_login_redirect(request)
 
 
 @receiver(pre_save, sender=UsageEvent)
