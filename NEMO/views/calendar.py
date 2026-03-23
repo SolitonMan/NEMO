@@ -1455,13 +1455,30 @@ def create_ics_for_reservation(request, reservation, cancelled=False):
 @login_required
 def multi_calendar_view(request):
 
-	# NEMO/views/calendar.py
 	def format_slot(slot):
-		return {
-			"start": slot[0].strftime("%m/%d/%Y %I:%M %p"),
-			"end": slot[1].strftime("%m/%d/%Y %I:%M %p"),
-			"tool_id": slot[2],  # Add tool_id to the slot dict
-		}
+		# slot can be a tuple (start, end, tool_id) or a dict
+		if isinstance(slot, dict):
+			return {
+				"start": slot.get("start"),
+				"end": slot.get("end"),
+				"tool_id": slot.get("tool_id"),
+			}
+		elif isinstance(slot, (list, tuple)):
+			# Defensive: handle both (start, end, tool_id) and (start, end)
+			if len(slot) == 3:
+				return {
+					"start": slot[0].strftime("%m/%d/%Y %I:%M %p"),
+					"end": slot[1].strftime("%m/%d/%Y %I:%M %p"),
+					"tool_id": slot[2],
+				}
+			elif len(slot) == 2:
+				return {
+					"start": slot[0].strftime("%m/%d/%Y %I:%M %p"),
+					"end": slot[1].strftime("%m/%d/%Y %I:%M %p"),
+					"tool_id": None,
+				}
+		# fallback
+		return {}
 
 	events = []
 	error_messages = []
