@@ -61,15 +61,13 @@
 {% endif %}
 
 {% if available_slots %}
-<div style="display:none;">
-	{{ available_slots }}
-</div>
 	<h3>Available Slots</h3>
 	<table class="table">
 		<thead>
 			<tr>
 				<th>Start</th>
 				<th>End</th>
+				<th>Action</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -77,6 +75,12 @@
 			<tr>
 				<td>{{ a.start }}</td>
 				<td>{{ a.end }}</td>
+				<td>
+					<button class="btn btn-success"
+						onclick="bookSlot('{{ a.start }}', '{{ a.end }}', '{{ a.tool_id }}')">
+						Book
+					</button>
+				</td>
 			</tr>
 		{% endfor %}
 		</tbody>
@@ -110,6 +114,25 @@
 {% endif %}
 
 <script type="text/javascript">
+function bookSlot(start, end, tool_id) {
+	$.ajax({
+		url: "{% url 'book_training_slot' %}", // Update with your actual booking URL
+		type: "POST",
+		data: {
+			'start': start,
+			'end': end,
+			'tool_id': tool_id,
+			'csrfmiddlewaretoken': '{{ csrf_token }}'
+		},
+		success: function(response) {
+			alert("Slot booked successfully!");
+			location.reload();
+		},
+		error: function(xhr) {
+			alert("Failed to book slot: " + xhr.responseText);
+		}
+	});
+}
 // Move all options between lists
 function move_all(sel) {
     var id_tag = "#" + sel;
