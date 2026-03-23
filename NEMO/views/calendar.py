@@ -1455,10 +1455,12 @@ def create_ics_for_reservation(request, reservation, cancelled=False):
 @login_required
 def multi_calendar_view(request):
 
+	# NEMO/views/calendar.py
 	def format_slot(slot):
 		return {
 			"start": slot[0].strftime("%m/%d/%Y %I:%M %p"),
 			"end": slot[1].strftime("%m/%d/%Y %I:%M %p"),
+			"tool_id": slot[2],  # Add tool_id to the slot dict
 		}
 
 	events = []
@@ -1603,14 +1605,22 @@ def multi_calendar_view(request):
 	# Convert to a list of lists for find_available_slots
 	events_grouped = list(events_by_source.values())
 
+	# NEMO/views/calendar.py
+
 	available_slots = []
 	if (
 		slot_duration is not None
 		and window_start is not None
 		and window_end is not None
-		and events_grouped  # Only call if there are sources
+		and tools  # Only call if there are selected tools
 	):
-		available_slots = find_available_slots(events_grouped, slot_duration, window_start, window_end)
+		for tool in tools:
+			# Filter events for this tool
+			tool_events = [e for e in events if e.get("type") == "leo" and e.get("source") == "LEO" and e.get("title", "").startswith(tool.name)]
+			# You may need to adjust the above filter to match your event structure
+			events_grouped = [tool_events]  # You may want to include other event sources as well
+			slots = find_available_slots(events_grouped, slot_duration, window_start, window_end, tool_id=tool.id)
+			available_slots.extend([format_slot(slot) for slot in slots])
 
 	if available_slots:
 		available_slots = [format_slot(slot) for slot in available_slots]
@@ -1633,7 +1643,7 @@ def ensure_datetime(dt):
 		return datetime.datetime(dt.year, dt.month, dt.day, tzinfo=UTC)
 	return dt
 
-def find_available_slots(list_of_events, duration_minutes, window_start, window_end, max_results=3):
+def find_available_slots(list_of_events, duration_minutes, window_start, window_end, max_results=3, tool_id=None):
 	# list_of_events: list of lists of {"start": datetime, "end": datetime}
 	# duration_minutes: int
 	# window_start, window_end: datetime
@@ -1706,7 +1716,7 @@ def find_available_slots(list_of_events, duration_minutes, window_start, window_
 		while slot_start + delta <= e:
 			slot_end = slot_start + delta
 			if is_business_hours(slot_start, slot_end):
-				slots.append((slot_start, slot_end))
+				slots.append((slot_start, slot_end, tool_id))  # Include tool_id
 				if len(slots) >= max_results:
 					return slots
 			slot_start += step
