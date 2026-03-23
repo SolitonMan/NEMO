@@ -1619,7 +1619,7 @@ def multi_calendar_view(request):
 			tool_events = [e for e in events if e.get("type") == "leo" and e.get("source") == "LEO" and e.get("title", "").startswith(tool.name)]
 			# You may need to adjust the above filter to match your event structure
 			events_grouped = [tool_events]  # You may want to include other event sources as well
-			slots = find_available_slots(events_grouped, slot_duration, window_start, window_end, 3, tool_id=tool.id)
+			slots = find_available_slots(events_grouped, slot_duration, window_start, window_end, 3, tool.id)
 			available_slots.extend([format_slot(slot) for slot in slots])
 
 	if available_slots:
@@ -1835,7 +1835,7 @@ def tool_training_schedule(request):
 				slot_duration = 30  # minutes
 
 			events_grouped = [tool_busy, user_busy, owner_busy]
-			available_slots = find_available_slots(events_grouped, slot_duration, window_start, window_end, max_results=3)
+			available_slots = find_available_slots(events_grouped, slot_duration, window_start, window_end, 3, tool.id)
 			available_slots = [
 				{
 					"start": s.strftime("%m/%d/%Y %I:%M %p"),
