@@ -50,7 +50,7 @@
 			</select>
 		</div>
 		<div class="col-md-3">
-			<div id="tool-requirements-feedback" class="form-control" style="display: none; max-height: 250px; overflow-y: auto;">
+			<div id="tool-requirements-feedback" class="form-control" style="display: none; min-height: 250px; max-height: 300px; overflow-y: auto; ">
 				<h4 id="requirements-tool-name"></h4>
 				<ul id="requirements-list"></ul>
 			</div>
@@ -241,7 +241,8 @@ $("#tools").on("click", "option", function() {
 	}
 	reqTitle.text("Requirements for " + toolName);
 	reqs.forEach(r => {
-		const status = r.status ? `<strong>Status:</strong> ${r.status}` : '';
+		const bg_color = r.status == 'completed' ? '#ccffcc' : '#ffcccc'
+		const status = r.status ? `<strong>Status:</strong> <span style="font-weight: bold; font-size: 10pt; border-radius: 12px; background-color:#ccffcc;">${r.status}</span>` : '';
 		const expires = r.expires_on ? ` (expires: ${r.expires_on})` : '';
 		reqList.append(`<li><strong>${r.name}</strong>: ${r.description}<br>${status}${expires}</li>`);
 	});
