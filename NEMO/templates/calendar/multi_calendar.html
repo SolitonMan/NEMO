@@ -45,6 +45,12 @@
                 <a href="javascript:move_all('tools_selected');" class="selector-remove active" id="remove_tools">Remove all</a>
             </div>
         </div>
+        <div class="row">
+			<div id="tool-requirements-feedback" class="alert alert-info" style="display:none;">
+				<h4>Tool Requirements</h4>
+				<ul id="requirements-list"></ul>
+			</div>
+		</div>
     </div>
 
     <button type="submit" class="btn btn-primary">Load Calendars</button>
@@ -87,7 +93,7 @@
 	</table>
 {% endif %}
 
-{% if events %}
+{% if events and 0 == 1 %}
     <h3>Events</h3>
     <table class="table table-striped">
         <thead>
@@ -212,6 +218,34 @@ function on_submit() {
 // Initialize paired selects
 $(document).ready(function() {
     pair_selects($("#tools"), $("#tools_selected"));
+});
+
+const toolRequirements = {{ tool_requirements|safe }};
+
+function showRequirements(toolId) {
+	const reqDiv = $("#tool-requirements-feedback");
+	const reqList = $("#requirements-list");
+	reqList.empty();
+	const reqs = toolRequirements[toolId] || [];
+	if (reqs.length === 0) {
+		reqDiv.hide();
+		return;
+	}
+	reqs.forEach(r => {
+		const status = r.status ? `<strong>Status:</strong> ${r.status}` : '';
+		const expires = r.expires_on ? ` (expires: ${r.expires_on})` : '';
+		reqList.append(`<li><strong>${r.name}</strong>: ${r.description}<br>${status}${expires}</li>`);
+	});
+	reqDiv.show();
+}
+
+$("#tools").on("change", function() {
+	const selected = $(this).val();
+	if (selected && selected.length === 1) {
+		showRequirements(selected[0]);
+	} else {
+		$("#tool-requirements-feedback").hide();
+	}
 });
 </script>
 {% endblock %}

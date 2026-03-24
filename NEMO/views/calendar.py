@@ -31,7 +31,7 @@ from django.utils.safestring import mark_safe
 
 from NEMO.decorators import disable_session_expiry_refresh
 from NEMO.forms import MultiCalendarForm, ToolDurationFormSet
-from NEMO.models import Tool, Reservation, Configuration, ReservationConfiguration, ReservationProject, ReservationNotification, Consumable, UsageEvent, UsageEventProject, AreaAccessRecord, StaffCharge, StaffChargeProject, User, Project, ScheduledOutage, ScheduledOutageCategory, UserProfile, UserProfileSetting, Sample
+from NEMO.models import Tool, Reservation, Configuration, ReservationConfiguration, ReservationProject, ReservationNotification, Consumable, UsageEvent, UsageEventProject, AreaAccessRecord, StaffCharge, StaffChargeProject, User, Project, ScheduledOutage, ScheduledOutageCategory, UserProfile, UserProfileSetting, Sample, ToolRequirement, Requirement, UserRequirementProgress
 from NEMO.utilities import EmailCategory, create_email_log, bootstrap_primary_color, create_email_attachment, extract_times, extract_dates, format_datetime, parse_parameter_string
 from NEMO.views.constants import ADDITIONAL_INFORMATION_MAXIMUM_LENGTH
 from NEMO.views.customization import get_customization, get_media_file_contents
@@ -1622,8 +1622,6 @@ def multi_calendar_view(request):
 	# Convert to a list of lists for find_available_slots
 	events_grouped = list(events_by_source.values())
 
-	# NEMO/views/calendar.py
-
 	available_slots = []
 	if (
 		slot_duration is not None
@@ -1647,6 +1645,7 @@ def multi_calendar_view(request):
 		"events": events,
 		"available_slots": available_slots,
 		"errors": error_messages,
+		"tool_requirements": _get_tool_requirements_with_status(request.user)
 	})
 
 def ensure_datetime(dt):
@@ -1939,3 +1938,18 @@ def book_training_slot(request):
 			"available_slots": [],
 			"selected_tool_id": tool_id,
 		})
+
+def _get_tool_requirements_with_status(user):
+	tool_reqs = ToolRequirement.objects.select_related('requirement', 'tool')
+	user_progress = { (p.requirement_id,): p for p in UserRequirementProgress.objects.filter(user=user) }
+	result = {}
+	for tr in tool_reqs:
+		status = user_progress.get((tr.requirement_id,))
+		result.setdefault(tr.tool_id, []).append({
+			'name': tr.requirement.name,
+			'description': tr.requirement.description,
+			'status': status.status if status else 'Not Started',
+			'completed_on': status.completed_on if status else None,
+			'expires_on': status.expires_on if status else None,
+		})
+	return result
