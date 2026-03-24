@@ -1941,14 +1941,20 @@ def book_training_slot(request):
 		})
 
 def _get_tool_requirements_with_status(user):
-	# Get all visible tools
 	tools = Tool.objects.filter(visible=True)
 	user_progress = {p.requirement_id: p for p in UserRequirementProgress.objects.filter(user=user)}
 	result = {}
 	for tool in tools:
-		leaf_reqs = get_leaf_requirements(tool)
+		# Get direct requirements for the tool
+		direct_reqs = [tr.requirement for tr in ToolRequirement.objects.filter(tool=tool)]
+		# For each direct requirement, get its leaf requirements
+		leaf_reqs = []
+		for req in direct_reqs:
+			leaf_reqs.extend(get_leaf_requirements(req))
+		# Optionally deduplicate leaf_reqs by id
+		unique_leaf_reqs = {req.id: req for req in leaf_reqs}.values()
 		reqs = []
-		for req in leaf_reqs:
+		for req in unique_leaf_reqs:
 			status = user_progress.get(req.id)
 			reqs.append({
 				'tool_id': tool.id,
@@ -1956,8 +1962,8 @@ def _get_tool_requirements_with_status(user):
 				'name': req.name,
 				'description': req.description,
 				'status': status.status if status else 'Not Started',
-				'completed_on': status.completed_on.strftime('%m/%d/%Y') if status and status.completed_on else None,
-				'expires_on': status.expires_on.strftime('%m/%d/%Y') if status and status.expires_on else None,
+				'completed_on': status.completed_on.strftime('%m/%d/%Y') if status and status.completed_on else '',
+				'expires_on': status.expires_on.strftime('%m/%d/%Y') if status and status.expires_on else '',
 			})
 		result[tool.id] = reqs
 	return result
