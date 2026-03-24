@@ -27,25 +27,34 @@
         {{ form.ics_urls }}
     </div>
 
-    <div class="form-group">
-        <label for="tools"><h3>Tools</h3></label>
-        <div class="row">
-			<div class="col-md-5">
-				<select multiple id="tools" size="10" class="form-control"></select>
-			</div>
-			<div class="col-md-2 text-center" style="margin-top: 40px;">
-				<button type="button" id="add_tool" class="btn btn-primary">&rarr;</button><br><br>
-				<button type="button" id="remove_tool" class="btn btn-secondary">&larr;</button>
-			</div>
-			<div class="col-md-5">
-				<select multiple id="tools_selected" size="10" class="form-control"></select>
-			</div>
+<div class="form-group">
+	<label for="tools"><h3>Tools</h3></label>
+	<div class="row">
+		<div class="col-md-5">
+			<input type="text" name="search_tools" id="search_tools" value="" placeholder="Search tools..." class="form-control" style="margin-bottom: 5px;" />
+			<select multiple name="tools" id="tools" size="10" class="form-control" style="width: 100%;">
+				{% for tool in tool_list %}
+					<option value="{{ tool.id }}">{{ tool.name }}</option>
+				{% endfor %}
+			</select>
 		</div>
-		<div id="tool-requirements-feedback" class="form-control" style="display:none;">
-			<h4 id="requirements-tool-name"></h4>
-			<ul id="requirements-list"></ul>
+		<div class="col-md-2 text-center" style="margin-top: 40px;">
+			<button type="button" id="add_tool" class="btn btn-primary">&rarr;</button><br><br>
+			<button type="button" id="remove_tool" class="btn btn-secondary">&larr;</button>
 		</div>
-    </div>
+		<div class="col-md-5">
+			<select multiple name="tools_selected" id="tools_selected" size="10" class="form-control" style="width: 100%;">
+				{% for tool in tools_selected %}
+					<option value="{{ tool.id }}">{{ tool.name }}</option>
+				{% endfor %}
+			</select>
+		</div>
+	</div>
+	<div id="tool-requirements-feedback" class="form-control" style="display:none;">
+		<h4 id="requirements-tool-name"></h4>
+		<ul id="requirements-list"></ul>
+	</div>
+</div>
 
     <button type="submit" class="btn btn-primary">Load Calendars</button>
 </form>

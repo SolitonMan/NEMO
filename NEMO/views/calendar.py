@@ -1481,11 +1481,13 @@ def multi_calendar_view(request):
 		# fallback
 		return {}
 
+	tool_list = Tool.objects.filter(visible=True).order_by('category', 'name')
 	events = []
 	error_messages = []
 	slot_duration = None
 	window_start = None
 	window_end = None
+	tools_selected = None
 
 	if request.method == "POST":
 		form = MultiCalendarForm(request.POST)
@@ -1593,6 +1595,7 @@ def multi_calendar_view(request):
 
 			# Handle LEO tool reservations
 			tools = form.cleaned_data['tools_selected']
+			tools_selected = tools
 			if tools:
 				reservations = Reservation.objects.filter(
 					tool__in=tools, cancelled=False, missed=False, shortened=False
@@ -1646,7 +1649,9 @@ def multi_calendar_view(request):
 		"events": events,
 		"available_slots": available_slots,
 		"errors": error_messages,
-		"tool_requirements": _get_tool_requirements_with_status(request.user)
+		"tool_requirements": _get_tool_requirements_with_status(request.user),
+		"tool_list": tool_list,
+		"tools_selected": tools_selected,
 	})
 
 def ensure_datetime(dt):
