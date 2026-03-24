@@ -48,11 +48,13 @@
 					<option value="{{ tool.id }}">{{ tool.name }}</option>
 				{% endfor %}
 			</select>
+			</div>
+		<div class="col-md-5">
+			<div id="tool-requirements-feedback" class="form-control" style="display:none;">
+				<h4 id="requirements-tool-name"></h4>
+				<ul id="requirements-list"></ul>
+			</div>
 		</div>
-	</div>
-	<div id="tool-requirements-feedback" class="form-control" style="display:none;">
-		<h4 id="requirements-tool-name"></h4>
-		<ul id="requirements-list"></ul>
 	</div>
 </div>
 
@@ -220,7 +222,7 @@ function on_submit() {
 
 // Initialize paired selects
 $(document).ready(function() {
-    pair_selects($("#tools"), $("#tools_selected"));
+    //pair_selects($("#tools"), $("#tools_selected"));
 });
 
 const toolRequirements = {{ tool_requirements|safe }};
