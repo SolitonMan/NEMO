@@ -241,8 +241,8 @@ $("#tools").on("click", "option", function() {
 	}
 	reqTitle.text("Requirements for " + toolName);
 	reqs.forEach(r => {
-		const bg_color = r.status == 'completed' ? '#ccffcc' : '#ffcccc'
-		const status = r.status ? `<strong>Status:</strong> <span style="font-weight: bold; font-size: 10pt; border-radius: 12px; background-color:#ccffcc;">${r.status}</span>` : '';
+		const bg_color = r.status === 'completed' ? '#ccffcc' : '#ffcccc';
+		const status = r.status ? `<strong>Status:</strong> <span style="font-weight: bold; font-size: 10pt; border-radius: 12px; background-color:${bg_color};">${r.status}</span>` : '';
 		const expires = r.expires_on ? ` (expires: ${r.expires_on})` : '';
 		reqList.append(`<li><strong>${r.name}</strong>: ${r.description}<br>${status}${expires}</li>`);
 	});
