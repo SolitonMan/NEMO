@@ -30,26 +30,20 @@
     <div class="form-group">
         <label for="tools"><h3>Tools</h3></label>
         <div class="row">
-            <div class="col-md-6">
-                <input type="text" name="search_tools" id="search_tools" value="" placeholder="Search tools..." class="form-control" style="margin-bottom: 5px;" />
-                <select multiple name="tools" id="tools" size="10" class="form-control" style="width: 100%;">
-                    {% for tool in form.fields.tools_selected.queryset %}
-                        <option value="{{ tool.id }}">{{ tool.name }}</option>
-                    {% endfor %}
-                </select>
-                <a href="javascript:move_all('tools');" class="selector-chooseall active" id="choose_tools">Choose all</a>
-            </div>
-            <div class="col-md-6">
-                <select multiple name="tools_selected" id="tools_selected" size="10" class="form-control" style="width: 100%;">
-                </select>
-                <a href="javascript:move_all('tools_selected');" class="selector-remove active" id="remove_tools">Remove all</a>
-            </div>
-        </div>
-        <div class="row">
-			<div id="tool-requirements-feedback" class="alert alert-info" style="display:none;">
-				<h4>Tool Requirements</h4>
-				<ul id="requirements-list"></ul>
+			<div class="col-md-5">
+				<select multiple id="tools" size="10" class="form-control"></select>
 			</div>
+			<div class="col-md-2 text-center" style="margin-top: 40px;">
+				<button type="button" id="add_tool" class="btn btn-primary">&rarr;</button><br><br>
+				<button type="button" id="remove_tool" class="btn btn-secondary">&larr;</button>
+			</div>
+			<div class="col-md-5">
+				<select multiple id="tools_selected" size="10" class="form-control"></select>
+			</div>
+		</div>
+		<div id="tool-requirements-feedback" class="form-control" style="display:none;">
+			<h4 id="requirements-tool-name"></h4>
+			<ul id="requirements-list"></ul>
 		</div>
     </div>
 
@@ -222,30 +216,39 @@ $(document).ready(function() {
 
 const toolRequirements = {{ tool_requirements|safe }};
 
-function showRequirements(toolId) {
+$("#tools").on("click", "option", function() {
+	const toolId = $(this).val();
+	const toolName = $(this).text();
 	const reqDiv = $("#tool-requirements-feedback");
 	const reqList = $("#requirements-list");
+	const reqTitle = $("#requirements-tool-name");
 	reqList.empty();
 	const reqs = toolRequirements[toolId] || [];
 	if (reqs.length === 0) {
 		reqDiv.hide();
 		return;
 	}
+	reqTitle.text("Requirements for " + toolName);
 	reqs.forEach(r => {
 		const status = r.status ? `<strong>Status:</strong> ${r.status}` : '';
 		const expires = r.expires_on ? ` (expires: ${r.expires_on})` : '';
 		reqList.append(`<li><strong>${r.name}</strong>: ${r.description}<br>${status}${expires}</li>`);
 	});
 	reqDiv.show();
-}
+});
 
-$("#tools").on("change", function() {
-	const selected = $(this).val();
-	if (selected && selected.length === 1) {
-		showRequirements(selected[0]);
-	} else {
-		$("#tool-requirements-feedback").hide();
-	}
+// Arrow button logic to move options between selects
+$("#add_tool").click(function() {
+	$("#tools option:selected").each(function() {
+		$("#tools_selected").append($(this).clone());
+		$(this).remove();
+	});
+});
+$("#remove_tool").click(function() {
+	$("#tools_selected option:selected").each(function() {
+		$("#tools").append($(this).clone());
+		$(this).remove();
+	});
 });
 </script>
 {% endblock %}

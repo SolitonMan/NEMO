@@ -36,6 +36,7 @@ from NEMO.utilities import EmailCategory, create_email_log, bootstrap_primary_co
 from NEMO.views.constants import ADDITIONAL_INFORMATION_MAXIMUM_LENGTH
 from NEMO.views.customization import get_customization, get_media_file_contents
 from NEMO.views.policy import check_policy_to_save_reservation, check_policy_to_cancel_reservation, check_policy_to_create_outage
+from NEMO.views.users import get_leaf_requirements
 from NEMO.widgets.tool_tree import ToolTree
 
 
@@ -1940,16 +1941,23 @@ def book_training_slot(request):
 		})
 
 def _get_tool_requirements_with_status(user):
-	tool_reqs = ToolRequirement.objects.select_related('requirement', 'tool')
-	user_progress = { (p.requirement_id,): p for p in UserRequirementProgress.objects.filter(user=user) }
+	# Get all visible tools
+	tools = Tool.objects.filter(visible=True)
+	user_progress = {p.requirement_id: p for p in UserRequirementProgress.objects.filter(user=user)}
 	result = {}
-	for tr in tool_reqs:
-		status = user_progress.get((tr.requirement_id,))
-		result.setdefault(tr.tool_id, []).append({
-			'name': tr.requirement.name,
-			'description': tr.requirement.description,
-			'status': status.status if status else 'Not Started',
-			'completed_on': status.completed_on.strftime('%m/%d/%Y') if status and status.completed_on else '',
-			'expires_on': status.expires_on.strftime('%m/%d/%Y') if status and status.expires_on else '',
-		})
+	for tool in tools:
+		leaf_reqs = get_leaf_requirements(tool)
+		reqs = []
+		for req in leaf_reqs:
+			status = user_progress.get(req.id)
+			reqs.append({
+				'tool_id': tool.id,
+				'tool_name': tool.name,
+				'name': req.name,
+				'description': req.description,
+				'status': status.status if status else 'Not Started',
+				'completed_on': status.completed_on.strftime('%m/%d/%Y') if status and status.completed_on else None,
+				'expires_on': status.expires_on.strftime('%m/%d/%Y') if status and status.expires_on else None,
+			})
+		result[tool.id] = reqs
 	return result
