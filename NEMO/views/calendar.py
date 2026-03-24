@@ -1949,7 +1949,7 @@ def _get_tool_requirements_with_status(user):
 			'name': tr.requirement.name,
 			'description': tr.requirement.description,
 			'status': status.status if status else 'Not Started',
-			'completed_on': status.completed_on if status else None,
-			'expires_on': status.expires_on if status else None,
+			'completed_on': status.completed_on.strftime('%m/%d/%Y') if status and status.completed_on else None,
+			'expires_on': status.expires_on.strftime('%m/%d/%Y') if status and status.expires_on else None,
 		})
 	return result
