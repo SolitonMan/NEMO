@@ -30,7 +30,7 @@
 <div class="form-group">
 	<label for="tools"><h3>Tools</h3></label>
 	<div class="row">
-		<div class="col-md-5">
+		<div class="col-md-4">
 			<input type="text" name="search_tools" id="search_tools" value="" placeholder="Search tools..." class="form-control" style="margin-bottom: 5px;" />
 			<select multiple name="tools" id="tools" size="10" class="form-control" style="width: 100%;">
 				{% for tool in tool_list %}
@@ -38,19 +38,19 @@
 				{% endfor %}
 			</select>
 		</div>
-		<div class="col-md-2 text-center" style="margin-top: 40px;">
+		<div class="col-md-1 text-center" style="margin-top: 40px;">
 			<button type="button" id="add_tool" class="btn btn-primary">&rarr;</button><br><br>
 			<button type="button" id="remove_tool" class="btn btn-secondary">&larr;</button>
 		</div>
-		<div class="col-md-5">
+		<div class="col-md-4">
 			<select multiple name="tools_selected" id="tools_selected" size="10" class="form-control" style="width: 100%;">
 				{% for tool in tools_selected %}
 					<option value="{{ tool.id }}">{{ tool.name }}</option>
 				{% endfor %}
 			</select>
-			</div>
-		<div class="col-md-5">
-			<div id="tool-requirements-feedback" class="form-control" style="display:none;">
+		</div>
+		<div class="col-md-3">
+			<div id="tool-requirements-feedback" class="form-control" style="display: none; max-height: 250px; overflow-y: auto;">
 				<h4 id="requirements-tool-name"></h4>
 				<ul id="requirements-list"></ul>
 			</div>
