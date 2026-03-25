@@ -1890,6 +1890,7 @@ def book_training_slot(request):
 	user = request.user
 
 	try:
+		explicit_policy_override = False
 		tool = Tool.objects.get(id=tool_id)
 		owner = tool.primary_owner
 		local_tz = pytz.timezone(settings.TIME_ZONE)
@@ -1906,17 +1907,24 @@ def book_training_slot(request):
 		end = end_local.astimezone(pytz.UTC)
 
 		# Create reservation
-		reservation = Reservation.objects.create(
-			user=user,
-			creator=user,
-			tool=tool,
-			start=start,
-			end=end,
-			short_notice=False,
-			created=timezone.now(),
-			updated=timezone.now(),
-			title="Training Session for " + str(user.get_full_name()) + " on " + str(tool.name)
-		)
+		reservation = Reservation()
+		reservation.user=user
+		reservation.creator=user
+		reservation.tool=tool
+		reservation.start=start
+		reservation.end=end
+		reservation.short_notice=False
+		reservation.created=timezone.now()
+		reservation.updated=timezone.now()
+		reservation.title="Training Session for " + str(user.get_full_name()) + " on " + str(tool.name)
+
+		policy_problems = None
+		overridable = None
+		policy_problems, overridable = check_policy_to_save_reservation(request, None, reservation, user, explicit_policy_override)
+		if policy_problems is not None and policy_problems != []:
+			return render(request, 'calendar/policy_dialog.html', {'policy_problems': policy_problems, 'overridable': overridable and request.user.is_staff})
+		else:
+			reservation.save()
 
 		# Send calendar invites to user and owner
 		attachment = create_ics_for_reservation(request, reservation, False)
