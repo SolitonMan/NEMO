@@ -408,6 +408,9 @@ def save_user_profile(request):
 
 
 	for key, value in request.POST.items():
+		if key == "SHAREABLE_CALENDAR_LINK":
+			request.user.user_shareable_calendar_link = value
+			request.user.save()
 		if key in settings:
 			setting = UserProfileSetting.objects.get(name=key)
 			if UserProfile.objects.filter(user=user, setting=setting).exists():
