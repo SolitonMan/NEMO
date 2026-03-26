@@ -12,6 +12,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 from NEMO.forms import ServiceTypeForm
 from NEMO.models import Tool, Area, Requirement, ToolRequirement, AreaRequirement, UserRequirementProgress, ServiceType, UserServiceRequest, Core
+from NEMO.views.users import get_leaf_requirements
 
 @staff_member_required(login_url=None)
 def add_requirement(request):
@@ -174,7 +175,8 @@ def service_type_requirements_ajax(request):
 
 def evaluate_requirements(user, obj):
 	"""
-	Core logic to determine if a user meets requirements for a Tool or Area.
+	Determine if a user meets all leaf requirements for a Tool or Area,
+	using the shared get_leaf_requirements function.
 	Returns (meets_requirements: bool, missing: list[{'id','name'}])
 	"""
 	if isinstance(obj, Tool):
@@ -183,9 +185,15 @@ def evaluate_requirements(user, obj):
 		requirements = [ar.requirement for ar in AreaRequirement.objects.filter(area=obj)]
 	else:
 		raise TypeError("Object must be a Tool or Area")
+
+	# Use get_leaf_requirements to expand all requirements
+	leaf_requirements = set()
+	for req in requirements:
+		leaf_requirements.update(get_leaf_requirements(req))
+
 	missing = [
 		{'id': r.id, 'name': r.name}
-		for r in requirements
+		for r in leaf_requirements
 		if not has_valid_requirement(user, r)
 	]
 	return len(missing) == 0, missing
