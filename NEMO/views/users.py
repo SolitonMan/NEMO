@@ -19,7 +19,7 @@ from django.views.decorators.http import require_GET, require_http_methods, requ
 from NEMO.admin import record_local_many_to_many_changes, record_active_state
 from NEMO.forms import UserForm, UserServiceRequestEditForm
 from NEMO.models import Account, Core, UserRelationship, UserRelationshipType, User, UserProfile, UserProfileSetting, Project, Tool, PhysicalAccessLevel, Reservation, StaffCharge, UsageEvent, AreaAccessRecord, ActivityHistory, ProbationaryQualifications, Sample, UserRequirementProgress, Requirement, AreaRequirement, ToolRequirement, ServiceType, UserServiceRequest
-from NEMO.views.requirements_admin import get_status_icon
+from NEMO.views.requirements_admin import get_status_icon, get_leaf_requirements
 
 @staff_member_required(login_url=None)
 @require_http_methods(['GET', 'POST'])
@@ -933,29 +933,3 @@ def cancel_user_service_request(request, request_id):
 		return JsonResponse({'success': True})
 	except UserServiceRequest.DoesNotExist:
 		return JsonResponse({'error': 'Request not found'}, status=404)
-
-
-def get_leaf_requirements(requirement, seen=None):
-	"""
-	Recursively expand requirements, skipping recursive/placeholder requirements,
-	and return only the leaf requirements.
-	"""
-	if seen is None:
-		seen = set()
-	if requirement.id in seen:
-		return []
-	seen.add(requirement.id)
-
-	# Check if this requirement is recursive (has a ServiceType with the same name and requirements)
-	service_types = ServiceType.objects.filter(name=requirement.name)
-	leafs = []
-	is_recursive = False
-	for st in service_types:
-		child_reqs = st.requirements.exclude(id=requirement.id)
-		if child_reqs.exists():
-			is_recursive = True
-			for child in child_reqs:
-				leafs.extend(get_leaf_requirements(child, seen))
-	if not is_recursive:
-		leafs.append(requirement)
-	return leafs

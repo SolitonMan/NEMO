@@ -12,7 +12,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 from NEMO.forms import ServiceTypeForm
 from NEMO.models import Tool, Area, Requirement, ToolRequirement, AreaRequirement, UserRequirementProgress, ServiceType, UserServiceRequest, Core
-from NEMO.views.users import get_leaf_requirements
+
 
 @staff_member_required(login_url=None)
 def add_requirement(request):
@@ -353,3 +353,29 @@ def requirements_dashboard(request):
 		'requirements_data': json.dumps(requirements_data),
 	}
 	return render(request, 'requirements/requirements_dashboard.html', context)
+
+
+def get_leaf_requirements(requirement, seen=None):
+	"""
+	Recursively expand requirements, skipping recursive/placeholder requirements,
+	and return only the leaf requirements.
+	"""
+	if seen is None:
+		seen = set()
+	if requirement.id in seen:
+		return []
+	seen.add(requirement.id)
+
+	# Check if this requirement is recursive (has a ServiceType with the same name and requirements)
+	service_types = ServiceType.objects.filter(name=requirement.name)
+	leafs = []
+	is_recursive = False
+	for st in service_types:
+		child_reqs = st.requirements.exclude(id=requirement.id)
+		if child_reqs.exists():
+			is_recursive = True
+			for child in child_reqs:
+				leafs.extend(get_leaf_requirements(child, seen))
+	if not is_recursive:
+		leafs.append(requirement)
+	return leafs
