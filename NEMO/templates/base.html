@@ -121,6 +121,7 @@
 		<div class="navbar-collapse collapse" id="nemo-navigation">
                         <ul class="nav navbar-nav">
                                 <li><a href="{% url 'calendar' %}">Calendar</a></li>
+								{% navigation_url 'multi_calendar' 'Training Scheduler' %}
                                 <li><a href="{% url 'tool_control' %}">Tool control</a></li>
                                 {% if user.physical_access_levels.all|length > 0 %}
                                 <li><a href="{% url 'new_area_access_customer' request.user.id %}">Area Access</a></li>
@@ -179,7 +180,6 @@
                                                 {% navigation_url 'maintenance' 'Maintenance' %}
                                                 {% endif %}
 											    {% navigation_url 'tool_training_schedule' 'Tool Training Scheduler' %}
-											    {% navigation_url 'multi_calendar' 'Multi calendar' %}
 											    {% navigation_url 'sequential_tool_schedule' 'Process Scheduling' %}
                                                 {% navigation_url 'create_notification_scheme' 'Notification Schemes' %}
                                                 <li><a href="{% url 'order_list' 0 %}">Orders</a></li>
