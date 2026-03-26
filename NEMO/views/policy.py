@@ -1,5 +1,5 @@
 from datetime import timedelta, datetime, date, time
-from logging import getLogger
+from logging import getLogger, basicConfig
 
 from django.core.mail import send_mail
 from django.db.models import Q
@@ -231,6 +231,7 @@ def check_policy_to_disable_tool(tool, operator, downtime, request):
 
 
 def check_policy_to_save_reservation(request, cancelled_reservation, new_reservation, user, explicit_policy_override):
+	logging.basicConfig(level=logging.INFO)
 	""" Check the reservation creation policy and return a list of policy problems """
 	logger.info("check_policy_to_save_reservation called for user: %s, tool: %s", user, new_reservation.tool)
 

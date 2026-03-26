@@ -2,7 +2,7 @@ import io
 from collections import defaultdict
 from datetime import timedelta
 from http import HTTPStatus
-from logging import getLogger
+from logging import getLogger, basicConfig
 from re import match, search
 
 import requests
@@ -1884,6 +1884,7 @@ def tool_training_schedule(request):
 @login_required
 @require_POST
 def book_training_slot(request):
+	basicConfig(level=logging.INFO)
 	logger = getLogger(__name__)
 	logger.info("book_training_slot called by user: %s", request.user)
 	tool_id = request.POST.get("tool_id")
