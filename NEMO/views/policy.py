@@ -232,6 +232,7 @@ def check_policy_to_disable_tool(tool, operator, downtime, request):
 
 def check_policy_to_save_reservation(request, cancelled_reservation, new_reservation, user, explicit_policy_override):
 	""" Check the reservation creation policy and return a list of policy problems """
+	logger.info("check_policy_to_save_reservation called for user: %s, tool: %s", user, new_reservation.tool)
 
 	# The function will check all policies. Policy problems are placed in the policy_problems list. overridable is True if the policy problems can be overridden by a staff member.
 	policy_problems = []
@@ -240,11 +241,13 @@ def check_policy_to_save_reservation(request, cancelled_reservation, new_reserva
 	# Check for requirements fulfillment if the operator is not a staff member
 	if not user.is_staff:
 		meets, missing = evaluate_requirements(user, new_reservation.tool)
+		logger.info("User staff check: is_staff=%s, meets_requirements=%s, missing=%s", user.is_staff, meets, missing)
 		if not meets:
 			msg = "You do not meet the requirements to use this tool.  The following requirements need to be completed:<br/><br/>"
 			for req in missing:
 				msg += "- {}<br/>".format(req['name'])
 			policy_problems.append(msg)
+			logger.warning("Requirements not met for user: %s, missing: %s", user, missing)
 
 	new_reservation_start = parse_datetime(str(new_reservation.start))
 	new_reservation_start = new_reservation_start.astimezone(timezone.get_current_timezone())
@@ -440,6 +443,7 @@ def check_policy_to_save_reservation(request, cancelled_reservation, new_reserva
 			policy_problems.append("You may only reserve up to " + str(new_reservation.tool.maximum_future_reservation_time) + " minutes of time on this tool, starting from the current time onward.")
 
 	# Return the list of all policies that are not met.
+	logger.info("Returning from check_policy_to_save_reservation: problems=%s, overridable=%s", policy_problems, overridable)
 	return policy_problems, overridable
 
 

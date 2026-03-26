@@ -1884,6 +1884,8 @@ def tool_training_schedule(request):
 @login_required
 @require_POST
 def book_training_slot(request):
+	logger = getLogger(__name__)
+	logger.info("book_training_slot called by user: %s", request.user)
 	tool_id = request.POST.get("tool_id")
 	start_str = request.POST.get("start")
 	end_str = request.POST.get("end")
@@ -1907,6 +1909,7 @@ def book_training_slot(request):
 		end = end_local.astimezone(pytz.UTC)
 
 		# Create reservation
+		logger.info("Creating reservation for user: %s, tool: %s, start: %s, end: %s", user, tool, start, end)
 		reservation = Reservation()
 		reservation.user=user
 		reservation.creator=user
@@ -1918,13 +1921,15 @@ def book_training_slot(request):
 		reservation.updated=timezone.now()
 		reservation.title="Training Session for " + str(user.get_full_name()) + " on " + str(tool.name)
 
-		policy_problems = None
-		overridable = None
 		policy_problems, overridable = check_policy_to_save_reservation(request, None, reservation, user, explicit_policy_override)
-		if policy_problems is not None and policy_problems != []:
+		logger.info("Policy check returned: problems=%s, overridable=%s", policy_problems, overridable)
+
+		if policy_problems:
+			logger.warning("Policy problems encountered: %s", policy_problems)
 			return render(request, 'calendar/policy_dialog.html', {'policy_problems': policy_problems, 'overridable': overridable and request.user.is_staff})
 		else:
 			reservation.save()
+			logger.info("Reservation saved for user: %s", user)
 
 		# Send calendar invites to user and owner
 		attachment = create_ics_for_reservation(request, reservation, False)
