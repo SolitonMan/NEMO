@@ -7,7 +7,7 @@
 	<p>This reservation conflicts with laboratory policy.{% if overridable %} The policy <span style="font-weight:bold">can</span> be overridden.{% endif %}</p>
 	<ul>
 		{% for reason in policy_problems %}
-			<li>{{ reason }}</li>
+			<li>{{ reason|safe }}</li>
 		{% endfor %}
 	</ul>
 	<input type="hidden" id="dialog_cancelled" value="true">
