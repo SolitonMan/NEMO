@@ -232,6 +232,11 @@ def check_policy_to_disable_tool(tool, operator, downtime, request):
 
 def check_policy_to_save_reservation(request, cancelled_reservation, new_reservation, user, explicit_policy_override):
 	""" Check the reservation creation policy and return a list of policy problems """
+
+	# The function will check all policies. Policy problems are placed in the policy_problems list. overridable is True if the policy problems can be overridden by a staff member.
+	policy_problems = []
+	overridable = False
+
 	# Check for requirements fulfillment if the operator is not a staff member
 	if not user.is_staff:
 		meets, missing = evaluate_requirements(user, new_reservation.tool)
@@ -239,11 +244,7 @@ def check_policy_to_save_reservation(request, cancelled_reservation, new_reserva
 			msg = "You do not meet the requirements to use this tool.  The following requirements need to be completed:<br/><br/>"
 			for req in missing:
 				msg += "- {}<br/>".format(req['name'])
-			return HttpResponseBadRequest(msg)
-
-	# The function will check all policies. Policy problems are placed in the policy_problems list. overridable is True if the policy problems can be overridden by a staff member.
-	policy_problems = []
-	overridable = False
+			policy_problems.append(msg)
 
 	new_reservation_start = parse_datetime(str(new_reservation.start))
 	new_reservation_start = new_reservation_start.astimezone(timezone.get_current_timezone())
