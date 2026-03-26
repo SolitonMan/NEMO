@@ -1,5 +1,6 @@
+import logging
+
 from datetime import timedelta, datetime, date, time
-from logging import getLogger, basicConfig
 
 from django.core.mail import send_mail
 from django.db.models import Q
@@ -13,7 +14,7 @@ from NEMO.utilities import format_datetime
 from NEMO.views.customization import get_customization, get_media_file_contents
 from NEMO.views.requirements_admin import evaluate_requirements
 
-logger = getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 def check_policy_to_enable_tool(tool, operator, user, project, staff_charge, request):
 	"""

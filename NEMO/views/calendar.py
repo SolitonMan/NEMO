@@ -1,8 +1,8 @@
 import io
+import logging
 from collections import defaultdict
 from datetime import timedelta
 from http import HTTPStatus
-from logging import getLogger, basicConfig
 from re import match, search
 
 import requests
@@ -330,7 +330,7 @@ def specific_user_feed(request, user, start, end):
 @login_required
 @require_POST
 def create_reservation(request):
-	logger = getLogger(__name__)
+	logger = logging.getLogger(__name__)
 
 	""" Create a reservation for a user. """
 	try:
@@ -1884,8 +1884,8 @@ def tool_training_schedule(request):
 @login_required
 @require_POST
 def book_training_slot(request):
-	basicConfig(level=logging.INFO)
-	logger = getLogger(__name__)
+	logging.basicConfig(level=logging.INFO)
+	logger = logging.getLogger(__name__)
 	logger.info("book_training_slot called by user: %s", request.user)
 	tool_id = request.POST.get("tool_id")
 	start_str = request.POST.get("start")
