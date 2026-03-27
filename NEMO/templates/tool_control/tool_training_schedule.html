@@ -26,7 +26,14 @@
 	</div>
 	<button type="submit" class="btn btn-primary">Show Available Slots</button>
 </form>
-
+<div class="row">
+	<div class="col-md-12">
+		<h4 id="requirements-tool-name"></h4>
+		<div id="tool-requirements-feedback" class="form-control" style="display: none; min-height: 250px; max-height: 300px; overflow-y: auto; ">
+			<ul id="requirements-list"></ul>
+		</div>
+	</div>
+</div>
 {% if available_slots %}
 	<h3>Available Training Slots</h3>
 	
@@ -89,4 +96,32 @@
 		</ul>
 	</div>
 {% endif %}
+
+<script type="text/javascript">
+
+const toolRequirements = {{ tool_requirements|safe }};
+
+$("#tool_id").on("change", "option", function() {
+	const toolId = $(this).val();
+	const toolName = $(this).text();
+	const reqDiv = $("#tool-requirements-feedback");
+	const reqList = $("#requirements-list");
+	const reqTitle = $("#requirements-tool-name");
+	reqList.empty();
+	const reqs = toolRequirements[toolId] || [];
+	if (reqs.length === 0) {
+		reqDiv.hide();
+		return;
+	}
+	reqTitle.text("Requirements for " + toolName);
+	reqs.forEach(r => {
+		const bg_color = r.status === 'completed' ? '#ccffcc' : '#ffcccc';
+		const status = r.status ? `<strong>Status:</strong> <span style="font-weight: bold; font-size: 10pt; border-radius: 12px; background-color:${bg_color};">${r.status}</span>` : '';
+		const expires = r.expires_on ? ` (expires: ${r.expires_on})` : '';
+		reqList.append(`<li><strong>${r.name}</strong>: ${r.description}<br>${status}${expires}</li>`);
+	});
+	reqDiv.show();
+});
+</script>
+
 {% endblock %}

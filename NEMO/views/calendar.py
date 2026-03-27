@@ -1885,6 +1885,7 @@ def tool_training_schedule(request):
 		"tool": tool,
 		"owner": owner,
 		"tool_user": user,
+		"tool_requirements": _get_tool_requirements_with_status(request.user),
 		"meets_requirements": meets,
 		"missing": missing,
 	})

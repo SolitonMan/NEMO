@@ -245,7 +245,7 @@ def check_policy_to_save_reservation(request, cancelled_reservation, new_reserva
 		meets, missing = evaluate_requirements(user, new_reservation.tool)
 		logger.info("User staff check: is_staff=%s, meets_requirements=%s, missing=%s", user.is_staff, meets, missing)
 		if not meets:
-			msg = "You do not meet the requirements to use this tool.  The following requirements need to be completed:<br/><br/>"
+			msg = "You do not meet the requirements to make reservations for this tool.  The following requirements need to be completed:<br/><br/>"
 			for req in missing:
 				msg += "- {}<br/>".format(req['name'])
 			policy_problems.append(msg)
