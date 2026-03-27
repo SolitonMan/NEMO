@@ -101,7 +101,7 @@
 $(document).ready(function() {
 	const toolRequirements = {{ tool_requirements|safe }};
 
-	$("#tool_id").on("change", function() {
+	$("#tool_id").on("change", function () {
 		const toolId = $(this).val();
 		const toolName = $("#tool_id option:selected").text();
 		const reqDiv = $("#tool-requirements-feedback");
@@ -122,7 +122,7 @@ $(document).ready(function() {
 			reqList.append(`<li><strong>${r.name}</strong>: ${r.description}<br>${status}${expires}</li>`);
 		});
 		reqDiv.show();
-	}
+	});
 });
 </script>
 
