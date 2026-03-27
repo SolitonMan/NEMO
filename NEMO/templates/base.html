@@ -121,7 +121,7 @@
 		<div class="navbar-collapse collapse" id="nemo-navigation">
                         <ul class="nav navbar-nav">
                                 <li><a href="{% url 'calendar' %}">Calendar</a></li>
-								{% navigation_url 'multi_calendar' 'Training Scheduler' %}
+								{% navigation_url 'tool_training_schedule' 'Training Scheduler' %}
                                 <li><a href="{% url 'tool_control' %}">Tool control</a></li>
                                 {% if user.physical_access_levels.all|length > 0 %}
                                 <li><a href="{% url 'new_area_access_customer' request.user.id %}">Area Access</a></li>

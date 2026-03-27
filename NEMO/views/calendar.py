@@ -21,7 +21,7 @@ from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.mail import send_mail, EmailMessage
 from django.db.models import F, Q, CharField, Value
 from django.db.models.functions import Concat
-from django.http import HttpResponseBadRequest, HttpResponse, HttpResponseNotFound, HttpResponseRedirect
+from django.http import HttpResponseBadRequest, HttpResponse, HttpResponseNotFound, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.template import Template, Context
 from django.utils import timezone, dateformat
@@ -36,6 +36,7 @@ from NEMO.utilities import EmailCategory, create_email_log, bootstrap_primary_co
 from NEMO.views.constants import ADDITIONAL_INFORMATION_MAXIMUM_LENGTH
 from NEMO.views.customization import get_customization, get_media_file_contents
 from NEMO.views.policy import check_policy_to_save_reservation, check_policy_to_cancel_reservation, check_policy_to_create_outage
+from NEMO.views.requirements_admin import evaluate_requirements
 from NEMO.views.users import get_leaf_requirements
 from NEMO.widgets.tool_tree import ToolTree
 
@@ -1801,12 +1802,17 @@ def tool_training_schedule(request):
 	tool = None
 	owner = None
 	user = request.user
+	meets = False
+	missing = []
 
 	if selected_tool_id:
 		try:
 			tool = Tool.objects.get(id=selected_tool_id)
 			owner = tool.primary_owner
 			user = request.user
+
+			# evaluate requirements 
+			meets, missing = evaluate_requirements(user, tool)
 
 			# Collect calendar URLs
 			user_url = user.user_shareable_calendar_link
@@ -1879,6 +1885,8 @@ def tool_training_schedule(request):
 		"tool": tool,
 		"owner": owner,
 		"tool_user": user,
+		"meets_requirements": meets,
+		"missing": missing,
 	})
 
 @login_required
@@ -1927,7 +1935,14 @@ def book_training_slot(request):
 
 		if policy_problems:
 			logger.warning("Policy problems encountered: %s", policy_problems)
-			return render(request, 'calendar/policy_dialog.html', {'policy_problems': policy_problems, 'overridable': overridable and request.user.is_staff})
+			return JsonResponse(
+				{
+					'success': False,
+					'policy_problems': policy_problems,
+					'overridable': overridable and request.user.is_staff
+				},
+				status=400
+			)
 		else:
 			reservation.save()
 			logger.info("Reservation saved for user: %s", user)
@@ -1950,7 +1965,7 @@ def book_training_slot(request):
 			request,
 			f"Successful reservation for {tool.name} on {start_local.strftime('%A, %B %d, %Y at %I:%M %p')}"
 		)
-		return redirect("tool_training_schedule") 
+		return redirect(request.META.get('HTTP_REFERER', '/'))
 	except Exception as e:
 		return render(request, "tool_control/tool_training_schedule.html", {
 			"tools": Tool.objects.filter(visible=True, operational=True).order_by('name'),

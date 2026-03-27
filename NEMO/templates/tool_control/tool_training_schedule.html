@@ -57,6 +57,7 @@
 				<td>{{ slot.start_full|date:"l" }}, {{ slot.start }}</td>
 				<td>{{ slot.end_full|date:"l" }}, {{ slot.end }}</td>
 				<td>
+					{% if meets_requirements %}
 					<form method="post" action="{% url 'book_training_slot' %}">
 						{% csrf_token %}
 						<input type="hidden" name="tool_id" value="{{ selected_tool_id }}">
@@ -64,6 +65,14 @@
 						<input type="hidden" name="end" value="{{ slot.end }}">
 						<button type="submit" class="btn btn-success">Reserve</button>
 					</form>
+					{% else %}
+					Requirements not met:<br/>
+					<ul>
+					{% for i, n in missing %}
+					<li>{{ n }}</li>
+					{% endfor %}
+					</ul>
+					{% endif %}
 				</td>
 			</tr>
 		{% endfor %}
