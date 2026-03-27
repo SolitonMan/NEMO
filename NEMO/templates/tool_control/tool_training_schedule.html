@@ -98,29 +98,30 @@
 {% endif %}
 
 <script type="text/javascript">
+$(document).ready(function() {
+	const toolRequirements = {{ tool_requirements|safe }};
 
-const toolRequirements = {{ tool_requirements|safe }};
-
-$("#tool_id").on("change", "option", function() {
-	const toolId = $(this).val();
-	const toolName = $(this).text();
-	const reqDiv = $("#tool-requirements-feedback");
-	const reqList = $("#requirements-list");
-	const reqTitle = $("#requirements-tool-name");
-	reqList.empty();
-	const reqs = toolRequirements[toolId] || [];
-	if (reqs.length === 0) {
-		reqDiv.hide();
-		return;
-	}
-	reqTitle.text("Requirements for " + toolName);
-	reqs.forEach(r => {
-		const bg_color = r.status === 'completed' ? '#ccffcc' : '#ffcccc';
-		const status = r.status ? `<strong>Status:</strong> <span style="font-weight: bold; font-size: 10pt; border-radius: 12px; background-color:${bg_color};">${r.status}</span>` : '';
-		const expires = r.expires_on ? ` (expires: ${r.expires_on})` : '';
-		reqList.append(`<li><strong>${r.name}</strong>: ${r.description}<br>${status}${expires}</li>`);
+	$("#tool_id").on("change", "option", function() {
+		const toolId = $(this).val();
+		const toolName = $(this).text();
+		const reqDiv = $("#tool-requirements-feedback");
+		const reqList = $("#requirements-list");
+		const reqTitle = $("#requirements-tool-name");
+		reqList.empty();
+		const reqs = toolRequirements[toolId] || [];
+		if (reqs.length === 0) {
+			reqDiv.hide();
+			return;
+		}
+		reqTitle.text("Requirements for " + toolName);
+		reqs.forEach(r => {
+			const bg_color = r.status === 'completed' ? '#ccffcc' : '#ffcccc';
+			const status = r.status ? `<strong>Status:</strong> <span style="font-weight: bold; font-size: 10pt; border-radius: 12px; background-color:${bg_color};">${r.status}</span>` : '';
+			const expires = r.expires_on ? ` (expires: ${r.expires_on})` : '';
+			reqList.append(`<li><strong>${r.name}</strong>: ${r.description}<br>${status}${expires}</li>`);
+		});
+		reqDiv.show();
 	});
-	reqDiv.show();
 });
 </script>
 
