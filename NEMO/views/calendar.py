@@ -1872,7 +1872,7 @@ def tool_training_schedule(request):
 					"end_full": e,
 					"tool_id": tool.id,
 				}
-				for s, e in available_slots
+				for s, e, t in available_slots
 			]
 		except Tool.DoesNotExist:
 			errors.append("Selected tool not found.")
