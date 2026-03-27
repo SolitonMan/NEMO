@@ -68,8 +68,8 @@
 					{% else %}
 					Requirements not met:<br/>
 					<ul>
-					{% for i, n in missing %}
-					<li>{{ n }}</li>
+					{% for req in missing %}
+						<li>{{ req.name }}</li>
 					{% endfor %}
 					</ul>
 					{% endif %}
