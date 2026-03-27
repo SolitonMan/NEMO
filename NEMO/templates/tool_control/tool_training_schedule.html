@@ -101,9 +101,9 @@
 $(document).ready(function() {
 	const toolRequirements = {{ tool_requirements|safe }};
 
-	$("#tool_id").on("change", "option", function() {
+	$("#tool_id").on("change", function() {
 		const toolId = $(this).val();
-		const toolName = $(this).text();
+		const toolName = $("#tool_id option:selected").text();
 		const reqDiv = $("#tool-requirements-feedback");
 		const reqList = $("#requirements-list");
 		const reqTitle = $("#requirements-tool-name");
@@ -111,6 +111,7 @@ $(document).ready(function() {
 		const reqs = toolRequirements[toolId] || [];
 		if (reqs.length === 0) {
 			reqDiv.hide();
+			reqTitle.text("");
 			return;
 		}
 		reqTitle.text("Requirements for " + toolName);
@@ -121,7 +122,7 @@ $(document).ready(function() {
 			reqList.append(`<li><strong>${r.name}</strong>: ${r.description}<br>${status}${expires}</li>`);
 		});
 		reqDiv.show();
-	});
+	}
 });
 </script>
 
