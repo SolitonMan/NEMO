@@ -448,6 +448,7 @@ document.getElementById('confirmCancelBtn').onclick = function() {
 </script>
 
 <script>
+// Place this inside your last <script> tag or in a new <script> block before {% endblock %}
 (function () {
 	var $ = window.jQuery;
 	if (!$) return;
@@ -480,32 +481,45 @@ document.getElementById('confirmCancelBtn').onclick = function() {
 		$('#requirements-table-container').show();
 	}
 
+	function setView(view) {
+		if (view === 'training') {
+			$('#toggle-training').addClass('active');
+			$('#toggle-service').removeClass('active');
+			$('#toggle-requirements').removeClass('active');
+			showRequestsTable();
+			filterRequests(true);
+		} else if (view === 'service') {
+			$('#toggle-service').addClass('active');
+			$('#toggle-training').removeClass('active');
+			$('#toggle-requirements').removeClass('active');
+			showRequestsTable();
+			filterRequests(false);
+		} else if (view === 'requirements') {
+			$('#toggle-requirements').addClass('active');
+			$('#toggle-training').removeClass('active');
+			$('#toggle-service').removeClass('active');
+			showRequirementsTable();
+		}
+	}
+
 	$('#toggle-training').on('click', function () {
-		$('#toggle-training').addClass('active');
-		$('#toggle-service').removeClass('active');
-		$('#toggle-requirements').removeClass('active');
-		showRequestsTable();
-		filterRequests(true);
+		localStorage.setItem('user_requests_view', 'training');
+		setView('training');
 	});
 
 	$('#toggle-service').on('click', function () {
-		$('#toggle-service').addClass('active');
-		$('#toggle-training').removeClass('active');
-		$('#toggle-requirements').removeClass('active');
-		showRequestsTable();
-		filterRequests(false);
+		localStorage.setItem('user_requests_view', 'service');
+		setView('service');
 	});
 
 	$('#toggle-requirements').on('click', function () {
-		$('#toggle-requirements').addClass('active');
-		$('#toggle-training').removeClass('active');
-		$('#toggle-service').removeClass('active');
-		showRequirementsTable();
+		localStorage.setItem('user_requests_view', 'requirements');
+		setView('requirements');
 	});
 
-	// Initial filter: show training requests
-	showRequestsTable();
-	filterRequests(true);
+	// On page load, restore the last selected view
+	var savedView = localStorage.getItem('user_requests_view') || 'training';
+	setView(savedView);
 
 	// Row-by-row expand/collapse
 	$(document).on('click', '.request-row', function () {
