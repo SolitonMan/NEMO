@@ -766,6 +766,25 @@ def user_requests(request):
 				'other_service_requests': list(other_srs),
 			})
 
+	def status_sort_key(status):
+		# Lower value = higher priority
+		if status == 'Not Started':
+			return 0
+		elif status == 'In Progress':
+			return 1
+		elif status == 'Completed':
+			return 2
+		return 3  # fallback for unknown
+
+	requirements_table.sort(
+		key=lambda r: (
+			status_sort_key(r['status_value']),
+			-(r['main_service_request'].updated.timestamp() if r['main_service_request'] and r['main_service_request'].updated else 0)
+		)
+	)
+
+	force_requirements_redirect = request.session.pop('force_requirements_redirect', False)
+
 	if request.device == 'mobile':
 		return render(request, 'users/mobile_user_requests.html', {
 			'mcl_services': mcl_services,
@@ -774,6 +793,7 @@ def user_requests(request):
 			'user_service_requests': user_service_requests,
 			'request_requirements': request_requirements,
 			'requirements_table': requirements_table,
+			'force_requirements_redirect': force_requirements_redirect,
 		})
 	else:
 		return render(request, 'users/user_requests.html', {
@@ -783,6 +803,7 @@ def user_requests(request):
 			'user_service_requests': user_service_requests,
 			'request_requirements': request_requirements,
 			'requirements_table': requirements_table,
+			'force_requirements_redirect': force_requirements_redirect,
 		})
 
 def add_requirements_and_recursive_requests(service, user, service_type, project, description, training_request, auto_include, processed_service_types=None):

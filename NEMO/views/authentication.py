@@ -249,6 +249,7 @@ def initialize_user_session(request, user, next_page):
 		})
 
 	# Requirements check: create missing login requirements and set redirect flag
+	request.session['force_requirements_redirect'] = False
 	login_reqs = Requirement.objects.filter(login_requirement_flag=True)
 	existing = set(UserRequirementProgress.objects.filter(user=user).values_list('requirement_id', flat=True))
 	missing = [r for r in login_reqs if r.id not in existing]
