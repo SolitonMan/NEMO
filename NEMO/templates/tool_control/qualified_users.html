@@ -63,6 +63,7 @@
 							<th>Name</th>
 							<th>Email</th>
 							<th>Status</th>
+							<th>Last Use</th>
 							<th>Actions</th>
 						</tr>
 					</thead>
@@ -78,6 +79,7 @@
 									full
 								{% endif %}
 							</td>
+							<td>{{ pq.tool_last_used }}</td>
 							<td>
 								{% if user.is_staff %}
 									{% if pq.disabled %}
