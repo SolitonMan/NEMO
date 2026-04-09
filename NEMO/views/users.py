@@ -126,11 +126,8 @@ def create_or_modify_user(request, user_id):
 			warning_message += ' An exception was encountered: ' + type(e).__name__ + ' - ' + str(e)
 			logger.error(warning_message)
 
-		pqd = {}
 		probationary_qualifications = ProbationaryQualifications.objects.filter(user=user)
-		for pq in probationary_qualifications:
-			pqd[pq.tool.id] = pq.probationary_user
-		dictionary['probationary_qualifications'] = pqd
+		dictionary['probationary_qualifications'] = probationary_qualifications
 
 		return render(request, 'users/create_or_modify_user.html', dictionary)
 	elif request.method == 'POST':
