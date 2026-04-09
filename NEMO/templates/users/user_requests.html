@@ -411,7 +411,7 @@ document.getElementById('confirmCancelBtn').onclick = function() {
 			services.forEach(function (s) {
 				$serviceSelect.append('<option value="' + s.id + '">' + s.name + '</option>');
 			});
-			updateTrainingField(); // <-- Add this line
+			updateTrainingField();
 		}
 		if (wizardStep === 1) {
 			if (!$('#wizard_service_select').val()) { alert('Please select a service.'); return; }

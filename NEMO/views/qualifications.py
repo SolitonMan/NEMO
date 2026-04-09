@@ -23,98 +23,64 @@ def qualifications(request):
 @staff_member_required(login_url=None)
 @require_POST
 def modify_qualifications(request):
-	""" Change the tools that a set of users is qualified to use. """
 	action = request.POST.get('action')
-	if action != 'qualify' and action != 'disqualify':
+	if action not in ['qualify', 'disqualify']:
 		return HttpResponseBadRequest("You must specify that you are qualifying or disqualifying users.")
+
 	users = request.POST.getlist('chosen_user[]') or request.POST.get('chosen_user') or []
 	users = User.objects.in_bulk(users)
-
-	if users == {}:
+	if not users:
 		return HttpResponseBadRequest("You must specify at least one user.")
-
 
 	tools = request.POST.getlist('chosen_tool[]') or request.POST.get('chosen_tool') or []
 	tools_full = request.POST.getlist('chosen_tools_full[]') or request.POST.get('chosen_tools_full') or []
-	if tools_full == '' or tools_full is None or tools_full == ['']:
+	if not tools_full or tools_full == ['']:
 		tools_full = []
 	tools_prob = request.POST.getlist('chosen_tools_prob[]') or request.POST.get('chosen_tools_prob') or []
-	if tools_prob == '' or tools_prob is None or tools_prob == ['']:
+	if not tools_prob or tools_prob == ['']:
 		tools_prob = []
 
 	for user in users.values():
-		original_qualifications = set(user.qualifications.all())
-		original_probationary_qualifications = set(user.probationary_qualifications.all())
+		original_qualifications = set(
+			ProbationaryQualifications.objects.filter(user=user, disabled=False).values_list('tool', flat=True)
+		)
+
 		if action == 'qualify':
-			try:
-				tool_list = Tool.objects.in_bulk(tools)
-				user.qualifications.add(*tool_list)
+			# Qualify for all selected tools (generic, full, probationary)
+			for tool_id in tools:
+				tool = Tool.objects.get(pk=tool_id)
+				pq, created = ProbationaryQualifications.objects.get_or_create(user=user, tool=tool)
+				if pq.disabled:
+					pq.disabled = False
+				pq.qualification_date = timezone.now()
+				pq.save()
 
-				for t in tool_list.values():
-					if not ProbationaryQualifications.objects.filter(tool=t,user=user).exists():
-						pq = ProbationaryQualifications()
-						pq.tool = t
-						pq.user = user
-						pq.qualification_date = timezone.now()
-						pq.save()
-					elif ProbationaryQualifications.objects.filter(tool=t,user=user,disabled=True).exists():
-						pq = ProbationaryQualifications.objects.get(tool=t,user=user,disabled=True)
-						pq.disabled = False
-						pq.save()
+			for tool_id in tools_full:
+				tool = Tool.objects.get(pk=tool_id)
+				pq, created = ProbationaryQualifications.objects.get_or_create(user=user, tool=tool)
+				pq.probationary_user = False
+				pq.disabled = False
+				pq.qualification_date = timezone.now()
+				pq.save()
 
-			except:
-				pass
+			for tool_id in tools_prob:
+				tool = Tool.objects.get(pk=tool_id)
+				pq, created = ProbationaryQualifications.objects.get_or_create(user=user, tool=tool)
+				pq.probationary_user = True
+				pq.disabled = False
+				pq.qualification_date = timezone.now()
+				pq.save()
 
-
-			try:
-				tool_list = Tool.objects.in_bulk(tools_full)
-				user.qualifications.add(*tool_list)
-
-				for t in tool_list.values():
-					if not ProbationaryQualifications.objects.filter(tool=t,user=user).exists():
-						pq = ProbationaryQualifications()
-						pq.tool = t
-						pq.user = user
-						pq.probationary_user = False
-						pq.qualification_date = timezone.now()
-						pq.save()
-					elif ProbationaryQualifications.objects.filter(tool=t,user=user,disabled=True).exists():
-						pq = ProbationaryQualifications.objects.get(tool=t,user=user,disabled=True)
-						pq.disabled = False
-						pq.probationary_user = False
-						pq.save()
-
-			except: 
-				pass
-
-			try:
-				# add probationary tool records and user qualified records
-				tool_list = Tool.objects.in_bulk(tools_prob)
-				user.qualifications.add(*tool_list)
-
-				for t in tool_list.values():
-					if not ProbationaryQualifications.objects.filter(tool=t,user=user).exists():
-						pq = ProbationaryQualifications()
-						pq.tool = t
-						pq.user = user
-						pq.probationary_user = True
-						pq.qualification_date = timezone.now()
-						pq.save()
-					elif ProbationaryQualifications.objects.filter(tool=t,user=user,disabled=True).exists():
-						pq = ProbationaryQualifications.objects.get(tool=t,user=user,disabled=True)
-						pq.disabled = False
-						pq.probationary_user = True
-						pq.save()
-
-			except: 
-				pass
-				
+			# Physical access logic (unchanged)
 			original_physical_access_levels = set(user.physical_access_levels.all())
-
-			# account for three different potential tool lists
-			tool_list = tools + tools_full + tools_prob
-			tool_list = Tool.objects.in_bulk(tool_list)
-			physical_access_level_automatic_enrollment = list(set([t.grant_physical_access_level_upon_qualification for t in tool_list.values() if t.grant_physical_access_level_upon_qualification and t.grant_physical_access_level_upon_qualification not in user.physical_access_levels.all()]))
+			tool_ids = tools + tools_full + tools_prob
+			tool_objs = Tool.objects.in_bulk(tool_ids)
+			physical_access_level_automatic_enrollment = [
+				t.grant_physical_access_level_upon_qualification
+				for t in tool_objs.values()
+				if t.grant_physical_access_level_upon_qualification and
+				t.grant_physical_access_level_upon_qualification not in user.physical_access_levels.all()
+			]
 			user.physical_access_levels.add(*physical_access_level_automatic_enrollment)
 			current_physical_access_levels = set(user.physical_access_levels.all())
 			added_physical_access_levels = set(current_physical_access_levels) - set(original_physical_access_levels)
@@ -125,56 +91,34 @@ def modify_qualifications(request):
 				entry.child_content_object = user
 				entry.action = entry.Action.ADDED
 				entry.save()
-#			if settings.IDENTITY_SERVICE['available']:
-#				for t in tools:
-#					tool = Tool.objects.get(id=t)
-#					if tool.grant_badge_reader_access_upon_qualification:
-#						parameters = {
-#							'username': user.username,
-#							'domain': user.domain,
-#							'requested_area': tool.grant_badge_reader_access_upon_qualification,
-#						}
-#						requests.put(urljoin(settings.IDENTITY_SERVICE['url'], '/add/'), data=parameters, timeout=3)
+
 		elif action == 'disqualify':
-			user.qualifications.remove(*tools)
-			user.qualifications.remove(*tools_full)
-			user.qualifications.remove(*tools_prob)
-			#user.probationary_qualifications.remove(*tools)
-			#user.probationary_qualifications.remove(*tools_full)
-			#user.probationary_qualifications.remove(*tools_prob)
+			# Disqualify for all selected tools (generic, full, probationary)
+			for tool_id in tools + tools_full + tools_prob:
+				try:
+					tool = Tool.objects.get(pk=tool_id)
+					pq = ProbationaryQualifications.objects.get(user=user, tool=tool)
+					pq.disabled = True
+					pq.save()
+				except ProbationaryQualifications.DoesNotExist:
+					continue
 
-			tool_list = Tool.objects.in_bulk(tools)
-			for t in tool_list.values():
-				pq = ProbationaryQualifications.objects.get(user=user, tool=t)
-				pq.disabled = True
-				pq.save()
-
-			tool_list = Tool.objects.in_bulk(tools_full)
-			for t in tool_list.values():
-				pq = ProbationaryQualifications.objects.get(user=user, tool=t)
-				pq.disabled = True
-				pq.save()
-
-			tool_list = Tool.objects.in_bulk(tools_prob)
-			for t in tool_list.values():
-				pq = ProbationaryQualifications.objects.get(user=user, tool=t)
-				pq.disabled = True
-				pq.save()
-
-			user_probationary_qualifications = ProbationaryQualifications.objects.filter(user=user, tool__in=tools, disabled=False)
-
-		current_qualifications = set(user.qualifications.all())
-		# Record the qualification changes for each tool:
-		added_qualifications = set(current_qualifications) - set(original_qualifications)
-		for tool in added_qualifications:
+		# Track changes for MembershipHistory
+		current_qualifications = set(
+			ProbationaryQualifications.objects.filter(user=user, disabled=False).values_list('tool', flat=True)
+		)
+		added_qualifications = current_qualifications - original_qualifications
+		for tool_id in added_qualifications:
+			tool = Tool.objects.get(pk=tool_id)
 			entry = MembershipHistory()
 			entry.authorizer = request.user
 			entry.parent_content_object = tool
 			entry.child_content_object = user
 			entry.action = entry.Action.ADDED
 			entry.save()
-		removed_qualifications = set(original_qualifications) - set(current_qualifications)
-		for tool in removed_qualifications:
+		removed_qualifications = original_qualifications - current_qualifications
+		for tool_id in removed_qualifications:
+			tool = Tool.objects.get(pk=tool_id)
 			entry = MembershipHistory()
 			entry.authorizer = request.user
 			entry.parent_content_object = tool
