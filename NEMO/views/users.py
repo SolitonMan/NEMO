@@ -122,6 +122,7 @@ def create_or_modify_user(request, user_id):
 		dictionary['probationary_qualifications'] = probationary_qualifications
 
 		return render(request, 'users/create_or_modify_user.html', dictionary)
+
 	elif request.method == 'POST':
 		form = UserForm(request.POST, instance=user)
 		dictionary['form'] = form
