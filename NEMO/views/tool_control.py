@@ -338,15 +338,8 @@ def tool_status(request, tool_id):
 	tool.update_post_usage_questions()
 
 	# Staff need the user list to be able to qualify users for the tool.
-	if request.user.is_staff or request.user in tool.user_set.all():
-		pqd = {}
-		tmp = {}
-		probationary_qualifications = ProbationaryQualifications.objects.filter(tool=tool)
-		for pq in probationary_qualifications:
-			pqd[pq.user.id] = pq.user
-			tmp[pq.user.id] = pq
-		dictionary['probationary_qualifications'] = tmp
-		dictionary['pqd'] = pqd
+	if request.user.is_staff or ProbationaryQualifications.objects.filter(tool=tool, user=request.user, disabled=False).exists():
+		dictionary['probationary_qualifications'] = ProbationaryQualifications.objects.filter(tool=tool)
 		dictionary['users'] = User.objects.filter(is_active=True, projects__active=True).distinct()
 	return render(request, 'tool_control/tool_status.html', dictionary)
 

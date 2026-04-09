@@ -6,9 +6,10 @@ from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.http import HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import render
+from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
-from NEMO.models import User, Tool, TrainingSession, Project, MembershipHistory
+from NEMO.models import User, Tool, TrainingSession, Project, MembershipHistory, ProbationaryQualifications
 
 @staff_member_required(login_url=None)
 @require_GET
@@ -72,9 +73,16 @@ def charge_training(request):
 
 
 def qualify(authorizer, user, tool):
-	if tool in user.qualifications.all():
+	# Check if the user is already qualified (not disabled)
+	if ProbationaryQualifications.objects.filter(user=user, tool=tool, disabled=False).exists():
 		return
-	user.qualifications.add(tool)
+
+	# If a disabled record exists, re-enable it; otherwise, create a new one
+	pq, created = ProbationaryQualifications.objects.get_or_create(user=user, tool=tool)
+	pq.disabled = False
+	pq.qualification_date = timezone.now()
+	pq.save()
+
 	entry = MembershipHistory()
 	entry.authorizer = authorizer
 	entry.parent_content_object = tool

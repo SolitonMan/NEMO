@@ -54,38 +54,31 @@
 		<input type="hidden" name="chosen_tools_prob[]" id="chosen_tools_prob" value="">
 		<input type="hidden" name="qualification_user_id" id="qualification_user_id" value="{{ form.instance.id }}">
 	</form>
-	{% with form.instance.qualifications.all as toolset %}
-		{% if toolset %}
+	{% if probationary_qualifications %}
 		<p>
 			Currently qualified tools are listed below.<br/>
-
-			{% for t in toolset %}
+			{% for pq in probationary_qualifications %}
 				<span>
-				<a href="javascript:remove_qualified_user('{{ form.instance.id }}', '{{ t.id }}')" class="grey hover-black" title="Disqualify {{ form.first_name.value }}">
-					<span class="glyphicon glyphicon-remove-circle"></span>
-				</a>
-				{% if probationary_qualifications is not None %}
-				{% if probationary_qualifications|get_item:t.id %}
-				<a href="javascript:promote_user('{{ form.instance.id }}', '{{ t.id }}')" class="grey hover-black" title="Promote {{ form.first_name.value }}">
-					<span class="glyphicon glyphicon-arrow-up"></span>
-				</a>
-				{% else %}
-				<a href="javascript:demote_user('{{ form.instance.id }}', '{{ t.id }}')" class="grey hover-black" title="Demote {{ form.first_name.value }}">
-				<span class="glyphicon glyphicon-arrow-down"></span>
-				</a>
-				{% endif %}
-				{% endif %}
-				{{ t }}
-				{% if probationary_qualifications is not None %}
-					{% if probationary_qualifications|get_item:t.id %} - limited
+					<a href="javascript:remove_qualified_user('{{ form.instance.id }}', '{{ pq.tool.id }}')" class="grey hover-black" title="Disqualify {{ form.first_name.value }}">
+						<span class="glyphicon glyphicon-remove-circle"></span>
+					</a>
+					{% if pq.probationary_user %}
+						<a href="javascript:promote_user('{{ form.instance.id }}', '{{ pq.tool.id }}')" class="grey hover-black" title="Promote {{ form.first_name.value }}">
+							<span class="glyphicon glyphicon-arrow-up"></span>
+						</a>
+					{% else %}
+						<a href="javascript:demote_user('{{ form.instance.id }}', '{{ pq.tool.id }}')" class="grey hover-black" title="Demote {{ form.first_name.value }}">
+							<span class="glyphicon glyphicon-arrow-down"></span>
+						</a>
+					{% endif %}
+					{{ pq.tool }}
+					{% if pq.probationary_user %} - limited
 					{% else %} - full
 					{% endif %}
-				{% endif %}
 				</span><br/>
 			{% endfor %}
 		</p>
-		{% endif %}
-	{% endwith %}
+	{% endif %}
 
 	</div>
 

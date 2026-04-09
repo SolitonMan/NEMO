@@ -7,14 +7,13 @@
 <div class="media-body">
 	<h4 class="media-heading">Qualified users</h4>
 
-	<div style="display: none;">
-		{{ probationary_qualifications }}
-		{{ pqd }}
-	</div>
-
 	<div id="qualified_users" class="collapse {% if expanded %}in{% endif %}">
 		<p id="btn_target">Only qualified users are able to operate the {{ tool.name }}.</p>
-		{% if tool.grant_physical_access_level_upon_qualification %}<p class="danger-highlight">Qualifying a user for this tool automatically grants them the physical access level &quot;{{ tool.grant_physical_access_level_upon_qualification }}&quot;.</p>{% endif %}
+		{% if tool.grant_physical_access_level_upon_qualification %}
+			<p class="danger-highlight">
+				Qualifying a user for this tool automatically grants them the physical access level &quot;{{ tool.grant_physical_access_level_upon_qualification }}&quot;.
+			</p>
+		{% endif %}
 
 		{% if user.is_staff %}
 		<form id="add_qualified_user_form" class="form-inline" style="margin-bottom:10px">
@@ -22,12 +21,16 @@
 				<div class="row" style="width: 570px;">
 					<div class="col-md-6">
 						<div class="form-group">
-							<label class="control-label">Add a fully qualified user <input type="text" id="add_qualified_user_search_box" placeholder="Search for a user" class="form-control"></label>
+							<label class="control-label">Add a fully qualified user
+								<input type="text" id="add_qualified_user_search_box" placeholder="Search for a user" class="form-control">
+							</label>
 						</div>
 					</div>
 					<div class="col-md-6">
 						<div class="form-group">
-							<label class="control-label">Add a limited user <input type="text" id="add_probationary_user_search_box" placeholder="Search for a user" class="form-control"></label>
+							<label class="control-label">Add a limited user
+								<input type="text" id="add_probationary_user_search_box" placeholder="Search for a user" class="form-control">
+							</label>
 						</div>
 					</div>
 				</div>
@@ -38,83 +41,67 @@
 			<input type="hidden" name="action" value="qualify">
 		</form>
 		{% endif %}
-		{% if pqd %}
-		{% if user.is_staff %}
-		<p>
-			<form action="{% url 'compose_email' %}" method="POST" style="display: inline;">
-				{% csrf_token %}
-				<input name="tools_selected" type="hidden" value="{{ tool.id }}" />
-				<input name="audience" type="hidden" value="tool" />
-				<input name="selection" type="hidden" value="{{ tool.id }}" />
-				<input type="submit" value="You can email all qualified users" class="btn btn-success" />
-			</form>
+
+		{% if probationary_qualifications %}
+			{% if user.is_staff %}
+			<p>
+				<form action="{% url 'compose_email' %}" method="POST" style="display: inline;">
+					{% csrf_token %}
+					<input name="tools_selected" type="hidden" value="{{ tool.id }}" />
+					<input name="audience" type="hidden" value="tool" />
+					<input name="selection" type="hidden" value="{{ tool.id }}" />
+					<input type="submit" value="You can email all qualified users" class="btn btn-success" />
+				</form>
+			</p>
 			{% endif %}
-		<p>
-			<input type="text" id="user_filter" placeholder="Filter users by name or username" class="form-control" style="margin-bottom: 10px;">
-			Current qualified users are listed below. Inactive qualified users are marked in <span class="light-grey">light grey</span>. Disqualified users are marked in <span class="light-red">light red</span>. Use the up/down arrows to change that user's qualification scope to full/limited.<br>
-			<table class="table table-striped">
-				<thead>
-					<tr>
-						<th>Name</th>
-						<th>Email</th>
-						<th>Status</th>
-						<th>Actions</th>
-					</tr>
-				</thead>
-				<tbody>
-					{% for k, u in pqd.items %}
-						{% if probationary_qualifications is not None %}
-						{% if probationary_qualifications|get_item:u.id %}
-						{% with probationary_qualifications|get_item:u.id as qd %}
-					<tr class="qualified-user{% if qd.disabled %} light-red{% elif not u.is_active %} light-grey{% endif %}">
-						{% endwith %}
-						{% endif %}
-						{% else %}
-					<tr class="qualified-user{% if not u.is_active %} light-grey{% endif %}">
-						{% endif %}
-						<td>{{ u }}</td>
-						<td><a href="mailto:{{ u.email }}">{{ u.email }}</a></td>
-						<td>
-							{% if probationary_qualifications is not None %}
-							{% if probationary_qualifications|get_item:u.id %}
-							{% with probationary_qualifications|get_item:u.id as qd %}
-							{% if qd.probationary_user %}
-							limited
-							{% else %}
-							full
-							{% endif %}
-							{% endwith %}
-							{% endif %}
-							{% endif %}
-						</td>
-						<td>
-							{% if request.user.is_staff %}
-							{% if probationary_qualifications is not None %}
-							{% if probationary_qualifications|get_item:u.id %}
-							{% with probationary_qualifications|get_item:u.id as qd %}
-							{% if qd.disabled %}
-							<span class="light-red">
-							<a href="javascript:requalify_user('{{ u.id }}', '{{ tool.id }}')" class="grey hover-black" title="Re-qualify {{ pq.user.first_name }}"><span class="glyphicon glyphicon-plus"></span></a>
-							{% else %}
-							<span>
-							<a href="javascript:remove_qualified_user('{{ u.id }}', '{{ tool.id }}')" class="grey hover-black" title="Disqualify {{ pq.user.first_name }}"><span class="glyphicon glyphicon-remove-circle"></span></a>
-							{% endif %}
-							{% if qd.probationary_user %}
-							<a href="javascript:promote_user('{{ u.id }}', '{{ tool.id }}')" class="grey hover-black" title="Promote {{ u.first_name }}"><span class="glyphicon glyphicon-arrow-up"></span></a>
-							{% else %}
-							<a href="javascript:demote_user('{{ u.id }}', '{{ tool.id }}')" class="grey hover-black" title="Demote {{ u.first_name }}"><span class="glyphicon glyphicon-arrow-down"></span></a>
-							{% endif %}
-							<span style="font-family: Courier">QD: {{ qd.qualification_date }} </span>
-							{% endwith %}
-							{% endif %}
-							{% endif %}
-							{% endif %}
-						</td>
-					</tr>
-					{% endfor %}
-				</tbody>
-			</table>
-		</p>
+			<p>
+				<input type="text" id="user_filter" placeholder="Filter users by name or username" class="form-control" style="margin-bottom: 10px;">
+				Current qualified users are listed below. Inactive qualified users are marked in <span class="light-grey">light grey</span>. Disqualified users are marked in <span class="light-red">light red</span>. Use the up/down arrows to change that user's qualification scope to full/limited.<br>
+				<table class="table table-striped">
+					<thead>
+						<tr>
+							<th>Name</th>
+							<th>Email</th>
+							<th>Status</th>
+							<th>Actions</th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for pq in probationary_qualifications %}
+						<tr class="qualified-user{% if pq.disabled %} light-red{% elif not pq.user.is_active %} light-grey{% endif %}">
+							<td>{{ pq.user }}</td>
+							<td><a href="mailto:{{ pq.user.email }}">{{ pq.user.email }}</a></td>
+							<td>
+								{% if pq.probationary_user %}
+									limited
+								{% else %}
+									full
+								{% endif %}
+							</td>
+							<td>
+								{% if user.is_staff %}
+									{% if pq.disabled %}
+										<span class="light-red">
+											<a href="javascript:requalify_user('{{ pq.user.id }}', '{{ tool.id }}')" class="grey hover-black" title="Re-qualify {{ pq.user.first_name }}"><span class="glyphicon glyphicon-plus"></span></a>
+										</span>
+									{% else %}
+										<span>
+											<a href="javascript:remove_qualified_user('{{ pq.user.id }}', '{{ tool.id }}')" class="grey hover-black" title="Disqualify {{ pq.user.first_name }}"><span class="glyphicon glyphicon-remove-circle"></span></a>
+											{% if pq.probationary_user %}
+												<a href="javascript:promote_user('{{ pq.user.id }}', '{{ tool.id }}')" class="grey hover-black" title="Promote {{ pq.user.first_name }}"><span class="glyphicon glyphicon-arrow-up"></span></a>
+											{% else %}
+												<a href="javascript:demote_user('{{ pq.user.id }}', '{{ tool.id }}')" class="grey hover-black" title="Demote {{ pq.user.first_name }}"><span class="glyphicon glyphicon-arrow-down"></span></a>
+											{% endif %}
+											<span style="font-family: Courier">QD: {{ pq.qualification_date }} </span>
+										</span>
+									{% endif %}
+								{% endif %}
+							</td>
+						</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</p>
 		{% endif %}
 	</div>
 </div>
