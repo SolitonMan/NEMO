@@ -96,7 +96,7 @@
 					<div class="wizard-step" id="wizardStepTraining" style="display:none;">
 						<!-- Training select (shown for non-Nanofab) -->
 						<div id="wizard_training_select_group">
-							<label for="wizard_training_requested">Training requested?</label>
+							<label for="wizard_training_requested">Is this a request for training?</label>
 							<select class="form-control" id="wizard_training_requested" name="training_requested">
 								<option value="True">Yes</option>
 								<option value="False" selected>No</option>
@@ -180,7 +180,9 @@
 				<td colspan="7">
 					<!-- Introductory details -->
 					<div>
+						{% if req.case_number %}
 						<strong>Case Number:</strong> {{ req.case_number|default:"-" }}<br>
+						{% endif %}
 						<strong>Contact:</strong>
 						{% if req.owner %}
 							<a href="mailto:{{ req.owner }}">{{ req.owner_first_name }} {{ req.owner_last_name }}</a>
@@ -250,7 +252,7 @@
 				<th>Completed On</th>
 				<th>Complete this requirement</th>
 				<th>Prerequisites</th>
-				<th>Estimated Time</th>
+				<th>Est. Completion (minutes)</th>
 				<th></th>
 			</tr>
 		</thead>
@@ -279,7 +281,7 @@
 								<button type="submit" class="btn btn-warning btn-sm">Unmark Completed</button>
 							</form>
 						{% elif req.status_value != 'Completed' %}
-							<form method="post" action="{% url 'complete_user_requirement' %}" onsubmit="return prompt('Please enter your username ({{ request.user.username }}) to indicate you have completed the requirement - {{ req.name }}') == '{{ request.user.username }}';">
+							<form method="post" action="{% url 'complete_user_requirement' %}" onsubmit="return prompt('Please enter your email ({{ request.user.email }}) to indicate you have completed the requirement - {{ req.name }}') == '{{ request.user.email }}';">
 								{% csrf_token %}
 								<input type="hidden" name="requirement_id" value="{{ req.id }}">
 								<button type="submit" class="btn btn-primary btn-sm">Mark Completed</button>
