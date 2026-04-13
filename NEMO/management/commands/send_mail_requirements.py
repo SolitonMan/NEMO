@@ -37,7 +37,7 @@ class Command(BaseCommand):
 						"<br><br>Best regards,<br>Admin Team"
 					)
 					send_mail(
-						"Reminder: User Requirement Pending",
+						"TEST - Reminder: User Requirement Pending",
 						message_text,
 						"LEOHelp@psu.edu",
 						to=[record.user.email],

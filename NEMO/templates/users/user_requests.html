@@ -29,6 +29,27 @@
 	.btn-requirements input[type="radio"] {
 		display: none;
 	}
+
+	#requirements-table-container th.sortable {
+		color: #337ab7;
+		text-decoration: underline;
+		cursor: pointer;
+		transition: color 0.2s;
+	}
+
+	#requirements-table-container th.sortable:hover {
+		color: #23527c;
+	}
+
+	#requirements-table-container th.sorted-asc::after {
+		content: " &#9650;";
+		font-size: 12px;
+	}
+
+	#requirements-table-container th.sorted-desc::after {
+		content: " &#9660;";
+		font-size: 12px;
+	}
 </style>
 {% endblock %}
 {% block content %}
@@ -104,8 +125,8 @@
 						</div>
 						<!-- Hidden input for Nanofab -->
 						<input type="hidden" id="wizard_training_hidden" name="training_requested" value="True" style="display:none;" />
-						<label for="wizard_description" style="margin-top:10px;">Description</label>
-						<textarea class="form-control" id="wizard_description" name="description" rows="4"></textarea>
+						<label for="wizard_description" style="margin-top:10px;">Request Summary</label>
+						<textarea class="form-control" id="wizard_description" name="description" rows="4" placeholder="Briefly describe what you need. Example: I'd like to discuss my project about ___; I'd like sample analysis on ____; etc."></textarea>
 					</div>
 				</div>
 				<div class="modal-footer">
@@ -180,7 +201,7 @@
 				<td colspan="7">
 					<!-- Introductory details -->
 					<div>
-						{% if req.core.id == 2 %}
+						{% if req.core.id != 2 %}
 						<strong>Case Number:</strong> {{ req.case_number|default:"-" }}<br>
 						{% endif %}
 						<strong>Contact:</strong>
@@ -191,8 +212,10 @@
 						{% endif %}
 						<br>
 						<strong>Description:</strong> {{ req.description|default:"-" }}<br>
+						{% if req.core.id != 2 %}
 						<strong>Training Requested:</strong> {% if req.training_request %}Yes{% else %}No{% endif %}<br>
 						<strong>Training Approved:</strong> {% if req.training_approved %}Yes{% else %}No{% endif %}<br>
+						{% endif %}
 						<strong>Last Updated:</strong> {{ req.updated|date:"Y-m-d H:i" }}<br><br>
 
 						{% if req.core_id == 2 and req.status != 'cancelled' and req.status != 'completed' %}
@@ -246,13 +269,13 @@
 	<table class="table table-striped">
 		<thead>
 			<tr>
-				<th>Requirement</th>
-				<th>Status</th>
-				<th>Added</th>
-				<th>Completed On</th>
-				<th>Complete this requirement</th>
-				<th>Prerequisites</th>
-				<th>Est. Completion (minutes)</th>
+				<th class="sortable">Requirement</th>
+				<th class="sortable">Status</th>
+				<th class="sortable">Added</th>
+				<th class="sortable">Completed On</th>
+				<th class="sortable">Complete this requirement</th>
+				<th class="sortable">Prerequisites</th>
+				<th class="sortable">Est. Completion (minutes)</th>
 				<th></th>
 			</tr>
 		</thead>
@@ -569,13 +592,15 @@ document.getElementById('confirmCancelBtn').onclick = function() {
 		};
 	}
 
-	Array.from(table.querySelectorAll('th')).forEach(function(th, idx) {
-		th.style.cursor = 'pointer';
+	var ths = Array.from(table.querySelectorAll('th.sortable'));
+	ths.forEach(function(th, idx) {
 		th.addEventListener('click', function() {
 			var type = th.textContent.includes('Status') ? 'status' :
 				(th.textContent.includes('Added') || th.textContent.includes('Completed On')) ? 'date' : 'string';
 			var asc = !this.asc;
+			ths.forEach(function(other) { other.classList.remove('sorted-asc', 'sorted-desc'); other.asc = undefined; });
 			this.asc = asc;
+			this.classList.add(asc ? 'sorted-asc' : 'sorted-desc');
 			var tbody = table.tBodies[0];
 			Array.from(tbody.querySelectorAll('tr'))
 				.sort(comparer(idx, type, asc))

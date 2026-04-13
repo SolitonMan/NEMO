@@ -327,6 +327,7 @@ class Requirement(models.Model):
 	login_requirement_flag = models.BooleanField(default=False, help_text="Checked if this requirement is used during login to see if this is a new user and the requirements are automatically added")
 	automated_update = models.BooleanField(default=False, help_text="Checked if this requirement is automatically updated by an external system")
 	prerequisites = models.TextField(blank=True)
+	logical_order = models.PositiveIntegerField(blank=True, null=True)
 
 	def __str__(self):
 		return self.name
