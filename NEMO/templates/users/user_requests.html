@@ -180,7 +180,7 @@
 				<td colspan="7">
 					<!-- Introductory details -->
 					<div>
-						{% if req.case_number %}
+						{% if req.core.id == 2 %}
 						<strong>Case Number:</strong> {{ req.case_number|default:"-" }}<br>
 						{% endif %}
 						<strong>Contact:</strong>
