@@ -34,7 +34,7 @@ def check_policy_to_enable_tool(tool, operator, user, project, staff_charge, req
 		return HttpResponseBadRequest("The tool is currently being used by " + str(current_usage_event.user) + ".")
 
 	# The user must be qualified to use the tool.
-	if tool not in operator.qualifications.all() and not operator.is_staff:
+	if not ProbationaryQualifications.objects.filter(tool=tool, user=operator, disabled=False).exists() and not operator.is_staff:
 		return HttpResponseBadRequest("You are not qualified to use this tool.")
 
 	# Only staff members can operate a tool on behalf of another user.
@@ -103,7 +103,7 @@ def check_policy_to_enable_tool(tool, operator, user, project, staff_charge, req
 	active_core_id = request.session.get("active_core_id")
 	if str(active_core_id) != "0" and str(active_core_id) != "None":
 		msg = "The " + tool.name + " is part of the core " + tool.core_id.name + ". You cannot operate a tool that is part of a different core."
-		if str(tool.core_id.id) not in str(active_core_id) and tool not in operator.qualifications.all() and not operator.is_superuser:
+		if str(tool.core_id.id) not in str(active_core_id) and not ProbationaryQualifications.objects.filter(tool=tool, user=operator, disabled=False).exists() and not operator.is_superuser:
 			return HttpResponseBadRequest(msg)
 
 
@@ -125,7 +125,7 @@ def check_policy_to_enable_tool_for_multi(tool, operator, user, project, request
 		return HttpResponseBadRequest("This tool is currently non-operational.")
 
 	# The user must be qualified to use the tool.
-	if tool not in operator.qualifications.all() and not operator.is_staff:
+	if not ProbationaryQualifications.objects.filter(tool=tool, user=operator, disabled=False).exists() and not operator.is_staff:
 		return HttpResponseBadRequest("You are not qualified to use this tool.")
 
 	# Only staff members can operate a tool on behalf of another user.
@@ -170,7 +170,7 @@ def check_policy_to_enable_tool_for_multi(tool, operator, user, project, request
 	active_core_id = request.session.get("active_core_id")
 	if str(active_core_id) != "0" and str(active_core_id) != "None":
 		msg = "The " + tool.name + " is part of the core " + tool.core_id.name + ". You cannot operate a tool that is part of a different core."
-		if str(tool.core_id.id) not in str(active_core_id) and tool not in operator.qualifications.all() and not operator.is_superuser:
+		if str(tool.core_id.id) not in str(active_core_id) and not ProbationaryQualifications.objects.filter(tool=tool, user=operator, disabled=False).exists() and not operator.is_superuser:
 			return HttpResponseBadRequest(msg)
 
 
@@ -181,7 +181,7 @@ def check_policy_to_disable_tool(tool, operator, downtime, request):
 	# Prevent tool disabling from a user in a different core
 	active_core_id = request.session.get("active_core_id")
 	if str(active_core_id) != "0" and str(active_core_id) != "None":
-		if str(tool.core_id.id) not in str(active_core_id) and tool not in operator.qualifications.all() and not operator.is_superuser:
+		if str(tool.core_id.id) not in str(active_core_id) and not ProbationaryQualifications.objects.filter(tool=tool, user=operator, disabled=False).exists() and not operator.is_superuser:
 			return HttpResponseBadRequest("You cannot disable a tool that is part of a different Core.")
 
 	""" Check that the user is allowed to disable the tool. """
