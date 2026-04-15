@@ -94,6 +94,7 @@ def landing(request):
 		'sc_count': sc_count,
 		'ar_count': ar_count,
 		'cw_count': cw_count,
+		'active_core_id': request.session.get('active_core_id'),
 	}
 	return render(request, 'landing.html', dictionary)
 

@@ -115,7 +115,7 @@ class LDAPAuthenticationBackend(ModelBackend):
 @require_http_methods(['GET', 'POST'])
 @sensitive_post_parameters('password')
 def login_user(request, context=None):
-	request.session['has_core'] = False
+	request.session['has_core'] = "false"
 
 	dictionary = {
 		'login_banner': get_media_file_contents('login_banner.html'),
@@ -179,23 +179,19 @@ def login_user(request, context=None):
 			else:
 				request.session['technical_staff'] = False
 
+			# set defaults before the core count check
+			request.session['active_core'] = "none"
+			request.session['active_core_id'] = 0
+			request.session['has_core'] = "false"
+
 			# check for a Core relationship for the user
 			count = user.core_ids.all().count()
-			if count == 0:
-				# send the user to the landing page; no Core relationship exists
-				request.session['active_core'] = "none"
-				request.session['active_core_id'] = 0
-				request.session['has_core'] = "false"
-				next_page = request.GET[REDIRECT_FIELD_NAME]
-
 			if count == 1:
 				# set the Core to the relevant option then redirect to the landing page
 				request.session['active_core'] = request.user.core_ids.values_list('name', flat=True).get()
 				request.session['active_core_id'] = request.user.core_ids.values_list('id', flat=True).get()
 				request.session['has_core'] = "true"
-				next_page = request.GET[REDIRECT_FIELD_NAME]
-
-			if count > 1:
+			elif count > 1:
 				request.session['has_core'] = "true"
 				names = request.user.core_ids.values_list('name', flat=True)
 				ids = request.user.core_ids.values_list('id', flat=True)
@@ -208,12 +204,10 @@ def login_user(request, context=None):
 				for i in enumerate(ids):
 					active_core_ids = active_core_ids + str(i[1]) + ","
 
-
 				request.session['active_core'] = str(active_core)
 				request.session['active_core_id'] = str(active_core_ids)
 
-				next_page = request.GET[REDIRECT_FIELD_NAME]
-
+			next_page = request.GET[REDIRECT_FIELD_NAME]
 			resolve(next_page)  # Make sure the next page is a legitimate URL for NEMO
 			if bReturnContext:
 				return context
@@ -334,20 +328,18 @@ def set_ma_session(request, context):
 		else:
 			request.session['technical_staff'] = False
 
-		count = request.user.core_ids.all().count()
-		if count == 0:
-			# send the user to the landing page; no Core relationship exists
-			request.session['active_core'] = "none"
-			request.session['active_core_id'] = 0
-			request.session['has_core'] = "false"
+		# set defaults before the core count check
+		request.session['active_core'] = "none"
+		request.session['active_core_id'] = 0
+		request.session['has_core'] = "false"
 
+		count = request.user.core_ids.all().count()
 		if count == 1:
 			# set the Core to the relevant option then redirect to the landing page
 			request.session['active_core'] = request.user.core_ids.values_list('name', flat=True).get()
 			request.session['active_core_id'] = request.user.core_ids.values_list('id', flat=True).get()
 			request.session['has_core'] = "true"
-
-		if count > 1:
+		elif count > 1:
 			request.session['has_core'] = "true"
 			names = request.user.core_ids.values_list('name', flat=True)
 			ids = request.user.core_ids.values_list('id', flat=True)
@@ -360,13 +352,12 @@ def set_ma_session(request, context):
 			for i in enumerate(ids):
 				active_core_ids = active_core_ids + str(i[1]) + ","
 
-
 			request.session['active_core'] = str(active_core)
 			request.session['active_core_id'] = str(active_core_ids)
 
-
-	except:
-		pass
+	except Exception as e:
+		logger = getLogger(__name__)
+		logger.error(f"Error setting session variables in set_ma_session for user {username}: {e}")
 
 	return context
 
