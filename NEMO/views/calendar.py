@@ -20,7 +20,7 @@ from django.utils.html import escape
 from django.utils.safestring import mark_safe
 
 from NEMO.decorators import disable_session_expiry_refresh
-from NEMO.models import Tool, Reservation, Configuration, ReservationConfiguration, ReservationProject, ReservationNotification, Consumable, UsageEvent, UsageEventProject, AreaAccessRecord, StaffCharge, StaffChargeProject, User, Project, ScheduledOutage, ScheduledOutageCategory, UserProfile, UserProfileSetting, Sample
+from NEMO.models import Tool, Reservation, Configuration, ReservationConfiguration, ReservationProject, ReservationNotification, Consumable, UsageEvent, UsageEventProject, AreaAccessRecord, StaffCharge, StaffChargeProject, User, Project, ScheduledOutage, ScheduledOutageCategory, UserProfile, UserProfileSetting, Sample, ProbationaryQualifications
 from NEMO.utilities import EmailCategory, create_email_log, bootstrap_primary_color, create_email_attachment, extract_times, extract_dates, format_datetime, parse_parameter_string
 from NEMO.views.constants import ADDITIONAL_INFORMATION_MAXIMUM_LENGTH
 from NEMO.views.customization import get_customization, get_media_file_contents
@@ -45,13 +45,15 @@ def calendar(request, tool_id=None, qualified_only=None, core_only=None):
 
 	if qualified_only is not None:
 		if int(qualified_only) == 1:
-			tools = tools.filter(id__in=request.user.qualifications.all()).order_by('category', 'name')
-			ctools = ctools.filter(id__in=request.user.qualifications.all()).order_by('category', 'name')
+			qualified_tool_ids = ProbationaryQualifications.objects.filter(user=request.user, disabled=False).values_list('tool_id', flat=True)
+			tools = tools.filter(id__in=qualified_tool_ids).order_by('category', 'name')
+			ctools = ctools.filter(id__in=qualified_tool_ids).order_by('category', 'name')
 
 	if core_only is not None:
 		if int(core_only) == 1:
-			tools = tools.filter(Q(core_id__in=request.user.core_ids.all()) | Q(id__in=request.user.qualifications.all())).order_by('category', 'name')
-			ctools = ctools.filter(Q(core_id__in=request.user.core_ids.all()) | Q(id__in=request.user.qualifications.all())).order_by('category', 'name')
+			qualified_tool_ids = ProbationaryQualifications.objects.filter(user=request.user, disabled=False).values_list('tool_id', flat=True)
+			tools = tools.filter(Q(core_id__in=request.user.core_ids.all()) | Q(id__in=qualified_tool_ids)).order_by('category', 'name')
+			ctools = ctools.filter(Q(core_id__in=request.user.core_ids.all()) | Q(id__in=qualified_tool_ids)).order_by('category', 'name')
 
 	# create searchable names for tools that include the category
 	categorized_tools = "["

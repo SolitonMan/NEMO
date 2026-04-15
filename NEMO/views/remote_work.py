@@ -22,7 +22,7 @@ from django.utils.dateformat import DateFormat
 from django.utils.dateparse import parse_time, parse_date, parse_datetime
 from django.views.decorators.http import require_GET, require_POST
 
-from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, AreaAccessRecordProjectSample, Consumable, ConsumableWithdraw, ContestTransaction, ContestTransactionData, ContestTransactionNewData, Core, CreditCostCollector, LockBilling, Project, UsageEvent, UsageEventProject, UsageEventProjectSample, StaffCharge, StaffChargeProject, StaffChargeProjectSample, Tool, User
+from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, AreaAccessRecordProjectSample, Consumable, ConsumableWithdraw, ContestTransaction, ContestTransactionData, ContestTransactionNewData, Core, CreditCostCollector, LockBilling, Project, UsageEvent, UsageEventProject, UsageEventProjectSample, StaffCharge, StaffChargeProject, StaffChargeProjectSample, Tool, ProbationaryQualifications, User
 from NEMO.utilities import month_list, get_month_timeframe
 
 
@@ -537,8 +537,9 @@ def contest_usage_event(request, usage_event_id):
 	if request.user.is_superuser:
 		tools = Tool.objects.all()
 	else:
-		tools = request.user.qualifications.all()
+		tools = Tool.objects.filter(id__in=ProbationaryQualifications.objects.filter(user=request.user, disabled=False).values_list('tool_id', flat=True))
 	dictionary['tools'] = tools
+
 	return render(request, 'remote_work_contest.html', dictionary)
 
 

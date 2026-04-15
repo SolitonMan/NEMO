@@ -10,7 +10,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 from django.http import HttpResponseRedirect
 
-from NEMO.models import Project, Reservation, Tool, UsageEvent, User
+from NEMO.models import Project, Reservation, Tool, UsageEvent, User, ProbationaryQualifications
 from NEMO.views.policy import check_policy_to_disable_tool, check_policy_to_enable_tool
 from NEMO.views.status_dashboard import create_tool_summary
 from NEMO.utilities import quiet_int
@@ -150,9 +150,13 @@ def category_choices(request, category, user_id):
 def tool_information(request, tool_id, user_id, back):
 	tool = Tool.objects.get(id=tool_id, visible=True)
 	customer = User.objects.get(id=user_id)
+	customer_qualified_tool_ids = set(
+		ProbationaryQualifications.objects.filter(user=customer, disabled=False).values_list('tool_id', flat=True)
+	)
 	dictionary = {
 		'customer': customer,
 		'tool': tool,
+		'customer_is_qualified': tool.id in customer_qualified_tool_ids,
 		'rendered_configuration_html': tool.configuration_widget(customer),
 		'post_usage_questions': DynamicForm(tool.post_usage_questions).render(),
 		'back': back,
