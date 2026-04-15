@@ -481,18 +481,16 @@
 				$("#add_qualified_tool_search_box").prop("placeholder","Disqualifying all tools, please wait...");
 				$("#add_probationary_tool_search_box").prop("placeholder","Disqualifying all tools, please wait...");
 				var data = {};
-				{% with form.instance.qualifications.all as toolset %}
-				{% if toolset %}
-				{% for t in toolset %}
+				{% if probationary_qualifications %}
+				{% for pq in probationary_qualifications %}
 				data = {
 					'action': 'disqualify',
-					'chosen_tool[]': {{ t.id }},
+					'chosen_tool[]': {{ pq.tool.id }},
 					'chosen_user[]': {{ form.instance.id }},
 				}
 				ajax_post("{% url 'modify_qualifications' %}", data, null, null);
 				{% endfor %}
 				{% endif %}
-				{% endwith %}
 				setTimeout(reload_qualified_tools,2000);
 			}
 		}
@@ -520,14 +518,12 @@
 				$("#add_probationary_tool_search_box").prop("placeholder","Promoting tools, please wait...");
 				var url;
 				var data = {};
-				{% with form.instance.qualifications.all as toolset %}
-				{% if toolset %}
-				{% for t in toolset %}
-				url = '/promote_user/' + {{ form.instance.id }} + '/' + {{ t.id }} + '/';
+				{% if probationary_qualifications %}
+				{% for pq in probationary_qualifications %}
+				url = '/promote_user/' + {{ form.instance.id }} + '/' + {{ pq.tool.id }} + '/';
 				ajax_get(url, data, null, null);
 				{% endfor %}
 				{% endif %}
-				{% endwith %}
 				setTimeout(reload_qualified_tools,2000);
 			}
 		}
@@ -549,14 +545,12 @@
 				$("#add_probationary_tool_search_box").prop("placeholder","Demoting tools, please wait...");
 				var url;
 				var data = {};
-				{% with form.instance.qualifications.all as toolset %}
-				{% if toolset %}
-				{% for t in toolset %}
-				url = '/demote_user/' + {{ form.instance.id }} + '/' + {{ t.id }} + '/';
+				{% if probationary_qualifications %}
+				{% for pq in probationary_qualifications %}
+				url = '/demote_user/' + {{ form.instance.id }} + '/' + {{ pq.tool.id }} + '/';
 				ajax_get(url, data, null, null);
 				{% endfor %}
 				{% endif %}
-				{% endwith %}
 				setTimeout(reload_qualified_tools,2000);
 			}
 		}
