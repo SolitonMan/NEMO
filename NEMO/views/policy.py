@@ -272,7 +272,7 @@ def check_policy_to_save_reservation(request, cancelled_reservation, new_reserva
 	else:
 		active_core_id = request.session.get("active_core_id")
 		
-	if str(new_reservation.tool.core_id.id) not in str(active_core_id) and new_reservation.tool not in user.qualifications.all() and not user.is_superuser:
+	if str(new_reservation.tool.core_id.id) not in str(active_core_id) and not ProbationaryQualifications.objects.filter(tool=new_reservation.tool, user=new_reservation.user, disabled=False).exists() and not user.is_superuser:
 			msg = "Your core is not the same as the core of " + str(new_reservation.tool.core_id.name) + " to which the " + str(new_reservation.tool.name) + " belongs.  You cannot make a reservation for this tool."
 			policy_problems.append(msg)
 
@@ -311,7 +311,7 @@ def check_policy_to_save_reservation(request, cancelled_reservation, new_reserva
 	# The user must be qualified on the tool in question in order to create, move, or resize a reservation.
 	# Staff may break this rule.
 	# An explicit policy override allows this rule to be broken.
-	if new_reservation.tool not in user.qualifications.all():
+	if not ProbationaryQualifications.objects.filter(tool=new_reservation.tool, user=new_reservation.user, disabled=False).exists():
 		policy_problems.append("You are not qualified to use this tool. Creating, moving, and resizing reservations is forbidden.")
 
 	# probationary users may only reserve a tool during regular business hours
@@ -434,7 +434,7 @@ def check_policy_to_cancel_reservation(reservation, user, request):
 	# Staff may only cancel reservations for tools in their core
 	active_core_id = request.session.get("active_core_id")
 	if str(active_core_id) != "0" and str(active_core_id) != "None":
-		if str(reservation.tool.core_id.id) not in str(active_core_id) and reservation.tool not in user.qualifications.all() and not user.is_superuser:
+		if str(reservation.tool.core_id.id) not in str(active_core_id) and not ProbationaryQualifications.objects.filter(tool=reservation.tool, user=reservation.user, disabled=False).exists() and not user.is_superuser:
 			msg = "Your core is not the same as the core of " + str(reservation.tool.core_id.name) + " to which the " + str(reservation.tool.name) + " belongs.  You cannot cancel a reservation for this tool."
 			return HttpResponseBadRequest(msg)
 
@@ -459,7 +459,7 @@ def check_policy_to_create_outage(outage, request):
 	# prevent staff from creating outages on tools in different cores
 	active_core_id = request.session.get("active_core_id")
 	if str(active_core_id) != "0" and str(active_core_id) != "None":
-		if str(outage.tool.core_id.id) not in str(active_core_id) and outage.tool not in request.user.qualifications.all() and not request.user.is_superuser:
+		if str(outage.tool.core_id.id) not in str(active_core_id) and not ProbationaryQualifications.objects.filter(tool=outage.tool, user=request.user, disabled=False).exists() and not request.user.is_superuser:
 			msg = "Your core is not the same as the core of " + str(outage.tool.core_id.name) + " to which the " + str(outage.tool.name) + " belongs.  You cannot create an outage for this tool."
 			return HttpResponseBadRequest(msg)
 
