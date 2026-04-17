@@ -53,6 +53,33 @@
 		.dropdown-submenu:focus > a {
 			background-color: #f5f5f5;
 		}
+
+		{# Accessibility: skip link focus styling #}
+		a.sr-only-focusable:focus {
+			position: fixed;
+			top: 10px;
+			left: 10px;
+			z-index: 10000;
+			padding: 10px 15px;
+			background: #fff;
+			color: #333;
+			border: 2px solid #333;
+			font-size: 14px;
+			font-weight: bold;
+			text-decoration: none;
+		}
+
+		{# Accessibility: staff charge indicator using contrast-safe color + icon instead of color alone #}
+		.staff-charge-indicator {
+			color: #c7254e;
+			text-decoration: none;
+			font-weight: bold;
+		}
+		.staff-charge-indicator:hover,
+		.staff-charge-indicator:focus {
+			color: #a0132b;
+			text-decoration: underline;
+		}
 	</style>
 	<script type="text/javascript">
 		if (self === top) {
@@ -107,18 +134,25 @@
 	<title>{% block title %}LEO - Laboratory Equipment Operations{% endblock %}</title>
 </head>
 <body>
-<div style="display:none" id="temp_holding_element"></div>
-<nav class="navbar navbar-default navbar-static-top"{% if device != "mobile" %} style="width: 100%;"{% endif %}>
+<div style="display:none" id="temp_holding_element" aria-hidden="true"></div>
+
+{# Accessibility: Skip navigation link (WCAG 2.4.1 Bypass Blocks) #}
+<a class="sr-only sr-only-focusable" href="#main-content">Skip to main content</a>
+
+<nav class="navbar navbar-default navbar-static-top" aria-label="Main navigation"{% if device != "mobile" %} style="width: 100%;"{% endif %}>
 	<div class="container"{% if device != "mobile" %} style="width: 90%;"{% endif %}>
 		<div class="navbar-header">
-			<button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#nemo-navigation">
-				<span class="icon-bar"></span>
-				<span class="icon-bar"></span>
-				<span class="icon-bar"></span>
+			<button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#nemo-navigation" aria-label="Toggle navigation" aria-expanded="false">
+				<span class="icon-bar" aria-hidden="true"></span>
+				<span class="icon-bar" aria-hidden="true"></span>
+				<span class="icon-bar" aria-hidden="true"></span>
 			</button>
-			<a class="navbar-brand" href="{% url 'landing' %}">LEO</a>
+			<a class="navbar-brand" href="{% url 'landing' %}">
+				<span class="sr-only">LEO - Laboratory Equipment Operations Home</span>
+				<span aria-hidden="true">LEO</span>
+			</a>
 		</div>
-		<div class="navbar-collapse collapse" id="nemo-navigation">
+		<div class="navbar-collapse collapse" id="nemo-navigation" role="navigation">
                         <ul class="nav navbar-nav">
                                 <li><a href="{% url 'calendar' %}">Calendar</a></li>
                                 <li><a href="{% url 'tool_control' %}">Tool control</a></li>
@@ -126,10 +160,10 @@
                                 <li><a href="{% url 'new_area_access_customer' request.user.id %}">Area Access</a></li>
                                 {% endif %}
 								<li class="dropdown">
-									<a href="#" class="dropdown-toggle" data-toggle="dropdown">Supplies <b class="caret"></b></a>
-									<ul class="dropdown-menu">
+									<a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Supplies <b class="caret" aria-hidden="true"></b></a>
+									<ul class="dropdown-menu" role="menu">
 									{% navigation_url 'create_order' 'Order Supplies' %}
-                                    <li><a href="{% url 'order_list' 1 %}">My Orders</a></li>
+                                    <li role="menuitem"><a href="{% url 'order_list' 1 %}">My Orders</a></li>
 									</ul>
 								</li>
 								{% navigation_url 'samples' 'Samples' %}
@@ -143,8 +177,8 @@
 
                                 {% if user.is_staff %}
                                 <li class="dropdown">
-                                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">Administration <b class="caret"></b></a>
-                                        <ul class="dropdown-menu">
+                                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Administration <b class="caret" aria-hidden="true"></b></a>
+                                        <ul class="dropdown-menu" role="menu">
                                                 {# The navigation_url tag will display the item if the URL name can be reversed. #}
                                                 {# This allows items to be easily removed from the public facing version of NEMO. #}
                                                 {% if user.is_superuser %}
@@ -180,7 +214,7 @@
 											    {% navigation_url 'tool_training_schedule' 'Tool Training Scheduler' %}
 											    {% navigation_url 'sequential_tool_schedule' 'Process Scheduling' %}
                                                 {% navigation_url 'create_notification_scheme' 'Notification Schemes' %}
-                                                <li><a href="{% url 'order_list' 0 %}">Orders</a></li>
+                                                <li role="menuitem"><a href="{% url 'order_list' 0 %}">Orders</a></li>
                                                 {% if user.is_superuser %}
                                                 {% navigation_url 'delegates' 'PI Delegates' %}
                                                 {% endif %}
@@ -190,9 +224,9 @@
                                                 {% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
                                                 {% navigation_url 'qualifications' 'Qualifications' %}
                                                 {% endif %}
-												<li class="dropdown-submenu">
+												<li class="dropdown-submenu" role="menuitem" aria-haspopup="true">
 													<a href="#">Requirements</a>
-													<ul class="dropdown-menu">
+													<ul class="dropdown-menu" role="menu">
 														{% if request.session.administrative_staff or request.session.core_admin or request.session.technical_staff or user.is_superuser %}
 															{% navigation_url 'add_requirement' 'Requirements Management' %}
 															{% navigation_url 'manage_requirements' 'Requirements - Assign to Tool or Area' %}
@@ -233,7 +267,7 @@
                                 {% if logout_allowed %}
                                 <li class="visible-xs"><a href="{% url 'logout' %}">Logout</a></li>
                                 {% endif %}
-                                <li><a href="mailto:LEOHelp@psu.edu">Report a problem</a></li>
+                                <li><a href="mailto:LEOHelp@psu.edu"><span class="sr-only">Send email to </span>Report a problem</a></li>
                         </ul>
 			<div  class="nav-tweak">
 			<ul class="nav-tweak nav navbar-nav navbar-right hidden-xs">
@@ -241,8 +275,10 @@
 				{% with user.get_staff_charge as staff_charge %}
 					<li class="hidden-sm">
 						<p class="navbar-text" style="font-weight: normal;">
-							<a id="staff_charge_link" href="{% url 'staff_charges' %}" style="color:red; text-decoration: none" data-toggle="tooltip" data-placement="bottom" title="You are charging staff time to {{ staff_charge.customers.all.0 }} {% if staff_charge.customers.all.count > 1 %}and others{% endif %} on the project {{ staff_charge.projects.all.0.project_number }} since {{ staff_charge.start }}. {% if staff_charge.core_id_override is not None and staff_charge.core_id_override != 0 %} These charges are being made for {{ staff_charge.core_id_override_name }} {% if staff_charge.credit_cost_collector_override is not None and staff_charge.credit_cost_collector_override != 0%} and being credited to {{ staff_charge.credit_cost_collector_override_name }}.{% endif %}{% endif %}">
-								Staff time ({{ staff_charge.projects.all.0.project_number }}{% if staff_charge.core_id_override is not None and staff_charge.core_id_override != 0 %} for {{ staff_charge.core_id_override_name }}{% elif staff_charge.credit_cost_collector_override is not None and staff_charge.credit_cost_collector_override != 0%} for {{ staff_charge.credit_cost_collector_override_name }}{% else %} for {{ user.credit_cost_collector.core.name }}{% endif %}) 
+							<a id="staff_charge_link" href="{% url 'staff_charges' %}" class="staff-charge-indicator" data-toggle="tooltip" data-placement="bottom" title="You are charging staff time to {{ staff_charge.customers.all.0 }} {% if staff_charge.customers.all.count > 1 %}and others{% endif %} on the project {{ staff_charge.projects.all.0.project_number }} since {{ staff_charge.start }}. {% if staff_charge.core_id_override is not None and staff_charge.core_id_override != 0 %} These charges are being made for {{ staff_charge.core_id_override_name }} {% if staff_charge.credit_cost_collector_override is not None and staff_charge.credit_cost_collector_override != 0%} and being credited to {{ staff_charge.credit_cost_collector_override_name }}.{% endif %}{% endif %}">
+								<span class="glyphicon glyphicon-time" aria-hidden="true"></span>
+								<span class="sr-only">Active staff charge: </span>
+								Staff time ({{ staff_charge.projects.all.0.project_number }}{% if staff_charge.core_id_override is not None and staff_charge.core_id_override != 0 %} for {{ staff_charge.core_id_override_name }}{% elif staff_charge.credit_cost_collector_override is not None and staff_charge.credit_cost_collector_override != 0%} for {{ staff_charge.credit_cost_collector_override_name }}{% else %} for {{ user.credit_cost_collector.core.name }}{% endif %})
 							</a>
 						</p>
 						<script>
@@ -254,7 +290,7 @@
 				{% if user.active_projects.count == 0 %}
 				<li class="hidden-sm"><p class="navbar-text">Welcome, {{ user.first_name }}</p></li>
 				{% else %}
-				<li class="hidden-sm"><p class="navbar-text"><a title="Click here to edit your profile" href="{% url 'user_profile' user.id %}">Welcome, {{ user.first_name }}</a></p></li>
+				<li class="hidden-sm"><p class="navbar-text"><a title="Edit your profile" href="{% url 'user_profile' user.id %}">Welcome, {{ user.first_name }}</a></p></li>
 				{% endif %}
 				{% if logout_allowed %}
 					<li><a href="{% entra_logout_url %}">Logout</a></li>
@@ -266,9 +302,9 @@
 </nav>
 {% block body %}
     <div class="body-container">
-        <div class="container">
+        <main id="main-content" class="container" role="main">
             {% block content %}{% endblock %}
-        </div>
+        </main>
         {% block extra_whitespace %}
             <!--div style="height: 200px"></div-->
         {% endblock %}
@@ -283,15 +319,15 @@
 {% endblock %}
 
 {# This division is used to display dialog messages via Bootstrap. #}
-<div class="modal fade" id="dialog" tabindex="-10" role="dialog">
-	<div class="modal-dialog">
+<div class="modal fade" id="dialog" tabindex="-1" role="dialog" aria-label="Notification dialog">
+	<div class="modal-dialog" role="document">
 		<div class="modal-content {% if device != 'mobile' %}modal-center{% else %}modal-center-mobile{% endif %}">
 		</div>
 	</div>
 </div>
 
-<div class="modal fade" id="sample_dialog" tabindex="-2" role="dialog">
-	<div class="modal-dialog">
+<div class="modal fade" id="sample_dialog" tabindex="-1" role="dialog" aria-label="Sample dialog">
+	<div class="modal-dialog" role="document">
 		<div class="modal-content {% if device != 'mobile' %}modal-center{% else %}modal-center-mobile{% endif %}">
 		</div>
 	</div>
