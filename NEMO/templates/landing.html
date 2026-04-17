@@ -3,18 +3,17 @@
 
 {% block title %}LEO{% endblock %}
 {% block content %}
+	<h1 class="sr-only">LEO Landing Page</h1>
 	{% if user.training_required %}
 		<div class="row">
 			<div class="col-lg-12">
-				<a href="{% url 'nanofab_rules' %}">
-					<div class="well clearfix">
-						<div class="col-lg-2 text-center"><img src="{% static 'icons/caution.png' %}" height="128" width="128"></div>
-						<div class="col-lg-8 text-center">
-							<h2>Laboratory Rules Tutorial</h2>
-							<p style="text-align: center">You must complete your laboratory rules tutorial before you can make reservations or use laboratory tools. Click here to begin the tutorial.</p>
-						</div>
-						<div class="col-lg-2 text-center"><img src="{% static 'icons/agreement.png' %}" height="128" width="128"></div>
+				<a href="{% url 'nanofab_rules' %}" class="well clearfix" style="display:block; text-decoration:none; color:inherit;">
+					<div class="col-lg-2 text-center"><img src="{% static 'icons/caution.png' %}" height="128" width="128" alt="Caution"></div>
+					<div class="col-lg-8 text-center">
+						<h2>Laboratory Rules Tutorial</h2>
+						<p style="text-align: center">You must complete your laboratory rules tutorial before you can make reservations or use laboratory tools. Click here to begin the tutorial.</p>
 					</div>
+					<div class="col-lg-2 text-center"><img src="{% static 'icons/agreement.png' %}" height="128" width="128" alt="Agreement"></div>
 				</a>
 			</div>
 		</div>
@@ -35,7 +34,7 @@
 	</script>
 	<div id="landing_notifications">
 	<div class="row">
-			<div class="col-lg-4" style="display: none;">
+			<div class="col-lg-4" style="display: none;" aria-hidden="true">
 				<h3>Record Counts</h3>
 				Usage Events: {{ ue_count}}<br/>
 				Staff Charges: {{ sc_count }}<br/>
@@ -45,8 +44,8 @@
 		{% if open_requirements == True %}
 			<div class="col-lg-4">
 				<h3>Open Requirements</h3>
-				<a href="{% url 'user_requests' %}" style="text-decoration: none">
-					<div class="alert alert-warning">
+				<a href="{% url 'user_requests' %}" style="text-decoration: none" aria-label="View open requirements on the Requests page">
+					<div class="alert alert-warning" role="alert">
 					You have requirements that need to be completed.  Please see the Requests page and click the Requirements button for details.
 					</div>
 				</a>
@@ -55,8 +54,8 @@
 		{% if validation_needed == True %}
 			<div class="col-lg-4">
 				<h3>Validation Needed</h3>
-				<a href="{% url 'remote_work' %}" style="text-decoration: none">
-					<div class="alert alert-warning">
+				<a href="{% url 'remote_work' %}" style="text-decoration: none" aria-label="Review items that require validation">
+					<div class="alert alert-warning" role="alert">
 					There are items that require validation.  Please review them now, they will be automatically validated within 5 days of completion.
 					</div>
 				</a>
@@ -65,8 +64,8 @@
 		{% if contested_items %}
 			<div class="col-lg-4">
 				<h3>Contested Items</h3>
-				<a href="{% url 'review_contested_items' %}" style="text-decoration: none">
-					<div class="alert alert-warning">
+				<a href="{% url 'review_contested_items' %}" style="text-decoration: none" aria-label="Review contested items">
+					<div class="alert alert-warning" role="alert">
 						<b>There are contested items that need to be reviewed</b>
 					</div>
 				</a>
@@ -76,8 +75,8 @@
 			<div class="col-lg-4">
 				<h3>Upcoming reservations</h3>
 				{% for r in upcoming_reservations %}
-					<a href="{% url 'tool_control' r.tool.id 0 0 %}" style="text-decoration: none">
-						<div class="alert {% if r.start < now %}alert-warning{% else %}alert-success{% endif %}">
+					<a href="{% url 'tool_control' r.tool.id 0 0 %}" style="text-decoration: none" aria-label="{% if r.start < now %}You are late for your {{ r.tool }} reservation{% else %}View reservation for {{ r.tool }}{% endif %}">
+						<div class="alert {% if r.start < now %}alert-warning{% else %}alert-success{% endif %}" role="alert">
 							{% if r.title %}<b>{{ r.title }}</b><br>{% endif %}
 							<b>{% if r.start < now %}You're late for your {{ r.tool }} reservation!{% else %}{{ r.tool }}{% endif %}</b><br>
 							Starting on {{ r.start|date:"l, F jS @ g:i A" }}<br>
@@ -91,13 +90,13 @@
 			<div class="col-lg-4">
 				<h3>Alerts &amp; outages</h3>
 				{% for a in alerts %}
-					<div class="alert alert-danger">
+					<div class="alert alert-danger" role="alert">
 						{% if a.title %}<span style="font-weight:bold">{{ a.title }}</span><br>{% endif %}
 						{{ a.contents }}
 					</div>
 				{% endfor %}
 				{% for r in disabled_resources %}
-					<div class="alert alert-danger">
+					<div class="alert alert-danger" role="alert">
 						<span style="font-weight:bold">Resource outage: {{ r }}</span><br>
 						{{ r.restriction_message }}
 					</div>
@@ -108,15 +107,15 @@
 			<div class="col-lg-4">
 				<h3>Current laboratory usage</h3>
 				{% for usage in usage_events %}
-					<a href="{% url 'tool_control' usage.tool.id %}" style="text-decoration: none">
-						<div class="alert alert-info">
+					<a href="{% url 'tool_control' usage.tool.id %}" style="text-decoration: none" aria-label="View tool control for {{ usage.tool }}">
+						<div class="alert alert-info" role="status">
 							You are using the <b>{{ usage.tool }}</b> {% if usage.projects.all|length == 1 %}for the project named {{ usage.projects.all.0 }}{% else %}for {{ usage.projects.all|length }} projects{% endif %} since {{ usage.start }}.
 						</div>
 					</a>
 				{% endfor %}
 				{% if user.charging_staff_time and user.get_staff_charge is not None %}
 					{% with user.get_staff_charge as current_staff_charge %}
-					<div class="alert alert-warning">
+					<div class="alert alert-warning" role="status">
 					You are currently charging staff time to {{ current_staff_charge.customers.all.0 }} for the project named {{ current_staff_charge.projects.all.0 }} since {{ current_staff_charge.start }}{% if current_staff_charge.customers.all.count > 1%}, along with other customers.{% else %}.{% endif %}  Charges are being collected in {% if current_staff_charge.credit_cost_collector_override is not None and current_staff_charge.credit_cost_collector_override != 0 %}{{ current_staff_charge.credit_cost_collector_override_name }}{% else %}{{ user.credit_cost_collector.name }}{% endif %}
 					</div>
 					{% endwith %}
@@ -124,8 +123,8 @@
 				{% if user.in_area %}
 					{% if not user.charging_staff_time %}
 					{% with user.active_project_count as active_project_count %}
-						{% if active_project_count > 1 %}<a href="{% url 'change_project' %}" style="text-decoration: none">{% endif %}
-						<div class="alert alert-info">
+						{% if active_project_count > 1 %}<a href="{% url 'change_project' %}" style="text-decoration: none" aria-label="Change billing project">{% endif %}
+						<div class="alert alert-info" role="status">
 							You are logged in to the <b>{{ user.area_access_record.area|lower }}</b>. Usage time is being billed to the project named <b>{{ user.billing_to_project }}</b>.
 							{% if active_project_count > 1 %}
 								Click to bill to a different project at any time.
@@ -134,13 +133,13 @@
 						{% if active_project_count > 1 %}</a>{% endif %}
 					{% endwith %}
 					{% endif %}
-						<div class="alert alert-info" onclick="force_user_out_of_the_area('{% url 'force_area_logout' user.id %}')">
+						<button type="button" class="alert alert-info" style="display:block; width:100%; text-align:left; border:1px solid #bce8f1; cursor:pointer;" onclick="force_user_out_of_the_area('{% url 'force_area_logout' user.id %}')">
 						You are logged into the <b>{{ user.area_access_record.area|lower }}</b>.  Click here to log out of the area.
-						</div>
+						</button>
 				{% endif %}
 				{% if self_log_in %}
-					<a href="{% url 'self_log_in' %}" style="text-decoration: none">
-						<div class="alert alert-success">
+					<a href="{% url 'self_log_in' %}" style="text-decoration: none" aria-label="Log in to an access controlled area">
+						<div class="alert alert-success" role="status">
 							You are not logged in to an access controlled area. Click here to log in.
 						</div>
 					</a>
@@ -150,7 +149,7 @@
 		{% if user.charging_staff_time and user.get_staff_charge is not None and not usage_events and not user.in_area and not self_log_in%}
 		{% with user.get_staff_charge as current_staff_charge %}
 		<div class="col-lg-4">
-		<div class="alert alert-warning">
+		<div class="alert alert-warning" role="status">
 		You are currently charging staff time to {{ current_staff_charge.customers.all.0 }} for the project named {{ current_staff_charge.projects.all.0 }} since {{ current_staff_charge.start }}{% if current_staff_charge.customers.all.count > 1%}, along with other customers.{% else %}.{% endif %}  Charges are being collected in {% if current_staff_charge.credit_cost_collector_override is not None %}{{ current_staff_charge.credit_cost_collector_override_name }}{% else %}{{ user.credit_cost_collector.name }}{% endif %}
 		</div>
 		</div>
@@ -162,14 +161,14 @@
 		{% for choice in landing_page_choices %}
 			{% if forloop.counter0|divisibleby:4 %}<div class="row">{% endif %}
 				<div class="col-md-3 text-center" style="margin-bottom:30px">
-					<a href="{{ choice.url }}" {% if choice.open_in_new_tab %}target="_blank"{% endif %} {% if choice.secure_referral %}rel="noopener noreferrer"{% endif %} style="text-decoration: none !important">
-						<img src="{{ choice.image.url }}" height="128" width="128">
+					<a href="{{ choice.url }}" {% if choice.open_in_new_tab %}target="_blank" rel="noopener noreferrer" aria-label="{{ choice.name }} (opens in new window)"{% elif choice.secure_referral %}rel="noopener noreferrer"{% endif %} style="text-decoration: none !important">
+						<img src="{{ choice.image.url }}" height="128" width="128" alt="{{ choice.name }}">
 						<h3 style="margin-top:0">
 							{{ choice.name }}
 							{% if choice.notifications %}
 								{% for type, count in notification_counts.items %}
 									{% if choice.notifications == type and count %}
-										<span class="badge" style="vertical-align:middle; background-color:red">{{ count }}</span>
+										<span class="badge" style="vertical-align:middle; background-color:red" aria-label="{{ count }} notifications">{{ count }}</span>
 									{% endif %}
 								{% endfor %}
 							{% endif %}
