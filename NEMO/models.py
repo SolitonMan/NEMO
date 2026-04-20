@@ -531,7 +531,7 @@ class Tool(models.Model):
 
 	def update_post_usage_questions(self):
 		post_usage_questions = []
-		for c in self.configuration_set.all():
+		for c in self.configuration_set.all().order_by('display_priority'):
 			if c.available_settings is None or c.available_settings == '':
 				if c.current_settings is not None and c.current_settings != '':
 					conf = {}
