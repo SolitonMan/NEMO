@@ -56,12 +56,12 @@ class ToolTreeHelper:
 		result += '<li>'
 		if node.__is_leaf():
 			is_selected = str(node.id) == str(selected_tool_id)
+			aria_current = ' aria-current="true"' if is_selected else ''
 			result += (
 				f'<a href="javascript:void(0);" style="display: inline;" '
 				f'onclick="set_selected_item(this)" '
 				f'class="leaf node{" selected" if is_selected else ""}" data-tool-id="{node.id}" data-type="tool link" '
-				f'role="treeitem" tabindex="0" aria-label="{node.name}"'
-				f'{" aria-current=\"true\"" if is_selected else ""}>{node.name}</a>'
+				f'role="treeitem" tabindex="0" aria-label="{node.name}"{aria_current}>{node.name}</a>'
 			)
 		else:
 			category_id = f"category-{self.__safe_id(node.name)}"
@@ -71,9 +71,10 @@ class ToolTreeHelper:
 			ul_class = "nav nav-list tree expanded" if should_expand else "nav nav-list tree collapsed"
 			ul_style = "display:block" if should_expand else "display:none"
 			icon_class = "glyphicon glyphicon-chevron-down" if should_expand else "glyphicon glyphicon-chevron-right"
+			onclick = f"toggle_tool_tree_category(this, '{category_id}')"
 			result += (
 				f'<button class="tree-toggler nav-header btn btn-link" aria-expanded="{aria_expanded}" aria-controls="{category_id}" '
-				f'onclick="toggle_tool_tree_category(this, \'{category_id}\')" '
+				f'onclick="{onclick}" '
 				f'type="button" tabindex="0" aria-label="Expand/collapse {node.name}">'
 				f'<span class="{icon_class}" aria-hidden="true"></span> '
 				f'{node.name}'
