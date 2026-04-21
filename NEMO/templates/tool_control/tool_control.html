@@ -60,22 +60,36 @@
 	</style>
 
 	{% if device == 'mobile' %}
-		<div id="content" class="container"></div>
+		<main id="content" class="container" role="main" aria-live="polite" tabindex="-1"></main>
 	{% else %}
-		<div id="sidebar" class="application-sidebar">
-			<div id="expand-collapse" class="btn-group sidebar-item">
-				<button type="button" class="btn btn-default" style="width:{% if user.is_superuser %}50%{% else %}33%{% endif %}" onclick="expand_all_categories()" title="Expand all tool categories"><span class="glyphicon glyphicon-resize-full"></span></button>
-				<button type="button" class="btn btn-default" style="width:{% if user.is_superuser %}50%{% else %}33%{% endif %}" onclick="collapse_all_categories()" title="Collapse all tool categories"><span class="glyphicon glyphicon-resize-small"></span></button>
+		<aside id="sidebar" class="application-sidebar" role="complementary" aria-label="Tool navigation">
+			<div id="expand-collapse" class="btn-group sidebar-item" role="group" aria-label="Expand or collapse tool categories">
+				<button type="button" class="btn btn-default"
+					style="width:{% if user.is_superuser %}50%{% else %}33%{% endif %}"
+					onclick="expand_all_categories()"
+					aria-label="Expand all tool categories">
+					<span class="glyphicon glyphicon-resize-full" aria-hidden="true"></span>
+				</button>
+				<button type="button" class="btn btn-default"
+					style="width:{% if user.is_superuser %}50%{% else %}33%{% endif %}"
+					onclick="collapse_all_categories()"
+					aria-label="Collapse all tool categories">
+					<span class="glyphicon glyphicon-resize-small" aria-hidden="true"></span>
+				</button>
 				{% if not user.is_superuser %}
-				<button type="button" class="btn btn-default" style="width:33%" onclick="update_tool_filter(this)" title="{% if user.is_staff %}{% if core_only == 1 %}Show all tools{% else %}Show core tools only{% endif %}{% else %}{% if qualified_only == 1 %}Show all tools{% else %}Show qualified tools only{% endif %}{% endif %}"><span class="glyphicon glyphicon-filter"></span></button>
+				<button type="button" class="btn btn-default"
+					style="width:33%"
+					onclick="update_tool_filter(this)"
+					aria-label="{% if user.is_staff %}{% if core_only == 1 %}Show all tools{% else %}Show core tools only{% endif %}{% else %}{% if qualified_only == 1 %}Show all tools{% else %}Show qualified tools only{% endif %}{% endif %}">
+					<span class="glyphicon glyphicon-filter" aria-hidden="true"></span>
+				</button>
 				{% endif %}
 			</div>
-			<input type="text" id="tool_search" placeholder="Search for a tool" class="form-control sidebar-item">
+			<input type="text" id="tool_search" placeholder="Search for a tool" class="form-control sidebar-item" aria-label="Search for a tool">
 			{{ rendered_tool_tree_html }}
-			<div style="height:50px"></div>
-		</div>
-		<div id="content" class="application-content" style="padding-right: 20px; overflow-y:scroll"></div>
-
+			<div style="height:50px" aria-hidden="true"></div>
+		</aside>
+		<main id="content" class="application-content" style="padding-right: 20px; overflow-y:scroll" role="main" aria-live="polite" tabindex="-1"></main>
 	{% endif %}
 
 	<script>
@@ -559,8 +573,19 @@
 
 							{% if request.device != 'mobile' %}
 
-							table_row = "<tr id=\"row_" + current_entry_number + "\"><td style=\"vertical-align: middle\"><span class=\"glyphicon glyphicon-remove-circle grey pointer\" onclick=\"remove_row(" + current_entry_number + ");{% if staff_charge_projects %}update_override(true);{% endif %}\"></span></td><td>" + scp[s]["customer"] + "<input type=\"hidden\" value=\"" + scp[s]["user_id"] + "\" id=\"user_textbox__" + current_entry_number + "\" name=\"chosen_user__" + current_entry_number + "\" data-row=\"" + current_entry_number + "\"></td><td id=\"project__" + current_entry_number + "\" style=\"vertical-align: middle\">" + scp[s]["project"] + "<input type=\"hidden\" value=\"" + scp[s]["project_id"] + "\" name=\"chosen_project__" + current_entry_number + "\" id=\"chosen_project__" + current_entry_number + "\"></td><td>";
-							
+							table_row = "<tr id=\"row_" + current_entry_number + "\">" +
+								"<td style=\"vertical-align: middle\">" +
+									"<button type=\"button\" class=\"btn btn-link p-0\" onclick=\"remove_row(" + current_entry_number + ");{% if staff_charge_projects %}update_override(true);{% endif %}\" aria-label=\"Remove customer\">" +
+										"<span class=\"glyphicon glyphicon-remove-circle grey pointer\" aria-hidden=\"true\"></span>" +
+									"</button>" +
+								"</td>" +
+								"<td>" + scp[s]["customer"] +
+									"<input type=\"hidden\" value=\"" + scp[s]["user_id"] + "\" id=\"user_textbox__" + current_entry_number + "\" name=\"chosen_user__" + current_entry_number + "\" data-row=\"" + current_entry_number + "\">" +
+								"</td>" +
+								"<td id=\"project__" + current_entry_number + "\" style=\"vertical-align: middle\">" + scp[s]["project"] +
+									"<input type=\"hidden\" value=\"" + scp[s]["project_id"] + "\" name=\"chosen_project__" + current_entry_number + "\" id=\"chosen_project__" + current_entry_number + "\">" +
+								"</td><td>";
+
 							for (smp in scp[s]["samples"]) {
 								table_row += scp[s]["samples"][smp]["sample"] + "<input type=\"hidden\" value=\"" + scp[s]["samples"][smp]["sample_id"] + "\" id=\"chosen_sample__" + current_entry_number + "\" name=\"chosen_sample__" + current_entry_number + "\"><br/>";
 							}

@@ -530,3 +530,17 @@ function toggle_tool_watching(tool_id, user_id)
 
 	ajax_post(url, params, [refresh_sidebar_icons], undefined);
 }
+
+
+function toggle_tool_tree_category(button, categoryId) {
+	var category = document.getElementById(categoryId);
+	var expanded = button.getAttribute('aria-expanded') === 'true';
+	button.setAttribute('aria-expanded', !expanded);
+	if (category) {
+		if (expanded) {
+			category.hidden = true;
+		} else {
+			category.hidden = false;
+		}
+	}
+}
