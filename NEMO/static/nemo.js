@@ -536,11 +536,29 @@ function toggle_tool_tree_category(button, categoryId) {
 	var category = document.getElementById(categoryId);
 	var expanded = button.getAttribute('aria-expanded') === 'true';
 	button.setAttribute('aria-expanded', !expanded);
+
+	// Toggle icon
+	var icon = button.querySelector('.glyphicon');
+	if (icon) {
+		if (expanded) {
+			icon.classList.remove('glyphicon-chevron-down');
+			icon.classList.add('glyphicon-chevron-right');
+		} else {
+			icon.classList.remove('glyphicon-chevron-right');
+			icon.classList.add('glyphicon-chevron-down');
+		}
+	}
+
+	// Toggle visibility
 	if (category) {
 		if (expanded) {
-			category.hidden = true;
+			category.classList.add('collapsed');
+			category.classList.remove('expanded');
+			category.style.display = 'none';
 		} else {
-			category.hidden = false;
+			category.classList.remove('collapsed');
+			category.classList.add('expanded');
+			category.style.display = 'block';
 		}
 	}
 }

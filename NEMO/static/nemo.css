@@ -351,6 +351,13 @@ table {
 	border-bottom: 3px solid black;
 }
 
+.collapsed {
+	display: none;
+}
+
+.expanded {
+	display: block;
+}
 
 /*
 @media screen and (max-width: 1200px) {
