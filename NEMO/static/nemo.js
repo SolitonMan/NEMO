@@ -34,26 +34,74 @@ function on_tool_search_selection(jquery_event, search_selection, dataset_name)
 }
 
 // This function toggles all parent categories of a tool and selects the tool.
-function expand_to_tool(id)
-{
+// This function toggles all parent categories of a tool and selects the tool.
+function expand_to_tool(id) {
 	$("#sidebar a").removeClass('selected');
-	//$("a[data-tool-id='" + id + "']").addClass('selected').click().parents('ul.tree').show();
-	$("#tool_tree").find("a[data-tool-id='" + id + "']").addClass('selected').click().parents('ul.tree').show();
-	//save_sidebar_state();
+	const toolLink = $("#tool_tree").find("a[data-tool-id='" + id + "']");
+
+	if (toolLink.length === 0) return;
+
+	toolLink.addClass('selected').click();
+
+	// Find all parent ul.tree elements and expand them properly
+	toolLink.parents('ul.tree').each(function () {
+		const categoryId = $(this).attr('id');
+		const button = $("button[aria-controls='" + categoryId + "']");
+
+		// Update button state
+		button.attr('aria-expanded', 'true');
+
+		// Update icon
+		const icon = button.find('.glyphicon');
+		icon.removeClass('glyphicon-chevron-right').addClass('glyphicon-chevron-down');
+
+		// Show the category
+		$(this).removeClass('collapsed').addClass('expanded').show();
+	});
+
+	save_sidebar_state();
 }
 
 // This function expands all tool category branches for the sidebar in the calendar & tool control pages.
-function expand_all_categories()
-{
-	$("#tool_tree ul.tree").show();
+function expand_all_categories() {
+	// Update all category buttons and their associated lists
+	$("#tool_tree ul.tree").each(function () {
+		const categoryId = $(this).attr('id');
+		const button = $("button[aria-controls='" + categoryId + "']");
+
+		// Update button state
+		button.attr('aria-expanded', 'true');
+
+		// Update icon
+		const icon = button.find('.glyphicon');
+		icon.removeClass('glyphicon-chevron-right').addClass('glyphicon-chevron-down');
+
+		// Show the category
+		$(this).removeClass('collapsed').addClass('expanded').show();
+	});
+
 	$("#search").focus();
 	save_sidebar_state();
 }
 
 // This function collapses all tool category branches for the sidebar in the calendar & tool control pages.
-function collapse_all_categories()
-{
-	$("#tool_tree ul.tree").hide();
+function collapse_all_categories() {
+	// Update all category buttons and their associated lists
+	$("#tool_tree ul.tree").each(function () {
+		const categoryId = $(this).attr('id');
+		const button = $("button[aria-controls='" + categoryId + "']");
+
+		// Update button state
+		button.attr('aria-expanded', 'false');
+
+		// Update icon
+		const icon = button.find('.glyphicon');
+		icon.removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-right');
+
+		// Hide the category
+		$(this).removeClass('expanded').addClass('collapsed').hide();
+	});
+
 	$("#search").focus();
 	save_sidebar_state();
 }
@@ -71,60 +119,102 @@ function get_selected_item()
 }
 
 // This function visually highlights a clicked link with a gray background.
-function set_selected_item(element)
-{
-	if ($("#calendar").length)
-	{
+function set_selected_item(element) {
+	if ($("#calendar").length) {
 		$("#calendar").fullCalendar("removeEvents");
 	}
 	$("#sidebar a").removeClass('selected');
 	$(element).addClass('selected');
+	$(element).attr('aria-current', 'true');
+	$("#sidebar a").not(element).removeAttr('aria-current');
 	$("#current_tool_selection").html($(element).text());
 	save_sidebar_state();
 }
 
-function set_selected_item_by_id(tool_id)
-{
+function set_selected_item_by_id(tool_id) {
 	if (!tool_id) {
 		tool_id = 1;
 	}
-	let tool = $("#tool_tree [data-tool-id=" + tool_id + "]");
-	if(tool.length === 1)
-	{
-		$("#sidebar a").removeClass('selected');
-		tool.addClass('selected');
+	const tool = $("#tool_tree [data-tool-id=" + tool_id + "]");
+	if (tool.length === 1) {
+		$("#sidebar a").removeClass('selected').removeAttr('aria-current');
+		tool.addClass('selected').attr('aria-current', 'true');
 		$("#current_tool_selection").html(tool.text());
 	}
 }
 
-function save_sidebar_state()
-{
-	localStorage.clear();
-	let categories = $("#tool_tree ul.tree");
-	for(let c = 0; c < categories.length; c++)
-	{
-		let category = categories[c].getAttribute('data-category');
-		localStorage[category] = $(categories[c]).is(':visible');
+function save_sidebar_state() {
+	// Clear previous state
+	const keysToRemove = [];
+	for (let i = 0; i < localStorage.length; i++) {
+		const key = localStorage.key(i);
+		if (key !== 'Selected tool ID') {
+			keysToRemove.push(key);
+		}
 	}
+	keysToRemove.forEach(key => localStorage.removeItem(key));
+
+	// Save current state of each category
+	const categories = $("#tool_tree ul.tree");
+	for (let c = 0; c < categories.length; c++) {
+		const categoryId = categories[c].getAttribute('id');
+		const button = $("button[aria-controls='" + categoryId + "']");
+		const isExpanded = button.attr('aria-expanded') === 'true';
+		localStorage[categoryId] = isExpanded;
+	}
+
+	// Save selected tool
 	localStorage['Selected tool ID'] = get_selected_item();
 }
 
-function load_sidebar_state()
-{
-	let categories = $("#tool_tree ul.tree");
-	for(let c = 0; c < categories.length; c++)
-	{
-		let category = categories[c];
-		let name = category.getAttribute('data-category');
-		let state = localStorage[name];
-		if(state === "true")
-			$(category).show();
-		else
-			$(category).hide();
+function load_sidebar_state() {
+	const categories = $("#tool_tree ul.tree");
+	let hasState = false;
+
+	// Check if we have any saved state
+	for (let c = 0; c < categories.length; c++) {
+		const categoryId = categories[c].getAttribute('id');
+		if (localStorage[categoryId] !== undefined) {
+			hasState = true;
+			break;
+		}
 	}
-	let selected = localStorage['Selected tool ID'];
-	if(selected)
+
+	// Load state for each category
+	for (let c = 0; c < categories.length; c++) {
+		const category = categories[c];
+		const categoryId = category.getAttribute('id');
+		const button = $("button[aria-controls='" + categoryId + "']");
+		const icon = button.find('.glyphicon');
+
+		let shouldExpand = false;
+
+		if (hasState) {
+			// Use saved state if available
+			const state = localStorage[categoryId];
+			shouldExpand = state === "true";
+		} else {
+			// Fall back to server-rendered state
+			shouldExpand = button.attr('aria-expanded') === 'true';
+		}
+
+		// Apply the state
+		if (shouldExpand) {
+			button.attr('aria-expanded', 'true');
+			icon.removeClass('glyphicon-chevron-right').addClass('glyphicon-chevron-down');
+			$(category).removeClass('collapsed').addClass('expanded').show();
+		} else {
+			button.attr('aria-expanded', 'false');
+			icon.removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-right');
+			$(category).removeClass('expanded').addClass('collapsed').hide();
+		}
+	}
+
+	// Load selected tool
+	const selected = localStorage['Selected tool ID'];
+	if (selected) {
 		set_selected_item_by_id(selected);
+	}
 }
 
 function refresh_sidebar_icons()
@@ -533,12 +623,12 @@ function toggle_tool_watching(tool_id, user_id)
 
 
 function toggle_tool_tree_category(button, categoryId) {
-	var category = document.getElementById(categoryId);
-	var expanded = button.getAttribute('aria-expanded') === 'true';
+	const category = document.getElementById(categoryId);
+	const expanded = button.getAttribute('aria-expanded') === 'true';
 	button.setAttribute('aria-expanded', !expanded);
 
 	// Toggle icon
-	var icon = button.querySelector('.glyphicon');
+	const icon = button.querySelector('.glyphicon');
 	if (icon) {
 		if (expanded) {
 			icon.classList.remove('glyphicon-chevron-down');
@@ -549,16 +639,16 @@ function toggle_tool_tree_category(button, categoryId) {
 		}
 	}
 
-	// Toggle visibility
+	// Toggle visibility with animation
 	if (category) {
 		if (expanded) {
 			category.classList.add('collapsed');
 			category.classList.remove('expanded');
-			category.style.display = 'none';
+			$(category).slideUp(300, save_sidebar_state);
 		} else {
 			category.classList.remove('collapsed');
 			category.classList.add('expanded');
-			category.style.display = 'block';
+			$(category).slideDown(300, save_sidebar_state);
 		}
 	}
 }
