@@ -227,86 +227,86 @@
 
 				{% if current_usage_event.usageeventproject_set.all.0.sample_detail.all.count > 0 %}
 
-				{% if device != 'mobile' %}
-				<div>
-					<h5>Samples</h5>
-					<table class="table">
-						<caption class="sr-only">Samples for {{ current_usage_event.projects.all.0 }}</caption>
-						<thead class="sr-only">
-							<tr>
-								<th>Sample</th>
-								<th>Comment</th>
-								<th>Actions</th>
-							</tr>
-						</thead>
-						<tbody>
-							{% for s in current_usage_event.usageeventproject_set.all.0.usageeventprojectsample_set.all %}
-							{% if s.active_flag %}
-							<tr>
-								<td class="sample-name-cell">{{ s.sample }}</td>
-								<td class="sample-comment-cell">
-									<label for="smpc__{{current_usage_event.usageeventproject_set.all.0.id}}__{{s.sample.id}}" class="sr-only">Comment for {{ s.sample }}</label>
-									<textarea rows="2" class="form-control sample-comment-textarea" name="smpc__{{current_usage_event.usageeventproject_set.all.0.id}}__{{s.sample.id}}" id="smpc__{{current_usage_event.usageeventproject_set.all.0.id}}__{{s.sample.id}}" onblur="save_sample_comment(this);">{% if s.notes is not None %}{{ s.notes }}{% endif %}</textarea>
-								</td>
-								<td class="sample-actions-cell">
-									<button type="button" class="btn btn-danger btn-sm" onclick="remove_sample({{current_usage_event.usageeventproject_set.all.0.id}},{{s.sample.id}});" aria-label="Remove {{ s.sample }} from run">
-										<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
-										<span class="sr-only">Remove</span>
-									</button>
-								</td>
-							</tr>
-							{% endif %}
-							{% endfor %}
-						</tbody>
-					</table>
-					<div class="sample-actions">
-						<button type="button" class="btn btn-success" onclick="add_run_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" aria-label="Add new sample">
-							<span class="glyphicon glyphicon-plus" aria-hidden="true"></span> New
-						</button>
-						<button type="button" class="btn btn-primary" onclick="add_run_existing_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" aria-label="Add existing sample" {% if current_usage_event.usageeventproject_set.all.0.project.sample_set.all.count == 0 %} disabled{% endif %}>
-							<span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Existing
-						</button>
+					{% if device != 'mobile' %}
+					<div>
+						<h5>Samples</h5>
+						<table class="table">
+							<caption class="sr-only">Samples for {{ current_usage_event.projects.all.0 }}</caption>
+							<thead class="sr-only">
+								<tr>
+									<th>Sample</th>
+									<th>Comment</th>
+									<th>Actions</th>
+								</tr>
+							</thead>
+							<tbody>
+								{% for s in current_usage_event.usageeventproject_set.all.0.usageeventprojectsample_set.all %}
+								{% if s.active_flag %}
+								<tr>
+									<td class="sample-name-cell">{{ s.sample }}</td>
+									<td class="sample-comment-cell">
+										<label for="smpc__{{current_usage_event.usageeventproject_set.all.0.id}}__{{s.sample.id}}" class="sr-only">Comment for {{ s.sample }}</label>
+										<textarea rows="2" class="form-control sample-comment-textarea" name="smpc__{{current_usage_event.usageeventproject_set.all.0.id}}__{{s.sample.id}}" id="smpc__{{current_usage_event.usageeventproject_set.all.0.id}}__{{s.sample.id}}" onblur="save_sample_comment(this);">{% if s.notes is not None %}{{ s.notes }}{% endif %}</textarea>
+									</td>
+									<td class="sample-actions-cell">
+										<button type="button" class="btn btn-danger btn-sm" onclick="remove_sample({{current_usage_event.usageeventproject_set.all.0.id}},{{s.sample.id}});" aria-label="Remove {{ s.sample }} from run">
+											<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+											<span class="sr-only">Remove</span>
+										</button>
+									</td>
+								</tr>
+								{% endif %}
+								{% endfor %}
+							</tbody>
+						</table>
+						<div class="sample-actions">
+							<button type="button" class="btn btn-success" onclick="add_run_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" aria-label="Add new sample">
+								<span class="glyphicon glyphicon-plus" aria-hidden="true"></span> New
+							</button>
+							<button type="button" class="btn btn-primary" onclick="add_run_existing_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" aria-label="Add existing sample" {% if current_usage_event.usageeventproject_set.all.0.project.sample_set.all.count == 0 %} disabled{% endif %}>
+								<span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Existing
+							</button>
+						</div>
 					</div>
-				</div>
-				{% else %}
+					{% else %}
 
-				<div class="sample-accordion">
-					{% for s in current_usage_event.usageeventproject_set.all.0.usageeventprojectsample_set.all %}
-					{% if s.active_flag %}
-					<div class="sample-accordion-item">
-						<div class="sample-accordion-header">{{ s.sample }}</div>
-						<div class="sample-accordion-body">
-							<label for="smpc__{{current_usage_event.usageeventproject_set.all.0.id}}__{{s.sample.id}}" class="sr-only">Comment for {{ s.sample }}</label>
-							<textarea rows="2" class="form-control sample-comment-textarea" name="smpc__{{current_usage_event.usageeventproject_set.all.0.id}}__{{s.sample.id}}" id="smpc__{{current_usage_event.usageeventproject_set.all.0.id}}__{{s.sample.id}}" onblur="save_sample_comment(this);">{% if s.notes is not None %}{{ s.notes }}{% endif %}</textarea>
-							<br />
-							<button type="button" class="btn btn-danger" onclick="remove_sample({{current_usage_event.usageeventproject_set.all.0.id}},{{s.sample.id}});" aria-label="Remove sample {{ s.sample }}">
-								<span class="glyphicon glyphicon-remove" aria-hidden="true"></span> Remove Sample
+					<div class="sample-accordion">
+						{% for s in current_usage_event.usageeventproject_set.all.0.usageeventprojectsample_set.all %}
+						{% if s.active_flag %}
+						<div class="sample-accordion-item">
+							<div class="sample-accordion-header">{{ s.sample }}</div>
+							<div class="sample-accordion-body">
+								<label for="smpc__{{current_usage_event.usageeventproject_set.all.0.id}}__{{s.sample.id}}" class="sr-only">Comment for {{ s.sample }}</label>
+								<textarea rows="2" class="form-control sample-comment-textarea" name="smpc__{{current_usage_event.usageeventproject_set.all.0.id}}__{{s.sample.id}}" id="smpc__{{current_usage_event.usageeventproject_set.all.0.id}}__{{s.sample.id}}" onblur="save_sample_comment(this);">{% if s.notes is not None %}{{ s.notes }}{% endif %}</textarea>
+								<br />
+								<button type="button" class="btn btn-danger" onclick="remove_sample({{current_usage_event.usageeventproject_set.all.0.id}},{{s.sample.id}});" aria-label="Remove sample {{ s.sample }}">
+									<span class="glyphicon glyphicon-remove" aria-hidden="true"></span> Remove Sample
+								</button>
+							</div>
+						</div>
+						{% endif %}
+						{% endfor %}
+						<div class="sample-actions">
+							<button type="button" class="btn btn-success" onclick="add_run_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" aria-label="Add new sample">
+								<span class="glyphicon glyphicon-plus" aria-hidden="true"></span> New Sample
+							</button>
+							<button type="button" class="btn btn-primary" onclick="add_run_existing_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" aria-label="Add existing sample" {%if current_usage_event.usageeventproject_set.all.0.project.sample_set.all.count == 0 %} disabled{% endif %}>
+								<span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Existing Sample
 							</button>
 						</div>
 					</div>
 					{% endif %}
-					{% endfor %}
-					<div class="sample-actions">
+					{% else %}
+					<p>
+						No samples currently selected<br />
 						<button type="button" class="btn btn-success" onclick="add_run_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" aria-label="Add new sample">
-							<span class="glyphicon glyphicon-plus" aria-hidden="true"></span> New Sample
+							<span class="glyphicon glyphicon-plus" aria-hidden="true"></span> New
 						</button>
 						<button type="button" class="btn btn-primary" onclick="add_run_existing_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" aria-label="Add existing sample" {%if current_usage_event.usageeventproject_set.all.0.project.sample_set.all.count == 0 %} disabled{% endif %}>
-							<span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Existing Sample
+							<span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Existing
 						</button>
-					</div>
-				</div>
-
-				{% else %}
-				<p>
-					No samples currently selected<br />
-					<button type="button" class="btn btn-success" onclick="add_run_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" aria-label="Add new sample">
-						<span class="glyphicon glyphicon-plus" aria-hidden="true"></span> New
-					</button>
-					<button type="button" class="btn btn-primary" onclick="add_run_existing_sample({{current_usage_event.usageeventproject_set.all.0.project.id}},{{current_usage_event.usageeventproject_set.all.0.id}});" aria-label="Add existing sample" {%if current_usage_event.usageeventproject_set.all.0.project.sample_set.all.count == 0 %} disabled{% endif %}>
-						<span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Existing
-					</button>
-				</p>
-				{% endif %}
+					</p>
+					{% endif %}
 				{% endif %}
 				since {{ current_usage_event.start|date:"l @ g:i A" }}.
 				{% if current_usage_event.set_for_autologout %}
