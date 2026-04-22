@@ -18,6 +18,12 @@
 			cursor: pointer;
 			display: table;
 			width: 100%;
+			border: none;
+			text-align: left;
+		}
+		.requirement-header:focus {
+			outline: 2px solid #0066cc;
+			outline-offset: 2px;
 		}
 		.requirement-title {
 			font-size: 1.1em;
@@ -34,10 +40,11 @@
 			margin-right: 0.5em;
 			display: inline-block;
 		}
-		.status-not-started { background: #f44336; }
-		.status-in-progress { background: #ff9800; }
-		.status-completed { background: #4caf50; }
-		.status-unknown { background: #9e9e9e; }
+		/* Updated colors for better contrast (4.5:1 minimum) */
+		.status-not-started { background: #d32f2f; } /* Darker red */
+		.status-in-progress { background: #e65100; } /* Darker orange */
+		.status-completed { background: #2e7d32; } /* Darker green */
+		.status-unknown { background: #616161; } /* Darker grey */
 		.requirement-toggle {
 			display: table-cell;
 			vertical-align: middle;
@@ -52,6 +59,21 @@
 		.card-actions {
 			margin-top: 0.7em;
 		}
+		.btn:focus {
+			outline: 2px solid #0066cc;
+			outline-offset: 2px;
+		}
+		.visually-hidden {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			padding: 0;
+			margin: -1px;
+			overflow: hidden;
+			clip: rect(0, 0, 0, 0);
+			white-space: nowrap;
+			border: 0;
+		}
 		@media (max-width: 600px) {
 			.requirement-header, .requirement-details {
 				padding: 0.7em;
@@ -64,98 +86,114 @@
 {% endblock %}
 {% block content %}
 
-<h3 class="mb-3">Your Requirements</h3>
+<main role="main" id="main-content">
+	<h1 class="mb-3">Your Requirements</h1>
 
-<div class="container-fluid" style="padding-left:0;padding-right:0;">
-	{% for req in requirements_table %}
-		<div class="requirement-panel panel panel-default" id="req-card-{{ req.id }}">
-			<div class="requirement-header" data-toggle="collapse" data-target="#details-{{ req.id }}">
-				<span class="status-badge
-					{% if req.status_value == 'Not Started' %}status-not-started
-					{% elif req.status_value == 'In Progress' %}status-in-progress
-					{% elif req.status_value == 'Completed' %}status-completed
-					{% else %}status-unknown{% endif %}">
-					{{ req.status_value|default:"Not Started" }}
-				</span>
-				<span class="requirement-title">{{ req.name }}</span>
-				<span class="requirement-toggle">
-					<span class="glyphicon glyphicon-chevron-down"></span>
-				</span>
-			</div>
-			<div class="requirement-details panel-collapse collapse" id="details-{{ req.id }}">
-				<div>
-					<strong>Description:</strong> {{ req.description|default:"-" }}
-				</div>
-				<div>
-					<strong>Added:</strong> {{ req.created|date:"m/d/Y"|default:"" }}
-					&nbsp;|&nbsp;
-					<strong>Completed:</strong> {{ req.completed_on|date:"m/d/Y"|default:"" }}
-				</div>
-				<div>
-					<strong>Resources:</strong>
-					{% if req.resource_link and req.resource_link != 'NULL' %}
-						<a href="{{ req.resource_link }}" target="_blank">{{ req.resource_link_name }}</a>
-					{% else %}
-						N/A
-					{% endif %}
-				</div>
-				<div>
-					<strong>Prerequisites:</strong> {{ req.prerequisites|default:"None" }}
-				</div>
-				<div>
-					<strong>Estimated Time:</strong> {{ req.expected_completion_time|default:"-" }}
-				</div>
-				<hr>
-				<div>
-					<strong>Related Service Request:</strong>
-					{% if req.main_service_request %}
-						<div>
-							<b>{{ req.main_service_request.service_type.name }}</b>
-							(Project: {{ req.main_service_request.project.name }}, Status: {{ req.main_service_request.status }})<br>
-							Description: {{ req.main_service_request.description|default:"-" }}
-						</div>
-					{% else %}
-						<div>No direct service request associated.</div>
-					{% endif %}
-				</div>
-				<div>
-					<strong>Other Service Requests:</strong>
-					<ul style="margin-bottom:0.5em;">
-					{% for sr in req.other_service_requests %}
-						<li>
-							<b>{{ sr.service_type.name }}</b>
-							(Project: {{ sr.project.name }}, Status: {{ sr.status }})<br>
-							Description: {{ sr.description|default:"-" }}
-						</li>
-					{% empty %}
-						<li>None</li>
-					{% endfor %}
-					</ul>
-				</div>
-				<div class="card-actions">
-					{% if not req.automated_update %}
-						{% if req.status_value == 'Completed' %}
-							<form method="post" action="{% url 'unmark_user_requirement' %}" style="display:inline;" onsubmit="return confirm('Please confirm that you wish to mark the requirement {{ req.name }} as incomplete.  Once you make this change you will have to sign again to mark it completed.');">
-								{% csrf_token %}
-								<input type="hidden" name="requirement_id" value="{{ req.id }}">
-								<button type="submit" class="btn btn-warning btn-block btn-sm">Unmark Completed</button>
-							</form>
-						{% elif req.status_value != 'Completed' %}
-							<form method="post" action="{% url 'complete_user_requirement' %}" style="display:inline;" onsubmit="return prompt('Please enter your username ({{ request.user.username }}) to indicate you have completed the requirement - {{ req.name }}') == '{{ request.user.username }}';">
-								{% csrf_token %}
-								<input type="hidden" name="requirement_id" value="{{ req.id }}">
-								<button type="submit" class="btn btn-primary btn-block btn-sm">Mark Completed</button>
-							</form>
+	<div class="container-fluid" style="padding-left:0;padding-right:0;" role="region" aria-label="Requirements list">
+		{% for req in requirements_table %}
+			<div class="requirement-panel panel panel-default" id="req-card-{{ req.id }}">
+				<button 
+					class="requirement-header" 
+					type="button"
+					aria-expanded="false" 
+					aria-controls="details-{{ req.id }}"
+					id="header-{{ req.id }}">
+					<span class="status-badge
+						{% if req.status_value == 'Not Started' %}status-not-started
+						{% elif req.status_value == 'In Progress' %}status-in-progress
+						{% elif req.status_value == 'Completed' %}status-completed
+						{% else %}status-unknown{% endif %}"
+						role="status"
+						aria-label="Status: {{ req.status_value|default:'Not Started' }}">
+						{{ req.status_value|default:"Not Started" }}
+					</span>
+					<span class="requirement-title">{{ req.name }}</span>
+					<span class="requirement-toggle" aria-hidden="true">
+						<span class="glyphicon glyphicon-chevron-down"></span>
+					</span>
+				</button>
+				<div 
+					class="requirement-details panel-collapse collapse" 
+					id="details-{{ req.id }}"
+					role="region"
+					aria-labelledby="header-{{ req.id }}">
+					<div>
+						<strong>Description:</strong> {{ req.description|default:"-" }}
+					</div>
+					<div>
+						<strong>Added:</strong> {{ req.created|date:"m/d/Y"|default:"" }}
+						&nbsp;|&nbsp;
+						<strong>Completed:</strong> {{ req.completed_on|date:"m/d/Y"|default:"" }}
+					</div>
+					<div>
+						<strong>Resources:</strong>
+						{% if req.resource_link and req.resource_link != 'NULL' %}
+							<a href="{{ req.resource_link }}" target="_blank" rel="noopener noreferrer" aria-label="Open {{ req.resource_link_name }} in new tab">
+								{{ req.resource_link_name }}
+								<span class="visually-hidden">(opens in new tab)</span>
+							</a>
+						{% else %}
+							N/A
 						{% endif %}
-					{% endif %}
-					{% if req.automated_update and req.status_value != 'Completed' %}
-						<span class="text-muted">Automated Update</span>
-					{% endif %}
+					</div>
+					<div>
+						<strong>Prerequisites:</strong> {{ req.prerequisites|default:"None" }}
+					</div>
+					<div>
+						<strong>Estimated Time:</strong> {{ req.expected_completion_time|default:"-" }}
+					</div>
+					<hr>
+					<div>
+						<strong>Related Service Request:</strong>
+						{% if req.main_service_request %}
+							<div>
+								<b>{{ req.main_service_request.service_type.name }}</b>
+								(Project: {{ req.main_service_request.project.name }}, Status: {{ req.main_service_request.status }})<br>
+								Description: {{ req.main_service_request.description|default:"-" }}
+							</div>
+						{% else %}
+							<div>No direct service request associated.</div>
+						{% endif %}
+					</div>
+					<div>
+						<strong>Other Service Requests:</strong>
+						<ul style="margin-bottom:0.5em;">
+						{% for sr in req.other_service_requests %}
+							<li>
+								<b>{{ sr.service_type.name }}</b>
+								(Project: {{ sr.project.name }}, Status: {{ sr.status }})<br>
+								Description: {{ sr.description|default:"-" }}
+							</li>
+						{% empty %}
+							<li>None</li>
+						{% endfor %}
+						</ul>
+					</div>
+					<div class="card-actions">
+						{% if not req.automated_update %}
+							{% if req.status_value == 'Completed' %}
+								<form method="post" action="{% url 'unmark_user_requirement' %}" style="display:inline;" onsubmit="return confirm('Please confirm that you wish to mark the requirement {{ req.name }} as incomplete.  Once you make this change you will have to sign again to mark it completed.');" aria-label="Unmark requirement {{ req.name }} as completed">
+									{% csrf_token %}
+									<input type="hidden" name="requirement_id" value="{{ req.id }}" aria-label="Requirement ID">
+									<button type="submit" class="btn btn-warning btn-block btn-sm" aria-label="Unmark {{ req.name }} as completed">Unmark Completed</button>
+								</form>
+							{% elif req.status_value != 'Completed' %}
+								<form method="post" action="{% url 'complete_user_requirement' %}" style="display:inline;" onsubmit="return prompt('Please enter your username ({{ request.user.username }}) to indicate you have completed the requirement - {{ req.name }}') == '{{ request.user.username }}';" aria-label="Mark requirement {{ req.name }} as completed">
+									{% csrf_token %}
+									<input type="hidden" name="requirement_id" value="{{ req.id }}" aria-label="Requirement ID">
+									<button type="submit" class="btn btn-primary btn-block btn-sm" aria-label="Mark {{ req.name }} as completed">Mark Completed</button>
+								</form>
+							{% endif %}
+						{% endif %}
+						{% if req.automated_update and req.status_value != 'Completed' %}
+							<span class="text-muted" role="status">Automated Update</span>
+						{% endif %}
+					</div>
 				</div>
 			</div>
-		</div>
-	{% endfor %}
-</div>
+		{% endfor %}
+	</div>
+</main>
 
 <script>
 (function () {
@@ -165,19 +203,36 @@
 	$('.requirement-header').on('click', function () {
 		var $header = $(this);
 		var $details = $header.closest('.requirement-panel').find('.requirement-details');
+		var isExpanded = $header.attr('aria-expanded') === 'true';
+		
+		// Update aria-expanded
+		$header.attr('aria-expanded', !isExpanded);
+		
 		$details.collapse('toggle');
-		// Remove icon toggle here; let collapse events handle it
 	});
 
 	$('.requirement-details').on('show.bs.collapse', function () {
-		$(this).closest('.requirement-panel').find('.glyphicon')
+		var $panel = $(this).closest('.requirement-panel');
+		$panel.find('.glyphicon')
 			.removeClass('glyphicon-chevron-down')
 			.addClass('glyphicon-chevron-up');
+		$panel.find('.requirement-header').attr('aria-expanded', 'true');
 	});
+	
 	$('.requirement-details').on('hide.bs.collapse', function () {
-		$(this).closest('.requirement-panel').find('.glyphicon')
+		var $panel = $(this).closest('.requirement-panel');
+		$panel.find('.glyphicon')
 			.removeClass('glyphicon-chevron-up')
 			.addClass('glyphicon-chevron-down');
+		$panel.find('.requirement-header').attr('aria-expanded', 'false');
+	});
+
+	// Keyboard support for Enter/Space on requirement headers
+	$('.requirement-header').on('keydown', function (e) {
+		if (e.key === 'Enter' || e.key === ' ') {
+			e.preventDefault();
+			$(this).click();
+		}
 	});
 })();
 </script>

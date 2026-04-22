@@ -13,7 +13,19 @@
 			border: 1px solid #e3e3e3;
 			padding: 12px;
 			background: #fff;
+		}
+		.request-card-button {
+			width: 100%;
+			text-align: left;
+			background: transparent;
+			border: none;
+			padding: 0;
 			cursor: pointer;
+			display: block;
+		}
+		.request-card-button:focus {
+			outline: 2px solid #0066cc;
+			outline-offset: 2px;
 		}
 		.request-header {
 			font-weight: bold;
@@ -28,6 +40,20 @@
 			padding: 2px 8px;
 			font-size: 12px;
 			display: inline-block;
+			font-weight: bold;
+		}
+		/* Updated colors for better contrast */
+		.status-not-started {
+			background-color: #ffcccc;
+			color: #8b0000; /* Dark red for contrast */
+		}
+		.status-completed {
+			background-color: #ccffcc;
+			color: #006400; /* Dark green for contrast */
+		}
+		.status-in-progress {
+			background-color: #fff4cc;
+			color: #8b6914; /* Dark yellow/gold for contrast */
 		}
 		.progress {
 			height: 12px;
@@ -48,6 +74,14 @@
 		.toggle-btn-group .btn {
 			flex: 1 1 0;
 			border-radius: 0;
+		}
+		.toggle-btn-group .btn:focus {
+			outline: 2px solid #0066cc;
+			outline-offset: 2px;
+		}
+		.btn:focus {
+			outline: 2px solid #0066cc;
+			outline-offset: 2px;
 		}
 		@media (max-width: 600px) {
 			.request-header {
@@ -91,249 +125,400 @@
 			width: 100%;
 			border-radius: 4px;
 		}
+		
+		.visually-hidden {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			padding: 0;
+			margin: -1px;
+			overflow: hidden;
+			clip: rect(0, 0, 0, 0);
+			white-space: nowrap;
+			border: 0;
+		}
+		
+		#error-message {
+			margin-top: 10px;
+		}
 	</style>
 {% endblock %}
 {% block content %}
 
-<div class="container-fluid">
-	<h3 style="margin-top: 12px;">Your Requests</h3>
-	<div class="toggle-btn-group">
-		<div class="btn-row">
-			<button class="btn btn-default active" id="toggle-training">Training</button>
-			<button class="btn btn-default" id="toggle-service">Service</button>
-		</div>
-		<div class="btn-row">
-			<button class="btn btn-requirements btn-block" id="toggle-requirements">Requirements Management</button>
-		</div>
-	</div>
-	<div>
-		<button class="btn btn-success btn-block" id="btn_add_service" type="button" data-toggle="modal" data-target="#requestWizardModal" style="margin-bottom: 16px;">Submit a request</button>
-	</div>
-
-	<!-- Training/Service Requests List -->
-	<div id="requests-list-container">
-		{% for req in user_service_requests %}
-			<div class="request-card"
-				data-request-id="{{ req.id }}"
-				data-training-request="{{ req.training_request|yesno:'true,false' }}">
-				<div class="request-header">
-					<span>
-						{{ req.service_type.name }}
-					</span>
-					<span class="request-status"
-						style="background-color:
-							{% if req.status == 'Not Started' %}#ffcccc{% endif %}
-							{% if req.status == 'Completed' %}#ccffcc{% endif %}
-							{% if req.status == 'In Progress' %}#ffffcc{% endif %};">
-						{{ req.status }}
-					</span>
-					<span class="glyphicon glyphicon-chevron-right"></span>
-				</div>
-				<div>
-					<strong>Core:</strong> {{ req.service_type.core.name }}<br>
-					<strong>Project:</strong> {{ req.project.name }}<br>
-					<strong>Requested:</strong> {{ req.created|date:"Y-m-d H:i" }}<br>
-					<strong>Training:</strong> {% if req.training_request %}Yes{% else %}No{% endif %}
-				</div>
-				<div style="margin-top: 8px;">
-					{% with reqs=request_requirements|get_item:req.id %}
-						{% with total=reqs|length completed=reqs|completed_count %}
-							<div style="display: flex; align-items: center;">
-								<div class="progress" style="flex: 1 1 auto; margin-right: 8px;">
-									<div class="progress-bar" role="progressbar"
-										style="width: {% if total > 0 %}{{ completed|floatformat:2|divided_by:total|floatformat:2 }}{% else %}0{% endif %}%;"
-										aria-valuenow="{{ completed }}" aria-valuemin="0" aria-valuemax="{{ total }}">
-									</div>
-								</div>
-								<span style="font-size: 12px;">{{ completed }}/{{ total }}</span>
-							</div>
-						{% endwith %}
-					{% endwith %}
-				</div>
-				<div class="details-section" id="details-{{ req.id }}">
-					<hr>
-					<div>
-						<strong>Case Number:</strong> {{ req.case_number|default:"-" }}<br>
-						<strong>Contact:</strong>
-						{% if req.owner %}
-							<a href="mailto:{{ req.owner }}">{{ req.owner_first_name }} {{ req.owner_last_name }}</a>
-						{% else %}
-							-
-						{% endif %}
-						<br>
-						<strong>Description:</strong> {{ req.description|default:"-" }}<br>
-						<strong>Training Approved:</strong> {% if req.training_approved %}Yes{% else %}No{% endif %}<br>
-						<strong>Last Updated:</strong> {{ req.updated|date:"Y-m-d H:i" }}
-					</div>
-					<hr>
-					<strong>Requirements:</strong>
-					{% with reqs=request_requirements|get_item:req.id %}
-						{% if reqs %}
-							<ul style="padding-left: 18px;">
-								{% for r in reqs %}
-									<li>
-										<span style="font-weight: bold;">{{ r.name }}</span>
-										<span class="request-status"
-											style="background-color:
-												{% if r.status == 'Not Started' %}#ffcccc{% endif %}
-												{% if r.status == 'Completed' %}#ccffcc{% endif %}
-												{% if r.status == 'In Progress' %}#ffffcc{% endif %};">
-											{{ r.status|default:"Not Started" }}
-										</span>
-										<br>
-										<span style="font-size: 12px;">
-											{{ r.description }}<br>
-											{% if r.resource_link %}
-												<a href="{{ r.resource_link }}" target="_blank">{{ r.resource_link_name }}</a>
-											{% endif %}
-											{% if r.expected_completion_time %}
-												&nbsp;Est: {{ r.expected_completion_time }}
-											{% endif %}
-											{% if r.prerequisites %}
-												&nbsp;Prereq: {{ r.prerequisites }}
-											{% endif %}
-										</span>
-									</li>
-								{% endfor %}
-							</ul>
-						{% else %}
-							<p>No requirements for this request.</p>
-						{% endif %}
-					{% endwith %}
-				</div>
+<main role="main" id="main-content">
+	<div class="container-fluid">
+		<h1 style="margin-top: 12px;">Your Requests</h1>
+		
+		<div class="toggle-btn-group" role="tablist" aria-label="Request type filters">
+			<div class="btn-row">
+				<button class="btn btn-default active" 
+					id="toggle-training" 
+					role="tab" 
+					aria-selected="true" 
+					aria-controls="requests-list-container">
+					Training
+				</button>
+				<button class="btn btn-default" 
+					id="toggle-service" 
+					role="tab" 
+					aria-selected="false" 
+					aria-controls="requests-list-container">
+					Service
+				</button>
 			</div>
-		{% endfor %}
-	</div>
+			<div class="btn-row">
+				<button class="btn btn-requirements btn-block" 
+					id="toggle-requirements" 
+					role="tab" 
+					aria-selected="false" 
+					aria-controls="requirements-table-container">
+					Requirements Management
+				</button>
+			</div>
+		</div>
+		
+		<div>
+			<button class="btn btn-success btn-block" 
+				id="btn_add_service" 
+				type="button" 
+				data-toggle="modal" 
+				data-target="#requestWizardModal" 
+				style="margin-bottom: 16px;"
+				aria-label="Open request submission form">
+				Submit a request
+			</button>
+		</div>
 
-	<!-- Requirements List (Mobile Friendly) -->
-	<div id="requirements-table-container" style="display:none;">
-		{% if requirements_table %}
-			<div>
-				{% for req in requirements_table %}
-					<div class="request-card" style="margin-bottom: 12px;">
-						<div class="request-header" style="font-size:15px;">
-							<span>{{ req.name }}</span>
-							<span class="request-status"
-								style="background-color:
-									{% if req.status_value == 'Not Started' %}#ffcccc{% endif %}
-									{% if req.status_value == 'Completed' %}#ccffcc{% endif %}
-									{% if req.status_value == 'In Progress' %}#ffffcc{% endif %};">
-								{{ req.status_value|default:"Not Started" }}
+		<!-- Training/Service Requests List -->
+		<div id="requests-list-container" role="tabpanel" aria-label="Service and training requests list">
+			{% for req in user_service_requests %}
+				<div class="request-card"
+					data-request-id="{{ req.id }}"
+					data-training-request="{{ req.training_request|yesno:'true,false' }}">
+					<button class="request-card-button" 
+						aria-expanded="false" 
+						aria-controls="details-{{ req.id }}"
+						aria-label="Toggle details for {{ req.service_type.name }} request">
+						<div class="request-header">
+							<span>
+								{{ req.service_type.name }}
 							</span>
+							<span class="request-status
+								{% if req.status == 'Not Started' %}status-not-started{% endif %}
+								{% if req.status == 'Completed' %}status-completed{% endif %}
+								{% if req.status == 'In Progress' %}status-in-progress{% endif %}"
+								role="status"
+								aria-label="Status: {{ req.status }}">
+								{{ req.status }}
+							</span>
+							<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
 						</div>
-						<div style="font-size:13px;">
-							<strong>Added:</strong> {{ req.created|date:"m/d/Y"|default:"" }}<br>
-							<strong>Completed On:</strong> {{ req.completed_on|date:"m/d/Y"|default:"" }}<br>
-							<strong>Resources:</strong>
-							{% if req.resource_link and req.resource_link != 'NULL' %}
-								<a href="{{ req.resource_link }}" target="_blank">{{ req.resource_link_name }}</a>
+					</button>
+					<div>
+						<strong>Core:</strong> {{ req.service_type.core.name }}<br>
+						<strong>Project:</strong> {{ req.project.name }}<br>
+						<strong>Requested:</strong> {{ req.created|date:"Y-m-d H:i" }}<br>
+						<strong>Training:</strong> {% if req.training_request %}Yes{% else %}No{% endif %}
+					</div>
+					<div style="margin-top: 8px;">
+						{% with reqs=request_requirements|get_item:req.id %}
+							{% with total=reqs|length completed=reqs|completed_count %}
+								<div style="display: flex; align-items: center;">
+									<div class="progress" style="flex: 1 1 auto; margin-right: 8px;">
+										<div class="progress-bar" 
+											role="progressbar"
+											style="width: {% if total > 0 %}{{ completed|floatformat:2|divided_by:total|floatformat:2 }}{% else %}0{% endif %}%;"
+											aria-valuenow="{{ completed }}" 
+											aria-valuemin="0" 
+											aria-valuemax="{{ total }}"
+											aria-label="Requirements progress: {{ completed }} of {{ total }} completed">
+										</div>
+									</div>
+									<span style="font-size: 12px;" aria-hidden="true">{{ completed }}/{{ total }}</span>
+								</div>
+							{% endwith %}
+						{% endwith %}
+					</div>
+					<div class="details-section" 
+						id="details-{{ req.id }}"
+						role="region"
+						aria-label="Details for {{ req.service_type.name }} request">
+						<hr>
+						<div>
+							<strong>Case Number:</strong> {{ req.case_number|default:"-" }}<br>
+							<strong>Contact:</strong>
+							{% if req.owner %}
+								<a href="mailto:{{ req.owner }}" aria-label="Email {{ req.owner_first_name }} {{ req.owner_last_name }}">
+									{{ req.owner_first_name }} {{ req.owner_last_name }}
+								</a>
 							{% else %}
-								N/A
+								-
 							{% endif %}
 							<br>
-							<strong>Prerequisites:</strong> {{ req.prerequisites|default:"-" }}<br>
-							<strong>Estimated Time:</strong> {{ req.expected_completion_time|default:"-" }}
+							<strong>Description:</strong> {{ req.description|default:"-" }}<br>
+							<strong>Training Approved:</strong> {% if req.training_approved %}Yes{% else %}No{% endif %}<br>
+							<strong>Last Updated:</strong> {{ req.updated|date:"Y-m-d H:i" }}
 						</div>
-						<div style="margin-top:10px;">
-							{% if not req.automated_update %}
-								{% if req.status_value == 'Completed' %}
-									<form method="post" action="{% url 'unmark_user_requirement' %}" style="display:inline;" onsubmit="return confirm('Please confirm that you wish to mark the requirement {{ req.name }} as incomplete.  Once you make this change you will have to sign again to mark it completed.');">
-										{% csrf_token %}
-										<input type="hidden" name="requirement_id" value="{{ req.id }}">
-										<button type="submit" class="btn btn-warning btn-xs btn-block">Unmark Completed</button>
-									</form>
-								{% elif req.status_value != 'Completed' %}
-									<form method="post" action="{% url 'complete_user_requirement' %}" style="display:inline;" onsubmit="return prompt('Please enter your username ({{ request.user.username }}) to indicate you have completed the requirement - {{ req.name }}') == '{{ request.user.username }}';">
-										{% csrf_token %}
-										<input type="hidden" name="requirement_id" value="{{ req.id }}">
-										<button type="submit" class="btn btn-primary btn-xs btn-block">Mark Completed</button>
-									</form>
-								{% endif %}
-							{% endif %}
-							{% if req.automated_update and req.status_value != 'Completed' %}
-								<span class="text-muted">Automated Update</span>
-							{% endif %}
-						</div>
-					</div>
-				{% endfor %}
-			</div>
-		{% else %}
-			<p>No requirements found.</p>
-		{% endif %}
-	</div>
-
-	<!-- Request Wizard Modal -->
-	<div class="modal fade" id="requestWizardModal" tabindex="-1" role="dialog" aria-labelledby="requestWizardLabel" aria-hidden="true">
-		<div class="modal-dialog" role="document">
-			<div class="modal-content">
-				<form id="requestWizardForm" method="post">
-					{% csrf_token %}
-					<input type="hidden" name="auto_include" value="True" />
-					<div class="modal-header">
-						<h4 class="modal-title" id="requestWizardLabel">Submit a Request</h4>
-						<button type="button" class="close" data-dismiss="modal" aria-label="Close">
-							<span aria-hidden="true">&times;</span>
-						</button>
-					</div>
-					<div class="modal-body">
-						<!-- Step 1: Core Selection -->
-						<div class="wizard-step" id="wizardStepCore">
-							<label for="wizard_choose_core">Choose a core:</label>
-							<select class="form-control" id="wizard_choose_core" name="choose_core">
-								<option value="">-- Choose a core --</option>
-								<option value="1">Materials Characterization Lab (MCL)</option>
-								<option value="2">Nanofab</option>
-								<!--<option value="4">2DCC</option>-->
-							</select>
-						</div>
-						<!-- Step 2: Service Selection -->
-						<div class="wizard-step" id="wizardStepService" style="display:none;">
-							<label for="wizard_service_select">Choose a service:</label>
-							<select class="form-control" id="wizard_service_select" name="service_select">
-								<option value="">-- Choose a service --</option>
-								<!-- Options will be populated dynamically -->
-							</select>
-						</div>
-						<!-- Step 3: Project Selection -->
-						<div class="wizard-step" id="wizardStepProject" style="display:none;">
-							<label for="wizard_project_select">Choose a project:</label>
-							<select class="form-control" id="wizard_project_select" name="project_select">
-								<option value="">-- Choose a project --</option>
-								{% if user_projects is not None %}
-									{% for p in user_projects %}
-										<option value="{{ p.id }}">{{ p }} [PI: {{ p.owner.first_name }} {{ p.owner.last_name }} ({{ p.owner.username }})]</option>
+						<hr>
+						<strong>Requirements:</strong>
+						{% with reqs=request_requirements|get_item:req.id %}
+							{% if reqs %}
+								<ul style="padding-left: 18px;">
+									{% for r in reqs %}
+										<li>
+											<span style="font-weight: bold;">{{ r.name }}</span>
+											<span class="request-status
+												{% if r.status == 'Not Started' %}status-not-started{% endif %}
+												{% if r.status == 'Completed' %}status-completed{% endif %}
+												{% if r.status == 'In Progress' %}status-in-progress{% endif %}"
+												role="status"
+												aria-label="Status: {{ r.status|default:'Not Started' }}">
+												{{ r.status|default:"Not Started" }}
+											</span>
+											<br>
+											<span style="font-size: 12px;">
+												{{ r.description }}<br>
+												{% if r.resource_link %}
+													<a href="{{ r.resource_link }}" 
+														target="_blank" 
+														rel="noopener noreferrer"
+														aria-label="Open {{ r.resource_link_name }} in new tab">
+														{{ r.resource_link_name }}
+														<span class="visually-hidden">(opens in new tab)</span>
+													</a>
+												{% endif %}
+												{% if r.expected_completion_time %}
+													&nbsp;Est: {{ r.expected_completion_time }}
+												{% endif %}
+												{% if r.prerequisites %}
+													&nbsp;Prereq: {{ r.prerequisites }}
+												{% endif %}
+											</span>
+										</li>
 									{% endfor %}
-								{% else %}
-									<option value="">No project available</option>
-								{% endif %}
-							</select>
-						</div>
-						<!-- Step 4: Training & Description -->
-						<div class="wizard-step" id="wizardStepTraining" style="display:none;">
-							<!-- Training select (shown for non-Nanofab) -->
-							<div id="wizard_training_select_group">
-								<label for="wizard_training_requested">Training requested?</label>
-								<select class="form-control" id="wizard_training_requested" name="training_requested">
-									<option value="True">Yes</option>
-									<option value="False" selected>No</option>
-								</select>
+								</ul>
+							{% else %}
+								<p>No requirements for this request.</p>
+							{% endif %}
+						{% endwith %}
+					</div>
+				</div>
+			{% endfor %}
+		</div>
+
+		<!-- Requirements List (Mobile Friendly) -->
+		<div id="requirements-table-container" 
+			style="display:none;" 
+			role="tabpanel" 
+			aria-label="All requirements list">
+			{% if requirements_table %}
+				<div>
+					{% for req in requirements_table %}
+						<div class="request-card" style="margin-bottom: 12px;">
+							<div class="request-header" style="font-size:15px;">
+								<span>{{ req.name }}</span>
+								<span class="request-status
+									{% if req.status_value == 'Not Started' %}status-not-started{% endif %}
+									{% if req.status_value == 'Completed' %}status-completed{% endif %}
+									{% if req.status_value == 'In Progress' %}status-in-progress{% endif %}"
+									role="status"
+									aria-label="Status: {{ req.status_value|default:'Not Started' }}">
+									{{ req.status_value|default:"Not Started" }}
+								</span>
 							</div>
-							<!-- Hidden input for Nanofab -->
-							<input type="hidden" id="wizard_training_hidden" name="training_requested" value="True" style="display:none;" />
-							<label for="wizard_description" style="margin-top:10px;">Description</label>
-							<textarea class="form-control" id="wizard_description" name="description" rows="4"></textarea>
+							<div style="font-size:13px;">
+								<strong>Added:</strong> {{ req.created|date:"m/d/Y"|default:"" }}<br>
+								<strong>Completed On:</strong> {{ req.completed_on|date:"m/d/Y"|default:"" }}<br>
+								<strong>Resources:</strong>
+								{% if req.resource_link and req.resource_link != 'NULL' %}
+									<a href="{{ req.resource_link }}" 
+										target="_blank" 
+										rel="noopener noreferrer"
+										aria-label="Open {{ req.resource_link_name }} in new tab">
+										{{ req.resource_link_name }}
+										<span class="visually-hidden">(opens in new tab)</span>
+									</a>
+								{% else %}
+									N/A
+								{% endif %}
+								<br>
+								<strong>Prerequisites:</strong> {{ req.prerequisites|default:"-" }}<br>
+								<strong>Estimated Time:</strong> {{ req.expected_completion_time|default:"-" }}
+							</div>
+							<div style="margin-top:10px;">
+								{% if not req.automated_update %}
+									{% if req.status_value == 'Completed' %}
+										<form method="post" 
+											action="{% url 'unmark_user_requirement' %}" 
+											style="display:inline;" 
+											onsubmit="return confirm('Please confirm that you wish to mark the requirement {{ req.name }} as incomplete.  Once you make this change you will have to sign again to mark it completed.');"
+											aria-label="Unmark requirement {{ req.name }} as completed">
+											{% csrf_token %}
+											<input type="hidden" name="requirement_id" value="{{ req.id }}" aria-label="Requirement ID">
+											<button type="submit" 
+												class="btn btn-warning btn-xs btn-block"
+												aria-label="Unmark {{ req.name }} as completed">
+												Unmark Completed
+											</button>
+										</form>
+									{% elif req.status_value != 'Completed' %}
+										<form method="post" 
+											action="{% url 'complete_user_requirement' %}" 
+											style="display:inline;" 
+											onsubmit="return prompt('Please enter your username ({{ request.user.username }}) to indicate you have completed the requirement - {{ req.name }}') == '{{ request.user.username }}';"
+											aria-label="Mark requirement {{ req.name }} as completed">
+											{% csrf_token %}
+											<input type="hidden" name="requirement_id" value="{{ req.id }}" aria-label="Requirement ID">
+											<button type="submit" 
+												class="btn btn-primary btn-xs btn-block"
+												aria-label="Mark {{ req.name }} as completed">
+												Mark Completed
+											</button>
+										</form>
+									{% endif %}
+								{% endif %}
+								{% if req.automated_update and req.status_value != 'Completed' %}
+									<span class="text-muted" role="status">Automated Update</span>
+								{% endif %}
+							</div>
 						</div>
-					</div>
-					<div class="modal-footer">
-						<button type="button" class="btn btn-secondary" id="wizardPrevBtn" style="display:none;">Previous</button>
-						<button type="button" class="btn btn-primary" id="wizardNextBtn">Next</button>
-						<button type="submit" class="btn btn-success" id="wizardSubmitBtn" style="display:none;">Submit</button>
-					</div>
-				</form>
+					{% endfor %}
+				</div>
+			{% else %}
+				<p>No requirements found.</p>
+			{% endif %}
+		</div>
+
+		<!-- Request Wizard Modal -->
+		<div class="modal fade" 
+			id="requestWizardModal" 
+			tabindex="-1" 
+			role="dialog" 
+			aria-labelledby="requestWizardLabel" 
+			aria-describedby="requestWizardDescription"
+			aria-hidden="true">
+			<div class="modal-dialog" role="document">
+				<div class="modal-content">
+					<form id="requestWizardForm" method="post" aria-label="Request submission wizard">
+						{% csrf_token %}
+						<input type="hidden" name="auto_include" value="True" aria-label="Auto include requirements" />
+						<div class="modal-header">
+							<h2 class="modal-title" id="requestWizardLabel">Submit a Request</h2>
+							<button type="button" class="close" data-dismiss="modal" aria-label="Close dialog">
+								<span aria-hidden="true">&times;</span>
+							</button>
+						</div>
+						<div class="modal-body">
+							<p id="requestWizardDescription" class="visually-hidden">
+								Multi-step form to submit a service or training request. Use the Next and Previous buttons to navigate between steps.
+							</p>
+							<div id="error-message" role="alert" aria-live="assertive" class="alert alert-danger" style="display:none;"></div>
+							
+							<!-- Step 1: Core Selection -->
+							<div class="wizard-step" id="wizardStepCore">
+								<label for="wizard_choose_core">Choose a core:</label>
+								<select class="form-control" 
+									id="wizard_choose_core" 
+									name="choose_core"
+									aria-required="true"
+									aria-describedby="core-help">
+									<option value="">-- Choose a core --</option>
+									<option value="1">Materials Characterization Lab (MCL)</option>
+									<option value="2">Nanofab</option>
+									<!--<option value="4">2DCC</option>-->
+								</select>
+								<span id="core-help" class="visually-hidden">Select the core facility for your request</span>
+							</div>
+							<!-- Step 2: Service Selection -->
+							<div class="wizard-step" id="wizardStepService" style="display:none;">
+								<label for="wizard_service_select">Choose a service:</label>
+								<select class="form-control" 
+									id="wizard_service_select" 
+									name="service_select"
+									aria-required="true"
+									aria-describedby="service-help">
+									<option value="">-- Choose a service --</option>
+									<!-- Options will be populated dynamically -->
+								</select>
+								<span id="service-help" class="visually-hidden">Select the specific service you need</span>
+							</div>
+							<!-- Step 3: Project Selection -->
+							<div class="wizard-step" id="wizardStepProject" style="display:none;">
+								<label for="wizard_project_select">Choose a project:</label>
+								<select class="form-control" 
+									id="wizard_project_select" 
+									name="project_select"
+									aria-required="true"
+									aria-describedby="project-help">
+									<option value="">-- Choose a project --</option>
+									{% if user_projects is not None %}
+										{% for p in user_projects %}
+											<option value="{{ p.id }}">{{ p }} [PI: {{ p.owner.first_name }} {{ p.owner.last_name }} ({{ p.owner.username }})]</option>
+										{% endfor %}
+									{% else %}
+										<option value="">No project available</option>
+									{% endif %}
+								</select>
+								<span id="project-help" class="visually-hidden">Select the project this request is for</span>
+							</div>
+							<!-- Step 4: Training & Description -->
+							<div class="wizard-step" id="wizardStepTraining" style="display:none;">
+								<!-- Training select (shown for non-Nanofab) -->
+								<div id="wizard_training_select_group">
+									<label for="wizard_training_requested">Training requested?</label>
+									<select class="form-control" 
+										id="wizard_training_requested" 
+										name="training_requested"
+										aria-describedby="training-help">
+										<option value="True">Yes</option>
+										<option value="False" selected>No</option>
+									</select>
+									<span id="training-help" class="visually-hidden">Indicate if you need training for this service</span>
+								</div>
+								<!-- Hidden input for Nanofab -->
+								<input type="hidden" 
+									id="wizard_training_hidden" 
+									name="training_requested" 
+									value="True" 
+									style="display:none;"
+									aria-label="Training automatically requested for Nanofab" />
+								<label for="wizard_description" style="margin-top:10px;">Description</label>
+								<textarea class="form-control" 
+									id="wizard_description" 
+									name="description" 
+									rows="4"
+									aria-describedby="description-help"></textarea>
+								<span id="description-help" class="visually-hidden">Provide additional details about your request</span>
+							</div>
+						</div>
+						<div class="modal-footer">
+							<button type="button" 
+								class="btn btn-secondary" 
+								id="wizardPrevBtn" 
+								style="display:none;"
+								aria-label="Go to previous step">
+								Previous
+							</button>
+							<button type="button" 
+								class="btn btn-primary" 
+								id="wizardNextBtn"
+								aria-label="Go to next step">
+								Next
+							</button>
+							<button type="submit" 
+								class="btn btn-success" 
+								id="wizardSubmitBtn" 
+								style="display:none;"
+								aria-label="Submit request">
+								Submit
+							</button>
+						</div>
+					</form>
+				</div>
 			</div>
 		</div>
 	</div>
-</div>
+</main>
 
 <script src="{% static 'jquery.js' %}"></script>
 <script src="{% static 'bootstrap/js/bootstrap.js' %}"></script>
@@ -353,6 +538,7 @@
 				$(this).show();
 				$(this).find('.details-section').hide();
 				$(this).find('.glyphicon').removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-right');
+				$(this).find('.request-card-button').attr('aria-expanded', 'false');
 			} else {
 				$(this).hide();
 				$(this).find('.details-section').hide();
@@ -372,26 +558,32 @@
 		$('#requirements-table-container .request-card').show();
 	}
 
+	function updateTabStates(activeId) {
+		$('.toggle-btn-group button[role="tab"]').each(function() {
+			var isActive = $(this).attr('id') === activeId;
+			$(this).attr('aria-selected', isActive ? 'true' : 'false');
+			if (isActive) {
+				$(this).addClass('active');
+			} else {
+				$(this).removeClass('active');
+			}
+		});
+	}
+
 	$('#toggle-training').on('click', function () {
-		$('#toggle-training').addClass('active');
-		$('#toggle-service').removeClass('active');
-		$('#toggle-requirements').removeClass('active');
+		updateTabStates('toggle-training');
 		showRequestsList();
 		filterRequests(true);
 	});
 
 	$('#toggle-service').on('click', function () {
-		$('#toggle-service').addClass('active');
-		$('#toggle-training').removeClass('active');
-		$('#toggle-requirements').removeClass('active');
+		updateTabStates('toggle-service');
 		showRequestsList();
 		filterRequests(false);
 	});
 
 	$('#toggle-requirements').on('click', function () {
-		$('#toggle-requirements').addClass('active');
-		$('#toggle-training').removeClass('active');
-		$('#toggle-service').removeClass('active');
+		updateTabStates('toggle-requirements');
 		showRequirementsTable();
 	});
 
@@ -400,16 +592,24 @@
 	filterRequests(true);
 
 	// Expand/collapse details for each request card
-	$(document).on('click', '.request-card', function (e) {
-		// Prevent toggling if clicking on a button inside the card
-		if ($(e.target).is('button') || $(e.target).is('a') || $(e.target).closest('form').length) return;
-		var $details = $(this).find('.details-section');
-		var $icon = $(this).find('.glyphicon');
+	$(document).on('click', '.request-card-button', function (e) {
+		var $button = $(this);
+		var $card = $button.closest('.request-card');
+		var $details = $card.find('.details-section');
+		var $icon = $button.find('.glyphicon');
+		var isExpanded = $button.attr('aria-expanded') === 'true';
+		
 		$details.toggle();
 		$icon.toggleClass('glyphicon-chevron-right glyphicon-chevron-down');
+		$button.attr('aria-expanded', !isExpanded);
 	});
 
-	// Wizard logic (copied from user_requests.html)
+	// Prevent form/link clicks within cards from toggling
+	$(document).on('click', '.request-card form, .request-card a', function(e) {
+		e.stopPropagation();
+	});
+
+	// Wizard logic
 	var wizardStep = 0;
 	var coreServices = {
 		"1": [{ id: "{{ mcl_services.0.id }}", name: "{{ mcl_services.0.name }}" }{% for opt in mcl_services|slice:"1:" %}, { id: "{{ opt.id }}", name: "{{ opt.name }}" }{% endfor %}],
@@ -417,7 +617,18 @@
 		"4": []
 	};
 
+	function showError(message) {
+		var $error = $('#error-message');
+		$error.text(message).show();
+		$error.focus();
+	}
+
+	function hideError() {
+		$('#error-message').hide();
+	}
+
 	function showStep(step) {
+		hideError();
 		$('.wizard-step').hide();
 		$('#wizardStepCore').toggle(step === 0);
 		$('#wizardStepService').toggle(step === 1);
@@ -431,6 +642,11 @@
 		if (step === 3) {
 			updateTrainingField();
 		}
+		
+		// Focus first visible input/select
+		setTimeout(function() {
+			$('.wizard-step:visible').find('select, textarea').first().focus();
+		}, 100);
 	}
 
 	function updateTrainingField() {
@@ -453,11 +669,18 @@
 		$('#wizard_service_select').empty().append('<option value="">-- Choose a service --</option>');
 	});
 
+	$('#requestWizardModal').on('shown.bs.modal', function () {
+		$('#wizard_choose_core').focus();
+	});
+
 	$('#wizardNextBtn').on('click', function () {
 		// Validation per step
 		if (wizardStep === 0) {
 			var core = $('#wizard_choose_core').val();
-			if (!core) { alert('Please select a core.'); return; }
+			if (!core) { 
+				showError('Please select a core.');
+				return; 
+			}
 			// Populate services
 			var services = coreServices[core] || [];
 			var $serviceSelect = $('#wizard_service_select');
@@ -468,10 +691,16 @@
 			updateTrainingField();
 		}
 		if (wizardStep === 1) {
-			if (!$('#wizard_service_select').val()) { alert('Please select a service.'); return; }
+			if (!$('#wizard_service_select').val()) { 
+				showError('Please select a service.');
+				return; 
+			}
 		}
 		if (wizardStep === 2) {
-			if (!$('#wizard_project_select').val()) { alert('Please select a project.'); return; }
+			if (!$('#wizard_project_select').val()) { 
+				showError('Please select a project.');
+				return; 
+			}
 		}
 		wizardStep++;
 		showStep(wizardStep);
@@ -494,7 +723,7 @@
 				location.reload();
 			},
 			function (xhr) {
-				alert('There was an error submitting your request. Please try again.');
+				showError('There was an error submitting your request. Please try again.');
 			}
 		);
 	});
