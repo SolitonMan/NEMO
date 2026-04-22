@@ -345,6 +345,9 @@
 	// Tab switching logic
 	function filterRequests(showTraining) {
 		$('.request-card').each(function () {
+			// Only filter cards in the requests-list-container, not requirements-table-container
+			if ($(this).closest('#requests-list-container').length === 0) return;
+			
 			var isTraining = $(this).data('training-request') === true || $(this).data('training-request') === 'True' || $(this).data('training-request') === 'true';
 			if (showTraining ? isTraining : !isTraining) {
 				$(this).show();
@@ -365,6 +368,8 @@
 	function showRequirementsTable() {
 		$('#requests-list-container').hide();
 		$('#requirements-table-container').show();
+		// Make sure all requirement cards are visible when switching to requirements view
+		$('#requirements-table-container .request-card').show();
 	}
 
 	$('#toggle-training').on('click', function () {
