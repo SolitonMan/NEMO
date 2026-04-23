@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 setup(
 	name='LEO',
 	version='2.0.0',
-	python_requires='>=3.8',
+	python_requires='>=3.10',
 	packages=find_packages(exclude=['NEMO.tests']),
 	include_package_data=True,
 	url='https://github.com/usnistgov/NEMO',
@@ -22,10 +22,12 @@ setup(
 		'Natural Language :: English',
 		'Operating System :: OS Independent',
 		'Programming Language :: Python :: 3.10',
+		'Programming Language :: Python :: 3.11',
+		'Programming Language :: Python :: 3.12',
 	],
 	install_requires=[
 		'cryptography>=3.1.0',
-		'Django==5.1.3',
+		'Django==5.2.13',
 		'django-filter>=2.2.0',
 		'djangorestframework>=3.8.2',
 		'ldap3>=2.7.0',
