@@ -7,6 +7,7 @@ RUN apt-get -y upgrade
 RUN apt-get install -y memcached telnet
 
 RUN pip install --upgrade pip
+RUN pip install setuptools
 
 # memcached seems to be needed for the microsoft auth or other supporting software
 RUN pip install python-memcached
