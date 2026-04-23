@@ -6,7 +6,13 @@ from django.urls import reverse, NoReverseMatch
 from django.utils import timezone
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
-from pkg_resources import get_distribution, DistributionNotFound
+
+# Use modern importlib.metadata instead of deprecated pkg_resources
+try:
+	from importlib.metadata import version, PackageNotFoundError
+except ImportError:
+	# Fallback for Python < 3.8 (though Django 5.2 requires 3.10+)
+	from importlib_metadata import version, PackageNotFoundError
 
 from NEMO.models import Area, AreaAccessRecord, AreaAccessRecordProject, Consumable, ConsumableWithdraw, StaffCharge, StaffChargeProject, UsageEvent, UsageEventProject
 from NEMO.utilities import format_datetime
@@ -43,8 +49,8 @@ def json_search_base(items_to_search):
 
 @register.simple_tag
 def update_variable(value):
-    """Allows to update existing variable in template"""
-    return value
+	"""Allows to update existing variable in template"""
+	return value
 
 @register.simple_tag
 def json_search_base_with_extra_fields(items_to_search, *extra_fields):
@@ -89,8 +95,8 @@ def app_version() -> str:
 		return dist_version
 	else:
 		try:
-			dist_version = get_distribution("NEMO").version
-		except DistributionNotFound:
+			dist_version = version("NEMO")
+		except PackageNotFoundError:
 			# package is not installed
 			dist_version = None
 			pass
@@ -199,24 +205,4 @@ def get_content_data(work_order_transaction):
 			content_data["record_id"] = content_object.id
 			content_data["parent_record_id"] = content_object.area_access_record.id
 
-		case "consumablewithdraw":
-			cw = content_object
-			content_data["staff_member"] = content_object.merchant
-			content_data["item"] = content_object.consumable
-			content_data["project"] = cw.project
-			content_data["date_range"] = format_datetime(content_object.date)
-			content_data["record_id"] = content_object.id
-
 	return content_data
-
-
-@register.filter
-def completed_count(reqs):
-	return len([r for r in reqs if r.get('status') == 'Completed'])
-
-@register.filter
-def divided_by(value, arg):
-	try:
-		return float(value) / float(arg) * 100
-	except (ValueError, ZeroDivisionError, TypeError):
-		return 0
