@@ -6,176 +6,333 @@
 <style>
 p {
 	font-weight: bold;
-	background-color: #eeeeee;
+	background-color: #f5f5f5;
 }
-</style>
 
-<h1>Transaction validation</h1>
-	<span style="background-color: #eeeeee;">
-	<p>This page displays transactions conducted by and for users.  If you have the appropriate permissions you can filter by which staff member performed the work, and when, by using the dropdown boxes below.</p>
+/* Enhanced color contrast for validation states */
+.success-highlight {
+	background-color: #d4edda !important;
+	border-left: 5px solid #28a745 !important;
+}
 
-	<p>The table lists all the charges sorted by the most recent Start date.  You can filter the table using the search field input below.</p>
+.warning-highlight {
+	background-color: #fff3cd !important;
+	border-left: 5px solid #ffc107 !important;
+}
 
-	<p>The individual transaction entries have been color-coded for identification.  The transaction types and associated colors are as follows:<br/>
-		<ul>
-			<li style="background-color: rgb(182,216,255)">Tool Use</li>
-			<li style="background-color: rgb(237,237,237)">Staff Charge</li>
-			<li style="background-color: rgb(253,225,227)">Area Access Record</li>
-			<li style="background-color: rgb(247,247,146)">Consumable Withdraw</li>
-		</ul>
-	</p>
+.danger-highlight {
+	background-color: #f8d7da !important;
+	border-left: 5px solid #dc3545 !important;
+}
 
-	<p>The table cells containing notes, for <span style="background-color: #ddffdd;">individual customers</span> or for <span style="background-color: #ddddff;">transactions generally</span>, are editable in this page.  Simply click on the desired cell and a pop up dialog will allow you to add or edit a comment.  Changes are saved immediately to the database.</p>
+/* Transaction type backgrounds with improved contrast */
+.tool-use-bg {
+	background-color: #b8d4f1;
+}
 
-	<p>Each charge can be validated, which means that you have confirmed that the charge is legitimate and correct, and no adjustment needs to
-	be made to it. Press the green 'Validate' button on an individual row to validate a charge. Charges that have already been validated are
-	highlighted in <span class="success-highlight">green</span>.</p>
+.staff-charge-bg {
+	background-color: #d3d3d3;
+}
 
-	<p>Each charge can also be contested, which means that an adjustment is needed.  Press the yellow 'Contest' button on an individual row to contest the charge.  Charges that are already being contested are highlighted in <span class="warning-highlight">yellow</span>.  If a contest is accepted then the transaction will be automatically validated as part of the resolution.  If the contest is rejected then the transaction record will display in <span class="danger-highlight">red</span> and the Validate and Contest buttons will be active.  The record can be validated at this point, or contested again with new information.</p>
-	</span>
+.area-access-bg {
+	background-color: #f5b7b7;
+}
 
-	<form class="form-inline" role="form">
-		<div class="form-group">
-			<label class="control-label">View charges for
-				{% if request.user.is_superuser or user_is_core_admin %}
-				<select name="operator" class="form-control">
-					<option {% if selected_staff == "all staff" %}selected{% endif %}>all staff</option>
-					{% for s in staff_list %}
-						<option value="{{ s.id }}" {% if s.id == selected_staff %}selected{% endif %}>{{ s.last_name }}, {{ s.first_name }} ({{ s.username }})</option>
-					{% endfor %}
-				</select>
-				{% else %}
-				<input type="hidden" name="operator" value="{{ request.user.id}}" />
-				{{ request.user.first_name }} {{ request.user.last_name }}
-				{% endif %}
-			</label>
-		</div>
-		<div class="form-group" style="margin-right:20px">
-			<label class="control-label">during
-				<select name="date" class="form-control">
-					{% for month in month_list %}
-						<option {% if selected_month == month|date:"F, Y" %}selected{% endif %}>{{ month|date:"F, Y" }}</option>
-					{% endfor %}
-				</select>
-			</label>
-		</div>
-		<div class="form-group">
-			<input type="submit" class="btn btn-default" value="Update">
-		</div>
-	</form>
+.withdraw-bg {
+	background-color: #ede17a;
+}
 
-<br/><br/>
-<style>
+/* Status badges for accessibility */
+.status-badge {
+	display: inline-block;
+	padding: 4px 8px;
+	border-radius: 3px;
+	font-weight: bold;
+	font-size: 0.875rem;
+	margin-left: 8px;
+	border: 1px solid #000;
+}
+
+.status-badge-validated {
+	background-color: #28a745;
+	color: #ffffff;
+}
+
+.status-badge-contested {
+	background-color: #ffc107;
+	color: #000000;
+}
+
+.status-badge-rejected {
+	background-color: #dc3545;
+	color: #ffffff;
+}
+
+.status-badge-open {
+	background-color: #6c757d;
+	color: #ffffff;
+}
+
+/* Editable cell styles with keyboard focus support */
+.editable-cell {
+	cursor: pointer;
+	transition: background-color 0.2s, color 0.2s;
+}
+
+.editable-cell:hover {
+	background-color: #0056b3;
+	color: #ffffff;
+	font-weight: bold;
+}
+
+.editable-cell:focus {
+	background-color: #0056b3;
+	color: #ffffff;
+	font-weight: bold;
+	outline: 3px solid #003d82;
+	outline-offset: -3px;
+}
+
+.customer-comment-cell {
+	background-color: #ddffdd;
+}
+
+.general-comment-cell {
+	background-color: #ddddff;
+}
+
+/* Ensure minimum touch target size */
+.btn {
+	min-height: 44px;
+	padding: 8px 16px;
+}
+
+input[type="checkbox"] {
+	width: 20px;
+	height: 20px;
+	margin: 12px;
+	cursor: pointer;
+}
+
+/* Focus indicators */
+a:focus, button:focus, input:focus, select:focus, textarea:focus, [tabindex]:focus {
+	outline: 3px solid #0056b3;
+	outline-offset: 2px;
+}
+
+/* Skip link */
+.skip-link {
+	position: absolute;
+	top: -40px;
+	left: 0;
+	background: #000;
+	color: #fff;
+	padding: 8px;
+	text-decoration: none;
+	z-index: 100;
+}
+
+.skip-link:focus {
+	top: 0;
+}
+
 td[rowspan] {
 	vertical-align: top;
 	text-align: left;
 }
+
 td {
 	border: 1px solid grey;
-	/*background-color: #fefefe;*/
 	padding: 5px;
 }
+
 th {
 	text-align: center;
 }
 
-.edit_note {
-	background-color: #2222dd;
-	color: #ffffff;
-	font-weight: bold;
+/* Visually hidden class for screen readers only */
+.visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border-width: 0;
 }
 </style>
 
-<div class="row" style="border: 1px solid #303030; margin: 0px; padding: 10px;">
-<u><b>Display Options</b></u><br/>
-<div>
-	<span style="display: inline; padding-right: 20px;">
-		<input type="checkbox" id="show_validated" checked onclick="toggle_transaction_view(this, 'success-highlight');" /> 
-		<b>Show Validated Transactions</b>
-	</span><br/>
-	<span style="display: inline; padding-right: 20px;">
-		<input type="checkbox" id="show_contested" checked onclick="toggle_transaction_view(this, 'warning-highlight');" />
-		<b>Show Contested Transactions</b>
-	</span><br/>
-	<span style="display: inline; padding-right: 20px;">
-		<input type="checkbox" id="show_validated" checked onclick="toggle_transaction_view(this, 'tool-use');" />
-		<b>Show Tool Use Transactions</b>
-	</span><br/>
-	{% if request.user.is_staff %}
-	<span style="display: inline; padding-right: 20px;">
-		<input type="checkbox" id="show_validated" checked onclick="toggle_transaction_view(this, 'staff-charge');" />
-		<b>Show Staff Charge Transactions</b>
-	</span><br/>
-	{% endif %}
-	<span style="display: inline; padding-right: 20px;">
-		<input type="checkbox" id="show_validated" checked onclick="toggle_transaction_view(this, 'area-access');" />
-		<b>Show Area Access Transactions</b>
-	</span><br/>
-	<span style="display: inline; padding-right: 20px;">
-		<input type="checkbox" id="show_validated" checked onclick="toggle_transaction_view(this, 'withdraw');" />
-		<b>Show Withdraw Transactions</b>
-	</span>
-</div>
-</div>
-<br/>
-<div class="row" style="border: 1px solid #303030; margin: 0px; padding: 10px;">
-	<div class="col-md-4" style="display: inline;">
-		<input type="checkbox" name="select_all" id="select_all" onclick="toggle_select(this)" /> <b>Select all visible transactions</b>
-	</div>
-	<div class="col-md-4" style="display: inline;">
-		<input type="button" class="btn btn-success" id="activate" disabled value="Validate Selected Transactions" onclick="validate_selected();" />
-	</div>
-	<div class="col-md-4" style="display: inline; margin-right:0px;">
-		<input id="search" type="text" placeholder="Search for transactions" class="form-control" autofocus>
-	</div>
-</div>
-<br/>
+<!-- Skip link for keyboard navigation -->
+<a href="#transactions" class="skip-link">Skip to transaction table</a>
 
+<h1>Transaction Validation</h1>
+
+<div role="region" aria-label="Page instructions">
+	<p>This page displays transactions conducted by and for users. If you have the appropriate permissions you can filter by which staff member performed the work, and when, by using the dropdown boxes below.</p>
+
+	<p>The table lists all the charges sorted by the most recent Start date. You can filter the table using the search field input below.</p>
+
+	<h2>Transaction Type Legend</h2>
+	<p>The individual transaction entries have been color-coded and labeled for identification. The transaction types and associated colors are as follows:</p>
+	<ul>
+		<li><span class="tool-use-bg" style="padding: 4px 8px; border: 1px solid #000;">Tool Use - Light Blue Background</span></li>
+		<li><span class="staff-charge-bg" style="padding: 4px 8px; border: 1px solid #000;">Staff Charge - Gray Background</span></li>
+		<li><span class="area-access-bg" style="padding: 4px 8px; border: 1px solid #000;">Area Access Record - Light Red Background</span></li>
+		<li><span class="withdraw-bg" style="padding: 4px 8px; border: 1px solid #000;">Consumable Withdraw - Yellow Background</span></li>
+	</ul>
+
+	<h2>Validation Status Legend</h2>
+	<p>Transactions are marked with colored left borders and status badges:</p>
+	<ul>
+		<li><span class="status-badge status-badge-validated">Validated</span> - Green border and badge: Charge confirmed as legitimate</li>
+		<li><span class="status-badge status-badge-contested">Contested</span> - Yellow border and badge: Adjustment needed</li>
+		<li><span class="status-badge status-badge-rejected">Rejected</span> - Red border and badge: Contest was rejected</li>
+		<li><span class="status-badge status-badge-open">Open</span> - Gray badge: Not yet validated or contested</li>
+	</ul>
+
+	<p>The table cells containing notes for <span class="customer-comment-cell" style="padding: 4px 8px;">individual customers (light green background)</span> or for <span class="general-comment-cell" style="padding: 4px 8px;">transactions generally (light blue background)</span> are editable. Click or press Enter on the desired cell to add or edit a comment. Changes are saved immediately to the database.</p>
+
+	<p>Each charge can be validated by pressing the "Validate" button on an individual row. Each charge can also be contested by pressing the "Contest" button, which will open a dialog to provide a reason for the contest.</p>
+</div>
+
+<h2>Filter Transactions</h2>
+<form class="form-inline" role="form" aria-label="Transaction filter form">
+	<div class="form-group">
+		<label class="control-label" for="operator-select">View charges for
+			{% if request.user.is_superuser or user_is_core_admin %}
+			<select name="operator" id="operator-select" class="form-control">
+				<option {% if selected_staff == "all staff" %}selected{% endif %}>all staff</option>
+				{% for s in staff_list %}
+					<option value="{{ s.id }}" {% if s.id == selected_staff %}selected{% endif %}>{{ s.last_name }}, {{ s.first_name }} ({{ s.username }})</option>
+				{% endfor %}
+			</select>
+			{% else %}
+			<input type="hidden" name="operator" value="{{ request.user.id}}" />
+			<span>{{ request.user.first_name }} {{ request.user.last_name }}</span>
+			{% endif %}
+		</label>
+	</div>
+	<div class="form-group" style="margin-right:20px">
+		<label class="control-label" for="date-select">during
+			<select name="date" id="date-select" class="form-control">
+				{% for month in month_list %}
+					<option {% if selected_month == month|date:"F, Y" %}selected{% endif %}>{{ month|date:"F, Y" }}</option>
+				{% endfor %}
+			</select>
+		</label>
+	</div>
+	<div class="form-group">
+		<input type="submit" class="btn btn-default" value="Update">
+	</div>
+</form>
+
+<h2 id="display-options-heading">Display Options</h2>
+<div role="region" aria-labelledby="display-options-heading" style="border: 1px solid #303030; margin: 0px 0px 20px 0px; padding: 10px;">
+	<div>
+		<label style="display: block; padding: 4px 0;">
+			<input type="checkbox" id="show_validated" checked onclick="toggle_transaction_view(this, 'success-highlight');" />
+			<span style="font-weight: bold;">Show Validated Transactions</span>
+		</label>
+		<label style="display: block; padding: 4px 0;">
+			<input type="checkbox" id="show_contested" checked onclick="toggle_transaction_view(this, 'warning-highlight');" />
+			<span style="font-weight: bold;">Show Contested Transactions</span>
+		</label>
+		<label style="display: block; padding: 4px 0;">
+			<input type="checkbox" id="show_tool_use" checked onclick="toggle_transaction_view(this, 'tool-use');" />
+			<span style="font-weight: bold;">Show Tool Use Transactions</span>
+		</label>
+		{% if request.user.is_staff %}
+		<label style="display: block; padding: 4px 0;">
+			<input type="checkbox" id="show_staff_charge" checked onclick="toggle_transaction_view(this, 'staff-charge');" />
+			<span style="font-weight: bold;">Show Staff Charge Transactions</span>
+		</label>
+		{% endif %}
+		<label style="display: block; padding: 4px 0;">
+			<input type="checkbox" id="show_area_access" checked onclick="toggle_transaction_view(this, 'area-access');" />
+			<span style="font-weight: bold;">Show Area Access Transactions</span>
+		</label>
+		<label style="display: block; padding: 4px 0;">
+			<input type="checkbox" id="show_withdraw" checked onclick="toggle_transaction_view(this, 'withdraw');" />
+			<span style="font-weight: bold;">Show Withdraw Transactions</span>
+		</label>
+	</div>
+</div>
+
+<h2>Bulk Actions and Search</h2>
+<div role="region" aria-label="Bulk actions and search" style="border: 1px solid #303030; margin: 0px 0px 20px 0px; padding: 10px;">
+	<div class="row">
+		<div class="col-md-4" style="display: inline;">
+			<label for="select_all">
+				<input type="checkbox" name="select_all" id="select_all" onclick="toggle_select(this)" />
+				<span style="font-weight: bold;">Select all visible transactions</span>
+			</label>
+		</div>
+		<div class="col-md-4" style="display: inline;">
+			<input type="button" class="btn btn-success" id="activate" disabled value="Validate Selected Transactions" onclick="validate_selected();" />
+		</div>
+		<div class="col-md-4" style="display: inline; margin-right:0px;">
+			<label for="search" class="visually-hidden">Search for transactions</label>
+			<input id="search" type="text" placeholder="Search for transactions" class="form-control" autofocus>
+		</div>
+	</div>
+</div>
+
+<!-- ARIA live region for status updates -->
+<div aria-live="polite" aria-atomic="true" class="visually-hidden" id="status-message"></div>
+
+<h2 class="visually-hidden">Transaction Table</h2>
 <table id="transactions" style="background-color: #fefefe;">
+	<caption class="visually-hidden">List of transactions with validation status, sorted by most recent start date</caption>
 	<thead>
 	<tr>
-		<th style="width:40px;">Type</th>
-		<td>
-			<!--table>
-			<tr>
-			<th style="width:120px;" title="This column refers to the person who operated the tool, performed the staff work, or sold the consumable">Merchant</th>
-			<th style="width:120px;">Start</th>
-			<th style="width:120px;">End</th>
-			<th style="width:70px;">Duration/Quantity</th>
-			<th style="width:150px;">Tool/Item/Area</th>
-			<th style="width:75px;" class="sort-validate">Validate</th>
-			<th style="width:75px;" class="sort-contest">Contest</th>
-			</tr>
-			</table-->
-		</td>
+		<th scope="col" style="width:40px;">Type</th>
+		<th scope="col">Transaction Details</th>
 	</tr>
 	</thead>
 	<tbody id="transaction_data">
 {% for key, value in transactions.items %}
-	<tr class="{{ value.class }} {% if value.type == "Tool Use" %}tool-use{% endif %} {% if value.type == "Staff Charge" %}staff-charge{% endif %} {% if value.type == "Area Access" %}area-access{% endif %} {% if value.type == "Withdraw" %}withdraw{% endif %}" id="transaction_row_{{ forloop.counter }}" style="{% if not value.validated and not value.contested %}background-color: {% endif %}{% if value.type == "Tool Use" and not value.validated and not value.contested %}rgb(182,216,255);{% endif %}{% if value.type == "Staff Charge" and not value.validated and not value.contested%}rgb(237,237,237);{% endif %}{% if value.type == "Area Access" and not value.validated and not value.contested %}rgb(253,225,227);{% endif %}{% if value.type == "Withdraw" and not value.validated and not value.contested %}rgb(247,247,146);{% endif %}border: 2px solid #c0c0c0;">
+	<tr class="{{ value.class }} {% if value.type == "Tool Use" %}tool-use{% endif %} {% if value.type == "Staff Charge" %}staff-charge{% endif %} {% if value.type == "Area Access" %}area-access{% endif %} {% if value.type == "Withdraw" %}withdraw{% endif %}" 
+		id="transaction_row_{{ forloop.counter }}" 
+		style="{% if not value.validated and not value.contested %}background-color: {% endif %}{% if value.type == "Tool Use" and not value.validated and not value.contested %}rgb(184,212,241);{% endif %}{% if value.type == "Staff Charge" and not value.validated and not value.contested%}rgb(211,211,211);{% endif %}{% if value.type == "Area Access" and not value.validated and not value.contested %}rgb(245,183,183);{% endif %}{% if value.type == "Withdraw" and not value.validated and not value.contested %}rgb(237,225,122);{% endif %}border: 2px solid #c0c0c0;">
 		<td rowspan="2" style="width:40px; background-color: inherit;" title="ID={{ value.id }}">
 			<b>{% if value.ad_hoc_created %}Ad Hoc {% endif %}{{ value.type }}</b>
+			{% comment %}Status badge for accessibility{% endcomment %}
+			{% if value.validated %}
+				<span class="status-badge status-badge-validated" role="status">Validated</span>
+			{% elif value.contested %}
+				<span class="status-badge status-badge-contested" role="status">Contested</span>
+			{% elif value.contest_rejection_reason %}
+				<span class="status-badge status-badge-rejected" role="status">Rejected</span>
+			{% else %}
+				<span class="status-badge status-badge-open" role="status">Open</span>
+			{% endif %}
 			<br/>
-			Record ID = {{ value.id }}
+			<span style="font-size: 0.875rem;">Record ID = {{ value.id }}</span>
 			{% if not value.validated and not value.contested %}
 			<br/>
-			<input type="checkbox" id="c_{{ forloop.counter }}" onclick="toggle_activation();"> <b>Select</b>
+			<label for="c_{{ forloop.counter }}" style="display: block; margin-top: 8px;">
+				<input type="checkbox" id="c_{{ forloop.counter }}" onclick="toggle_activation();">
+				<span style="font-weight: bold;">Select</span>
+			</label>
 			{% endif %}
 			<br/><br/>
 			{% if value.related_usage_event %}
-			Related Tool Use ID = {{ value.related_usage_event.id }}
+			<span style="font-size: 0.875rem;">Related Tool Use ID = {{ value.related_usage_event.id }}</span>
 			{% endif %}
 		</td>
 		<td style="padding: 20px; background-color: inherit;">
 			<table style="border: 2px solid black; font-weight: bold; background-color: inherit;">
+			<caption class="visually-hidden">Transaction details for {{ value.type }} ID {{ value.id }}</caption>
 			<tr style="background-color: inherit;">
-			<th style="width:120px; background-color: inherit;" title="This column refers to the person who operated the tool, performed the staff work, or sold the consumable">Merchant</th>
-			<th style="width:120px; background-color: inherit;">Start</th>
-			<th style="width:120px; background-color: inherit;">End</th>
-			<th style="width:70px; background-color: inherit;">Duration/Quantity</th>
-			<th style="width:150px; background-color: inherit;">Tool/Item/Area</th>
-			<th style="width:75px; background-color: inherit;" class="sort-validate">Validate</th>
-			<th style="width:75px; background-color: inherit;" class="sort-contest">Contest</th>
+			<th scope="col" style="width:120px; background-color: inherit;" title="This column refers to the person who operated the tool, performed the staff work, or sold the consumable">Merchant</th>
+			<th scope="col" style="width:120px; background-color: inherit;">Start</th>
+			<th scope="col" style="width:120px; background-color: inherit;">End</th>
+			<th scope="col" style="width:70px; background-color: inherit;">Duration/Quantity</th>
+			<th scope="col" style="width:150px; background-color: inherit;">Tool/Item/Area</th>
+			<th scope="col" style="width:75px; background-color: inherit;" class="sort-validate">Validate</th>
+			<th scope="col" style="width:75px; background-color: inherit;" class="sort-contest">Contest</th>
 			</tr>
 			<tr style="background-color: inherit;">
 			<td style="width:120px; background-color: inherit;">{{ value.operator }}</td>
@@ -187,16 +344,16 @@ th {
 			{% if show_buttons %}
 				{% if not value.validated %}
 					{% if value.type == "Tool Use" %}
-			<button id="b_c_{{ forloop.counter }}" {% if value.contested %}disabled{% endif %}  class="btn btn-success" onclick="validate_charge('{% url 'validate_usage_event' value.id %}', this, '#transaction_row_{{ forloop.counter }}')">Validate</button>
+			<button id="b_c_{{ forloop.counter }}" {% if value.contested %}disabled{% endif %} class="btn btn-success" onclick="validate_charge('{% url 'validate_usage_event' value.id %}', this, '#transaction_row_{{ forloop.counter }}', '{{ value.type|escapejs }}', '{{ value.tool|escapejs }}')" aria-label="Validate {{ value.type }} for {{ value.tool }}">Validate</button>
 					{% endif %}
 					{% if value.type == "Staff Charge" %}
-			<button id="b_c_{{ forloop.counter }}" {% if value.contested %}disabled{% endif %}  class="btn btn-success" onclick="validate_charge('{% url 'validate_staff_charge' value.id %}', this, '#transaction_row_{{ forloop.counter }}')">Validate</button>
+			<button id="b_c_{{ forloop.counter }}" {% if value.contested %}disabled{% endif %} class="btn btn-success" onclick="validate_charge('{% url 'validate_staff_charge' value.id %}', this, '#transaction_row_{{ forloop.counter }}', '{{ value.type|escapejs }}', '{{ value.tool|escapejs }}')" aria-label="Validate {{ value.type }} for {{ value.tool }}">Validate</button>
 					{% endif %}
 					{% if value.type == "Area Access" %}
-			<button id="b_c_{{ forloop.counter }}" {% if value.contested %}disabled{% endif %}  class="btn btn-success" onclick="validate_charge('{% url 'validate_area_access_record' value.id %}', this, '#transaction_row_{{ forloop.counter }}')">Validate</button>
+			<button id="b_c_{{ forloop.counter }}" {% if value.contested %}disabled{% endif %} class="btn btn-success" onclick="validate_charge('{% url 'validate_area_access_record' value.id %}', this, '#transaction_row_{{ forloop.counter }}', '{{ value.type|escapejs }}', '{{ value.tool|escapejs }}')" aria-label="Validate {{ value.type }} for {{ value.tool }}">Validate</button>
 					{% endif %}
 					{% if value.type == "Withdraw" %}
-			<button id="b_c_{{ forloop.counter }}" {% if value.contested %}disabled{% endif %}  class="btn btn-success" onclick="validate_charge('{% url 'validate_consumable_withdraw' value.id %}', this, '#transaction_row_{{ forloop.counter }}')">Validate</button>
+			<button id="b_c_{{ forloop.counter }}" {% if value.contested %}disabled{% endif %} class="btn btn-success" onclick="validate_charge('{% url 'validate_consumable_withdraw' value.id %}', this, '#transaction_row_{{ forloop.counter }}', '{{ value.type|escapejs }}', '{{ value.tool|escapejs }}')" aria-label="Validate {{ value.type }} for {{ value.tool }}">Validate</button>
 					{% endif %}
 				{% endif %}
 			{% endif %}
@@ -205,23 +362,27 @@ th {
 			{% if show_buttons %}
 				{% if not value.validated %}
 					{% if value.type == "Tool Use" %}
-			<form action="{% url 'contest_usage_event' value.id %}" method="POST">
+			<form action="{% url 'contest_usage_event' value.id %}" method="POST" onsubmit="return contest_charge(this, '{{ value.type|escapejs }}', '{{ value.tool|escapejs }}', '#transaction_row_{{ forloop.counter }}')">
 			<input type="hidden" name="usage_event_id" value="{{ value.id }}" />
+			<input type="hidden" name="description" id="contest_desc_{{ value.id }}" value="" />
 					{% endif %}
 					{% if value.type == "Staff Charge" %}
-			<form action="{% url 'contest_staff_charge' value.id %}" method="POST">
+			<form action="{% url 'contest_staff_charge' value.id %}" method="POST" onsubmit="return contest_charge(this, '{{ value.type|escapejs }}', '{{ value.tool|escapejs }}', '#transaction_row_{{ forloop.counter }}')">
 			<input type="hidden" name="staff_charge_id" value="{{ value.id }}" />
+			<input type="hidden" name="description" id="contest_desc_{{ value.id }}" value="" />
 					{% endif %}
 					{% if value.type == "Area Access" %}
-			<form action="{% url 'contest_area_access_record' value.id %}" method="POST">
+			<form action="{% url 'contest_area_access_record' value.id %}" method="POST" onsubmit="return contest_charge(this, '{{ value.type|escapejs }}', '{{ value.tool|escapejs }}', '#transaction_row_{{ forloop.counter }}')">
 			<input type="hidden" name="area_access_record_id" value="{{ value.id }}" />
+			<input type="hidden" name="description" id="contest_desc_{{ value.id }}" value="" />
 					{% endif %}
 					{% if value.type == "Withdraw" %}
-			<form action="{% url 'contest_consumable_withdraw' value.id %}" method="POST">
+			<form action="{% url 'contest_consumable_withdraw' value.id %}" method="POST" onsubmit="return contest_charge(this, '{{ value.type|escapejs }}', '{{ value.tool|escapejs }}', '#transaction_row_{{ forloop.counter }}')">
 			<input type="hidden" name="consumable_withdraw_id" value="{{ value.id }}" />
+			<input type="hidden" name="description" id="contest_desc_{{ value.id }}" value="" />
 					{% endif %}
 			{% csrf_token %}
-			<input {% if value.contested %}disabled{% endif %}  type="submit" class="btn btn-warning" value="Contest" />
+			<button type="submit" {% if value.contested %}disabled{% endif %} class="btn btn-warning" aria-label="Contest {{ value.type }} for {{ value.tool }}">Contest</button>
 			</form>
 				{% endif %}
 			{% endif %}
@@ -230,20 +391,23 @@ th {
 			</table>
 		</td>
 	</tr>
-	<tr class="{{ value.class }} {% if value.type == "Tool Use" %}tool-use{% endif %} {% if value.type == "Staff Charge" %}staff-charge{% endif %} {% if value.type == "Area Access" %}area-access{% endif %} {% if value.type == "Withdraw" %}withdraw{% endif %}" id="transaction_row_{{ forloop.counter }}_customers" style="{% if  not value.validated and not value.contested %}background-color: {% endif %}{% if value.type == "Tool Use" and not value.validated and not value.contested %}rgb(182,216,255);{% endif %}{% if value.type == "Staff Charge" and not value.validated and not value.contested %}rgb(237,237,237);{% endif %}{% if value.type == "Area Access" and not value.validated and not value.contested %}rgb(253,225,227);{% endif %}{% if value.type == "Withdraw" and not value.validated and not value.contested %}rgb(247,247,146);{% endif %}border: 2px solid #c0c0c0;">
+	<tr class="{{ value.class }} {% if value.type == "Tool Use" %}tool-use{% endif %} {% if value.type == "Staff Charge" %}staff-charge{% endif %} {% if value.type == "Area Access" %}area-access{% endif %} {% if value.type == "Withdraw" %}withdraw{% endif %}" 
+		id="transaction_row_{{ forloop.counter }}_customers" 
+		style="{% if  not value.validated and not value.contested %}background-color: {% endif %}{% if value.type == "Tool Use" and not value.validated and not value.contested %}rgb(184,212,241);{% endif %}{% if value.type == "Staff Charge" and not value.validated and not value.contested %}rgb(211,211,211);{% endif %}{% if value.type == "Area Access" and not value.validated and not value.contested %}rgb(245,183,183);{% endif %}{% if value.type == "Withdraw" and not value.validated and not value.contested %}rgb(237,225,122);{% endif %}border: 2px solid #c0c0c0;">
 		<td style="padding: 20px; background-color: inherit;">
 			<table style="background-color: inherit;">
+			<caption class="visually-hidden">Customer and project details for transaction {{ value.id }}</caption>
 			<tr style="background-color: inherit;">
-			<th style="width:100px; background-color: inherit;" class="sort-customer">Customer</th>
-			<th style="width:200px; background-color: inherit;" class="sort-project">Project</th>
+			<th scope="col" style="width:100px; background-color: inherit;" class="sort-customer">Customer</th>
+			<th scope="col" style="width:200px; background-color: inherit;" class="sort-project">Project</th>
 			{% if value.cost_per_sample_run %}
-			<th style="width:90px; background-color: inherit;" class="sort-percent">No. of samples</th>
-			<th style="width:90px; background-color: inherit;" class="sort-percent">Cost per sample</th>
+			<th scope="col" style="width:90px; background-color: inherit;" class="sort-percent">No. of samples</th>
+			<th scope="col" style="width:90px; background-color: inherit;" class="sort-percent">Cost per sample</th>
 			{% else %}
-			<th style="width:70px; background-color: inherit;" class="sort-percent">Percent</th>
+			<th scope="col" style="width:70px; background-color: inherit;" class="sort-percent">Percent</th>
 			{% endif %}
 			{% if value.type != "Withdraw" %}
-			<th style="width:70px;" class="sort-percent">Customer Comment</th>
+			<th scope="col" style="width:70px;" class="sort-percent">Customer Comment</th>
 			{% endif %}
 			</tr>
 			{% for k, v in value.customers.items %}
@@ -257,16 +421,31 @@ th {
 			<td style="width:70px; background-color: inherit;">{{ v.percent }}</td>
 			{% endif %}
 			{% if value.type != "Withdraw" %}
-			<td title="Click to edit this customer comment" style="width:70px; background-color: #ddffdd; padding: 5px;" onclick="edit_comment({{ v.id }}, '{{ value.type }} customer', $('#cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa{% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__customer__{{ v.id }}').html())" onmouseover="$(this).css({ 'background-color':'#2222dd', 'font-weight':'bold', 'color':'#ffffff', 'padding': '0px' });" onmouseout="$(this).css({ 'background-color':'#ddffdd', 'font-weight':'', 'color':'', 'padding': '5px' });">
-				<span style="width: 90%;" id="cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa{% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__customer__{{ v.id }}">{% if v.comment is not None %}{{ v.comment }}{% endif %}</span>
+			<td class="editable-cell customer-comment-cell" 
+				title="Click to edit this customer comment" 
+				style="width:70px; padding: 5px;" 
+				tabindex="0"
+				role="button"
+				aria-label="Edit customer comment for {{ v.customer }}. Current comment: {% if v.comment %}{{ v.comment }}{% else %}No comment{% endif %}"
+				onclick="edit_comment({{ v.id }}, '{{ value.type }} customer', $('#cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa{% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__customer__{{ v.id }}').text(), '{{ v.customer|escapejs }}')"
+				onkeypress="if(event.key === 'Enter' || event.key === ' ') { edit_comment({{ v.id }}, '{{ value.type }} customer', $('#cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa{% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__customer__{{ v.id }}').text(), '{{ v.customer|escapejs }}'); event.preventDefault(); }">
+				<span style="width: 90%;" id="cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa{% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__customer__{{ v.id }}">{% if v.comment %}{{ v.comment }}{% else %}<em>Click to add</em>{% endif %}</span>
 			</td>
 			{% endif %}
 			</tr>
 			{% endfor %}
 			<tr style="background-color: inherit;">
-				<td style="background-color: #ddddff;" title="Click to edit this general comment" {%if value.cost_per_sample_run%}colspan="5"{%else%}colspan="4"{%endif%} onclick="edit_comment({{ value.id }}, '{{ value.type }}', $('#cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa{% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__{{ value.id }}').html())" onmouseover="$(this).css({ 'background-color':'#2222dd', 'font-weight':'bold', 'color':'#ffffff' });" onmouseout="$(this).css({ 'background-color':'#ddddff', 'font-weight':'', 'color':'' });">
+				<td class="editable-cell general-comment-cell" 
+					style="background-color: #ddddff;" 
+					title="Click to edit this general comment" 
+					{%if value.cost_per_sample_run%}colspan="5"{%else%}colspan="4"{%endif%} 
+					tabindex="0"
+					role="button"
+					aria-label="Edit general transaction comment. Current comment: {% if value.comment %}{{ value.comment }}{% else %}No comment{% endif %}"
+					onclick="edit_comment({{ value.id }}, '{{ value.type }}', $('#cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa{% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__{{ value.id }}').text(), 'Transaction')"
+					onkeypress="if(event.key === 'Enter' || event.key === ' ') { edit_comment({{ value.id }}, '{{ value.type }}', $('#cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa{% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__{{ value.id }}').text(), 'Transaction'); event.preventDefault(); }">
 					<span style="font-weight: bold;">General Comment: </span>
-					<span id="cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa{% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__{{ value.id }}">{% if value.comment is not None %}{{ value.comment }}{% endif %}</span>
+					<span id="cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa{% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__{{ value.id }}">{% if value.comment %}{{ value.comment }}{% else %}<em>Click to add</em>{% endif %}</span>
 				</td>
 			</tr>
 			{% if value.contest_rejection_reason != '' %}
@@ -288,25 +467,77 @@ th {
 	</tr>
 {% endfor %}
 	</tbody>
-	</table>
+</table>
+
+<!-- Accessible modal dialog for editing comments -->
+<div class="modal fade" id="comment_dialog" tabindex="-1" role="dialog" aria-labelledby="comment_dialog_title" aria-modal="true">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+				<h4 class="modal-title" id="comment_dialog_title">Edit Comment</h4>
+			</div>
+			<div class="modal-body">
+				<form id="comment_update_form" onsubmit="return false;">
+					<label for="comment_text_input" style="display: block; margin-bottom: 8px; font-weight: bold;">
+						Comment:
+					</label>
+					<textarea id="comment_text_input" cols="60" rows="5" class="form-control"></textarea>
+					<div style="margin-top: 16px;">
+						<button type="submit" class="btn btn-success">Update Comment</button>
+						<button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Accessible modal dialog for contesting charges -->
+<div class="modal fade" id="contest_dialog" tabindex="-1" role="dialog" aria-labelledby="contest_dialog_title" aria-modal="true">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+				<h4 class="modal-title" id="contest_dialog_title">Contest Charge</h4>
+			</div>
+			<div class="modal-body">
+				<label for="contest_reason_input" style="display: block; margin-bottom: 8px; font-weight: bold;">
+					Reason for contesting this charge:
+				</label>
+				<textarea id="contest_reason_input" cols="60" rows="5" class="form-control" required></textarea>
+				<div style="margin-top: 16px;">
+					<button type="button" id="submit_contest_btn" class="btn btn-warning">Submit Contest</button>
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
 
 <script type="text/javascript">
-/*
-$(function() {
-	$("#transactions").tablesorter({ 
-		sortList: [[2,1], [0,0]],
+// Global variables for dialog state
+let currentContestForm = null;
+let currentCommentCallback = null;
+let originalComment = "";
 
-		headers: {
-			'.sort-customer, .sort-project, .sort-percent, .sort-validate, .sort-contest' : {
-				sorter: false
-			}
-		}
-	});
-});
-*/
+// Announce status to screen readers
+function announceStatus(message) {
+	const statusEl = document.getElementById('status-message');
+	if (statusEl) {
+		statusEl.textContent = message;
+		setTimeout(() => {
+			statusEl.textContent = '';
+		}, 3000);
+	}
+}
 
+// Search functionality
 $("#search").keyup(function () {
-	//var data = this.value.split(" ");
 	var data = this.value;
 	var contested_state = $("#show_contested").prop("checked") === true;
 	var validated_state = $("#show_validated").prop("checked") === true;
@@ -323,10 +554,9 @@ $("#search").keyup(function () {
 
 	tr.hide();
 
+	var visibleCount = 0;
 	tr.filter(function(i, v) {
 		var $t = $(this);
-
-		// add more detailed filtering to collectively hide and show related rows
 		var id = $t.prop("id");
 
 		if (id.indexOf("_customers") > -1) {
@@ -346,24 +576,22 @@ $("#search").keyup(function () {
 			}
 		}
 	})
-	.show();
+	.show()
+	.each(function() {
+		if (!$(this).attr('id').includes('_customers')) {
+			visibleCount++;
+		}
+	});
+
+	if (data) {
+		announceStatus(visibleCount + ' transactions found');
+	}
 
 	toggle_activation();
 });
 
-function search_filter()
-{
-	var data = $("#search").val();
-	var validated_state = $("#show_validated").prop("checked") === true;
-	var contested_state = $("#show_contested").prop("checked") === true;
-
-	var tr = $("#transaction_data").children();
-
-	
-}
-
-function toggle_transaction_view(el, s_class)
-{
+// Toggle transaction view
+function toggle_transaction_view(el, s_class) {
 	var data = $("#search").val();
 
 	if (data != "") {
@@ -371,10 +599,11 @@ function toggle_transaction_view(el, s_class)
 		return;
 	} else {
 		var tr = $("#transaction_data").children();
+		var isChecked = $(el).prop("checked");
 
 		tr.each(function() {
 			if ($(this).hasClass(s_class)) {
-				if ($(el).prop("checked")) {
+				if (isChecked) {
 					$(this).show();
 				} else {
 					$(this).hide();
@@ -384,10 +613,9 @@ function toggle_transaction_view(el, s_class)
 	}
 }
 
-function set_select_all()
-{
-	// check on state of transactions per row and adjust select all checkbox accordingly
-	bCheck = true;
+// Set select all checkbox state
+function set_select_all() {
+	var bCheck = true;
 	$("input[id^='c_']").each(function() {
 		if ($(this).parentsUntil("tbody").last().css("display") == "table-row") {
 			if (!$(this).prop("checked")) {
@@ -398,16 +626,20 @@ function set_select_all()
 	$("#select_all").prop("checked", bCheck);
 }
 
+// Toggle select all
+function toggle_select(el) {
+	var isChecked = $(el).prop("checked");
+	var count = 0;
 
-function toggle_select(el)
-{
-	if ($(el).prop("checked")) {
+	if (isChecked) {
 		$("input[id^='c_']").each(function() {
 			if ($(this).parentsUntil("tbody").last().css("display") == "table-row") {
 				$(this).prop("checked", true);
+				count++;
 			}
 		});
 		$("#activate").prop("disabled", false);
+		announceStatus(count + ' transactions selected');
 	} else {
 		$("input[id^='c_']").each(function() {
 			if ($(this).parentsUntil("tbody").last().css("display") == "table-row") {
@@ -415,29 +647,31 @@ function toggle_select(el)
 			}
 		});
 		$("#activate").prop("disabled", true);
+		announceStatus('All transactions deselected');
 	}
 }
 
-
-function validate_selected()
-{
+// Validate selected transactions
+function validate_selected() {
+	var count = 0;
 	$("input[id^='c_']").each(function() {
 		if ($(this).parentsUntil("tbody").last().css("display") == "table-row") {
 			if ($(this).prop("checked")) {
-				s = '#b_' + $(this).prop("id");
+				var s = '#b_' + $(this).prop("id");
 				$(s).click();
+				count++;
 			}
 		}
 	});
 
+	announceStatus('Validating ' + count + ' transactions');
 	toggle_activation();
 	$("#search").keyup();
 }
 
-
-function toggle_activation()
-{
-	bDisabled = true;
+// Toggle activation button
+function toggle_activation() {
+	var bDisabled = true;
 	$("input[id^='c_']").each(function() {
 		if ($(this).parentsUntil("tbody").last().css("display") == "table-row") {
 			if ($(this).prop("checked")) {
@@ -446,156 +680,209 @@ function toggle_activation()
 		}
 	});
 	$("#activate").prop("disabled", bDisabled);
-
 	set_select_all();
 }
 
-function validate_charge(url, button, row)
-{
-	id = $(button).prop("id");
-	id = "#" + id.substring(2);
-	$(id).next().hide();
-	$(id).hide();
+// Validate charge
+function validate_charge(url, button, row, transactionType, toolName) {
+	var id = $(button).prop("id");
+	var checkboxId = "#" + id.substring(2);
+	
+	$(checkboxId).next().hide();
+	$(checkboxId).hide();
 	$(button).hide();
 	$(button).parent().next().children().first().hide();
+	
 	$(row).addClass('success-highlight');
-	customer = row + '_customers';
-	$(customer).addClass('success-highlight');	
+	$(row).css('background-color', '');
+	
+	// Update status badge
+	$(row).find('.status-badge').removeClass('status-badge-open status-badge-contested status-badge-rejected')
+		.addClass('status-badge-validated').text('Validated');
+	
+	var customer = row + '_customers';
+	$(customer).addClass('success-highlight');
+	$(customer).css('background-color', '');
+	
 	var failure_dialog = ajax_failure_callback("Unable to validate charge");
-	ajax_post(url, undefined, undefined, failure_dialog);
+	ajax_post(url, undefined, function() {
+		announceStatus(transactionType + ' for ' + toolName + ' validated successfully');
+	}, failure_dialog);
 }
 
-function contest_charge(url, button, row)
-{
-	var description = prompt("What is the reason you're contesting this charge?  Please enter your reason below and click OK, or click Cancel to cancel the contest.");
-	if (description != null) {
-		$(button).hide();
-		$(button).parent().prev().children().first().prop("disabled", true);
+// Contest charge with accessible modal
+function contest_charge(form, transactionType, toolName, row) {
+	currentContestForm = form;
+	
+	$('#contest_dialog_title').text('Contest ' + transactionType + ' for ' + toolName);
+	$('#contest_reason_input').val('');
+	
+	// Set up submit handler
+	$('#submit_contest_btn').off('click').on('click', function() {
+		var description = $('#contest_reason_input').val().trim();
+		
+		if (!description) {
+			alert('Please provide a reason for contesting this charge.');
+			$('#contest_reason_input').focus();
+			return;
+		}
+		
+		// Set the hidden field value
+		$(currentContestForm).find('input[name="description"]').val(description);
+		
+		// Mark row as contested
 		$(row).addClass('warning-highlight');
-		customer = row + '_customers';
+		$(row).css('background-color', '');
+		
+		// Update status badge
+		$(row).find('.status-badge').removeClass('status-badge-open')
+			.addClass('status-badge-contested').text('Contested');
+		
+		var customer = row + '_customers';
 		$(customer).addClass('warning-highlight');
-		var failure_dialog = ajax_failure_callback("Unable to contest charge");
-		ajax_post(url, {"description": description}, undefined, failure_dialog);
-	}
+		$(customer).css('background-color', '');
+		
+		// Disable buttons
+		$(currentContestForm).find('button[type="submit"]').prop('disabled', true);
+		$(currentContestForm).closest('td').prev().find('button').prop('disabled', true);
+		
+		// Submit the form programmatically
+		currentContestForm.submit();
+		
+		$('#contest_dialog').modal('hide');
+		announceStatus('Contest submitted for ' + transactionType);
+	});
+	
+	$('#contest_dialog').modal('show');
+	
+	// Focus on textarea when modal opens
+	$('#contest_dialog').on('shown.bs.modal', function() {
+		$('#contest_reason_input').focus();
+	});
+	
+	return false; // Prevent default form submission
 }
 
-function edit_comment(id, type, comment)
-{
-	//var edited = prompt("Please make any desired changes to the comment for the " + type, comment);
-
+// Edit comment with accessible modal
+function edit_comment(id, type, comment, entityName) {
+	originalComment = comment;
 	let url = "";
 	let span_id = "#cmt__";
+	let dialogTitle = "";
+	
 	switch (type) {
 		case "Tool Use":
 			url = "{% url 'save_operator_comment' %}";
 			span_id += "tu__" + id;
+			dialogTitle = "Edit Tool Use Comment";
 			break;
 		case "Tool Use customer":
 			url = "{% url 'save_tool_comment' %}";
 			span_id += "tu__customer__" + id;
+			dialogTitle = "Edit Customer Comment for " + entityName;
 			break;
 		case "Withdraw":
 			url = "{% url 'save_withdraw_notes' %}";
 			span_id += "wd__" + id;
+			dialogTitle = "Edit Withdraw Comment";
 			break;
 		case "Staff Charge":
 			url = "{% url 'save_staff_comment' %}";
 			span_id += "sc__" + id;
+			dialogTitle = "Edit Staff Charge Comment";
 			break;
 		case "Staff Charge customer":
 			url = "{% url 'save_sc_customer_comment' %}";
 			span_id += "sc__customer__" + id;
+			dialogTitle = "Edit Customer Comment for " + entityName;
 			break;
 		case "Area Access":
 			url = "{% url 'save_area_access_comment' %}";
 			span_id += "aa__" + id;
+			dialogTitle = "Edit Area Access Comment";
 			break;
 		case "Area Access customer":
 			url = "{% url 'save_aa_customer_comment' %}";
 			span_id += "aa__customer__" + id;
+			dialogTitle = "Edit Customer Comment for " + entityName;
 			break;
 	}
 
-	let dialog_contents =
-		"<div class='modal-header'>" +
-		"<button type='button' class='close' data-dismiss='modal'>&times;</button>" +
-		"<h4 class='modal-title'>Please update your comment</h4>" +
-		"</div>" +
-		"<div class='modal-body'>" +
-		"<form action='" + url + "' id='comment_update'>" +
-		"<textarea id='comment_text' cols=15 rows=5 class='form-control'>" + comment + "</textarea>" +
-		"<input type='submit' value='Update Comment' class='btn btn-success' />" +
-		"<button type='button' class='btn btn-danger' data-dismiss='modal'>Cancel</button>" +
-		"</form>" +		
-		"</div>";
-	$("#dialog .modal-content").html(dialog_contents);
-	$("#comment_update").submit(function( event ) {
-		if ($("#comment_text").val() != comment) {
-			//let url = "";
-			let params = {};
+	$('#comment_dialog_title').text(dialogTitle);
+	$('#comment_text_input').val(comment);
 
-			switch (type) {
-				case "Tool Use":
-					url = "{% url 'save_operator_comment' %}";
-					params["usage_id"] = id;
-					params["operator_comment"] = $("#comment_text").val();
-					break;
-				case "Tool Use customer":
-					url = "{% url 'save_tool_comment' %}";
-					params["uep_id"] = id;
-					params["comment"] = $("#comment_text").val();
-					break;
-				case "Withdraw":
-					url = "{% url 'save_withdraw_notes' %}";
-					params["withdraw_id"] = id
-					params["withdraw_comment"] = $("#comment_text").val();
-					break;
-				case "Staff Charge":
-					url = "{% url 'save_staff_comment' %}";
-					params["staff_charge_id"] = id
-					params["staff_member_comment"] = $("#comment_text").val();
-					break;
-				case "Staff Charge customer":
-					url = "{% url 'save_sc_customer_comment' %}";
-					params["scp_id"] = id;
-					params["comment"] = $("#comment_text").val();
-					break;
-				case "Area Access":
-					url = "{% url 'save_area_access_comment' %}";
-					params["area_access_id"] = id;
-					params["area_access_comment"] = $("#comment_text").val();
-					break;
-				case "Area Access customer":
-					url = "{% url 'save_aa_customer_comment' %}";
-					params["aarp_id"] = id;
-					params["comment"] = $("#comment_text").val();
-					break;
-				default:
-					alert($("#comment_text").val());
-					return false;
-			}
-					
-			ajax_get(
-				url,
-				params,
-				function() {
-					$(span_id).html($("#comment_text").val());
-					$("#dialog").modal('hide'); 
-				},
-				undefined
-			);
-		} else {
-			alert("No changes were detected in the current comment text.  The update will be cancelled.");
-			$("#dialog").modal('hide');
+	// Remove previous submit handler and add new one
+	$('#comment_update_form').off('submit').on('submit', function(event) {
+		event.preventDefault();
+		
+		const newComment = $("#comment_text_input").val();
+		
+		if (newComment === originalComment) {
+			announceStatus('No changes detected');
+			$('#comment_dialog').modal('hide');
+			return false;
 		}
+		
+		let params = {};
+		
+		switch (type) {
+			case "Tool Use":
+				params["usage_id"] = id;
+				params["operator_comment"] = newComment;
+				break;
+			case "Tool Use customer":
+				params["uep_id"] = id;
+				params["comment"] = newComment;
+				break;
+			case "Withdraw":
+				params["withdraw_id"] = id;
+				params["withdraw_comment"] = newComment;
+				break;
+			case "Staff Charge":
+				params["staff_charge_id"] = id;
+				params["staff_member_comment"] = newComment;
+				break;
+			case "Staff Charge customer":
+				params["scp_id"] = id;
+				params["comment"] = newComment;
+				break;
+			case "Area Access":
+				params["area_access_id"] = id;
+				params["area_access_comment"] = newComment;
+				break;
+			case "Area Access customer":
+				params["aarp_id"] = id;
+				params["comment"] = newComment;
+				break;
+			default:
+				return false;
+		}
+		
+		ajax_get(
+			url,
+			params,
+			function() {
+				$(span_id).html(newComment || '<em>Click to add</em>');
+				$('#comment_dialog').modal('hide');
+				announceStatus('Comment updated successfully');
+			},
+			function() {
+				announceStatus('Failed to update comment');
+			}
+		);
+		
 		return false;
 	});
-	$("#dialog").on("shown.bs.modal", function () {
-		var s = $("#comment_text").val();
-		$("#comment_text").focus();
-		$("#comment_text")[0].setSelectionRange(s.length,s.length);
+
+	$('#comment_dialog').modal('show');
+	
+	// Focus on textarea and move cursor to end when modal opens
+	$('#comment_dialog').on('shown.bs.modal', function() {
+		const textarea = $('#comment_text_input')[0];
+		textarea.focus();
+		const len = textarea.value.length;
+		textarea.setSelectionRange(len, len);
 	});
-	$("#dialog").modal('show');
 }
 </script>
 {% endautoescape %}
