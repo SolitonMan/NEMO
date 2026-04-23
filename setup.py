@@ -36,6 +36,7 @@ setup(
 		'Pillow>=7.1.1',
 		'pyjwt>=1.7.1',
 		'icalendar>=6.3.0',
+		'setuptools>=65.0.0',
 	],
 	entry_points={
 		'console_scripts': ['nemo=NEMO.provisioning:entry_point'],
