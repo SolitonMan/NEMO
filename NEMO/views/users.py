@@ -869,6 +869,12 @@ def staff_service_requests(request):
 		status__iexact='closed'
 	).select_related('project', 'user', 'service_type', 'tool').order_by('-updated')[:5]
 
+	placeholder_req_ids = set(
+		Requirement.objects.filter(
+			name__in=ServiceType.objects.values_list('name', flat=True)
+		).values_list('id', flat=True)
+	)
+
 	request_requirements = {}
 	for req in open_requests:
 		# Get requirements for this service type
