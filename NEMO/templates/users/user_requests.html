@@ -86,9 +86,9 @@
 						<label for="wizard_choose_core">Choose a core:</label>
 						<select class="form-control" id="wizard_choose_core" name="choose_core">
 							<option value="">-- Choose a core --</option>
-							<option value="1">Materials Characterization Lab (MCL)</option>
-							<option value="2">Nanofab</option>
-							<!--<option value="4">2DCC</option>-->
+							{% for c in cores %}
+							<option value="{{ c.id }}">{{ c.name }}</option>
+							{% endfor %}
 						</select>
 					</div>
 					<!-- Step 2: Service Selection -->

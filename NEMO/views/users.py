@@ -784,14 +784,18 @@ def user_requests(request):
 
 	force_requirements_redirect = request.session.pop('force_requirements_redirect', False)
 
+	core_ids = ServiceRequest.object.values_list('core_id', flat=True).distinct()
+	cores = Core.objects.filter(id__in=core_ids)
+
 	if request.device == 'mobile':
 		return render(request, 'users/mobile_user_requests.html', {
+			'cores': cores,
 			'mcl_services': mcl_services,
-			'mcl_core': mcl_core,
+			'mcl_core': mcl_core.id,
 			'nano_services': nano_services,
-			'nano_core': nano_core,
+			'nano_core': nano_core.id,
 			'twodcc_services': twodcc_services,
-			'twodcc_core': twodcc_core,
+			'twodcc_core': twodcc_core.id,
 			'user_projects': user_projects,
 			'user_service_requests': user_service_requests,
 			'request_requirements': request_requirements,
@@ -800,6 +804,7 @@ def user_requests(request):
 		})
 	else:
 		return render(request, 'users/user_requests.html', {
+			'cores': cores,
 			'mcl_services': mcl_services,
 			'mcl_core': mcl_core,
 			'nano_services': nano_services,
