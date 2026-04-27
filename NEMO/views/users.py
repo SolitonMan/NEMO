@@ -784,7 +784,7 @@ def user_requests(request):
 
 	force_requirements_redirect = request.session.pop('force_requirements_redirect', False)
 
-	core_ids = ServiceRequest.object.values_list('core_id', flat=True).distinct()
+	core_ids = ServiceType.object.values_list('core_id', flat=True).distinct()
 	cores = Core.objects.filter(id__in=core_ids)
 
 	if request.device == 'mobile':
