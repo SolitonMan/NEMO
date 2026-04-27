@@ -1,7 +1,64 @@
 {% extends "base.html" %}
 {% load custom_tags_and_filters %}
+{% block title %}Service and Training Requests{% endblock %}
+{% block extrahead %}
+	{% load static %}
+	<style>
+	tr.requirements-row {
+		display: none;
+	}
+
+	.highlight {
+		border: 1px solid #c0c0c0;
+	}
+
+	.btn-requirements {
+		background-color: rgb(51, 122, 183) !important;
+		background-image: linear-gradient(rgb(51, 122, 183) 0%, rgb(38, 90, 136) 100%); 
+		background-repeat: repeat-x;
+		border: 0.66667px solid rgb(36, 85, 128);
+		color: #fff !important;
+		font-weight: bold;
+		border: none;
+		box-shadow: none;
+	}
+
+	.btn-requirements:hover, .btn-requirements.active, .btn-requirements:focus {
+		background-color: #283593 !important;
+		color: #fff !important;
+		border: none;
+		box-shadow: none;
+	}
+
+	.btn-requirements input[type="radio"] {
+		display: none;
+	}
+
+	#requirements-table-container th.sortable {
+		color: #337ab7;
+		text-decoration: underline;
+		cursor: pointer;
+		transition: color 0.2s;
+	}
+
+	#requirements-table-container th.sortable:hover {
+		color: #23527c;
+	}
+
+	#requirements-table-container th.sorted-asc::after {
+		content: " \25B2";
+		font-size: 12px;
+	}
+
+	#requirements-table-container th.sorted-desc::after {
+		content: " \25BC";
+		font-size: 12px;
+	}
+</style>
+{% endblock %}
+
 {% block content %}
-<h2>Open Service Requests Assigned to You</h2>
+<h2>Open Service and Training Requests Assigned to You</h2>
 <table class="table">
 	<thead>
 		<tr>
@@ -77,7 +134,7 @@
 				</div>
 				<hr>
 				<strong>Requirements for this request:</strong>
-				<table class="table">
+				<table class="table highlight">
 					<thead>
 						<tr>
 							<th>Requirement</th>
