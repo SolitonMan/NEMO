@@ -383,9 +383,9 @@ document.getElementById('confirmCancelBtn').onclick = function() {
 	// Wizard state
 	var wizardStep = 0;
 	var coreServices = {
-		"1": [{ id: "{{ mcl_services.0.id }}", name: "{{ mcl_services.0.name }}" }{% for opt in mcl_services|slice:"1:" %}, { id: "{{ opt.id }}", name: "{{ opt.name }}" }{% endfor %}],
-		"2": [{ id: "{{ nano_services.0.id }}", name: "{{ nano_services.0.name }}" }{% for opt in nano_services|slice:"1:" %}, { id: "{{ opt.id }}", name: "{{ opt.name }}" }{% endfor %}],
-		"4": []
+		"{{ mcl_core }}": [{ id: "{{ mcl_services.0.id }}", name: "{{ mcl_services.0.name }}" }{% for opt in mcl_services|slice:"1:" %}, { id: "{{ opt.id }}", name: "{{ opt.name }}" }{% endfor %}],
+		"{{ nano_core }}": [{ id: "{{ nano_services.0.id }}", name: "{{ nano_services.0.name }}" }{% for opt in nano_services|slice:"1:" %}, { id: "{{ opt.id }}", name: "{{ opt.name }}" }{% endfor %}],
+		"{{ twodcc_core }}": [{ id: "{{ twodcc_services.0.id }}", name: "{{ twodcc_services.0.name }}" }{% for opt in twodcc_services|slice:"1:" %}, { id: "{{ opt.id }}", name: "{{ opt.name }}" }{% endfor %}]
 	};
 
 	function showStep(step) {
@@ -406,7 +406,7 @@ document.getElementById('confirmCancelBtn').onclick = function() {
 
 	function updateTrainingField() {
 		var core = $('#wizard_choose_core').val();
-		if (core === "2") { // Nanofab
+		if (core === "{{ nano_core }}" || core === "{{ twodcc_core }}") { // Nanofab or 2DCC
 			$('#wizard_training_select_group').hide();
 			$('#wizard_training_select_group select').prop('disabled', true);
 			$('#wizard_training_hidden').show().prop('disabled', false);

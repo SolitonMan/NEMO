@@ -664,10 +664,12 @@ def user_requests(request):
 		return ServiceType.objects.filter(name=requirement.name, requirements__isnull=False).exclude(requirements=requirement).exists()
 
 	requirement_names = set(Requirement.objects.values_list('name', flat=True))
-	mcl_core = Core.objects.get(id=1)
+	mcl_core = Core.objects.get(name='Materials Characterization Lab (MCL)')
 	mcl_services = ServiceType.objects.filter(core=mcl_core).exclude(name__in=requirement_names).order_by('name')
-	nano_core = Core.objects.get(id=2)
+	nano_core = Core.objects.get(name='Nanofabrication Facility')
 	nano_services = ServiceType.objects.filter(core=nano_core).exclude(name__in=requirement_names).order_by('name')
+	twodcc_core = Core.objects.get(name='2DCC')
+	twodcc_services = ServiceType.objects.filter(core=twodcc_core).exclude(name__in=requirement_names).order_by('name')
 	user_projects = request.user.active_projects
 
 	owner_first_name_subquery = User.objects.filter(email=OuterRef('owner')).values('first_name')[:1]
@@ -785,7 +787,11 @@ def user_requests(request):
 	if request.device == 'mobile':
 		return render(request, 'users/mobile_user_requests.html', {
 			'mcl_services': mcl_services,
+			'mcl_core': mcl_core,
 			'nano_services': nano_services,
+			'nano_core': nano_core,
+			'twodcc_services': twodcc_services,
+			'twodcc_core': twodcc_core,
 			'user_projects': user_projects,
 			'user_service_requests': user_service_requests,
 			'request_requirements': request_requirements,
@@ -795,7 +801,11 @@ def user_requests(request):
 	else:
 		return render(request, 'users/user_requests.html', {
 			'mcl_services': mcl_services,
+			'mcl_core': mcl_core,
 			'nano_services': nano_services,
+			'nano_core': nano_core,
+			'twodcc_services': twodcc_services,
+			'twodcc_core': twodcc_core,
 			'user_projects': user_projects,
 			'user_service_requests': user_service_requests,
 			'request_requirements': request_requirements,
