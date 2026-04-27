@@ -206,3 +206,14 @@ def get_content_data(work_order_transaction):
 			content_data["parent_record_id"] = content_object.area_access_record.id
 
 	return content_data
+
+@register.filter
+def completed_count(reqs):
+	return len([r for r in reqs if r.get('status') == 'Completed'])
+
+@register.filter
+def divided_by(value, arg):
+	try:
+		return float(value) / float(arg) * 100
+	except (ValueError, ZeroDivisionError, TypeError):
+		return 0
