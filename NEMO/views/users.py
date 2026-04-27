@@ -869,6 +869,33 @@ def staff_service_requests(request):
 		status__iexact='closed'
 	).select_related('project', 'user', 'service_type', 'tool').order_by('-updated')[:5]
 
+	request_requirements = {}
+	for req in open_requests:
+		# Get requirements for this service type
+		requirements = req.service_type.requirements.all()
+		leaf_requirements = []
+		for r in requirements:
+			leaf_requirements.extend(get_leaf_requirements(r))
+		# Remove duplicates
+		leaf_requirements = list({r.id: r for r in leaf_requirements}.values())
+		req_list = []
+		for r in leaf_requirements:
+			if r.id in placeholder_req_ids:
+				continue  # Skip placeholder requirements
+			progress = UserRequirementProgress.objects.filter(user=request.user, requirement=r).first()
+			req_list.append({
+				'id': r.id,
+				'name': r.name,
+				'description': r.description,
+				'has_progress': progress is not None,
+				'status': progress.get_status_display() if progress else None,
+				'resource_link_name': r.resource_link_name,
+				'resource_link': r.resource_link,
+				'expected_completion_time': r.expected_completion_time,
+				'prerequisites': r.prerequisites,
+			})
+		request_requirements[req.id] = req_list
+
 	if request.method == 'POST':
 		req_id = request.POST.get('request_id')
 		action = request.POST.get('action')
@@ -884,6 +911,7 @@ def staff_service_requests(request):
 	return render(request, 'users/staff_service_requests.html', {
 		'open_requests': open_requests,
 		'closed_requests': closed_requests,
+		'request_requirements': request_requirements,
 	})
 
 @login_required

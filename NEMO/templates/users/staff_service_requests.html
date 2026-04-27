@@ -10,12 +10,13 @@
 			<th>Service Type</th>
 			<th>Tool</th>
 			<th>Description</th>
+			<th>Progress</th>
 			<th>Action</th>
 		</tr>
 	</thead>
 	<tbody>
 		{% for req in open_requests %}
-		<tr>
+		<tr class="request-row" data-request-id="{{ req.id }}" data-training-request="{{ req.training_request }}" style="cursor:pointer;">
 			<td><a href="{% url 'edit_service_request' req.id %}">{{ req.case_number }}</a></td>
 			<td><a href="{% url 'edit_service_request' req.id %}">{{ req.project.project_number }}</a></td>
 			<td><a href="{% url 'edit_service_request' req.id %}">{{ req.user.get_full_name }}</a></td>
@@ -23,12 +24,88 @@
 			<td><a href="{% url 'edit_service_request' req.id %}">{{ req.tool.name }}</a></td>
 			<td><a href="{% url 'edit_service_request' req.id %}">{{ req.description|default:"" }}</a></td>
 			<td>
-				<form method="post" style="display:inline;" onsubmit="return confirm('Are you sure you want to resolve this case?');">
+				{% with reqs=request_requirements|get_item:req.id %}
+					{% with total=reqs|length completed=reqs|completed_count %}
+						<div style="display: flex; align-items: center; min-width: 120px;">
+							<div class="progress" style="flex: 1 1 auto; margin-bottom: 0; height: 18px; margin-right: 8px;">
+								<div class="progress-bar" role="progressbar"
+									style="width: {% if total > 0 %}{{ completed|floatformat:2|divided_by:total|floatformat:2 }}{% else %}0{% endif %}%;"
+									aria-valuenow="{{ completed }}" aria-valuemin="0" aria-valuemax="{{ total }}">
+								</div>
+							</div>
+							<span style="white-space: nowrap; font-size: 12px;">
+								{{ completed }}/{{ total }}
+							</span>
+						</div>
+					{% endwith %}
+				{% endwith %}
+			</td>
+			<td>
+				<form method="post" style="display:inline;" onsubmit="return confirm('Are you sure you want to close this case?');">
 					{% csrf_token %}
 					<input type="hidden" name="request_id" value="{{ req.id }}">
 					<input type="hidden" name="action" value="resolve">
 					<button type="submit" class="btn btn-success btn-sm">Close</button>
 				</form>
+			</td>
+		</tr>
+		<tr class="requirements-row" data-request-id="{{ req.id }}" style="display:none;">
+			<td colspan="7">
+				<!-- Introductory details -->
+				<div>
+					{% if req.core.id != 2 %}
+					<strong>Case Number:</strong> {{ req.case_number|default:"-" }}<br>
+					{% endif %}
+					<strong>Contact:</strong>
+					{% if req.owner %}
+						<a href="mailto:{{ req.owner }}">{{ req.owner_first_name }} {{ req.owner_last_name }}</a>
+					{% else %}
+						-
+					{% endif %}
+					<br>
+					<strong>Description:</strong> {{ req.description|default:"-" }}<br>
+					{% if req.core.id != 2 %}
+					<strong>Training Requested:</strong> {% if req.training_request %}Yes{% else %}No{% endif %}<br>
+					<strong>Training Approved:</strong> {% if req.training_approved %}Yes{% else %}No{% endif %}<br>
+					{% endif %}
+					<strong>Last Updated:</strong> {{ req.updated|date:"Y-m-d H:i" }}<br><br>
+
+					{% if req.core_id == 2 and req.status != 'cancelled' and req.status != 'completed' %}
+					<button class="btn btn-danger btn-sm" onclick="showCancelModal({{ req.id }})">Cancel Request</button>
+					{% endif %}
+				</div>
+				<hr>
+				<strong>Requirements for this request:</strong>
+				<table class="table">
+					<thead>
+						<tr>
+							<th>Requirement</th>
+							<th>Status</th>
+							<th>Complete this requirement</th>
+							<th>Est.</th>
+							<th>Prerequisites</th>
+						</tr>
+					</thead>
+					<tbody>
+				{% for r in request_requirements|get_item:req.id %}
+					<tr style="margin: 3px 3px 3px 3px;">
+						<td style="width:20%;">{{ r.name }}</td>
+						<td style="width:10%;">
+						{% if r.has_progress %}
+							<span style="font-weight:bold; font-size: 10pt; border-radius: 12px; background-color: {% if r.status == 'Not Started' %}#ffcccc{% endif %}{% if r.status == 'Completed' %}#ccffcc{% endif %}{% if r.status == 'In Progress' %}#ffffcc{% endif %};">{{ r.status|default:"Not Started" }}</span>
+						{% else %}
+							Not assigned
+						{% endif %}
+						</td>
+						<td style="width:25%;"><a href="{{ r.resource_link }}" target="_blank">{{ r.resource_link_name }}</a></td>
+						<td style="width:5%;">{{ r.expected_completion_time }}</td>
+						<td>{{ r.prerequisites }}</td>
+					</tr>
+				{% empty %}
+					<tr><td>No requirements for this request.</td></tr>
+				{% endfor %}
+					</tbody>
+				</table>
 			</td>
 		</tr>
 		{% empty %}
@@ -73,4 +150,40 @@
 		{% endfor %}
 	</tbody>
 </table>
+
+<script>
+(function () {
+	var $ = window.jQuery;
+	if (!$) return;
+
+	// Filter and expand/collapse logic for requests table
+	function filterRequests(showTraining) {
+		$('.request-row').each(function () {
+			var isTraining = $(this).data('training-request') === true || $(this).data('training-request') === 'True' || $(this).data('training-request') === 'true';
+			var reqId = $(this).data('request-id');
+			var $requirementsRow = $('.requirements-row[data-request-id="' + reqId + '"]');
+			var $icon = $(this).find('.glyphicon');
+			if (showTraining ? isTraining : !isTraining) {
+				$(this).show();
+				$requirementsRow.hide();
+				$icon.removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-right');
+			} else {
+				$(this).hide();
+				$requirementsRow.hide();
+			}
+		});
+	}
+
+	// Row-by-row expand/collapse
+	$(document).on('click', '.request-row', function () {
+		var reqId = $(this).data('request-id');
+		var $detailsRow = $('.requirements-row[data-request-id="' + reqId + '"]');
+		var $icon = $(this).find('.glyphicon');
+		if ($(this).is(':visible')) {
+			$detailsRow.toggle();
+			$icon.toggleClass('glyphicon-chevron-right glyphicon-chevron-down');
+		}
+	});
+})();
+</script>
 {% endblock %}
