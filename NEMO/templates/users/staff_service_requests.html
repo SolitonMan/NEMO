@@ -103,7 +103,7 @@
 				{% endwith %}
 			</td>
 			<td width="200px;">
-				<form method="post" onsubmit="return confirm('Are you sure you want to close this case?');">
+				<form method="post" onsubmit="return confirm('Are you sure you want to close this case?');" style="display: inline-block;">
 					{% csrf_token %}
 					<input type="hidden" name="request_id" value="{{ req.id }}">
 					<input type="hidden" name="action" value="resolve">
