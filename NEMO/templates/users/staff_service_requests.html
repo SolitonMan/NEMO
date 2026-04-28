@@ -102,12 +102,12 @@
 					{% endwith %}
 				{% endwith %}
 			</td>
-			<td>
-				<form method="post" style="display:inline;" onsubmit="return confirm('Are you sure you want to close this case?');">
+			<td width="200px;">
+				<form method="post" onsubmit="return confirm('Are you sure you want to close this case?');">
 					{% csrf_token %}
 					<input type="hidden" name="request_id" value="{{ req.id }}">
 					<input type="hidden" name="action" value="resolve">
-					<button type="submit" class="btn btn-danger btn-sm">Close</button>
+					<button type="submit" class="btn btn-danger btn-sm" onclick="event.stopPropagation();" aria-label="Close service request">Close</button>
 				</form>
 				<button type="button" class="btn btn-success btn-sm" onclick="event.stopPropagation();" data-url="{% url 'edit_service_request' req.id %}" aria-label="Edit service request">
 					Edit
