@@ -75,12 +75,12 @@
 	<tbody>
 		{% for req in open_requests %}
 		<tr class="request-row" data-request-id="{{ req.id }}" data-training-request="{{ req.training_request }}" style="cursor:pointer;">
-			<td><a href="{% url 'edit_service_request' req.id %}">{{ req.case_number }}</a></td>
-			<td><a href="{% url 'edit_service_request' req.id %}">{{ req.project.project_number }}</a></td>
-			<td><a href="{% url 'edit_service_request' req.id %}">{{ req.user.get_full_name }}</a></td>
-			<td><a href="{% url 'edit_service_request' req.id %}">{{ req.service_type.name }}</a></td>
-			<td><a href="{% url 'edit_service_request' req.id %}">{{ req.tool.name }}</a></td>
-			<td><a href="{% url 'edit_service_request' req.id %}">{{ req.description|default:"" }}</a></td>
+			<td>{{ req.case_number }}</td>
+			<td>{{ req.project.project_number }}</td>
+			<td>{{ req.user.get_full_name }}</td>
+			<td>{{ req.service_type.name }}</td>
+			<td>{{ req.tool.name }}</td>
+			<td>{{ req.description|default:"" }}</td>
 			<td>
 				{% with reqs=request_requirements|get_item:req.id %}
 					{% with total=reqs|length completed=reqs|completed_count %}
