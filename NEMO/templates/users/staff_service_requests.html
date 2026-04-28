@@ -84,17 +84,21 @@
 			<td>
 				{% with reqs=request_requirements|get_item:req.id %}
 					{% with total=reqs|length completed=reqs|completed_count %}
+						{% if total > 0 %}
 						<div style="display: flex; align-items: center; min-width: 120px;">
-							<div class="progress" style="flex: 1 1 auto; margin-bottom: 0; height: 18px; margin-right: 8px;">
-								<div class="progress-bar" role="progressbar"
-									style="width: {% if total > 0 %}{{ completed|floatformat:2|divided_by:total|floatformat:2 }}{% else %}0{% endif %}%;"
-									aria-valuenow="{{ completed }}" aria-valuemin="0" aria-valuemax="{{ total }}">
-								</div>
-							</div>
-							<span style="white-space: nowrap; font-size: 12px;">
-								{{ completed }}/{{ total }}
-							</span>
+										<div class="progress" style="flex: 1 1 auto; margin-bottom: 0; height: 18px; margin-right: 8px;">
+														<div class="progress-bar" role="progressbar"
+															style="width: {% if total > 0 %}{{ completed|floatformat:2|divided_by:total|floatformat:2 }}{% else %}0{% endif %}%;"
+															aria-valuenow="{{ completed }}" aria-valuemin="0" aria-valuemax="{{ total }}">
+														</div>
+										</div>
+										<span style="white-space: nowrap; font-size: 12px;">
+														{{ completed }}/{{ total }}
+										</span>
 						</div>
+						{% else %}
+						No requirements
+						{% endif %}
 					{% endwith %}
 				{% endwith %}
 			</td>

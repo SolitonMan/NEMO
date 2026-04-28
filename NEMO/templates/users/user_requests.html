@@ -8,6 +8,10 @@
 		display: none;
 	}
 
+	.highlight {
+		border: 1px solid #c0c0c0;
+	}
+
 	.btn-requirements {
 		background-color: rgb(51, 122, 183) !important;
 		background-image: linear-gradient(rgb(51, 122, 183) 0%, rgb(38, 90, 136) 100%); 
@@ -182,6 +186,7 @@
 				<td>
 					{% with reqs=request_requirements|get_item:req.id %}
 						{% with total=reqs|length completed=reqs|completed_count %}
+							{% if total > 0 %}
 							<div style="display: flex; align-items: center; min-width: 120px;">
 								<div class="progress" style="flex: 1 1 auto; margin-bottom: 0; height: 18px; margin-right: 8px;">
 									<div class="progress-bar" role="progressbar"
@@ -193,6 +198,9 @@
 									{{ completed }}/{{ total }}
 								</span>
 							</div>
+							{% else %}
+							No requirements
+							{% endif %}
 						{% endwith %}
 					{% endwith %}
 				</td>
@@ -224,7 +232,7 @@
 					</div>
 					<hr>
 					<strong>Requirements for this request:</strong>
-					<table class="table">
+					<table class="table highlight">
 						<thead>
 							<tr>
 								<th>Requirement</th>
