@@ -107,8 +107,11 @@
 					{% csrf_token %}
 					<input type="hidden" name="request_id" value="{{ req.id }}">
 					<input type="hidden" name="action" value="resolve">
-					<button type="submit" class="btn btn-success btn-sm">Close</button>
+					<button type="submit" class="btn btn-danger btn-sm">Close</button>
 				</form>
+				<button type="button" class="btn btn-success btn-sm" onclick="event.stopPropagation();" data-url="{% url 'edit_service_request' req.id %}" aria-label="Edit service request">
+					Edit
+				</button>
 			</td>
 		</tr>
 		<tr class="requirements-row" data-request-id="{{ req.id }}" style="display:none;">
@@ -214,6 +217,15 @@
 </table>
 
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+	document.querySelectorAll('.btn-success[data-url]').forEach(button => {
+		button.addEventListener('click', function(e) {
+			e.stopPropagation();
+			window.location.href = this.dataset.url;
+		});
+	});
+});
+
 (function () {
 	var $ = window.jQuery;
 	if (!$) return;
