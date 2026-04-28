@@ -534,6 +534,14 @@ document.getElementById('confirmCancelBtn').onclick = function() {
 		}
 	}
 
+	// Helper function to get URL parameter
+	function getUrlParameter(name) {
+		name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+		var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+		var results = regex.exec(location.search);
+		return results === null ? null : decodeURIComponent(results[1].replace(/\+/g, ' '));
+	}
+
 	$('#toggle-training').on('click', function () {
 		localStorage.setItem('user_requests_view', 'training');
 		setView('training');
@@ -549,15 +557,28 @@ document.getElementById('confirmCancelBtn').onclick = function() {
 		setView('requirements');
 	});
 
-	// On page load, restore the last selected view
+	// On page load, determine the view to show based on:
+	// 1. URL parameter (highest priority)
+	// 2. force_requirements_redirect from backend
+	// 3. localStorage (fallback)
+	var urlView = getUrlParameter('view');
 	var forceRequirements = {{ force_requirements_redirect|yesno:"true,false" }};
 	var savedView = localStorage.getItem('user_requests_view');
-	if (forceRequirements) {
-		setView('requirements');
+	
+	var initialView = 'training'; // default
+	if (urlView && ['training', 'service', 'requirements'].indexOf(urlView) !== -1) {
+		// URL parameter takes highest priority
+		initialView = urlView;
+		// Update localStorage so the view persists
+		localStorage.setItem('user_requests_view', urlView);
+	} else if (forceRequirements) {
+		initialView = 'requirements';
 		localStorage.setItem('user_requests_view', 'requirements');
-	} else {
-		setView(savedView || 'training');
+	} else if (savedView) {
+		initialView = savedView;
 	}
+	
+	setView(initialView);
 
 	// Row-by-row expand/collapse
 	$(document).on('click', '.request-row', function () {
