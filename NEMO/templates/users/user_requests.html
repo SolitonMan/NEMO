@@ -121,6 +121,7 @@
 					<div class="wizard-step" id="wizardStepTraining" style="display:none;">
 						<!-- Training select (shown for non-Nanofab) -->
 						<div id="wizard_training_select_group">
+							<span>Please note that some project details will appear in a few minutes.  Training related requirements may be assigned if a training request is approved.</span>
 							<label for="wizard_training_requested">Is this a request for training?</label>
 							<select class="form-control" id="wizard_training_requested" name="training_requested">
 								<option value="True">Yes</option>
@@ -465,6 +466,7 @@ document.getElementById('confirmCancelBtn').onclick = function() {
 	$('#requestWizardForm').on('submit', function (e) {
 		if ($('#wizard_description').val().trim() === '') {
 			alert('Please provide details about your request');
+			$('#wizard_description').focus();
 			e.preventDefault();
 			return false;
 		}
