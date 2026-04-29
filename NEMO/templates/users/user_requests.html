@@ -129,8 +129,8 @@
 						</div>
 						<!-- Hidden input for Nanofab -->
 						<input type="hidden" id="wizard_training_hidden" name="training_requested" value="True" style="display:none;" />
-						<label for="wizard_description" style="margin-top:10px;">Request Summary</label>
-						<textarea class="form-control" id="wizard_description" name="description" rows="4" placeholder="Briefly describe what you need. Example: I'd like to discuss my project about ___; I'd like sample analysis on ____; etc."></textarea>
+						<label for="wizard_description" style="margin-top:10px;">Request Details</label>
+						<textarea class="form-control" id="wizard_description" name="description" rows="4" placeholder="Briefly describe your request. Example: project details, tools or processes of interest, and any training needs."></textarea>
 					</div>
 				</div>
 				<div class="modal-footer">
@@ -452,6 +452,7 @@ document.getElementById('confirmCancelBtn').onclick = function() {
 		if (wizardStep === 2) {
 			if (!$('#wizard_project_select').val()) { alert('Please select a project.'); return; }
 		}
+		
 		wizardStep++;
 		showStep(wizardStep);
 	});
@@ -462,6 +463,12 @@ document.getElementById('confirmCancelBtn').onclick = function() {
 	});
 
 	$('#requestWizardForm').on('submit', function (e) {
+		if ($('#wizard_description').val().trim() === '') {
+			alert('Please provide details about your request');
+			e.preventDefault();
+			return false;
+		}
+
 		e.preventDefault();
 		var data = $(this).serialize();
 		ajax_post(
