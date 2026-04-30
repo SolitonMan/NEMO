@@ -151,6 +151,7 @@
 							<th>Complete this requirement</th>
 							<th>Est.</th>
 							<th>Prerequisites</th>
+							<th>Actions</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -167,16 +168,30 @@
 						<td style="width:25%;"><a href="{{ r.resource_link }}" target="_blank">{{ r.resource_link_name }}</a></td>
 						<td style="width:5%;">{{ r.expected_completion_time }}</td>
 						<td>{{ r.prerequisites }}</td>
+						<td>
+							{% if not r.automated_update %}
+								{% if r.status != 'Completed' and r.has_progress %}
+									<form method="post" action="{% url 'staff_complete_user_requirement' %}" onsubmit="return confirm('Mark requirement {{ r.name }} as completed for {{ req.user.get_full_name }}?');" style="display: inline-block;">
+										{% csrf_token %}
+										<input type="hidden" name="user_id" value="{{ r.user_id }}">
+										<input type="hidden" name="requirement_id" value="{{ r.id }}">
+										<button type="submit" class="btn btn-primary btn-sm" onclick="event.stopPropagation();">Mark Complete</button>
+									</form>
+								{% endif %}
+							{% else %}
+								<span class="text-muted">Automated Update</span>
+							{% endif %}
+						</td>
 					</tr>
 				{% empty %}
-					<tr><td>No requirements for this request.</td></tr>
+					<tr><td colspan="6">No requirements for this request.</td></tr>
 				{% endfor %}
 					</tbody>
 				</table>
 			</td>
 		</tr>
 		{% empty %}
-		<tr><td colspan="7">No open requests assigned to you.</td></tr>
+		<tr><td colspan="9">No open requests assigned to you.</td></tr>
 		{% endfor %}
 	</tbody>
 </table>
