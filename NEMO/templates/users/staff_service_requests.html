@@ -62,8 +62,9 @@
 <table class="table">
 	<thead>
 		<tr>
+			<th></th>
 			<th>Case #</th>
-			<th>Project #</th>
+			<th>Request Date</th>
 			<th>User</th>
 			<th>Service Type</th>
 			<th>Tool</th>
@@ -75,8 +76,9 @@
 	<tbody>
 		{% for req in open_requests %}
 		<tr class="request-row" data-request-id="{{ req.id }}" data-training-request="{{ req.training_request }}" style="cursor:pointer;">
+			<td><span class="glyphicon glyphicon-chevron-right"></span></td>
 			<td>{{ req.case_number }}</td>
-			<td>{{ req.project.project_number }}</td>
+			<td>{{ req.created|date:"Y-m-d" }}</td>
 			<td>{{ req.user.get_full_name }}</td>
 			<td>{{ req.service_type.name }}</td>
 			<td>{{ req.tool.name }}</td>
@@ -115,7 +117,7 @@
 			</td>
 		</tr>
 		<tr class="requirements-row" data-request-id="{{ req.id }}" style="display:none;">
-			<td colspan="7">
+			<td colspan="9">
 				<!-- Introductory details -->
 				<div>
 					{% if req.core.id != 2 %}
