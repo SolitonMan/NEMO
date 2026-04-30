@@ -54,12 +54,6 @@ def remote_work(request):
 	area_access_records = AreaAccessRecord.objects.filter(end__gte=first_of_the_month, end__lte=last_of_the_month, active_flag=True, no_charge_flag=False).exclude(end=None)
 	consumable_withdraws = ConsumableWithdraw.objects.filter(date__gte=first_of_the_month, date__lte=last_of_the_month, active_flag=True, no_charge_flag=False)
 
-	# DEBUG: Print query counts before filtering
-	logger = getLogger(__name__)
-	logger.error(f"DEBUG - Date range: {first_of_the_month} to {last_of_the_month}")
-	logger.error(f"DEBUG - Operator: {operator}")
-	logger.error(f"DEBUG - Initial counts: UE={usage_events.count()}, SC={staff_charges.count()}, AAR={area_access_records.count()}, CW={consumable_withdraws.count()}")
-
 	if request.user.groups.filter(name="Core Admin").exists():
 		usage_events = usage_events.filter(tool__core_id__in=request.user.core_ids.all())
 		staff_charges = staff_charges.filter(staff_member__core_ids__in=request.user.core_ids.all())
