@@ -21,11 +21,11 @@
 	<table class="table">
 		<tr>
 			<th>Start Time Selected:</th>
-			<td>{{ ad_hoc_start }}<input type="hidden" name="ad_hoc_start" value="{{ ad_hoc_start }}" /></td>
+			<td>{{ ad_hoc_start }}<input type="hidden" name="ad_hoc_start" value="{{ ad_hoc_start|datetime_input_format }}" /></td>
 		</tr>
 		<tr>
 			<th>End Time Selected:</th>
-			<td>{{ ad_hoc_end }}<input type="hidden" name="ad_hoc_end" value="{{ ad_hoc_end }}" /></td>
+			<td>{{ ad_hoc_end }}<input type="hidden" name="ad_hoc_end" value="{{ ad_hoc_end|datetime_input_format }}" /></td>
 		</tr>
 		<tr>
 			<th>Customers Selected:</th>

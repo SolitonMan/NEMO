@@ -217,3 +217,19 @@ def divided_by(value, arg):
 		return float(value) / float(arg) * 100
 	except (ValueError, ZeroDivisionError, TypeError):
 		return 0
+
+@register.filter
+def datetime_input_format(value):
+	"""
+	Format a datetime object for use in HTML datetime-local input fields.
+	Converts to current timezone and outputs in ISO format (YYYY-MM-DDTHH:MM).
+	"""
+	if not value:
+		return ''
+	
+	# Ensure the datetime is timezone-aware and converted to current timezone
+	if timezone.is_aware(value):
+		value = timezone.localtime(value)
+	
+	# Format as YYYY-MM-DDTHH:MM for datetime-local input
+	return value.strftime('%Y-%m-%dT%H:%M')
