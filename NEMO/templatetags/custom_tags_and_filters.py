@@ -231,5 +231,5 @@ def datetime_input_format(value):
 	if timezone.is_aware(value):
 		value = timezone.localtime(value)
 	
-	# Format as YYYY-MM-DDTHH:MM for datetime-local input
-	return value.strftime('%Y-%m-%dT%H:%M')
+	# Format as YYYY-MM-DD HH:MM±ZZ (e.g., 2025-05-01 12:00-05:00)
+	return value.strftime('%Y-%m-%d %H:%M%z')[:-2]
