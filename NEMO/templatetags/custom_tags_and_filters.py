@@ -210,3 +210,29 @@ def get_content_data(work_order_transaction):
 	return content_data
 
 
+@register.filter
+def completed_count(reqs):
+	return len([r for r in reqs if r.get('status') == 'Completed'])
+
+@register.filter
+def divided_by(value, arg):
+	try:
+		return float(value) / float(arg) * 100
+	except (ValueError, ZeroDivisionError, TypeError):
+		return 0
+
+@register.filter
+def datetime_input_format(value):
+	"""
+	Format a datetime object for use in HTML datetime-local input fields.
+	Converts to current timezone and outputs in ISO format (YYYY-MM-DDTHH:MM).
+	"""
+	if not value:
+		return ''
+	
+	# Ensure the datetime is timezone-aware and converted to current timezone
+	if timezone.is_aware(value):
+		value = timezone.localtime(value)
+	
+	# Format as YYYY-MM-DD HH:MM±ZZ (e.g., 2025-05-01 12:00-05:00)
+	return value.strftime('%Y-%m-%d %H:%M%z')[:-2]

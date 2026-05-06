@@ -3,6 +3,7 @@ from re import search
 import requests
 import string
 from datetime import timedelta, datetime
+from dateutil import parser
 from decimal import Decimal
 
 from django.conf import settings
@@ -782,11 +783,11 @@ def ad_hoc_overlap_resolution(request):
 
 		# create initial ad hoc staff charge
 		ahc = StaffCharge()
-		ahc_start = parse_datetime(request.POST.get("ad_hoc_start"))
+		ahc_start = parser.parse(request.POST.get("ad_hoc_start"))
 		ahc_start = ahc_start.astimezone(timezone.get_current_timezone())
 		ahc.start = ahc_start
-		ahc_end = parse_datetime(request.POST.get("ad_hoc_end"))
-		ahc_end = ahc_end.astimezome(timezone.get_current_timezone())
+		ahc_end = parser.parse(request.POST.get("ad_hoc_end"))
+		ahc_end = ahc_end.astimezone(timezone.get_current_timezone())  # Fixed typo
 		ahc.end = ahc_end
 		ahc.ad_hoc_created = True
 		ahc.staff_member = request.user
