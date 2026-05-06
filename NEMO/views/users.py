@@ -7,6 +7,7 @@ import requests
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
+from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.db.models import Q, OuterRef, Subquery
 from django.http import HttpResponseBadRequest, HttpResponseRedirect, JsonResponse, HttpResponse
@@ -654,6 +655,17 @@ def user_requests(request):
 				owner=svc.principle_assignee.email,
 				assignee=svc.principle_assignee
 			)
+
+			# Send email notification to assignee
+			if svc.principle_assignee and svc.principle_assignee.email:
+				send_mail(
+					subject=f'New Service Request: {svc.name}',
+					message=f'A new service request has been submitted by {request.user.get_full_name()}.\n\nService: {svc.name}\nProject: {proj.name}\nDescription: {description}',
+					from_email=settings.SERVER_EMAIL,
+					recipient_list=[svc.principle_assignee.email],
+					fail_silently=True,
+				)
+
 			# Only add requirements and recursive requests if not MCL
 			add_requirements_and_recursive_requests(new_service, request.user, svc, proj, description, training_request, include__auto_include)
 
