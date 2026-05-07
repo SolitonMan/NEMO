@@ -677,11 +677,11 @@ def user_requests(request):
 
 	requirement_names = set(Requirement.objects.values_list('name', flat=True))
 	mcl_core = Core.objects.get(name='Materials Characterization Lab (MCL)')
-	mcl_services = ServiceType.objects.filter(core=mcl_core).exclude(name__in=requirement_names).order_by('name')
+	mcl_services = ServiceType.objects.filter(core=mcl_core, active=True).exclude(name__in=requirement_names).order_by('name')
 	nano_core = Core.objects.get(name='Nanofabrication Facility')
-	nano_services = ServiceType.objects.filter(core=nano_core).exclude(name__in=requirement_names).order_by('name')
+	nano_services = ServiceType.objects.filter(core=nano_core, active=True).exclude(name__in=requirement_names).order_by('name')
 	twodcc_core = Core.objects.get(name='2DCC')
-	twodcc_services = ServiceType.objects.filter(core=twodcc_core).exclude(name__in=requirement_names).order_by('name')
+	twodcc_services = ServiceType.objects.filter(core=twodcc_core, active=True).exclude(name__in=requirement_names).order_by('name')
 	user_projects = request.user.active_projects
 
 	owner_first_name_subquery = User.objects.filter(email=OuterRef('owner')).values('first_name')[:1]
