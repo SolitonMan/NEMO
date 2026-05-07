@@ -58,7 +58,7 @@
 {% endblock %}
 {% block content %}
 
-<h2>Requests</h2>
+<h2>Requests and Requirements</h2>
 
 <p>
 Use this page to make and track requests for training, or for services like characterization and analysis.  Click the Requests button to launch the request wizard and step
@@ -71,12 +71,13 @@ through making a request:
 	<li>Submit the request</li>
 </ol>
 
-<br/>
 Requests may have requirements that need to be fulfilled before the service can be undertaken or the training can commence.  
 Requirements assigned to you can be managed by clicking the blue Requirements Management button.
 Some requirements are automatically updated based on your activities, while other require manual confirmation of completion.  
 In those cases you'll be asked to digitally sign the completion confirmation using your LEO email address.
 </p>
+
+<br/>
 
 <div class="container-fluid">
 {% if force_requirements_redirect %}
@@ -167,14 +168,14 @@ In those cases you'll be asked to digitally sign the completion confirmation usi
 			<label style="font-weight: bold; margin-right: 8px;">Show:</label>
 			<div class="btn-group btn-group-toggle" data-toggle="buttons">
 				<label class="btn btn-default active" id="toggle-training">
-					<input type="radio" name="toggle" autocomplete="off" checked> Training
+					<input type="radio" name="toggle" autocomplete="off" checked> Training Requests
 				</label>
 				<label class="btn btn-default" id="toggle-service">
-					<input type="radio" name="toggle" autocomplete="off"> Service
+					<input type="radio" name="toggle" autocomplete="off"> Service Requests
 				</label>
 			</div>
 		</div>
-		<!-- Requirements Management button pushed right and styled -->
+
 		<label class="btn btn-requirements" id="toggle-requirements">
 			<input type="radio" name="toggle" autocomplete="off"> Requirements Management
 		</label>
