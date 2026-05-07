@@ -60,6 +60,24 @@
 
 <h2>Requests</h2>
 
+<p>
+Use this page to make and track requests for training, or for services like characterization and analysis.  Click the Requests button to launch the request wizard and step
+through making a request:
+<ol>
+	<li>Select the core</li>
+	<li>Select the request type</li>
+	<li>Select the project to charge</li>
+	<li>Describe the purpose of the request (and indicate if it's a training request for MCL)</li>
+	<li>Submit the request</li>
+</ol>
+
+<br/>
+Requests may have requirements that need to be fulfilled before the service can be undertaken or the training can commence.  
+Requirements assigned to you can be managed by clicking the blue Requirements Management button.
+Some requirements are automatically updated based on your activities, while other require manual confirmation of completion.  
+In those cases you'll be asked to digitally sign the completion confirmation using your LEO email address.
+</p>
+
 <div class="container-fluid">
 {% if force_requirements_redirect %}
 <div class="alert alert-info" role="alert">
@@ -172,7 +190,7 @@
 				<th>Project</th>
 				<th>Status</th>
 				<th>Requested</th>
-				<th>Progress</th>
+				<th>Requirement Completion Progress</th>
 			</tr>
 		</thead>
 		<tbody>
