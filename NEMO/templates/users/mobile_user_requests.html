@@ -217,6 +217,7 @@
 
 		<!-- Training/Service Requests List -->
 		<div id="requests-list-container" role="tabpanel" aria-label="Service and training requests list">
+			<h3 id="requests-table-title">My Training Requests</h3>
 			{% for req in user_service_requests %}
 				<div class="request-card"
 					data-request-id="{{ req.id }}"
@@ -337,6 +338,7 @@
 			style="display:none;" 
 			role="tabpanel" 
 			aria-label="All requirements list">
+			<h3>My Requirements</h3>
 			{% if requirements_table %}
 				<div>
 					{% for req in requirements_table %}
@@ -598,12 +600,14 @@
 
 	$('#toggle-training').on('click', function () {
 		updateTabStates('toggle-training');
+		$('#requests-table-title').text('My Training Requests')
 		showRequestsList();
 		filterRequests(true);
 	});
 
 	$('#toggle-service').on('click', function () {
 		updateTabStates('toggle-service');
+		$('#requests-table-title').text('My Service Requests');
 		showRequestsList();
 		filterRequests(false);
 	});

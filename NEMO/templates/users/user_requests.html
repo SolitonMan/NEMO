@@ -191,7 +191,7 @@
 	</div>
 {% if user_service_requests %}
 	<div id="requests-table-container">
-	<h3 id="requests-table-title">Your Training Requests</h3>
+	<h3 id="requests-table-title">My Training Requests</h3>
 	<table class="table table-striped">
 		<thead>
 			<tr>
@@ -574,14 +574,14 @@ document.getElementById('confirmCancelBtn').onclick = function() {
 			$('#toggle-training').addClass('active');
 			$('#toggle-service').removeClass('active');
 			$('#toggle-requirements').removeClass('active');
-			$('#requests-table-title').text('My Training Requests')
+			$('#requests-table-title').text('My Training Requests');
 			showRequestsTable();
 			filterRequests(true);
 		} else if (view === 'service') {
 			$('#toggle-service').addClass('active');
 			$('#toggle-training').removeClass('active');
 			$('#toggle-requirements').removeClass('active');
-			$('#requests-table-title').text('My Service Requests')
+			$('#requests-table-title').text('My Service Requests');
 			showRequestsTable();
 			filterRequests(false);
 		} else if (view === 'requirements') {
