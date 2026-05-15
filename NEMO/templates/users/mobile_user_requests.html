@@ -147,7 +147,33 @@
 
 <main role="main" id="main-content">
 	<div class="container-fluid">
-		<h1 style="margin-top: 12px;">Your Requests</h1>
+		<h1 style="margin-top: 12px;">Requests and Requirements</h1>
+
+<div style="margin-bottom: 16px;">
+	<button
+		type="button"
+		aria-expanded="false"
+		aria-controls="instructions-content"
+		style="background: none; border: none; padding: 0; cursor: pointer; display: flex; align-items: center; font: inherit;"
+		id="instructions-toggle">
+		<span class="glyphicon glyphicon-chevron-right" aria-hidden="true" style="margin-right: 8px;"></span>
+		<h4 style="display: inline; margin: 0;">Instructions</h4>
+	</button>
+	<div id="instructions-content" style="display: none; margin-top: 8px;">
+		Use this page to make and track requests for training, or for services like characterization and analysis. Click the Submit a request button to launch the request wizard and step through making a request:
+		<ol>
+			<li>Select the core</li>
+			<li>Select the request type</li>
+			<li>Select the project to charge</li>
+			<li>Describe the purpose of the request (and indicate if it's a training request for MCL)</li>
+			<li>Submit the request</li>
+		</ol>
+		Requests may have requirements that need to be fulfilled before the service can be undertaken or the training can commence.
+		Requirements assigned to you can be managed by clicking the blue Requirements Management button.
+		Some requirements are automatically updated based on your activities, while other require manual confirmation of completion.
+		In those cases you'll be asked to digitally sign the completion confirmation using your LEO email address.
+	</div>
+</div>
 		
 		<div class="toggle-btn-group" role="tablist" aria-label="Request type filters">
 			<div class="btn-row">
@@ -423,9 +449,9 @@
 									aria-required="true"
 									aria-describedby="core-help">
 									<option value="">-- Choose a core --</option>
-									<option value="1">Materials Characterization Lab (MCL)</option>
-									<option value="2">Nanofab</option>
-									<!--<option value="4">2DCC</option>-->
+									{% for c in cores %}
+									<option value="{{ c.id }}">{{ c.name }}</option>
+									{% endfor %}
 								</select>
 								<span id="core-help" class="visually-hidden">Select the core facility for your request</span>
 							</div>
@@ -612,9 +638,9 @@
 	// Wizard logic
 	var wizardStep = 0;
 	var coreServices = {
-		"1": [{ id: "{{ mcl_services.0.id }}", name: "{{ mcl_services.0.name }}" }{% for opt in mcl_services|slice:"1:" %}, { id: "{{ opt.id }}", name: "{{ opt.name }}" }{% endfor %}],
-		"2": [{ id: "{{ nano_services.0.id }}", name: "{{ nano_services.0.name }}" }{% for opt in nano_services|slice:"1:" %}, { id: "{{ opt.id }}", name: "{{ opt.name }}" }{% endfor %}],
-		"4": []
+		"{{ mcl_core }}": [{ id: "{{ mcl_services.0.id }}", name: "{{ mcl_services.0.name }}" }{% for opt in mcl_services|slice:"1:" %}, { id: "{{ opt.id }}", name: "{{ opt.name }}" }{% endfor %}],
+		"{{ nano_core }}": [{ id: "{{ nano_services.0.id }}", name: "{{ nano_services.0.name }}" }{% for opt in nano_services|slice:"1:" %}, { id: "{{ opt.id }}", name: "{{ opt.name }}" }{% endfor %}],
+		"{{ twodcc_core }}": [{ id: "{{ twodcc_services.0.id }}", name: "{{ twodcc_services.0.name }}" }{% for opt in twodcc_services|slice:"1:" %}, { id: "{{ opt.id }}", name: "{{ opt.name }}" }{% endfor %}]
 	};
 
 	function showError(message) {
@@ -651,7 +677,7 @@
 
 	function updateTrainingField() {
 		var core = $('#wizard_choose_core').val();
-		if (core === "2") { // Nanofab
+		if (core === "{{ nano_core }}" || core === "{{ twodcc_core }}") { // Nanofab or 2DCC
 			$('#wizard_training_select_group').hide();
 			$('#wizard_training_select_group select').prop('disabled', true);
 			$('#wizard_training_hidden').show().prop('disabled', false);
@@ -726,6 +752,23 @@
 				showError('There was an error submitting your request. Please try again.');
 			}
 		);
+	});
+})();
+</script>
+
+<script>
+(function () {
+	var $ = window.jQuery;
+	if (!$) return;
+
+	$('#instructions-toggle').on('click', function () {
+		var $content = $('#instructions-content');
+		var $icon = $(this).find('.glyphicon');
+		var isExpanded = $(this).attr('aria-expanded') === 'true';
+
+		$content.slideToggle(200);
+		$(this).attr('aria-expanded', !isExpanded);
+		$icon.toggleClass('glyphicon-chevron-right glyphicon-chevron-down');
 	});
 })();
 </script>
