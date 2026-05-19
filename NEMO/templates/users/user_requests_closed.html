@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+{% load custom_tags_and_filters %}
+{% block title %}Your Requests{% endblock %}
+{% block extrahead %}
+	{% load static %}
+<style>
+	tr.requirements-row {
+		display: none;
+	}
+
+	.highlight {
+		border: 1px solid #c0c0c0;
+	}
+
+	.btn-requirements {
+		background-color: rgb(51, 122, 183) !important;
+		background-image: linear-gradient(rgb(51, 122, 183) 0%, rgb(38, 90, 136) 100%); 
+		background-repeat: repeat-x;
+		border: 0.66667px solid rgb(36, 85, 128);
+		color: #fff !important;
+		font-weight: bold;
+		border: none;
+		box-shadow: none;
+	}
+
+	.btn-requirements:hover, .btn-requirements.active, .btn-requirements:focus {
+		background-color: #283593 !important;
+		color: #fff !important;
+		border: none;
+		box-shadow: none;
+	}
+
+	.btn-requirements input[type="radio"] {
+		display: none;
+	}
+
+	#requirements-table-container th.sortable {
+		color: #337ab7;
+		text-decoration: underline;
+		cursor: pointer;
+		transition: color 0.2s;
+	}
+
+	#requirements-table-container th.sortable:hover {
+		color: #23527c;
+	}
+
+	#requirements-table-container th.sorted-asc::after {
+		content: " \25B2";
+		font-size: 12px;
+	}
+
+	#requirements-table-container th.sorted-desc::after {
+		content: " \25BC";
+		font-size: 12px;
+	}
+</style>
+{% endblock %}
+{% block content %}
+
+<h2>Closed Requests</h2>
+<div>
+<button class="btn btn-success" onclick="location.href='{% url 'user_requests' %};'">Closed Requests</button>
+</div>
+{% if user_service_requests %}
+	<div id="requests-table-container">
+	<h3 id="requests-table-title">My Training Requests</h3>
+	<table class="table table-striped">
+		<thead>
+			<tr>
+				<th></th>
+				<th>Request Type</th>
+				<th>Core</th>
+				<th>Project</th>
+				<th>Status</th>
+				<th>Requested</th>
+				<th>Requirement Completion Progress</th>
+			</tr>
+		</thead>
+		<tbody>
+		{% for req in user_service_requests %}
+			<tr class="request-row" data-request-id="{{ req.id }}" data-training-request="{{ req.training_request }}" style="cursor:pointer;">
+				<td><span class="glyphicon glyphicon-chevron-right"></span></td>
+				<td><span style="font-weight: bold;">{{ req.service_type.name }}</span></td>
+				<td>{{ req.service_type.core.name }}</td>
+				<td>{{ req.project.name }}</td>
+				<td><span style="background-color: {% if r.status == 'Not Started' %}#ffcccc{% endif %}{% if r.status == 'Completed' %}#ccffcc{% endif %}{% if r.status == 'In Progress' %}#ffffcc{% endif %};">{{ req.status }}</span></td>
+				<td>{{ req.created|date:"Y-m-d H:i" }}</td>
+				<td>
+					{% with reqs=request_requirements|get_item:req.id %}
+						{% with total=reqs|length completed=reqs|completed_count %}
+							{% if total > 0 %}
+							<div style="display: flex; align-items: center; min-width: 120px;">
+								<div class="progress" style="flex: 1 1 auto; margin-bottom: 0; height: 18px; margin-right: 8px;">
+									<div class="progress-bar" role="progressbar"
+										style="width: {% if total > 0 %}{{ completed|floatformat:2|divided_by:total|floatformat:2 }}%{% else %}0{% endif %};{% if total == completed %}background-color: #4EA74E!important;background-image:none;{% endif %}"
+										aria-valuenow="{{ completed }}" aria-valuemin="0" aria-valuemax="{{ total }}">
+									</div>
+								</div>
+								<span style="white-space: nowrap; font-size: 12px;">
+									{{ completed }}/{{ total }}
+								</span>
+							</div>
+							{% else %}
+							No requirements
+							{% endif %}
+						{% endwith %}
+					{% endwith %}
+				</td>
+			</tr>
+			<tr class="requirements-row" data-request-id="{{ req.id }}" style="display:none;">
+				<td colspan="7">
+					<!-- Introductory details -->
+					<div>
+						{% if req.core.id != 2 %}
+						<strong>Case Number:</strong> {{ req.case_number|default:"-" }}<br>
+						{% endif %}
+						<strong>Contact:</strong>
+						{% if req.owner %}
+							<a href="mailto:{{ req.owner }}">{{ req.owner_first_name }} {{ req.owner_last_name }}</a>
+						{% else %}
+							-
+						{% endif %}
+						<br>
+						<strong>Description:</strong> {{ req.description|default:"-" }}<br>
+						{% if req.core.id != 2 %}
+						<strong>Training Requested:</strong> {% if req.training_request %}Yes{% else %}No{% endif %}<br>
+						<strong>Training Approved:</strong> {% if req.training_approved %}Yes{% else %}No{% endif %}<br>
+						{% endif %}
+						<strong>Last Updated:</strong> {{ req.updated|date:"Y-m-d H:i" }}<br><br>
+					</div>
+				</td>
+			</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+	</div>
+{% else %}
+	<p>No service requests found.</p>
+{% endif %}
+
+
+<script>
+(function () {
+	var $ = window.jQuery;
+	if (!$) return;
+
+	// Row-by-row expand/collapse
+	$(document).on('click', '.request-row', function () {
+		var reqId = $(this).data('request-id');
+		var $detailsRow = $('.requirements-row[data-request-id="' + reqId + '"]');
+		var $icon = $(this).find('.glyphicon');
+		if ($(this).is(':visible')) {
+			$detailsRow.toggle();
+			$icon.toggleClass('glyphicon-chevron-right glyphicon-chevron-down');
+		}
+	});
+})();
+</script>
+
+
+{% endblock %}

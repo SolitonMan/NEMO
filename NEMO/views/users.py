@@ -1072,3 +1072,26 @@ def staff_unmark_user_requirement(request):
 	progress.save()
 	
 	return redirect('staff_service_requests')
+
+@login_required
+def closed_user_service_requests(request):
+	user_service_requests = (
+		UserServiceRequest.objects
+		.filter(user=request.user, status__in=('Closed','Cancelled'))
+		.annotate(
+			owner_first_name=Subquery(owner_first_name_subquery),
+			owner_last_name=Subquery(owner_last_name_subquery)
+		)
+		.select_related('service_type', 'project', 'core', 'pi_user')
+		.order_by('-updated')
+	)
+
+	# Exclude service requests that are for placeholder/recursive requirements
+	placeholder_req_names = set(
+		Requirement.objects.filter(
+			name__in=ServiceType.objects.values_list('name', flat=True)
+		).values_list('name', flat=True)
+	)
+	user_service_requests = user_service_requests.exclude(service_type__name__in=placeholder_req_names)
+
+	return render(request, 'users/user_requests_closed.html', {'user_service_requests': user_service_requests,})
