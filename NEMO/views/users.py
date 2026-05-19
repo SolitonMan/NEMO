@@ -1075,6 +1075,10 @@ def staff_unmark_user_requirement(request):
 
 @login_required
 def closed_user_service_requests(request):
+
+	owner_first_name_subquery = User.objects.filter(email=OuterRef('owner')).values('first_name')[:1]
+	owner_last_name_subquery = User.objects.filter(email=OuterRef('owner')).values('last_name')[:1]
+
 	user_service_requests = (
 		UserServiceRequest.objects
 		.filter(user=request.user, status__in=('Closed','Cancelled'))
