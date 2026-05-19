@@ -1043,3 +1043,32 @@ def staff_complete_user_requirement(request):
 	progress.save()
 	
 	return redirect('staff_service_requests')
+
+
+@staff_member_required(login_url=None)
+@require_POST
+def staff_unmark_user_requirement(request):
+	"""
+	Staff-controlled requirement completion for users.
+	Accepts user_id and requirement_id to mark a requirement complete.
+	"""
+	user_id = request.POST.get('user_id')
+	requirement_id = request.POST.get('requirement_id')
+	
+	if not user_id or not requirement_id:
+		return JsonResponse({'success': False, 'error': 'Missing user_id or requirement_id'}, status=400)
+	
+	try:
+		target_user = User.objects.get(id=user_id)
+		progress = UserRequirementProgress.objects.get(user=target_user, requirement_id=requirement_id)
+	except User.DoesNotExist:
+		return JsonResponse({'success': False, 'error': 'User not found'}, status=404)
+	except UserRequirementProgress.DoesNotExist:
+		return JsonResponse({'success': False, 'error': 'Requirement progress not found'}, status=404)
+	
+	progress.status = 'not_started'
+	progress.completed_on = None
+	progress.updated = timezone.now()
+	progress.save()
+	
+	return redirect('staff_service_requests')

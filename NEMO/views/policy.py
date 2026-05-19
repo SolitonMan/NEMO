@@ -86,9 +86,9 @@ def check_policy_to_enable_tool(tool, operator, user, project, staff_charge, req
 			#logger.error(str(business_start))
 			business_end = time(17,0,0)
 			#logger.error(str(business_end))
-			current_time = timezone.now().time()
+			current_time = timezone.localtime(timezone.now()).time()
 			#logger.error(str(current_time))
-			intDay = timezone.now().weekday()
+			intDay = timezone.localtime(timezone.now()).weekday()
 			#logger.error(str(intDay))
 			if (intDay == 5 or intDay == 6 or current_time < business_start or current_time > business_end) and not operator.is_staff:
 				td=timedelta(minutes=15)

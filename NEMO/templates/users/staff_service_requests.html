@@ -175,7 +175,14 @@
 										{% csrf_token %}
 										<input type="hidden" name="user_id" value="{{ r.user_id }}">
 										<input type="hidden" name="requirement_id" value="{{ r.id }}">
-										<button type="submit" class="btn btn-primary btn-sm" onclick="event.stopPropagation();">Mark Complete</button>
+										<button type="submit" class="btn btn-primary btn-sm" onclick="event.stopPropagation();">Mark Completed</button>
+									</form>
+								{% else %}
+									<form method="post" action="{% url 'staff_unmark_user_requirement' %}" onsubmit="return confirm('Mark requirement {{ r.name }} as not started for {{ req.user.get_full_name }}?');" style="display: inline-block;">
+										{% csrf_token %}
+										<input type="hidden" name="user_id" value="{{ r.user_id }}">
+										<input type="hidden" name="requirement_id" value="{{ r.id }}">
+										<button type="submit" class="btn btn-warning btn-sm" onclick="event.stopPropagation();">Unmark Completed</button>
 									</form>
 								{% endif %}
 							{% else %}

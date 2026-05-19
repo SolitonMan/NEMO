@@ -125,6 +125,7 @@ urlpatterns = [
 	path('complete_user_requirement/', requirements_admin.complete_user_requirement, name='complete_user_requirement'),
 	path('unmark_user_requirement/', users.unmark_user_requirement, name='unmark_user_requirement'),
 	path('staff_complete_user_requirement/', users.staff_complete_user_requirement, name='staff_complete_user_requirement'),
+	path('staff_unmark_user_requirement/', users.staff_unmark_user_requirement, name='staff_unmark_user_requirement'),
 	path('service_types/', requirements_admin.service_type_list, name='service_type_list'),
 	path('service_types/add/', requirements_admin.service_type_add, name='service_type_add'),
 	path('service_types/edit/<int:pk>/', requirements_admin.service_type_edit, name='service_type_edit'),
