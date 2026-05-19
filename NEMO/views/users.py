@@ -922,10 +922,10 @@ def staff_service_requests(request):
 		action = request.POST.get('action')
 		service_request = get_object_or_404(UserServiceRequest, id=req_id, assignee=staff_user)
 		if action == 'resolve' and service_request.status.lower() == 'open':
-			service_request.status = 'closed'
+			service_request.status = 'Closed'
 			service_request.save()
 		elif action == 'reopen' and service_request.status.lower() == 'closed':
-			service_request.status = 'open'
+			service_request.status = 'Open'
 			service_request.save()
 		return redirect('staff_service_requests')
 
@@ -1081,7 +1081,7 @@ def closed_user_service_requests(request):
 
 	user_service_requests = (
 		UserServiceRequest.objects
-		.filter(user=request.user, status__in=('Closed','Cancelled'))
+		.filter(user=request.user, status__in=('Closed','Cancelled','closed','cancelled'))
 		.annotate(
 			owner_first_name=Subquery(owner_first_name_subquery),
 			owner_last_name=Subquery(owner_last_name_subquery)
