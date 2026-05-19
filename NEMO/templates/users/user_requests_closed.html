@@ -74,7 +74,6 @@
 				<th>Project</th>
 				<th>Status</th>
 				<th>Requested</th>
-				<th>Requirement Completion Progress</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -86,30 +85,9 @@
 				<td>{{ req.project.name }}</td>
 				<td><span style="background-color: {% if r.status == 'Not Started' %}#ffcccc{% endif %}{% if r.status == 'Completed' %}#ccffcc{% endif %}{% if r.status == 'In Progress' %}#ffffcc{% endif %};">{{ req.status }}</span></td>
 				<td>{{ req.created|date:"Y-m-d H:i" }}</td>
-				<td>
-					{% with reqs=request_requirements|get_item:req.id %}
-						{% with total=reqs|length completed=reqs|completed_count %}
-							{% if total > 0 %}
-							<div style="display: flex; align-items: center; min-width: 120px;">
-								<div class="progress" style="flex: 1 1 auto; margin-bottom: 0; height: 18px; margin-right: 8px;">
-									<div class="progress-bar" role="progressbar"
-										style="width: {% if total > 0 %}{{ completed|floatformat:2|divided_by:total|floatformat:2 }}%{% else %}0{% endif %};{% if total == completed %}background-color: #4EA74E!important;background-image:none;{% endif %}"
-										aria-valuenow="{{ completed }}" aria-valuemin="0" aria-valuemax="{{ total }}">
-									</div>
-								</div>
-								<span style="white-space: nowrap; font-size: 12px;">
-									{{ completed }}/{{ total }}
-								</span>
-							</div>
-							{% else %}
-							No requirements
-							{% endif %}
-						{% endwith %}
-					{% endwith %}
-				</td>
 			</tr>
 			<tr class="requirements-row" data-request-id="{{ req.id }}" style="display:none;">
-				<td colspan="7">
+				<td colspan="6">
 					<!-- Introductory details -->
 					<div>
 						{% if req.core.id != 2 %}
