@@ -1098,4 +1098,7 @@ def closed_user_service_requests(request):
 	)
 	user_service_requests = user_service_requests.exclude(service_type__name__in=placeholder_req_names)
 
-	return render(request, 'users/user_requests_closed.html', {'user_service_requests': user_service_requests,})
+	if request.device == 'mobile':
+		return render(request, 'users/mobile_user_requests_closed.html', {'user_service_requests': user_service_requests,})
+	else:
+		return render(request, 'users/user_requests_closed.html', {'user_service_requests': user_service_requests,})

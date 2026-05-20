@@ -1,0 +1,159 @@
+{% load custom_tags_and_filters %}
+{% block title %}Closed Requests (Mobile){% endblock %}
+{% block extrahead %}
+	{% load static %}
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.css' %}">
+	<style>
+		.request-card {
+			margin-bottom: 16px;
+			border-radius: 6px;
+			box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+			border: 1px solid #e3e3e3;
+			padding: 12px;
+			background: #fff;
+		}
+		.request-card-button {
+			width: 100%;
+			text-align: left;
+			background: transparent;
+			border: none;
+			padding: 0;
+			cursor: pointer;
+			display: block;
+		}
+		.request-card-button:focus {
+			outline: 2px solid #0066cc;
+			outline-offset: 2px;
+		}
+		.request-header {
+			font-weight: bold;
+			font-size: 16px;
+			margin-bottom: 8px;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+		}
+		.request-status {
+			border-radius: 12px;
+			padding: 2px 8px;
+			font-size: 12px;
+			display: inline-block;
+			font-weight: bold;
+		}
+		.status-not-started {
+			background-color: #ffcccc;
+			color: #8b0000;
+		}
+		.status-completed {
+			background-color: #ccffcc;
+			color: #006400;
+		}
+		.status-in-progress {
+			background-color: #fff4cc;
+			color: #8b6914;
+		}
+		.details-section {
+			margin-top: 10px;
+			display: none;
+		}
+		.btn:focus {
+			outline: 2px solid #0066cc;
+			outline-offset: 2px;
+		}
+		@media (max-width: 600px) {
+			.request-header {
+				font-size: 15px;
+			}
+			.request-card {
+				padding: 8px;
+			}
+		}
+		.visually-hidden {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			padding: 0;
+			margin: -1px;
+			overflow: hidden;
+			clip: rect(0, 0, 0, 0);
+			white-space: nowrap;
+			border: 0;
+		}
+	</style>
+{% endblock %}
+{% block content %}
+<main role="main" id="main-content">
+	<div class="container-fluid">
+		<h1 style="margin-top: 12px;">Closed Requests</h1>
+		<div>
+			<button class="btn btn-success btn-block" onclick="location.href='{% url 'user_requests' %}'" style="margin-bottom: 16px;" aria-label="View current requests">
+				Current Requests
+			</button>
+		</div>
+		{% if user_service_requests %}
+			<div id="requests-list-container" role="region" aria-label="Closed requests list">
+				<h3>My Closed Requests</h3>
+				{% for req in user_service_requests %}
+					<div class="request-card" data-request-id="{{ req.id }}">
+						<button class="request-card-button" aria-expanded="false" aria-controls="details-{{ req.id }}" aria-label="Toggle details for {{ req.service_type.name }} request">
+							<div class="request-header">
+								<span>{{ req.service_type.name }}</span>
+								<span class="request-status {% if req.status == 'Not Started' %}status-not-started{% endif %}{% if req.status == 'Completed' %}status-completed{% endif %}{% if req.status == 'In Progress' %}status-in-progress{% endif %}" role="status" aria-label="Status: {{ req.status }}">
+									{{ req.status }}
+								</span>
+								<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+							</div>
+						</button>
+						<div>
+							<strong>Core:</strong> {{ req.service_type.core.name }}<br>
+							<strong>Project:</strong> {{ req.project.name }}<br>
+							<strong>Requested:</strong> {{ req.created|date:"Y-m-d H:i" }}<br>
+							<strong>Training:</strong> {% if req.training_request %}Yes{% else %}No{% endif %}
+						</div>
+						<div class="details-section" id="details-{{ req.id }}" role="region" aria-label="Details for {{ req.service_type.name }} request">
+							<hr>
+							<div>
+								{% if req.core.id != 2 %}
+								<strong>Case Number:</strong> {{ req.case_number|default:"-" }}<br>
+								{% endif %}
+								<strong>Contact:</strong>
+								{% if req.owner %}
+									<a href="mailto:{{ req.owner }}" aria-label="Email {{ req.owner_first_name }} {{ req.owner_last_name }}">
+										{{ req.owner_first_name }} {{ req.owner_last_name }}
+									</a>
+								{% else %}
+									-
+								{% endif %}
+								<br>
+								<strong>Description:</strong> {{ req.description|default:"-" }}<br>
+								{% if req.core.id != 2 %}
+								<strong>Training Approved:</strong> {% if req.training_approved %}Yes{% else %}No{% endif %}<br>
+								{% endif %}
+								<strong>Last Updated:</strong> {{ req.updated|date:"Y-m-d H:i" }}
+							</div>
+						</div>
+					</div>
+				{% endfor %}
+			</div>
+		{% else %}
+			<p>No closed requests found.</p>
+		{% endif %}
+	</div>
+</main>
+<script>
+(function () {
+	var $ = window.jQuery;
+	if (!$) return;
+	$(document).on('click', '.request-card-button', function () {
+		var $button = $(this);
+		var $details = $button.siblings('.details-section');
+		var $icon = $button.find('.glyphicon');
+		var isExpanded = $button.attr('aria-expanded') === 'true';
+		$details.slideToggle();
+		$button.attr('aria-expanded', !isExpanded);
+		$icon.toggleClass('glyphicon-chevron-right glyphicon-chevron-down');
+	});
+})();
+</script>
+{% endblock %}
