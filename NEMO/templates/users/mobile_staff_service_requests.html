@@ -1,0 +1,488 @@
+{% extends "base.html" %}
+{% load custom_tags_and_filters %}
+{% block title %}Service and Training Requests{% endblock %}
+{% block extrahead %}
+	{% load static %}
+	<style>
+		/* Mobile-first responsive design */
+		body {
+			font-size: 14px;
+		}
+
+		.mobile-card {
+			background: #fff;
+			border: 1px solid #ddd;
+			border-radius: 8px;
+			margin-bottom: 12px;
+			padding: 12px;
+			box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+		}
+
+		.mobile-card-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-bottom: 10px;
+			padding-bottom: 10px;
+			border-bottom: 1px solid #e0e0e0;
+			cursor: pointer;
+		}
+
+		.mobile-card-header .expand-icon {
+			transition: transform 0.3s ease;
+			font-size: 18px;
+			color: #337ab7;
+		}
+
+		.mobile-card-header.expanded .expand-icon {
+			transform: rotate(90deg);
+		}
+
+		.case-badge {
+			display: inline-block;
+			background-color: #337ab7;
+			color: white;
+			padding: 4px 10px;
+			border-radius: 12px;
+			font-size: 12px;
+			font-weight: bold;
+		}
+
+		.mobile-card-body {
+			display: none;
+			padding-top: 10px;
+		}
+
+		.mobile-card-body.show {
+			display: block;
+		}
+
+		.info-row {
+			display: flex;
+			margin-bottom: 8px;
+			line-height: 1.6;
+		}
+
+		.info-label {
+			font-weight: bold;
+			min-width: 100px;
+			color: #555;
+		}
+
+		.info-value {
+			flex: 1;
+			word-break: break-word;
+		}
+
+		.progress-container {
+			display: flex;
+			align-items: center;
+			margin: 10px 0;
+		}
+
+		.progress {
+			flex: 1;
+			height: 24px;
+			margin-right: 10px;
+			margin-bottom: 0;
+			border-radius: 12px;
+		}
+
+		.progress-bar {
+			line-height: 24px;
+			font-size: 11px;
+		}
+
+		.progress-text {
+			white-space: nowrap;
+			font-weight: bold;
+			font-size: 13px;
+		}
+
+		.action-buttons {
+			display: flex;
+			gap: 8px;
+			margin-top: 12px;
+			flex-wrap: wrap;
+		}
+
+		.action-buttons .btn {
+			flex: 1;
+			min-width: 100px;
+		}
+
+		.requirements-section {
+			margin-top: 15px;
+			padding-top: 15px;
+			border-top: 2px solid #e0e0e0;
+		}
+
+		.requirement-card {
+			background: #f9f9f9;
+			border: 1px solid #e0e0e0;
+			border-radius: 6px;
+			padding: 10px;
+			margin-bottom: 10px;
+		}
+
+		.requirement-status {
+			display: inline-block;
+			padding: 4px 10px;
+			border-radius: 12px;
+			font-size: 11px;
+			font-weight: bold;
+			margin-bottom: 8px;
+		}
+
+		.requirement-status.not-started {
+			background-color: #ffcccc;
+			color: #8b0000;
+		}
+
+		.requirement-status.in-progress {
+			background-color: #ffffcc;
+			color: #8b8b00;
+		}
+
+		.requirement-status.completed {
+			background-color: #ccffcc;
+			color: #008b00;
+		}
+
+		.requirement-status.not-assigned {
+			background-color: #e0e0e0;
+			color: #666;
+		}
+
+		.section-header {
+			font-size: 18px;
+			font-weight: bold;
+			margin: 20px 0 15px 0;
+			color: #333;
+			padding: 10px;
+			background: #f5f5f5;
+			border-left: 4px solid #337ab7;
+		}
+
+		.empty-state {
+			text-align: center;
+			padding: 30px 20px;
+			color: #999;
+			font-style: italic;
+		}
+
+		.btn-sm {
+			padding: 6px 12px;
+			font-size: 13px;
+		}
+
+		.mobile-table {
+			width: 100%;
+			border-collapse: collapse;
+			font-size: 13px;
+		}
+
+		.mobile-table td {
+			padding: 8px;
+			border-bottom: 1px solid #e0e0e0;
+		}
+
+		.highlight {
+			border: 1px solid #c0c0c0;
+			background: #fafafa;
+		}
+
+		@media (max-width: 480px) {
+			.action-buttons .btn {
+				flex: 1 1 100%;
+				min-width: 100%;
+			}
+
+			.info-row {
+				flex-direction: column;
+			}
+
+			.info-label {
+				margin-bottom: 4px;
+			}
+		}
+
+		/* Accessibility enhancements */
+		.btn:focus, .mobile-card-header:focus {
+			outline: 2px solid #4A90E2;
+			outline-offset: 2px;
+		}
+
+		a {
+			color: #337ab7;
+			text-decoration: none;
+		}
+
+		a:hover {
+			text-decoration: underline;
+		}
+
+		a:focus {
+			outline: 2px solid #4A90E2;
+			outline-offset: 2px;
+		}
+	</style>
+{% endblock %}
+
+{% block content %}
+<div style="padding: 10px;">
+	<h2 class="section-header">Open Service and Training Requests Assigned to You</h2>
+
+	{% for req in open_requests %}
+	<div class="mobile-card" data-request-id="{{ req.id }}" data-training-request="{{ req.training_request }}">
+		<div class="mobile-card-header" onclick="toggleCard(this)" tabindex="0" role="button" aria-expanded="false" aria-label="Expand service request details for case {{ req.case_number }}">
+			<div>
+				<span class="case-badge">{{ req.case_number }}</span>
+				<div style="margin-top: 6px; color: #666; font-size: 13px;">
+					{{ req.user.get_full_name }}
+				</div>
+			</div>
+			<span class="expand-icon glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+		</div>
+
+		<div class="mobile-card-body">
+			<div class="info-row">
+				<span class="info-label">Request Date:</span>
+				<span class="info-value">{{ req.created|date:"Y-m-d" }}</span>
+			</div>
+			<div class="info-row">
+				<span class="info-label">Service Type:</span>
+				<span class="info-value">{{ req.service_type.name }}</span>
+			</div>
+			<div class="info-row">
+				<span class="info-label">Tool:</span>
+				<span class="info-value">{{ req.tool.name }}</span>
+			</div>
+			<div class="info-row">
+				<span class="info-label">Description:</span>
+				<span class="info-value">{{ req.description|default:"-" }}</span>
+			</div>
+			{% if req.core.id != 2 %}
+			<div class="info-row">
+				<span class="info-label">Contact:</span>
+				<span class="info-value">
+					{% if req.owner %}
+						<a href="mailto:{{ req.owner }}">{{ req.owner_first_name }} {{ req.owner_last_name }}</a>
+					{% else %}
+						-
+					{% endif %}
+				</span>
+			</div>
+			<div class="info-row">
+				<span class="info-label">Training Requested:</span>
+				<span class="info-value">{% if req.training_request %}Yes{% else %}No{% endif %}</span>
+			</div>
+			<div class="info-row">
+				<span class="info-label">Training Approved:</span>
+				<span class="info-value">{% if req.training_approved %}Yes{% else %}No{% endif %}</span>
+			</div>
+			{% endif %}
+			<div class="info-row">
+				<span class="info-label">Last Updated:</span>
+				<span class="info-value">{{ req.updated|date:"Y-m-d H:i" }}</span>
+			</div>
+
+			<div class="info-row">
+				<span class="info-label">Progress:</span>
+				<span class="info-value">
+					{% with reqs=request_requirements|get_item:req.id %}
+						{% with total=reqs|length completed=reqs|completed_count %}
+							{% if total > 0 %}
+							<div class="progress-container">
+								<div class="progress">
+									<div class="progress-bar" role="progressbar"
+										style="width: {% if total > 0 %}{{ completed|floatformat:2|divided_by:total|floatformat:2 }}%{% else %}0{% endif %};{% if total == completed %}background-color: #4EA74E!important;background-image:none{% endif %}"
+										aria-valuenow="{{ completed }}" aria-valuemin="0" aria-valuemax="{{ total }}">
+									</div>
+								</div>
+								<span class="progress-text">{{ completed }}/{{ total }}</span>
+							</div>
+							{% else %}
+							No requirements
+							{% endif %}
+						{% endwith %}
+					{% endwith %}
+				</span>
+			</div>
+
+			<div class="action-buttons">
+				<button type="button" class="btn btn-success btn-sm" onclick="event.stopPropagation(); window.location.href='{% url 'edit_service_request' req.id %}';" aria-label="Edit service request {{ req.case_number }}">
+					Edit
+				</button>
+				{% if req.core_id == 2 and req.status != 'cancelled' and req.status != 'completed' %}
+				<button class="btn btn-warning btn-sm" onclick="event.stopPropagation(); showCancelModal({{ req.id }});" aria-label="Cancel service request {{ req.case_number }}">
+					Cancel Request
+				</button>
+				{% endif %}
+				<form method="post" onsubmit="return confirm('Are you sure you want to close this case?');" style="display: inline; flex: 1;">
+					{% csrf_token %}
+					<input type="hidden" name="request_id" value="{{ req.id }}">
+					<input type="hidden" name="action" value="resolve">
+					<button type="submit" class="btn btn-danger btn-sm" onclick="event.stopPropagation();" style="width: 100%;" aria-label="Close service request {{ req.case_number }}">
+						Close Case
+					</button>
+				</form>
+			</div>
+
+			<!-- Requirements Section -->
+			{% with req_requirements=request_requirements|get_item:req.id %}
+			{% if req_requirements %}
+			<div class="requirements-section">
+				<strong style="font-size: 15px;">Requirements:</strong>
+				{% for r in req_requirements %}
+				<div class="requirement-card">
+					<div>
+						<strong>{{ r.name }}</strong>
+					</div>
+					<div style="margin: 8px 0;">
+						{% if r.has_progress %}
+							<span class="requirement-status {% if r.status == 'Not Started' %}not-started{% endif %}{% if r.status == 'Completed' %}completed{% endif %}{% if r.status == 'In Progress' %}in-progress{% endif %}">
+								{{ r.status|default:"Not Started" }}
+							</span>
+						{% else %}
+							<span class="requirement-status not-assigned">Not assigned</span>
+						{% endif %}
+					</div>
+					{% if r.resource_link %}
+					<div style="margin: 8px 0;">
+						<strong>Complete:</strong> <a href="{{ r.resource_link }}" target="_blank">{{ r.resource_link_name }}</a>
+					</div>
+					{% endif %}
+					{% if r.expected_completion_time %}
+					<div style="margin: 8px 0;">
+						<strong>Est. Time:</strong> {{ r.expected_completion_time }}
+					</div>
+					{% endif %}
+					{% if r.prerequisites %}
+					<div style="margin: 8px 0;">
+						<strong>Prerequisites:</strong> {{ r.prerequisites }}
+					</div>
+					{% endif %}
+					{% if not r.automated_update %}
+						{% if r.status != 'Completed' and r.has_progress %}
+						<form method="post" action="{% url 'staff_complete_user_requirement' %}" onsubmit="return confirm('Mark requirement {{ r.name }} as completed for {{ req.user.get_full_name }}?');" style="margin-top: 8px;">
+							{% csrf_token %}
+							<input type="hidden" name="user_id" value="{{ r.user_id }}">
+							<input type="hidden" name="requirement_id" value="{{ r.id }}">
+							<button type="submit" class="btn btn-primary btn-sm" onclick="event.stopPropagation();" style="width: 100%;">
+								Mark Completed
+							</button>
+						</form>
+						{% else %}
+						<form method="post" action="{% url 'staff_unmark_user_requirement' %}" onsubmit="return confirm('Mark requirement {{ r.name }} as not started for {{ req.user.get_full_name }}?');" style="margin-top: 8px;">
+							{% csrf_token %}
+							<input type="hidden" name="user_id" value="{{ r.user_id }}">
+							<input type="hidden" name="requirement_id" value="{{ r.id }}">
+							<button type="submit" class="btn btn-warning btn-sm" onclick="event.stopPropagation();" style="width: 100%;">
+								Unmark Completed
+							</button>
+						</form>
+						{% endif %}
+					{% else %}
+						<div style="margin-top: 8px; color: #999; font-style: italic;">
+							Automated Update
+						</div>
+					{% endif %}
+				</div>
+				{% endfor %}
+			</div>
+			{% else %}
+			<div class="requirements-section">
+				<p style="color: #999; font-style: italic;">No requirements for this request.</p>
+			</div>
+			{% endif %}
+			{% endwith %}
+		</div>
+	</div>
+	{% empty %}
+	<div class="empty-state">
+		No open requests assigned to you.
+	</div>
+	{% endfor %}
+
+	<h2 class="section-header" style="margin-top: 30px;">Recently Closed Service Requests</h2>
+
+	{% for req in closed_requests %}
+	<div class="mobile-card">
+		<div style="margin-bottom: 10px;">
+			<a href="{% url 'edit_service_request' req.id %}" class="case-badge">{{ req.case_number }}</a>
+		</div>
+		<div class="info-row">
+			<span class="info-label">Project #:</span>
+			<span class="info-value">{{ req.project.project_number }}</span>
+		</div>
+		<div class="info-row">
+			<span class="info-label">User:</span>
+			<span class="info-value">{{ req.user.get_full_name }}</span>
+		</div>
+		<div class="info-row">
+			<span class="info-label">Service Type:</span>
+			<span class="info-value">{{ req.service_type.name }}</span>
+		</div>
+		<div class="info-row">
+			<span class="info-label">Tool:</span>
+			<span class="info-value">{{ req.tool.name }}</span>
+		</div>
+		<div class="info-row">
+			<span class="info-label">Description:</span>
+			<span class="info-value">{{ req.description|default:"-" }}</span>
+		</div>
+		<form method="post" style="margin-top: 12px;" onsubmit="return confirm('Re-open this case?');">
+			{% csrf_token %}
+			<input type="hidden" name="request_id" value="{{ req.id }}">
+			<input type="hidden" name="action" value="reopen">
+			<button type="submit" class="btn btn-warning btn-sm" style="width: 100%;" aria-label="Re-open service request {{ req.case_number }}">
+				Re-open Case
+			</button>
+		</form>
+	</div>
+	{% empty %}
+	<div class="empty-state">
+		No recently closed requests.
+	</div>
+	{% endfor %}
+</div>
+
+<script>
+function toggleCard(headerElement) {
+	var cardBody = headerElement.nextElementSibling;
+	var icon = headerElement.querySelector('.expand-icon');
+	var isExpanded = cardBody.classList.contains('show');
+	
+	cardBody.classList.toggle('show');
+	headerElement.classList.toggle('expanded');
+	headerElement.setAttribute('aria-expanded', !isExpanded);
+	
+	if (icon) {
+		icon.classList.toggle('glyphicon-chevron-right');
+		icon.classList.toggle('glyphicon-chevron-down');
+	}
+}
+
+// Keyboard accessibility for card headers
+document.addEventListener('DOMContentLoaded', function() {
+	document.querySelectorAll('.mobile-card-header').forEach(function(header) {
+		header.addEventListener('keypress', function(e) {
+			if (e.key === 'Enter' || e.key === ' ') {
+				e.preventDefault();
+				toggleCard(this);
+			}
+		});
+	});
+});
+
+// Optional: Auto-expand first card
+document.addEventListener('DOMContentLoaded', function() {
+	var firstHeader = document.querySelector('.mobile-card-header');
+	if (firstHeader) {
+		// Uncomment the next line to auto-expand the first card
+		// toggleCard(firstHeader);
+	}
+});
+</script>
+{% endblock %}

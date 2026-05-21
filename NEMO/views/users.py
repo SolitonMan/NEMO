@@ -929,11 +929,18 @@ def staff_service_requests(request):
 			service_request.save()
 		return redirect('staff_service_requests')
 
-	return render(request, 'users/staff_service_requests.html', {
-		'open_requests': open_requests,
-		'closed_requests': closed_requests,
-		'request_requirements': request_requirements,
-	})
+	if request.device == 'mobile':
+		return render(request, 'users/mobile_staff_service_requests.html', {
+			'open_requests': open_requests,
+			'closed_requests': closed_requests,
+			'request_requirements': request_requirements,
+		})
+	else:
+		return render(request, 'users/staff_service_requests.html', {
+			'open_requests': open_requests,
+			'closed_requests': closed_requests,
+			'request_requirements': request_requirements,
+		})
 
 @login_required
 def edit_service_request(request, pk):
