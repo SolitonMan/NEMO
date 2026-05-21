@@ -46,3 +46,46 @@ class Command(BaseCommand):
 					record.last_notified = now
 					record.updated = now
 					record.save()
+
+		# Second query: Completed requirements expiring within 31 days
+		expiration_threshold = now + timedelta(days=31)
+		expiring_records = UserRequirementProgress.objects.filter(
+			status='completed',
+			expires_on__lt=expiration_threshold,
+			expires_on__gt=now,
+			requirement__retrain_interval_days__gt=0,
+			requirement__retrain_interval_days__isnull=False
+		)
+
+		for record in expiring_records:
+			requirement = record.requirement
+			notification_interval = requirement.notification_interval
+			Reminders_time = now - timedelta(days=notification_interval)
+			resource_link = requirement.resource_link
+
+			if record.last_notified is None or record.last_notified < Reminders_time:
+				days_until_expiration = (record.expires_on - now).days
+				requirement_name = getattr(record.requirement, 'name', record.requirement)
+				
+				message_text = (
+					f"Dear {getattr(record.user, 'first_name', record.user)} {getattr(record.user, 'last_name', record.user)},<br><br>"
+					f"This is a reminder that your requirement '{requirement_name}' will expire in {days_until_expiration} day{'s' if days_until_expiration != 1 else ''} "
+					f"on {record.expires_on.strftime('%B %d, %Y')}.<br><br>"
+					f"Please ensure you complete the retraining before the expiration date to maintain your qualification."
+				)
+				
+				if resource_link:
+					message_text += f"<br><br>You can find more information and access the necessary resources here: {resource_link}."
+				
+				message_text += "<br><br>Best regards,<br>Admin Team"
+				
+				send_mail(
+					f"{requirement_name} is expiring in {days_until_expiration} day{'s' if days_until_expiration != 1 else ''}",
+					message_text,
+					"LEOHelp@psu.edu",
+					to=[record.user.email],
+					fail_silently=False,
+				)
+				record.last_notified = now
+				record.updated = now
+				record.save()
