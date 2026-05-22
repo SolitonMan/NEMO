@@ -448,6 +448,39 @@
 	{% endfor %}
 </div>
 
+
+<script>
+let currentRequestId = null;
+
+function showCancelModal(requestId) {
+  currentRequestId = requestId;
+  document.getElementById('cancelReason').value = '';
+  $('#cancelRequestModal').modal('show');
+}
+
+document.getElementById('confirmCancelBtn').onclick = function() {
+  var reason = document.getElementById('cancelReason').value;
+  fetch('/user_service_request/' + currentRequestId + '/cancel/', {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': '{{ csrf_token }}',
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body: 'reason=' + encodeURIComponent(reason)
+  })
+  .then(function(response) { return response.json(); })
+  .then(function(data) {
+    $('#cancelRequestModal').modal('hide');
+    if (data.success) {
+      location.reload();
+    } else {
+      alert(data.error || 'Failed to cancel request');
+    }
+  });
+};
+</script>
+
+
 <script>
 function toggleCard(headerElement) {
 	var cardBody = headerElement.nextElementSibling;
