@@ -1011,14 +1011,42 @@ def cancel_user_service_request(request, request_id):
 		return HttpResponseBadRequest("Invalid method")
 	try:
 		usr = UserServiceRequest.objects.get(pk=request_id)
-		if usr.core_id != 2:
-			return JsonResponse({'error': 'Not a Nanofab request'}, status=403)
 		if usr.status == 'Cancelled' or usr.status == 'Completed':
 			return JsonResponse({'error': 'Request already cancelled or completed'}, status=400)
 		usr.cancelled_by = request.user
 		usr.cancellation_reason = request.POST.get('reason', '')
 		usr.status = 'Cancelled'
 		usr.save()
+
+		# notify assignee of cancellation
+		if usr.assignee and usr.assignee.email:
+			subject = f'Service Request Cancelled: {usr.service_type.name if usr.service_type else "N/A"}'
+			service_name = usr.service_type.name if usr.service_type else 'N/A'
+			user_name = request.user.get_full_name()
+			reason = usr.cancellation_reason if usr.cancellation_reason else 'No reason provided'
+			
+			message = f"""Hello {usr.assignee.first_name},
+
+					A service request assigned to you has been cancelled by {user_name}.
+
+					Service: {service_name}
+					Requester: {usr.user.get_full_name()}
+					Project: {usr.project.name if usr.project else 'N/A'}
+					Cancellation Reason: {reason}
+
+					You can view more details in NEMO.
+
+					Thank you,
+					NEMO Team"""
+			
+			send_mail(
+				subject,
+				message,
+				settings.SERVER_EMAIL,
+				[usr.assignee.email],
+				fail_silently=True,
+			)
+
 		return JsonResponse({'success': True})
 	except UserServiceRequest.DoesNotExist:
 		return JsonResponse({'error': 'Request not found'}, status=404)
