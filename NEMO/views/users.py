@@ -1027,17 +1027,17 @@ def cancel_user_service_request(request, request_id):
 			
 			message = f"""Hello {usr.assignee.first_name},
 
-					A service request assigned to you has been cancelled by {user_name}.
+A service request assigned to you has been cancelled by {user_name}.
 
-					Service: {service_name}
-					Requester: {usr.user.get_full_name()}
-					Project: {usr.project.name if usr.project else 'N/A'}
-					Cancellation Reason: {reason}
+Service: {service_name}
+Requester: {usr.user.get_full_name()}
+Project: {usr.project.name if usr.project else 'N/A'}
+Cancellation Reason: {reason}
 
-					You can view more details in NEMO.
+You can view more details in NEMO.
 
-					Thank you,
-					NEMO Team"""
+Thank you,
+NEMO Team"""
 			
 			send_mail(
 				subject,
@@ -1046,6 +1046,51 @@ def cancel_user_service_request(request, request_id):
 				[usr.assignee.email],
 				fail_silently=True,
 			)
+
+		# Remove orphaned requirements that are only related to this cancelled request
+		if usr.service_type:
+			# Get all requirements associated with this cancelled service request
+			cancelled_requirements = usr.service_type.requirements.all()
+			
+			# Get all other open service requests for this user
+			other_open_requests = UserServiceRequest.objects.filter(
+				user=usr.user,
+				status='Open'
+			).exclude(id=usr.id)
+			
+			# Build a set of requirement IDs that are still needed by other open requests
+			needed_requirement_ids = set()
+			for open_request in other_open_requests:
+				if open_request.service_type:
+					# Get all requirements (including nested/leaf requirements)
+					for req in open_request.service_type.requirements.all():
+						# Add the requirement itself
+						needed_requirement_ids.add(req.id)
+						# Get and add all leaf requirements (handles nested requirements)
+						leaf_reqs = get_leaf_requirements(req)
+						needed_requirement_ids.update(r.id for r in leaf_reqs)
+			
+			# Find and remove orphaned requirements
+			for requirement in cancelled_requirements:
+				# Check the requirement itself first
+				if requirement.id not in needed_requirement_ids:
+					# This requirement is not needed by any other open request
+					UserRequirementProgress.objects.filter(
+						user=usr.user,
+						requirement=requirement,
+						status__in=['not_started', 'in_progress']
+					).delete()
+				
+				# Also check leaf requirements (in case this is a parent requirement)
+				leaf_requirements = get_leaf_requirements(requirement)
+				for leaf_req in leaf_requirements:
+					if leaf_req.id not in needed_requirement_ids:
+						# This leaf requirement is not needed by any other open request
+						UserRequirementProgress.objects.filter(
+							user=usr.user,
+							requirement=leaf_req,
+							status__in=['not_started', 'in_progress']
+						).delete()
 
 		return JsonResponse({'success': True})
 	except UserServiceRequest.DoesNotExist:
