@@ -1114,6 +1114,7 @@ def staff_complete_user_requirement(request):
 	
 	try:
 		target_user = User.objects.get(id=user_id)
+		requirement = Requirement.objects.get(id=requirement_id)
 		progress = UserRequirementProgress.objects.get(user=target_user, requirement_id=requirement_id)
 	except User.DoesNotExist:
 		return JsonResponse({'success': False, 'error': 'User not found'}, status=404)
@@ -1122,6 +1123,8 @@ def staff_complete_user_requirement(request):
 	
 	progress.status = 'completed'
 	progress.completed_on = timezone.now()
+	if requirement.retrain_interval_days and requirement.retrain_interval_days > 0:
+		progress.expires_on = timezone.now() + timedelta(days=requirement.retrain_interval_days)
 	progress.updated = timezone.now()
 	progress.save()
 	

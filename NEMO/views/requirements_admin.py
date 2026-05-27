@@ -230,20 +230,23 @@ def get_status_icon(status):
 @login_required
 @require_POST
 def complete_user_requirement(request):
-    requirement_id = request.POST.get('requirement_id')
-    if not requirement_id:
-        return JsonResponse({'success': False, 'error': 'Missing requirement_id'}, status=400)
+	requirement_id = request.POST.get('requirement_id')
+	if not requirement_id:
+		return JsonResponse({'success': False, 'error': 'Missing requirement_id'}, status=400)
 
-    try:
-        progress = UserRequirementProgress.objects.get(user=request.user, requirement_id=requirement_id)
-    except UserRequirementProgress.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'Requirement progress not found'}, status=404)
+	try:
+		requirement = Requirement.objects.get(id=requirement_id)
+		progress = UserRequirementProgress.objects.get(user=request.user, requirement_id=requirement_id)
+	except UserRequirementProgress.DoesNotExist:
+		return JsonResponse({'success': False, 'error': 'Requirement progress not found'}, status=404)
 
-    progress.status = 'completed'
-    progress.completed_on = timezone.now()
-    progress.updated = timezone.now()
-    progress.save()
-    return redirect('user_requests')
+	progress.status = 'completed'
+	progress.completed_on = timezone.now()
+	if requirement.retrain_interval_days and requirement.retrain_interval_days > 0:
+		progress.expires_on = timezone.now() + timedelta(days=requirement.retrain_interval_days)
+	progress.updated = timezone.now()
+	progress.save()
+	return redirect('user_requests')
 
 
 @staff_member_required
