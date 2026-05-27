@@ -148,7 +148,10 @@ def create_or_modify_user(request, user_id):
 		UserRequirementProgress.objects.filter(user=user).exclude(requirement_id__in=req_ids).delete()
 		# Add new assignments
 		for req_id in req_ids:
-			UserRequirementProgress.objects.get_or_create(user=user, requirement_id=req_id)
+			urp = UserRequirementProgress.objects.get_or_create(user=user, requirement_id=req_id)
+			if urp.updated is None:
+				urp.updated = timezone.now()
+				urp.save()
 
 		user = form.save(commit=False)
 		user.save()
@@ -843,7 +846,7 @@ def add_requirements_and_recursive_requests(service, user, service_type, project
 	for requirement in requirements:
 		# Add requirement if not already present
 		if not UserRequirementProgress.objects.filter(user=user, requirement=requirement).exists():
-			UserRequirementProgress.objects.create(user=user, requirement=requirement, status='not_started', service_request=service)
+			UserRequirementProgress.objects.create(user=user, requirement=requirement, status='not_started', service_request=service, updated=timezone.now())
 			# Check for ServiceType with same name as requirement
 			matching_service_types = ServiceType.objects.filter(name=requirement.name, auto_include=auto_include)
 			for matching_service_type in matching_service_types:
