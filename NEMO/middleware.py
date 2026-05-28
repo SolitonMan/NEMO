@@ -14,10 +14,10 @@ class RequirementsRedirectMiddleware:
 		if (
 			request.user.is_authenticated
 			and request.session.get('force_requirements_redirect')
-			and request.path != reverse('user_requirements')
+			and request.path != reverse('user_requests')
 		):
 			request.session.pop('force_requirements_redirect', None)
-			return redirect(f"{reverse('user_requirements')}?first=1")
+			return redirect(f"{reverse('user_requests')}?first=1")
 		return self.get_response(request)
 
 
