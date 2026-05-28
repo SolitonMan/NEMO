@@ -257,8 +257,10 @@
 						{% endif %}
 						<strong>Last Updated:</strong> {{ req.updated|date:"Y-m-d H:i" }}<br><br>
 
-						{% if req.core.id in [nano_core, twodcc_core] and req.status not in ['cancelled', 'completed'] %}
+						{% if req.core.id == nano_core or req.core.id == twodcc_core %}
+							{% if req.status != 'cancelled' and req.status != 'completed' %}
 						<button class="btn btn-danger btn-sm" onclick="showCancelModal({{ req.id }})">Cancel Request</button>
+							{% endif %}
 						{% endif %}
 					</div>
 					<hr>
