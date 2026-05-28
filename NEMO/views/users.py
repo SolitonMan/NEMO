@@ -148,8 +148,8 @@ def create_or_modify_user(request, user_id):
 		UserRequirementProgress.objects.filter(user=user).exclude(requirement_id__in=req_ids).delete()
 		# Add new assignments
 		for req_id in req_ids:
-			urp = UserRequirementProgress.objects.get_or_create(user=user, requirement_id=req_id)
-			if urp.updated is None:
+			urp, created = UserRequirementProgress.objects.get_or_create(user=user, requirement_id=req_id)
+			if created:
 				urp.updated = timezone.now()
 				urp.save()
 

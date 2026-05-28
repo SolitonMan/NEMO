@@ -94,6 +94,7 @@ def mark_requirement_completed(user, requirement):
 	progress.status = 'completed'
 	progress.completed_on = now
 	progress.expires_on = now + retrain_interval
+	progress.updated = now
 	progress.save()
 
 def has_valid_requirement(user, requirement):
