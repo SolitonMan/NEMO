@@ -240,7 +240,7 @@
 				<td colspan="7">
 					<!-- Introductory details -->
 					<div>
-						{% if req.core.id != 2 %}
+						{% if req.core.id == mcl_core %}
 						<strong>Case Number:</strong> {{ req.case_number|default:"-" }}<br>
 						{% endif %}
 						<strong>Contact:</strong>
@@ -251,13 +251,13 @@
 						{% endif %}
 						<br>
 						<strong>Description:</strong> {{ req.description|default:"-" }}<br>
-						{% if req.core.id != 2 %}
+						{% if req.core.id == mcl_core %}
 						<strong>Training Requested:</strong> {% if req.training_request %}Yes{% else %}No{% endif %}<br>
 						<strong>Training Approved:</strong> {% if req.training_approved %}Yes{% else %}No{% endif %}<br>
 						{% endif %}
 						<strong>Last Updated:</strong> {{ req.updated|date:"Y-m-d H:i" }}<br><br>
 
-						{% if req.core_id == 2 and req.status != 'cancelled' and req.status != 'completed' %}
+						{% if (req.core_id == nano_core or req.core_id == twodcc_core and req.status != 'cancelled' and req.status != 'completed' %}
 						<button class="btn btn-danger btn-sm" onclick="showCancelModal({{ req.id }})">Cancel Request</button>
 						{% endif %}
 					</div>

@@ -277,7 +277,9 @@
 						aria-label="Details for {{ req.service_type.name }} request">
 						<hr>
 						<div>
+							{% if req.core.id ==mcl_core %}
 							<strong>Case Number:</strong> {{ req.case_number|default:"-" }}<br>
+							{% endif %}
 							<strong>Contact:</strong>
 							{% if req.owner %}
 								<a href="mailto:{{ req.owner }}" aria-label="Email {{ req.owner_first_name }} {{ req.owner_last_name }}">
@@ -288,7 +290,10 @@
 							{% endif %}
 							<br>
 							<strong>Description:</strong> {{ req.description|default:"-" }}<br>
+							{% if req.core.id == mcl_core %}
+							<strong>Training Requested:</strong> {% if req.training_request %}Yes{% else %}No{% endif %}<br>
 							<strong>Training Approved:</strong> {% if req.training_approved %}Yes{% else %}No{% endif %}<br>
+							{% endif %}
 							<strong>Last Updated:</strong> {{ req.updated|date:"Y-m-d H:i" }}
 						</div>
 						<hr>
