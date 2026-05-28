@@ -357,7 +357,7 @@ class UserServiceRequest(models.Model):
 	tool = models.ForeignKey('Tool', on_delete=models.CASCADE, null=True, blank=True)
 	created = models.DateTimeField(auto_now_add=True, null=True)
 	updated = models.DateTimeField(null=True, blank=True)
-	status = models.CharField(default='open', max_length=32)
+	status = models.CharField(default='OPEN', max_length=32)
 	description = models.TextField(null=True, blank=True)
 	project = models.ForeignKey('Project', on_delete=models.SET_NULL, null=True, blank=True)
 	pi_user = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, related_name='pi_for_service_request')

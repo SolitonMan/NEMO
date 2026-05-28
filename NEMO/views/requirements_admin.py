@@ -252,7 +252,7 @@ def complete_user_requirement(request):
 	# Find all open service requests that include this requirement
 	open_requests = UserServiceRequest.objects.filter(
 		user=request.user,
-		status='open'
+		status='OPEN'
 	).select_related('service_type', 'assignee')
 
 	for service_request in open_requests:

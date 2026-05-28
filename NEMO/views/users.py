@@ -501,7 +501,7 @@ def user_requirements(request):
 			proj = Project.objects.get(id=project)
 			UserServiceRequest.objects.create(
 				updated=timezone.now(),
-				status='Open',
+				status='OPEN',
 				description=description,
 				core=svc.core,
 				pi_user=proj.owner,
@@ -647,7 +647,7 @@ def user_requests(request):
 			proj = Project.objects.get(id=project)
 			new_service = UserServiceRequest.objects.create(
 				updated=timezone.now(),
-				status='Open',
+				status='OPEN',
 				description=description,
 				core=svc.core,
 				pi_user=proj.owner,
@@ -692,7 +692,7 @@ def user_requests(request):
 
 	user_service_requests = (
 		UserServiceRequest.objects
-		.filter(user=request.user, status='Open')
+		.filter(user=request.user, status='OPEN')
 		.annotate(
 			owner_first_name=Subquery(owner_first_name_subquery),
 			owner_last_name=Subquery(owner_last_name_subquery)
@@ -855,7 +855,7 @@ def add_requirements_and_recursive_requests(service, user, service_type, project
 					# Recursively add request and requirements
 					new_service = UserServiceRequest.objects.create(
 						updated=timezone.now(),
-						status='Open',
+						status='OPEN',
 						description=f"Auto-generated request for requirement '{requirement.name}'",
 						core=matching_service_type.core,
 						pi_user=project.owner,
@@ -876,12 +876,12 @@ def staff_service_requests(request):
 	staff_user = request.user
 	open_requests = UserServiceRequest.objects.filter(
 		assignee=staff_user,
-		status__iexact='open'
+		status__iexact='OPEN'
 	).select_related('project', 'user', 'service_type', 'tool').order_by('-created')
 
 	closed_requests = UserServiceRequest.objects.filter(
 		assignee=staff_user,
-		status__iexact='closed'
+		status__iexact='CLOSED'
 	).select_related('project', 'user', 'service_type', 'tool').order_by('-updated')[:5]
 
 	placeholder_req_ids = set(
@@ -924,11 +924,11 @@ def staff_service_requests(request):
 		req_id = request.POST.get('request_id')
 		action = request.POST.get('action')
 		service_request = get_object_or_404(UserServiceRequest, id=req_id, assignee=staff_user)
-		if action == 'resolve' and service_request.status.lower() == 'open':
-			service_request.status = 'Closed'
+		if action == 'resolve' and service_request.status == 'OPEN':
+			service_request.status = 'CLOSED'
 			service_request.save()
-		elif action == 'reopen' and service_request.status.lower() == 'closed':
-			service_request.status = 'Open'
+		elif action == 'reopen' and service_request.status == 'CLOSED':
+			service_request.status = 'OPEN'
 			service_request.save()
 		return redirect('staff_service_requests')
 
