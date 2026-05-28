@@ -231,6 +231,7 @@ def get_status_icon(status):
 @require_POST
 def complete_user_requirement(request):
 	requirement_id = request.POST.get('requirement_id')
+	mcl_core = Core.objects.get(name='Materials Characterization Lab (MCL)')
 	if not requirement_id:
 		return JsonResponse({'success': False, 'error': 'Missing requirement_id'}, status=400)
 
@@ -246,6 +247,82 @@ def complete_user_requirement(request):
 		progress.expires_on = timezone.now() + timedelta(days=requirement.retrain_interval_days)
 	progress.updated = timezone.now()
 	progress.save()
+
+	# Check if this completed requirement satisfies any service requests, and if so email the assignee(s)
+	# Find all open service requests that include this requirement
+	open_requests = UserServiceRequest.objects.filter(
+		user=request.user,
+		status='open'
+	).select_related('service_type', 'assignee')
+
+	for service_request in open_requests:
+		# Get all requirements for this service request
+		if service_request.service_type:
+			# Get all requirements for the service type
+			service_type_requirements = service_request.service_type.requirements.all()
+			
+			# Expand requirements using get_leaf_requirements
+			all_leaf_requirements = set()
+			for req in service_type_requirements:
+				all_leaf_requirements.update(get_leaf_requirements(req))
+			
+			# Check if all requirements are completed for this user
+			all_completed = True
+			completed_requirements_list = []
+			for req in all_leaf_requirements:
+				try:
+					user_progress = UserRequirementProgress.objects.get(user=request.user, requirement=req)
+					if user_progress.status == 'completed' and (not user_progress.expires_on or user_progress.expires_on > timezone.now()):
+						completed_requirements_list.append(req.name)
+					else:
+						all_completed = False
+						break
+				except UserRequirementProgress.DoesNotExist:
+					all_completed = False
+					break
+			
+			# If all requirements are completed, send email to assignee except for MCL which will get notified via Power-CRM
+			if all_completed and service_request.assignee and service_request.assignee.email and service_request.service_type.core != mcl_core:
+				subject = f"Service Request Ready: All Requirements Completed for {request.user.get_full_name()}"
+				
+				# Build requirements list
+				requirements_html = "<ul>"
+				for req_name in sorted(completed_requirements_list):
+					requirements_html += f"<li>{req_name} - Completed</li>"
+				requirements_html += "</ul>"
+				
+				body = f"""
+				<p>Dear {service_request.assignee.get_full_name()},</p>
+				
+				<p>This is to notify you that <strong>{request.user.get_full_name()}</strong> has completed all requirements 
+				for the service request and can now advance to the next step.</p>
+				
+				<p><strong>Service Type:</strong> {service_request.service_type.name}</p>
+				
+				<p><strong>Completed Requirements:</strong></p>
+				{requirements_html}
+				
+				<p>Please proceed with the next steps for this service request.</p>
+				
+				<p>Best regards,<br>NEMO System</p>
+				"""
+				
+				try:
+					from django.core.mail import EmailMultiAlternatives
+					email = EmailMultiAlternatives(
+						subject=subject,
+						body=body,
+						from_email=request.user.email if request.user.email else 'noreply@yourdomain.com',
+						to=[service_request.assignee.email]
+					)
+					email.attach_alternative(body, 'text/html')
+					email.send()
+				except Exception as e:
+					# Log the error but don't fail the requirement completion
+					from logging import getLogger
+					logger = getLogger(__name__)
+					logger.error(f"Failed to send email to assignee {service_request.assignee.email}: {str(e)}")
+
 	return redirect('user_requests')
 
 
