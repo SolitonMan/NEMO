@@ -277,7 +277,7 @@
 						aria-label="Details for {{ req.service_type.name }} request">
 						<hr>
 						<div>
-							{% if req.core.id ==mcl_core %}
+							{% if req.core.id == mcl_core %}
 							<strong>Case Number:</strong> {{ req.case_number|default:"-" }}<br>
 							{% endif %}
 							<strong>Contact:</strong>
