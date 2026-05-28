@@ -115,7 +115,6 @@ urlpatterns = [
 
 	# Requirements:
 	path('requirements/', requirements_admin.manage_requirements, name='manage_requirements'),
-	path('user_requirements/', users.user_requirements, name='user_requirements'),
 	path('user_requests/', users.user_requests, name='user_requests'),
 	path('closed_user_service_requests/', users.closed_user_service_requests, name='closed_user_service_requests'),
 	path('add_requirement/', requirements_admin.add_requirement, name='add_requirement'),

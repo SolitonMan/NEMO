@@ -471,134 +471,6 @@ def get_requirement_cores(requirement):
 		cores.add('General')
 	return cores
 
-@login_required
-@require_http_methods(['GET', 'POST'])
-def user_requirements(request):
-
-	if request.device == 'mobile':
-		return redirect(reverse('mobile_user_requirements'))
-
-	post_data = None
-	if request.method == 'POST':
-		print("POST data:", request.POST)
-		services = request.POST.getlist('service_select')
-		projects = request.POST.getlist('project_select')
-		descriptions = request.POST.getlist('description')
-		training_requests = request.POST.getlist('training_requested')
-
-		# Combine each set into a row
-		rows = []
-		for service, project, description, training_request in zip(services, projects, descriptions, training_requests):
-			rows.append({
-				'service': service,
-				'project': project,
-				'description': description,
-				'training_request': training_request,
-			})
-
-			# insert into UserServiceRequest for each item
-			svc = ServiceType.objects.get(id=service)
-			proj = Project.objects.get(id=project)
-			UserServiceRequest.objects.create(
-				updated=timezone.now(),
-				status='OPEN',
-				description=description,
-				core=svc.core,
-				pi_user=proj.owner,
-				project=proj,
-				service_type=svc,
-				user=request.user,
-				training_request=training_request
-			)
-
-		post_data = rows
-
-	progress_list = (
-		UserRequirementProgress.objects
-		.filter(user=request.user)
-		.select_related('requirement', 'service_request', 'service_request__service_type', 'service_request__tool')
-		.order_by('requirement__name')
-	)
-
-	requirements_table = []
-	for p in progress_list:
-		# The main service request for this requirement (may be None)
-		main_sr = p.service_request
-		# All other service requests for this user that depend on this requirement
-		other_srs = (
-			UserServiceRequest.objects
-			.filter(user=request.user, service_type__requirements=p.requirement)
-			.exclude(id=main_sr.id if main_sr else None)
-			.distinct()
-		)
-		requirements_table.append({
-			'id': p.requirement.id,
-			'name': p.requirement.name,
-			'description': p.requirement.description,
-			'status': get_status_icon(p.status),
-			'status_value': p.get_status_display(),
-			'created': p.created,
-			'completed_on': p.completed_on,
-			'expected_completion_time': getattr(p.requirement, 'expected_completion_time', ''),
-			'resource_link': getattr(p.requirement, 'resource_link', None),
-			'resource_link_name': getattr(p.requirement, 'resource_link_name', None),
-			'automated_update': getattr(p.requirement, 'automated_update', False),
-			'prerequisites': getattr(p.requirement, 'prerequisites', False),
-			'main_service_request': main_sr,
-			'other_service_requests': list(other_srs),
-		})
-
-	def sr_title(sr):
-		if not sr:
-			return 'General'
-		parts = []
-		if sr.case_number: parts.append(f"Case {sr.case_number}")
-		if sr.service_type: parts.append(sr.service_type.name)
-		if sr.tool: parts.append(sr.tool.name)
-		# Fallbacks
-		title = ' - '.join(parts) if parts else (sr.description or f"Service Request #{sr.id}")
-		return title
-
-	grouped = {}
-	order = []  # keep insertion order for display
-	for p in progress_list:
-		group_name = sr_title(p.service_request)
-		if group_name not in grouped:
-			grouped[group_name] = {'requirements': [], 'all_completed': True}
-			order.append(group_name)
-		r = p.requirement
-		grouped[group_name]['requirements'].append({
-			'id': r.id,
-			'name': r.name,
-			'description': r.description,
-			'status': get_status_icon(p.status),
-			'status_value': p.status,
-			'created': p.created,
-			'completed_on': p.completed_on,
-			'expected_completion_time': getattr(r, 'expected_completion_time', ''),
-			'resource_link': getattr(r, 'resource_link', None),
-			'resource_link_name': getattr(r, 'resource_link_name', None),
-			'automated_update': getattr(r, 'automated_update', False),
-			'prerequisites': getattr(r, 'prerequisites', False),
-		})
-		if p.status != 'completed':
-			grouped[group_name]['all_completed'] = False
-
-	mcl_core = Core.objects.get(id=1)
-	mcl_services = ServiceType.objects.filter(core=mcl_core).order_by('name')
-	nano_core = Core.objects.get(id=2)
-	nano_services = ServiceType.objects.filter(core=nano_core).order_by('name')
-	user_projects = request.user.active_projects
-
-	user_service_requests = (
-		UserServiceRequest.objects
-		.filter(user=request.user)
-		.select_related('service_type', 'project', 'core', 'pi_user')
-		.order_by('-updated')
-	)
-
-	return render(request, 'users/user_requirements.html', {'grouped': grouped, 'group_order': order, 'mcl_services':mcl_services, 'nano_services':nano_services, 'user_projects':user_projects, 'post_data':post_data, 'user_service_requests': user_service_requests, 'requirements_table': requirements_table,})
-
 
 @login_required
 @require_POST
@@ -926,9 +798,11 @@ def staff_service_requests(request):
 		service_request = get_object_or_404(UserServiceRequest, id=req_id, assignee=staff_user)
 		if action == 'resolve' and service_request.status == 'OPEN':
 			service_request.status = 'CLOSED'
+			service_request.updated = timezone.now()
 			service_request.save()
 		elif action == 'reopen' and service_request.status == 'CLOSED':
 			service_request.status = 'OPEN'
+			service_request.updated = timezone.now()
 			service_request.save()
 		return redirect('staff_service_requests')
 
@@ -1014,11 +888,12 @@ def cancel_user_service_request(request, request_id):
 		return HttpResponseBadRequest("Invalid method")
 	try:
 		usr = UserServiceRequest.objects.get(pk=request_id)
-		if usr.status == 'Cancelled' or usr.status == 'Completed':
-			return JsonResponse({'error': 'Request already cancelled or completed'}, status=400)
+		if usr.status == 'CANCELLED' or usr.status == 'CLOSED':
+			return JsonResponse({'error': 'Request already cancelled or closed'}, status=400)
 		usr.cancelled_by = request.user
 		usr.cancellation_reason = request.POST.get('reason', '')
-		usr.status = 'Cancelled'
+		usr.status = 'CANCELLED'
+		usr.updated = timezone.now()
 		usr.save()
 
 		# notify assignee of cancellation
@@ -1040,7 +915,7 @@ Cancellation Reason: {reason}
 You can view more details in NEMO.
 
 Thank you,
-NEMO Team"""
+LEO Admin Team"""
 			
 			send_mail(
 				subject,
