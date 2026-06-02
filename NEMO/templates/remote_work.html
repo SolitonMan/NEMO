@@ -362,24 +362,20 @@ th {
 			{% if show_buttons %}
 				{% if not value.validated %}
 					{% if value.type == "Tool Use" %}
-			<form action="{% url 'contest_usage_event' value.id %}" method="POST" onsubmit="return contest_charge(this, '{{ value.type|escapejs }}', '{{ value.tool|escapejs }}', '#transaction_row_{{ forloop.counter }}')">
+			<form action="{% url 'contest_usage_event' value.id %}" method="POST">
 			<input type="hidden" name="usage_event_id" value="{{ value.id }}" />
-			<input type="hidden" name="description" id="contest_desc_{{ value.id }}" value="" />
 					{% endif %}
 					{% if value.type == "Staff Charge" %}
-			<form action="{% url 'contest_staff_charge' value.id %}" method="POST" onsubmit="return contest_charge(this, '{{ value.type|escapejs }}', '{{ value.tool|escapejs }}', '#transaction_row_{{ forloop.counter }}')">
+			<form action="{% url 'contest_staff_charge' value.id %}" method="POST">
 			<input type="hidden" name="staff_charge_id" value="{{ value.id }}" />
-			<input type="hidden" name="description" id="contest_desc_{{ value.id }}" value="" />
 					{% endif %}
 					{% if value.type == "Area Access" %}
-			<form action="{% url 'contest_area_access_record' value.id %}" method="POST" onsubmit="return contest_charge(this, '{{ value.type|escapejs }}', '{{ value.tool|escapejs }}', '#transaction_row_{{ forloop.counter }}')">
+			<form action="{% url 'contest_area_access_record' value.id %}" method="POST">
 			<input type="hidden" name="area_access_record_id" value="{{ value.id }}" />
-			<input type="hidden" name="description" id="contest_desc_{{ value.id }}" value="" />
 					{% endif %}
 					{% if value.type == "Withdraw" %}
-			<form action="{% url 'contest_consumable_withdraw' value.id %}" method="POST" onsubmit="return contest_charge(this, '{{ value.type|escapejs }}', '{{ value.tool|escapejs }}', '#transaction_row_{{ forloop.counter }}')">
+			<form action="{% url 'contest_consumable_withdraw' value.id %}" method="POST">
 			<input type="hidden" name="consumable_withdraw_id" value="{{ value.id }}" />
-			<input type="hidden" name="description" id="contest_desc_{{ value.id }}" value="" />
 					{% endif %}
 			{% csrf_token %}
 			<button type="submit" {% if value.contested %}disabled{% endif %} class="btn btn-warning" aria-label="Contest {{ value.type }} for {{ value.tool }}">Contest</button>
@@ -495,29 +491,6 @@ th {
 	</div>
 </div>
 
-<!-- Accessible modal dialog for contesting charges -->
-<div class="modal fade" id="contest_dialog" tabindex="-1" role="dialog" aria-labelledby="contest_dialog_title" aria-modal="true">
-	<div class="modal-dialog" role="document">
-		<div class="modal-content">
-			<div class="modal-header">
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
-					<span aria-hidden="true">&times;</span>
-				</button>
-				<h4 class="modal-title" id="contest_dialog_title">Contest Charge</h4>
-			</div>
-			<div class="modal-body">
-				<label for="contest_reason_input" style="display: block; margin-bottom: 8px; font-weight: bold;">
-					Reason for contesting this charge:
-				</label>
-				<textarea id="contest_reason_input" cols="60" rows="5" class="form-control" required></textarea>
-				<div style="margin-top: 16px;">
-					<button type="button" id="submit_contest_btn" class="btn btn-warning">Submit Contest</button>
-					<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-				</div>
-			</div>
-		</div>
-	</div>
-</div>
 
 <script type="text/javascript">
 // Global variables for dialog state
@@ -710,58 +683,6 @@ function validate_charge(url, button, row, transactionType, toolName) {
 	}, failure_dialog);
 }
 
-// Contest charge with accessible modal
-function contest_charge(form, transactionType, toolName, row) {
-	currentContestForm = form;
-	
-	$('#contest_dialog_title').text('Contest ' + transactionType + ' for ' + toolName);
-	$('#contest_reason_input').val('');
-	
-	// Set up submit handler
-	$('#submit_contest_btn').off('click').on('click', function() {
-		var description = $('#contest_reason_input').val().trim();
-		
-		if (!description) {
-			alert('Please provide a reason for contesting this charge.');
-			$('#contest_reason_input').focus();
-			return;
-		}
-		
-		// Set the hidden field value
-		$(currentContestForm).find('input[name="description"]').val(description);
-		
-		// Mark row as contested
-		$(row).addClass('warning-highlight');
-		$(row).css('background-color', '');
-		
-		// Update status badge
-		$(row).find('.status-badge').removeClass('status-badge-open')
-			.addClass('status-badge-contested').text('Contested');
-		
-		var customer = row + '_customers';
-		$(customer).addClass('warning-highlight');
-		$(customer).css('background-color', '');
-		
-		// Disable buttons
-		$(currentContestForm).find('button[type="submit"]').prop('disabled', true);
-		$(currentContestForm).closest('td').prev().find('button').prop('disabled', true);
-		
-		// Submit the form programmatically
-		currentContestForm.submit();
-		
-		$('#contest_dialog').modal('hide');
-		announceStatus('Contest submitted for ' + transactionType);
-	});
-	
-	$('#contest_dialog').modal('show');
-	
-	// Focus on textarea when modal opens
-	$('#contest_dialog').on('shown.bs.modal', function() {
-		$('#contest_reason_input').focus();
-	});
-	
-	return false; // Prevent default form submission
-}
 
 // Edit comment with accessible modal
 function edit_comment(id, type, comment, entityName) {
