@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+{% load custom_tags_and_filters %}
+{% block title %}User Requirement Management{% endblock %}
+{% block content %}
+	<h1>User Requirement Management</h1>
+	
+	<div class="alert alert-danger" role="alert" style="margin-bottom: 20px;">
+		<strong>WARNING: EMERGENCY USE ONLY</strong><br>
+		This interface should only be used in emergency situations to override user requirement statuses. 
+		All changes made here bypass normal workflow processes and may affect billing, access control, and compliance tracking.
+		Use with extreme caution and document all changes appropriately.
+	</div>
+
+	{% if not selected_user %}
+		<!-- User Search Interface -->
+		<div class="row">
+			<div class="col-sm-12">
+				<h3>Search for User</h3>
+				<p>Search by first name, last name, username, or email address.</p>
+				
+				<form name="search_form" method="post">
+					{% csrf_token %}
+					<div class="form-group">
+						<div class="input-group" style="max-width: 600px;">
+							<input id="search" name="search" type="text" 
+								placeholder="Search for users" 
+								class="form-control" 
+								value="{{ search_string|default:'' }}" 
+								autofocus>
+							<span class="input-group-btn">
+								<button type="submit" class="btn btn-success">Search</button>
+							</span>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+
+		{% if users %}
+			<div class="row">
+				<div class="col-sm-12">
+					<h3>Search Results</h3>
+					{% if search_string %}
+						<p>Results for "{{ search_string }}":</p>
+					{% endif %}
+					
+					<div class="form-group" style="max-width: 600px;">
+						<input id="filter" name="filter" type="text" 
+							placeholder="Filter results" 
+							class="form-control">
+					</div>
+					
+					<table class="table table-striped">
+						<thead>
+							<tr>
+								<th>Last Name</th>
+								<th>First Name</th>
+								<th>Username</th>
+								<th>Email</th>
+								<th>Action</th>
+							</tr>
+						</thead>
+						<tbody id="user_data">
+							{% for u in users %}
+								<tr {% if not u.is_active %}style="background-color: #d0d0d0;"{% endif %}>
+									<td>{{ u.last_name }}</td>
+									<td>{{ u.first_name }}</td>
+									<td>{{ u.username }}</td>
+									<td>{{ u.email }}</td>
+									<td>
+										<a href="{% url 'manage_user_requirements' %}?user_id={{ u.id }}" 
+											class="btn btn-primary btn-sm">
+											Select User
+										</a>
+									</td>
+								</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				</div>
+			</div>
+
+			<script>
+				$("#filter").keyup(function () {
+					var data = this.value.split(" ");
+					var tr = $("#user_data").find("tr");
+					
+					if (this.value == "") {
+						tr.show();
+						return;
+					}
+					
+					tr.hide();
+					
+					tr.filter(function(i, v) {
+						var $t = $(this);
+						for (var d = 0; d < data.length; ++d) {
+							var s = data[d].toUpperCase();
+							if ($t.text().toUpperCase().indexOf(s) > -1) {
+								return true;
+							}
+						}
+					}).show();
+				});
+			</script>
+		{% endif %}
+	{% else %}
+		<!-- Requirements Management Interface -->
+		<div class="row">
+			<div class="col-sm-12">
+				<h3>Managing Requirements for: {{ selected_user.get_full_name }} ({{ selected_user.username }})</h3>
+				<p>
+					<a href="{% url 'manage_user_requirements' %}" class="btn btn-default">
+						&larr; Search for Another User
+					</a>
+					<a href="{% url 'create_or_modify_user' selected_user.id %}" class="btn btn-info">
+						View User Profile
+					</a>
+				</p>
+			</div>
+		</div>
+
+		{% if requirements_list %}
+			<div class="row">
+				<div class="col-sm-12">
+					<h4>Current Requirements ({{ requirements_list|length }})</h4>
+					<table class="table table-bordered table-striped">
+						<thead>
+							<tr>
+								<th style="width: 30%;">Requirement Name</th>
+								<th style="width: 35%;">Description</th>
+								<th style="width: 15%;">Status</th>
+								<th style="width: 10%;">Completed On</th>
+								<th style="width: 10%;">Action</th>
+							</tr>
+						</thead>
+						<tbody>
+							{% for req in requirements_list %}
+								<tr>
+									<td><strong>{{ req.name }}</strong></td>
+									<td>{{ req.description|default:"No description" }}</td>
+									<td>
+										{% if req.is_completed %}
+											<span class="label label-success">{{ req.status_display }}</span>
+										{% elif req.status == 'in_progress' %}
+											<span class="label label-warning">{{ req.status_display }}</span>
+										{% else %}
+											<span class="label label-default">{{ req.status_display }}</span>
+										{% endif %}
+										{% if req.expires_on %}
+											<br><small>Expires: {{ req.expires_on|date:"Y-m-d" }}</small>
+										{% endif %}
+									</td>
+									<td>
+										{% if req.completed_on %}
+											{{ req.completed_on|date:"Y-m-d H:i" }}
+										{% else %}
+											-
+										{% endif %}
+									</td>
+									<td>
+										{% if req.is_completed %}
+											<form method="post" action="{% url 'staff_unmark_user_requirement' %}" style="display: inline;">
+												{% csrf_token %}
+												<input type="hidden" name="requirement_id" value="{{ req.id }}">
+												<input type="hidden" name="user_id" value="{{ selected_user.id }}">
+												<input type="hidden" name="redirect_url" value="{% url 'manage_user_requirements' %}?user_id={{ selected_user.id }}">
+												<button type="submit" class="btn btn-warning btn-sm" 
+													onclick="return confirm('Are you sure you want to unmark this requirement as completed?');">
+													Unmark Complete
+												</button>
+											</form>
+										{% else %}
+											<form method="post" action="{% url 'staff_complete_user_requirement' %}" style="display: inline;">
+												{% csrf_token %}
+												<input type="hidden" name="requirement_id" value="{{ req.id }}">
+												<input type="hidden" name="user_id" value="{{ selected_user.id }}">
+												<input type="hidden" name="redirect_url" value="{% url 'manage_user_requirements' %}?user_id={{ selected_user.id }}">
+												<button type="submit" class="btn btn-success btn-sm"
+													onclick="return confirm('Are you sure you want to mark this requirement as completed?');">
+													Mark Complete
+												</button>
+											</form>
+										{% endif %}
+									</td>
+								</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		{% else %}
+			<div class="row">
+				<div class="col-sm-12">
+					<div class="alert alert-info">
+						<strong>No Requirements Assigned</strong><br>
+						This user does not have any requirements assigned. Requirements are typically assigned when a user submits a service request.
+					</div>
+				</div>
+			</div>
+		{% endif %}
+	{% endif %}
+{% endblock %}

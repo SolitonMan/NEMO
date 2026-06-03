@@ -532,7 +532,7 @@ def user_requests(request):
 			)
 
 			# Send email notification to assignee
-			if svc.principle_assignee and svc.principle_assignee.email:
+			if svc.principle_assignee and svc.principle_assignee.email and svc.core.name != 'Materials Characterization Lab (MCL)':
 				send_mail(
 					subject=f'New Service Request: {svc.name}',
 					message=f'A new service request has been submitted by {request.user.get_full_name()}.\n\nService: {svc.name}\nProject: {proj.name}\nDescription: {description}',
@@ -974,28 +974,94 @@ LEO Admin Team"""
 	except UserServiceRequest.DoesNotExist:
 		return JsonResponse({'error': 'Request not found'}, status=404)
 
+# Add this import at the top with other imports
+from datetime import timedelta
+
+# Add this new view function (add it after the staff_service_requests function)
+
+@staff_member_required(login_url=None)
+@require_http_methods(['GET', 'POST'])
+def manage_user_requirements(request):
+	"""
+	Staff interface to override user requirement statuses in emergency situations.
+	Allows staff to search for a user and mark requirements as complete/incomplete.
+	"""
+	selected_user = None
+	requirements_list = []
+	
+	if request.method == 'POST':
+		# Handle user search
+		search_string = request.POST.get('search', None)
+		
+		if search_string:
+			# Search for users
+			all_users = User.objects.filter(
+				Q(first_name__icontains=search_string) | 
+				Q(last_name__icontains=search_string) | 
+				Q(username__icontains=search_string) | 
+				Q(email__icontains=search_string)
+			).order_by('last_name', 'first_name')
+			
+			return render(request, 'users/manage_user_requirements.html', {
+				'users': all_users,
+				'search_string': search_string,
+			})
+	
+	# Handle user selection
+	user_id = request.GET.get('user_id')
+	if user_id:
+		selected_user = get_object_or_404(User, id=user_id)
+		
+		# Get all UserRequirementProgress records for this user
+		progress_records = UserRequirementProgress.objects.filter(
+			user=selected_user
+		).select_related('requirement').order_by('requirement__name')
+		
+		# Build requirements list with status information
+		for progress in progress_records:
+			req = progress.requirement
+			# Skip placeholder/recursive requirements
+			if ServiceType.objects.filter(name=req.name).exists():
+				continue
+				
+			requirements_list.append({
+				'id': req.id,
+				'name': req.name,
+				'description': req.description,
+				'status': progress.status,
+				'status_display': progress.get_status_display(),
+				'completed_on': progress.completed_on,
+				'expires_on': progress.expires_on,
+				'is_completed': progress.status == 'completed',
+			})
+	
+	return render(request, 'users/manage_user_requirements.html', {
+		'selected_user': selected_user,
+		'requirements_list': requirements_list,
+		'use_form': True,
+	})
+
+
 @staff_member_required(login_url=None)
 @require_POST
 def staff_complete_user_requirement(request):
 	"""
-	Staff-controlled requirement completion for users.
-	Accepts user_id and requirement_id to mark a requirement complete.
+	Staff override to mark a user's requirement as complete.
 	"""
-	user_id = request.POST.get('user_id')
 	requirement_id = request.POST.get('requirement_id')
+	user_id = request.POST.get('user_id')
 	
-	if not user_id or not requirement_id:
-		return JsonResponse({'success': False, 'error': 'Missing user_id or requirement_id'}, status=400)
+	if not requirement_id or not user_id:
+		return HttpResponseBadRequest('Missing requirement_id or user_id')
 	
 	try:
-		target_user = User.objects.get(id=user_id)
+		user = User.objects.get(id=user_id)
 		requirement = Requirement.objects.get(id=requirement_id)
-		progress = UserRequirementProgress.objects.get(user=target_user, requirement_id=requirement_id)
-	except User.DoesNotExist:
-		return JsonResponse({'success': False, 'error': 'User not found'}, status=404)
-	except UserRequirementProgress.DoesNotExist:
-		return JsonResponse({'success': False, 'error': 'Requirement progress not found'}, status=404)
+		progress = UserRequirementProgress.objects.get(user=user, requirement_id=requirement_id)
+	except (User.DoesNotExist, Requirement.DoesNotExist, UserRequirementProgress.DoesNotExist) as e:
+		return HttpResponseBadRequest(f'Invalid data: {str(e)}')
 	
+	# Mark as completed
 	progress.status = 'completed'
 	progress.completed_on = timezone.now()
 	if requirement.retrain_interval_days and requirement.retrain_interval_days > 0:
@@ -1003,36 +1069,37 @@ def staff_complete_user_requirement(request):
 	progress.updated = timezone.now()
 	progress.save()
 	
-	return redirect('staff_service_requests')
+	redirect_url = request.POST.get('redirect_url', reverse('staff_service_requests'))
+	return HttpResponseRedirect(redirect_url)
 
 
 @staff_member_required(login_url=None)
 @require_POST
 def staff_unmark_user_requirement(request):
 	"""
-	Staff-controlled requirement completion for users.
-	Accepts user_id and requirement_id to mark a requirement complete.
+	Staff override to unmark a user's requirement (set to not_started).
 	"""
-	user_id = request.POST.get('user_id')
 	requirement_id = request.POST.get('requirement_id')
+	user_id = request.POST.get('user_id')
 	
-	if not user_id or not requirement_id:
-		return JsonResponse({'success': False, 'error': 'Missing user_id or requirement_id'}, status=400)
+	if not requirement_id or not user_id:
+		return HttpResponseBadRequest('Missing requirement_id or user_id')
 	
 	try:
-		target_user = User.objects.get(id=user_id)
-		progress = UserRequirementProgress.objects.get(user=target_user, requirement_id=requirement_id)
-	except User.DoesNotExist:
-		return JsonResponse({'success': False, 'error': 'User not found'}, status=404)
-	except UserRequirementProgress.DoesNotExist:
-		return JsonResponse({'success': False, 'error': 'Requirement progress not found'}, status=404)
+		user = User.objects.get(id=user_id)
+		progress = UserRequirementProgress.objects.get(user=user, requirement_id=requirement_id)
+	except (User.DoesNotExist, UserRequirementProgress.DoesNotExist) as e:
+		return HttpResponseBadRequest(f'Invalid data: {str(e)}')
 	
+	# Reset to not started
 	progress.status = 'not_started'
 	progress.completed_on = None
+	progress.expires_on = None
 	progress.updated = timezone.now()
 	progress.save()
 	
-	return redirect('staff_service_requests')
+	redirect_url = request.POST.get('redirect_url', reverse('staff_service_requests'))
+	return HttpResponseRedirect(redirect_url)
 
 @login_required
 def closed_user_service_requests(request):
