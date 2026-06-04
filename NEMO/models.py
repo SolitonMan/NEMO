@@ -343,7 +343,7 @@ class Requirement(models.Model):
 				'table', 'thead', 'tbody', 'tr', 'th', 'td', 'img', 'span', 'div'
 			}
 			allowed_attributes = {
-				'a': {'href', 'title', 'target', 'rel'},
+				'a': {'href', 'title', 'target'},  # Removed 'rel' from here
 				'img': {'src', 'alt', 'title', 'width', 'height'},  # alt is required for accessibility
 				'table': {'summary'},  # For accessibility
 				'th': {'scope'},  # For accessibility
@@ -352,7 +352,8 @@ class Requirement(models.Model):
 			self.description = nh3.clean(
 				self.description,
 				tags=allowed_tags,
-				attributes=allowed_attributes
+				attributes=allowed_attributes,
+				link_rel='noopener noreferrer'  # Automatically adds safe rel attribute to all links
 			)
 		super().save(*args, **kwargs)
 
