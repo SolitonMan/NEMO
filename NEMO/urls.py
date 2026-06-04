@@ -30,6 +30,7 @@ router.register(r'scheduled_outages', api.ScheduledOutageViewSet)
 
 urlpatterns = [
 	path('admin/', admin.site.urls),
+	path('ckeditor5/', include('django_ckeditor_5.urls')),  # Add this line for CKEditor 5
 	# Authentication & error pages:
 	#path('valid/from-auth-redirect/',AuthenticateCallbackView.as_view(),name='from-auth-redirect'),
 	#path('valid/', include('microsoft_auth.urls', namespace='microsoft')),
