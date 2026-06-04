@@ -49,10 +49,10 @@ RUN pip install django-pymemcache
 RUN pip install django-widget-tweaks
 
 # install ckeditor 5
-pip install django-ckeditor-5
+RUN pip install django-ckeditor-5
 
 # install sanitization
-pip install nh3
+RUN pip install nh3
 
 # Intall NEMO (in the current directory) and Gunicorn
 COPY . /nemo/
