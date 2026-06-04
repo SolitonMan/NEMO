@@ -1,86 +1,147 @@
 {% extends 'base.html' %}
 {% load custom_tags_and_filters %}
+{% load static %}
 {% block title %}Add Requirements{% endblock %}
+{% block extrahead %}
+	<style>
+		.ck-editor__editable {
+			min-height: 300px;
+		}
+	</style>
+{% endblock %}
 {% block content %}
 <h2>Add Requirement</h2>
 <form method="post">
-    {% csrf_token %}
-    <div class="form-group">
-        <label>Name</label>
-        <input type="text" name="name" class="form-control" required>
-    </div>
-    <div class="form-group">
-        <label>Description</label>
-        <textarea name="description" class="form-control"></textarea>
-    </div>
-    <div class="form-group">
-        <label>Resource Link</label>
-        <input type="url" name="resource_link" class="form-control">
-    </div>
-    <div class="form-group">
-        <label>Resource Link Name</label>
-        <input type="text" name="resource_link_name" class="form-control">
-    </div>
-    <div class="form-group">
-        <label>Prerequisites</label>
-        <textarea name="prerequisites" class="form-control"></textarea>
-    </div>
-    <div class="form-group">
-        <label>Retrain Interval (days)</label>
-        <input type="number" name="retrain_interval_days" class="form-control" value="0">
-    </div>
-    <div class="form-group">
-        <label>Expected completion time (minutes)</label>
-        <input type="number" name="expected_completion_time" class="form-control" value="">
-    </div>
-    <div class="form-group">
-        <label>Requirement Assigned at First Login</label>
-        <input type="checkbox" name="login_requirement_flag">
-    </div>
-    <div class="form-group">
-        <label>Automated Update</label>
-        <input type="checkbox" name="automated_update">
-    </div>
-    <button type="submit" class="btn btn-primary">Add Requirement</button>
+	{% csrf_token %}
+	<div class="form-group">
+		<label for="id_name">Name</label>
+		<input type="text" name="name" id="id_name" class="form-control" required>
+	</div>
+	<div class="form-group">
+		<label for="id_description">Description</label>
+		<textarea name="description" id="id_description" class="form-control django_ckeditor_5"></textarea>
+	</div>
+	<div class="form-group">
+		<label for="id_resource_link">Resource Link</label>
+		<input type="url" name="resource_link" id="id_resource_link" class="form-control">
+	</div>
+	<div class="form-group">
+		<label for="id_resource_link_name">Resource Link Name</label>
+		<input type="text" name="resource_link_name" id="id_resource_link_name" class="form-control">
+	</div>
+	<div class="form-group">
+		<label for="id_prerequisites">Prerequisites</label>
+		<textarea name="prerequisites" id="id_prerequisites" class="form-control" rows="3"></textarea>
+	</div>
+	<div class="form-group">
+		<label for="id_retrain_interval_days">Retrain Interval (days)</label>
+		<input type="number" name="retrain_interval_days" id="id_retrain_interval_days" class="form-control" value="0">
+	</div>
+	<div class="form-group">
+		<label for="id_expected_completion_time">Expected completion time (minutes)</label>
+		<input type="number" name="expected_completion_time" id="id_expected_completion_time" class="form-control" value="">
+	</div>
+	<div class="form-group">
+		<div class="checkbox">
+			<label>
+				<input type="checkbox" name="login_requirement_flag" id="id_login_requirement_flag">
+				Requirement Assigned at First Login
+			</label>
+		</div>
+	</div>
+	<div class="form-group">
+		<div class="checkbox">
+			<label>
+				<input type="checkbox" name="automated_update" id="id_automated_update">
+				Automated Update
+			</label>
+		</div>
+	</div>
+	<div class="form-group">
+		<button type="submit" class="btn btn-primary">Add Requirement</button>
+	</div>
 </form>
 
 <hr>
 
 <h3>Existing Requirements</h3>
-<table class="table">
-	<tr>
-		<th>Name</th>
-		<th>Description</th>
-		<th>Resource Link</th>
-		<th>Prerequisittes</th>
-		<th>Retrain Interval (days)</th>
-		<th>Expected Completion Time (minutes)</th>
-	</tr>
+<table class="table table-striped">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Description</th>
+			<th>Resource Link</th>
+			<th>Prerequisites</th>
+			<th>Retrain Interval (days)</th>
+			<th>Expected Completion Time (minutes)</th>
+		</tr>
+	</thead>
+	<tbody>
 	{% for req in requirements %}
-	<tr>
-		<td>
-			<a href="{% url 'edit_requirement' req.id %}">{{ req.name }}</a>
-		</td>
-		<td>
-			{{ req.description|default:"No description" }}
-		</td>
-		<td>
-			{% if req.resource_link %}
-			<a href="{{ req.resource_link }}" target="_blank">{{ req.resource_link }}</a>
-			{% else %}
-			No resource link
-			{% endif %}
-		</td>
-		<td>{{ req.prerequisites }}</td>
-		<td>
-			{{ req.retrain_interval_days }}
-		</td>
-		<td>
-			{% if req.expected_completion_time %}{{ req.expected_completion_time }}{% endif %}
-		</td>
-	</tr>
+		<tr>
+			<td>
+				<a href="{% url 'edit_requirement' req.id %}">{{ req.name }}</a>
+			</td>
+			<td>
+				{% if req.description %}
+					{{ req.description|safe|truncatewords_html:20 }}
+				{% else %}
+					<em>No description</em>
+				{% endif %}
+			</td>
+			<td>
+				{% if req.resource_link %}
+					<a href="{{ req.resource_link }}" target="_blank">{{ req.resource_link_name|default:"Link" }}</a>
+				{% else %}
+					-
+				{% endif %}
+			</td>
+			<td>{{ req.prerequisites|default:"-" }}</td>
+			<td>{{ req.retrain_interval_days }}</td>
+			<td>
+				{% if req.expected_completion_time %}{{ req.expected_completion_time }}{% else %}-{% endif %}
+			</td>
+		</tr>
 	{% empty %}
-	<tr><td colspan="6">No requirements found.</td></tr>
+		<tr>
+			<td colspan="6" class="text-center"><em>No requirements found.</em></td>
+		</tr>
 	{% endfor %}
+	</tbody>
 </table>
+
+<script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
+<script>
+	document.addEventListener('DOMContentLoaded', function() {
+		const editorElement = document.querySelector('#id_description');
+		if (editorElement) {
+			ClassicEditor
+				.create(editorElement, {
+					toolbar: {
+						items: [
+							'heading', '|',
+							'bold', 'italic', 'link', 'bulletedList', 'numberedList', '|',
+							'outdent', 'indent', '|',
+							'blockQuote', 'insertTable', '|',
+							'undo', 'redo'
+						]
+					},
+					heading: {
+						options: [
+							{ model: 'paragraph', title: 'Paragraph', class: 'ck-heading_paragraph' },
+							{ model: 'heading1', view: 'h1', title: 'Heading 1', class: 'ck-heading_heading1' },
+							{ model: 'heading2', view: 'h2', title: 'Heading 2', class: 'ck-heading_heading2' },
+							{ model: 'heading3', view: 'h3', title: 'Heading 3', class: 'ck-heading_heading3' }
+						]
+					},
+					table: {
+						contentToolbar: ['tableColumn', 'tableRow', 'mergeTableCells']
+					}
+				})
+				.catch(error => {
+					console.error('CKEditor initialization error:', error);
+				});
+		}
+	});
+</script>
 {% endblock %}
