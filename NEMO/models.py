@@ -1,5 +1,6 @@
 import datetime
 import json
+import nh3
 import socket
 import struct
 import requests
@@ -331,6 +332,29 @@ class Requirement(models.Model):
 
 	def __str__(self):
 		return self.name
+
+	def save(self, *args, **kwargs):
+		# Sanitize HTML content before saving to prevent XSS
+		if self.description:
+			# Define allowed tags and attributes for accessibility compliance
+			allowed_tags = {
+				'p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+				'ul', 'ol', 'li', 'a', 'blockquote', 'code', 'pre',
+				'table', 'thead', 'tbody', 'tr', 'th', 'td', 'img', 'span', 'div'
+			}
+			allowed_attributes = {
+				'a': {'href', 'title', 'target', 'rel'},
+				'img': {'src', 'alt', 'title', 'width', 'height'},  # alt is required for accessibility
+				'table': {'summary'},  # For accessibility
+				'th': {'scope'},  # For accessibility
+				'*': {'class', 'id', 'aria-label', 'aria-describedby', 'role'}  # ARIA attributes for accessibility
+			}
+			self.description = nh3.clean(
+				self.description,
+				tags=allowed_tags,
+				attributes=allowed_attributes
+			)
+		super().save(*args, **kwargs)
 
 class ToolRequirement(models.Model):
 	tool = models.ForeignKey('Tool', on_delete=models.CASCADE)

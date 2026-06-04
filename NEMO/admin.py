@@ -5,6 +5,8 @@ from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.contrib.auth.models import Permission
 from django.utils import timezone
 
+from django_ckeditor_5.widgets import CKEditor5Widget
+
 #from microsoft_auth.models import MicrosoftAccount
 #from microsoft_auth.admin import MicrosoftAccountAdmin
 
@@ -1188,10 +1190,39 @@ class SampleAdmin(admin.ModelAdmin):
 	def has_delete_permission(self, request, obj=None):
 		return False
 
-@admin.register(Requirement)
+class RequirementAdminForm(forms.ModelForm):
+	description = forms.CharField(
+		widget=CKEditor5Widget(config_name='extends'),
+		required=False,
+		help_text="Formatted instructions for this requirement. HTML will be sanitized for security."
+	)
+
+	class Meta:
+		model = Requirement
+		fields = '__all__'
+
+@register(Requirement)
 class RequirementAdmin(admin.ModelAdmin):
-	list_display = ('name', 'description', 'resource_link', 'retrain_interval_days')
+	list_display = ('name', 'retrain_interval_days', 'expected_completion_time', 'login_requirement_flag')
+	list_filter = ('login_requirement_flag', 'automated_update')
 	search_fields = ('name', 'description')
+	form = RequirementAdminForm
+	
+	fieldsets = (
+		(None, {
+			'fields': ('name', 'description', 'resource_link', 'resource_link_name')
+		}),
+		('Configuration', {
+			'fields': ('retrain_interval_days', 'notification_interval', 'expected_completion_time', 'logical_order')
+		}),
+		('System Settings', {
+			'fields': ('login_requirement_flag', 'automated_update', 'prerequisites'),
+			'classes': ('collapse',)
+		}),
+	)
+
+	def has_delete_permission(self, request, obj=None):
+		return False
 
 @admin.register(UserRequirementProgress)
 class UserRequirementProgressAdmin(admin.ModelAdmin):

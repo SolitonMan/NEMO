@@ -8,6 +8,10 @@
 		display: none;
 	}
 
+	tr.requirement-description-row {
+		display: none;
+	}
+
 	.highlight {
 		border: 1px solid #c0c0c0;
 	}
@@ -53,6 +57,21 @@
 	#requirements-table-container th.sorted-desc::after {
 		content: " \25BC";
 		font-size: 12px;
+	}
+
+	.requirement-description-content {
+		padding: 15px;
+		background-color: #f9f9f9;
+		border: 1px solid #e0e0e0;
+		border-radius: 4px;
+	}
+
+	.requirement-main-row {
+		cursor: pointer;
+	}
+
+	.requirement-main-row:hover {
+		background-color: #f5f5f5;
 	}
 </style>
 {% endblock %}
@@ -311,6 +330,7 @@
 	<table class="table table-striped">
 		<thead>
 			<tr>
+				<th style="width: 30px;"></th>
 				<th class="sortable">Requirement</th>
 				<th class="sortable">Status</th>
 				<th class="sortable">Added</th>
@@ -323,7 +343,10 @@
 		</thead>
 		<tbody>
 		{% for req in requirements_table %}
-			<tr>
+			<tr class="requirement-main-row" data-requirement-id="{{ req.id }}">
+				<td>
+					<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+				</td>
 				<td><span style="font-weight: bold;">{{ req.name }}</span></td>
 				<td><span style="font-weight: bold; font-size: 10pt; border-radius: 12px; background-color:{% if req.status_value == 'Not Started' %}#ffcccc{% endif %}{% if req.status_value == 'Completed' %}#ccffcc{% endif %}{% if req.status_value == 'In Progress' %}#ffffcc{% endif %};">{{ req.status_value|default:"Not Started" }}</span></td>
 				<td>{{ req.created|date:"m/d/Y"|default:"" }}</td>
@@ -358,12 +381,20 @@
 					{% endif %}
 				</td>
 			</tr>
+			<tr class="requirement-description-row" data-requirement-id="{{ req.id }}" style="display:none;">
+				<td colspan="9">
+					<div class="requirement-description-content">
+						{% if req.description %}
+							{{ req.description|safe }}
+						{% else %}
+							<em>No description available for this requirement.</em>
+						{% endif %}
+					</div>
+				</td>
+			</tr>
 		{% endfor %}
 		</tbody>
 	</table>
-</div>
-
-
 </div>
 
 <div class="modal fade" id="cancelRequestModal" tabindex="-1" role="dialog" aria-labelledby="cancelRequestModalLabel" aria-hidden="true">
@@ -538,7 +569,30 @@ document.getElementById('confirmCancelBtn').onclick = function() {
 	});
 })();
 </script>
+<script>
+(function () {
+	var $ = window.jQuery;
+	if (!$) return;
 
+	// Toggle requirement description rows
+	$(document).on('click', '.requirement-main-row', function (e) {
+		// Don't toggle if clicking on a link, button, or form element
+		if ($(e.target).is('a, button, input, select, textarea') || $(e.target).closest('form, a').length > 0) {
+			return;
+		}
+
+		var reqId = $(this).data('requirement-id');
+		var $descriptionRow = $('.requirement-description-row[data-requirement-id="' + reqId + '"]');
+		var $icon = $(this).find('.glyphicon');
+		
+		// Toggle the description row
+		$descriptionRow.slideToggle(200);
+		
+		// Toggle the chevron icon
+		$icon.toggleClass('glyphicon-chevron-right glyphicon-chevron-down');
+	});
+})();
+</script>
 <script>
 (function () {
 	var $ = window.jQuery;

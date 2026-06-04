@@ -48,6 +48,12 @@ RUN pip install django-pymemcache
 # install bootstrap support
 RUN pip install django-widget-tweaks
 
+# install ckeditor 5
+pip install django-ckeditor-5
+
+# install sanitization
+pip install nh3
+
 # Intall NEMO (in the current directory) and Gunicorn
 COPY . /nemo/
 #RUN pip install /nemo/ gunicorn==20.0.4
