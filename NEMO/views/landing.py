@@ -10,7 +10,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 from django.http import HttpResponseRedirect
 
-from NEMO.models import Alert, AreaAccessRecord, ConsumableWithdraw, LandingPageChoice, Reservation, Resource, StaffCharge, UsageEvent, User, UserServiceRequest
+from NEMO.models import Alert, AreaAccessRecord, ConsumableWithdraw, LandingPageChoice, Reservation, Resource, StaffCharge, UsageEvent, User, UserServiceRequest, UserRequirementProgress, Requirement, ServiceType
 from NEMO.views.alerts import delete_expired_alerts
 from NEMO.views.area_access import able_to_self_log_in_to_area
 from NEMO.views.notifications import delete_expired_notifications, get_notification_counts
@@ -77,7 +77,8 @@ def landing(request):
 			user_delegate = True
 
 	open_requirements = False
-	if UserServiceRequest.objects.filter(user=request.user).exclude(status='completed').exists():
+	servicetype_names = ServiceType.objects.values_list('name', flat=True)
+	if UserRequirementProgress.objects.filter(user=request.user).exclude(status='completed', requirement__name__in=servicetype_names).exists():
 		open_requirements = True
 
 
