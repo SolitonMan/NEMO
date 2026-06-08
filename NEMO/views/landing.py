@@ -78,7 +78,7 @@ def landing(request):
 
 	open_requirements = False
 	servicetype_names = ServiceType.objects.values_list('name', flat=True)
-	if UserRequirementProgress.objects.filter(user=request.user).exclude(status='completed', requirement__name__in=servicetype_names).exists():
+	if UserRequirementProgress.objects.filter(user=request.user).exclude(Q(status='completed') | Q(requirement__name__in=servicetype_names)).exists():
 		open_requirements = True
 
 
