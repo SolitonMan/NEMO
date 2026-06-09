@@ -37,7 +37,7 @@
 
 
 	
-	<div id="qualified_tools" class="qualified-tools-section">
+	<div id="qualified_tools">
 	<h2>Tools</h2>
 	<div>
 		<input type="button" value="Promote all tools to full" class="btn btn-success" onclick="promote_all_tools();" />
@@ -65,8 +65,8 @@
 		<input type="hidden" name="qualification_user_id" id="qualification_user_id" value="{{ form.instance.id }}">
 	</form>
 	{% if probationary_qualifications %}
-	<p>
 		Currently qualified tools are listed below.<br/>
+		<div class="qualified-tools-section">
 		{% for pq in probationary_qualifications %}
 			<span>
 				<a href="javascript:remove_qualified_user('{{ form.instance.id }}', '{{ pq.tool.id }}')" class="grey hover-black" title="Disqualify {{ form.first_name.value }}">
@@ -87,8 +87,8 @@
 				{% endif %}
 			</span><br/>
 		{% endfor %}
-	</p>
-{% endif %}
+		</div>
+	{% endif %}
 
 	</div>
 
