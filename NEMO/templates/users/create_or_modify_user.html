@@ -5,6 +5,15 @@
 	{% load static %}
 	<script type="text/javascript" src="{% static "datetimepicker/bootstrap-datetimepicker.js" %}"></script>
 	<link rel="stylesheet" type="text/css" href="{% static "datetimepicker/bootstrap-datetimepicker.css" %}"/>
+	<style>
+	.qualified-tools-section {
+		height: 300px;
+		overflow-y: auto;
+		overflow-x: hidden;
+		padding-right: 8px; /* Prevents content from hiding under scrollbar */
+		box-sizing: border-box; /* Includes padding in the 300px height */
+	}
+	</style>
 {% endblock %}
 {% block content %}
 	{% if form.errors %}
@@ -27,60 +36,7 @@
 	<h1>{% if form.instance.id %}Modify user{% else %}New user{% endif %}</h1>
 
 
-	<div id="qualified_tools" style="position:absolute; top:300px; left:1100px">
-	<h2>Tools</h2>
-	<div>
-		<input type="button" value="Promote all tools to full" class="btn btn-success" onclick="promote_all_tools();" />
-		<input type="button" value="Demote all tools to limited" class="btn btn-danger" onclick="demote_all_tools();" />
-		<input type="button" value="Disqualify user from all tools" class="btn btn-danger" onclick="disqualify_all_tools();" />
-	</div>
-	<form id="add_qualified_tool_form" class="form-inline" style="margin-bottom:10px">
-		<div class="container">
-			<div class="row" style="width: 570px;">
-				<div class="col-md-6">
-					<div class="form-group">
-					<label class="control-label">Add a fully qualified tool <input type="text" id="add_qualified_tool_search_box" placeholder="Search for a tool" class="form-control"></label>
-					</div>
-				</div>
-				<div class="col-md-6">
-					<div class="form-group">
-					<label class="control-label">Add a limited tool <input type="text" id="add_probationary_tool_search_box" placeholder="Search for a tool" class="form-control"></label>
-					</div>
-				</div>
-			</div>
-		</div>
-		<input type="hidden" name="action" value="qualify">
-		<input type="hidden" name="chosen_tools_full[]" id="chosen_tools_full" value="">
-		<input type="hidden" name="chosen_tools_prob[]" id="chosen_tools_prob" value="">
-		<input type="hidden" name="qualification_user_id" id="qualification_user_id" value="{{ form.instance.id }}">
-	</form>
-	{% if probationary_qualifications %}
-	<p>
-		Currently qualified tools are listed below.<br/>
-		{% for pq in probationary_qualifications %}
-			<span>
-				<a href="javascript:remove_qualified_user('{{ form.instance.id }}', '{{ pq.tool.id }}')" class="grey hover-black" title="Disqualify {{ form.first_name.value }}">
-					<span class="glyphicon glyphicon-remove-circle"></span>
-				</a>
-				{% if pq.probationary_user %}
-					<a href="javascript:promote_user('{{ form.instance.id }}', '{{ pq.tool.id }}')" class="grey hover-black" title="Promote {{ form.first_name.value }}">
-						<span class="glyphicon glyphicon-arrow-up"></span>
-					</a>
-				{% else %}
-					<a href="javascript:demote_user('{{ form.instance.id }}', '{{ pq.tool.id }}')" class="grey hover-black" title="Demote {{ form.first_name.value }}">
-						<span class="glyphicon glyphicon-arrow-down"></span>
-					</a>
-				{% endif %}
-				{{ pq.tool }}
-				{% if pq.probationary_user %} - limited
-				{% else %} - full
-				{% endif %}
-			</span><br/>
-		{% endfor %}
-	</p>
-{% endif %}
-
-	</div>
+	
 
 
 	<form id="user_form" class="form-horizontal" method="post" action="{% if form.instance.id %}{% url 'create_or_modify_user' form.instance.id %}{% else %}{% url 'create_or_modify_user' 'new' %}{% endif %}">
@@ -414,6 +370,60 @@
 		{% endif %}
 	{% endif %}
 
+	<div id="qualified_tools" class="qualified_tools_section">
+	<h2>Tools</h2>
+	<div>
+		<input type="button" value="Promote all tools to full" class="btn btn-success" onclick="promote_all_tools();" />
+		<input type="button" value="Demote all tools to limited" class="btn btn-danger" onclick="demote_all_tools();" />
+		<input type="button" value="Disqualify user from all tools" class="btn btn-danger" onclick="disqualify_all_tools();" />
+	</div>
+	<form id="add_qualified_tool_form" class="form-inline" style="margin-bottom:10px">
+		<div class="container">
+			<div class="row" style="width: 570px;">
+				<div class="col-md-6">
+					<div class="form-group">
+					<label class="control-label">Add a fully qualified tool <input type="text" id="add_qualified_tool_search_box" placeholder="Search for a tool" class="form-control"></label>
+					</div>
+				</div>
+				<div class="col-md-6">
+					<div class="form-group">
+					<label class="control-label">Add a limited tool <input type="text" id="add_probationary_tool_search_box" placeholder="Search for a tool" class="form-control"></label>
+					</div>
+				</div>
+			</div>
+		</div>
+		<input type="hidden" name="action" value="qualify">
+		<input type="hidden" name="chosen_tools_full[]" id="chosen_tools_full" value="">
+		<input type="hidden" name="chosen_tools_prob[]" id="chosen_tools_prob" value="">
+		<input type="hidden" name="qualification_user_id" id="qualification_user_id" value="{{ form.instance.id }}">
+	</form>
+	{% if probationary_qualifications %}
+	<p>
+		Currently qualified tools are listed below.<br/>
+		{% for pq in probationary_qualifications %}
+			<span>
+				<a href="javascript:remove_qualified_user('{{ form.instance.id }}', '{{ pq.tool.id }}')" class="grey hover-black" title="Disqualify {{ form.first_name.value }}">
+					<span class="glyphicon glyphicon-remove-circle"></span>
+				</a>
+				{% if pq.probationary_user %}
+					<a href="javascript:promote_user('{{ form.instance.id }}', '{{ pq.tool.id }}')" class="grey hover-black" title="Promote {{ form.first_name.value }}">
+						<span class="glyphicon glyphicon-arrow-up"></span>
+					</a>
+				{% else %}
+					<a href="javascript:demote_user('{{ form.instance.id }}', '{{ pq.tool.id }}')" class="grey hover-black" title="Demote {{ form.first_name.value }}">
+						<span class="glyphicon glyphicon-arrow-down"></span>
+					</a>
+				{% endif %}
+				{{ pq.tool }}
+				{% if pq.probationary_user %} - limited
+				{% else %} - full
+				{% endif %}
+			</span><br/>
+		{% endfor %}
+	</p>
+{% endif %}
+
+	</div>
 	<script>
 		function on_search_selection(jquery_event, search_selection, dataset_name)
 		{
