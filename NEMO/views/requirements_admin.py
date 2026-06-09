@@ -249,25 +249,49 @@ def complete_user_requirement(request):
 	progress.updated = timezone.now()
 	progress.save()
 
-	# Check if this completed requirement satisfies any service requests, and if so email the assignee(s)
-	# Find all open service requests that include this requirement
+	service_type_names = set(ServiceType.objects.values_list('name', flat=True))
+	placeholder_progresses = UserRequirementProgress.objects.filter(
+		user=request.user,
+		requirement__name__in=service_type_names
+	).exclude(status='completed').select_related('requirement')
+
+	for placeholder_progress in placeholder_progresses:
+		placeholder_name = placeholder_progress.requirement.name
+		service_type = ServiceType.objects.filter(name=placeholder_name).first()
+		if service_type:
+			service_type_reqs = service_type.requirements.all()
+			all_met = True
+			for st_req in service_type_reqs:
+				try:
+					user_req_progress = UserRequirementProgress.objects.get(user=request.user, requirement=st_req)
+					if user_req_progress.status != 'completed' or (user_req_progress.expires_on and user_req_progress.expires_on <= timezone.now()):
+						all_met = False
+						break
+				except UserRequirementProgress.DoesNotExist:
+					all_met = False
+					break
+			
+			if all_met:
+				placeholder_progress.status = 'completed'
+				placeholder_progress.completed_on = timezone.now()
+				if placeholder_progress.requirement.retrain_interval_days and placeholder_progress.requirement.retrain_interval_days > 0:
+					placeholder_progress.expires_on = timezone.now() + timedelta(days=placeholder_progress.requirement.retrain_interval_days)
+				placeholder_progress.updated = timezone.now()
+				placeholder_progress.save()
+
 	open_requests = UserServiceRequest.objects.filter(
 		user=request.user,
 		status='OPEN'
 	).select_related('service_type', 'assignee')
 
 	for service_request in open_requests:
-		# Get all requirements for this service request
 		if service_request.service_type:
-			# Get all requirements for the service type
 			service_type_requirements = service_request.service_type.requirements.all()
 			
-			# Expand requirements using get_leaf_requirements
 			all_leaf_requirements = set()
 			for req in service_type_requirements:
 				all_leaf_requirements.update(get_leaf_requirements(req))
 			
-			# Check if all requirements are completed for this user
 			all_completed = True
 			completed_requirements_list = []
 			for req in all_leaf_requirements:
@@ -282,11 +306,9 @@ def complete_user_requirement(request):
 					all_completed = False
 					break
 			
-			# If all requirements are completed, send email to assignee except for MCL which will get notified via Power-CRM
 			if all_completed and service_request.assignee and service_request.assignee.email and service_request.service_type.core != mcl_core:
 				subject = f"Service Request Ready: All Requirements Completed for {request.user.get_full_name()}"
 				
-				# Build requirements list
 				requirements_html = "<ul>"
 				for req_name in sorted(completed_requirements_list):
 					requirements_html += f"<li>{req_name} - Completed</li>"
@@ -319,7 +341,6 @@ def complete_user_requirement(request):
 					email.attach_alternative(body, 'text/html')
 					email.send()
 				except Exception as e:
-					# Log the error but don't fail the requirement completion
 					from logging import getLogger
 					logger = getLogger(__name__)
 					logger.error(f"Failed to send email to assignee {service_request.assignee.email}: {str(e)}")
