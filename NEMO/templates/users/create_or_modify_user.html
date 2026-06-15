@@ -68,10 +68,17 @@
 		Currently qualified tools are listed below.<br/>
 		<div class="qualified-tools-section">
 		{% for pq in probationary_qualifications %}
-			<span>
-				<a href="javascript:remove_qualified_user('{{ form.instance.id }}', '{{ pq.tool.id }}')" class="grey hover-black" title="Disqualify {{ form.first_name.value }}">
-					<span class="glyphicon glyphicon-remove-circle"></span>
-				</a>
+			{% if pq.tool.visible %}
+			<span class="qualified-user{% if pq.disabled %} light-red{% elif not pq.user.is_active %} light-grey{% endif %}">
+				{% if pq.disabled %}
+					<a href="javascript:requalify_user('{{ form.instance.id }}', '{{ pq.tool.id }}')" class="grey hover-black" title="Disqualify {{ form.first_name.value }}">
+						<span class="glyphicon glyphicon-plus-sign"></span>
+					</a>
+				{% else %}
+					<a href="javascript:remove_qualified_user('{{ form.instance.id }}', '{{ pq.tool.id }}')" class="grey hover-black" title="Disqualify {{ form.first_name.value }}">
+						<span class="glyphicon glyphicon-remove-circle"></span>
+					</a>
+				{% endif %}
 				{% if pq.probationary_user %}
 					<a href="javascript:promote_user('{{ form.instance.id }}', '{{ pq.tool.id }}')" class="grey hover-black" title="Promote {{ form.first_name.value }}">
 						<span class="glyphicon glyphicon-arrow-up"></span>
@@ -86,6 +93,7 @@
 				{% else %} - full
 				{% endif %}
 			</span><br/>
+			{% endif %}
 		{% endfor %}
 		</div>
 	{% endif %}
@@ -457,6 +465,17 @@
 			var failure_dialog = ajax_failure_callback("Failed to remove qualified user", "There was a problem revoking this user's tool qualification.");
 			var data = {
 				'action': 'disqualify',
+				'chosen_tool[]': tool_id,
+				'chosen_user[]': user_id
+			};
+			ajax_post("{% url 'modify_qualifications' %}", data, reload_qualified_tools, failure_dialog);
+		}
+
+		function requalify_user(user_id, tool_id)
+		{
+			var failure_dialog = ajax_failure_callback("Failed to remove qualified user", "There was a problem revoking this user's tool qualification.");
+			var data = {
+				'action': 'qualify',
 				'chosen_tool[]': tool_id,
 				'chosen_user[]': user_id
 			};
