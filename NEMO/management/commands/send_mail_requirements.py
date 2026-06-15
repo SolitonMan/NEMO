@@ -19,10 +19,10 @@ class Command(BaseCommand):
 		records = UserRequirementProgress.objects.filter(status__in=status_type)
 
 		for record in records:
-			Requirement = record.requirement
-			notification_interval = Requirement.notification_interval 
+			rqmt = record.requirement
+			notification_interval = rqmt.notification_interval 
 			Reminders_time = now - timedelta(days=notification_interval)
-			resource_link = Requirement.resource_link
+			resource_link = rqmt.resource_link
 
 			if record.last_notified is None or record.last_notified < Reminders_time:
 				if record.updated and (record.last_notified is None or record.updated <= record.last_notified):
@@ -58,10 +58,10 @@ class Command(BaseCommand):
 		)
 
 		for record in expiring_records:
-			requirement = record.requirement
-			notification_interval = requirement.notification_interval
+			rqmt = record.requirement
+			notification_interval = rqmt.notification_interval
 			Reminders_time = now - timedelta(days=notification_interval)
-			resource_link = requirement.resource_link
+			resource_link = rqmt.resource_link
 
 			if record.last_notified is None or record.last_notified < Reminders_time:
 				days_until_expiration = (record.expires_on - now).days
