@@ -179,19 +179,10 @@ class ToolAdminForm(forms.ModelForm):
 			self.fields['nonrequired_resources'].initial = self.instance.nonrequired_resource_set.all()
 
 
-class ToolRequirementInline(admin.TabularInline):
-    model = ToolRequirement
-    extra = 1
-
-class AreaRequirementInline(admin.TabularInline):
-    model = AreaRequirement
-    extra = 1
-
 @register(Tool)
 class ToolAdmin(admin.ModelAdmin):
 	list_display = ('name', 'category', 'core_id', 'visible', 'operational', 'primary_owner')
 	list_filter = ('visible', 'operational', 'core_id')
-	inlines = [ToolRequirementInline]
 	form = ToolAdminForm
 
 	search_fields = ('name', 'category')
@@ -243,17 +234,6 @@ class ToolAdmin(admin.ModelAdmin):
 		return False
 
 
-
-#@register(MicrosoftAccount)
-#class UpdatedMicrosoftAccountAdmin(MicrosoftAccountAdmin):
-#	list_display = ('id', 'microsoft_id', 'user')
-#	search_fields = ('microsoft_id', 'user__username', 'user__last_name', 'user__first_name')
-#
-#	def has_delete_permission(self, request, obj=None):
-#		return False
-
-#admin.site.unregister(MicrosoftAccount)
-#admin.site.register(MicrosoftAccount, UpdatedMicrosoftAccountAdmin)
 
 @register(TrainingSession)
 class TrainingSessionAdmin(admin.ModelAdmin):
@@ -1070,7 +1050,6 @@ class ResourceCategoryAdmin(admin.ModelAdmin):
 class AreaAdmin(admin.ModelAdmin):
 	list_display = ('id', 'name', 'welcome_message', 'core_id')
 	search_fields = ('name',)
-	inlines = [AreaRequirementInline]
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == 'credit_cost_collector':
