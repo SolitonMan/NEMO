@@ -58,3 +58,19 @@ class SessionTimeout:
 		refresh_disabled = getattr(view_function, 'disable_session_expiry_refresh', False)
 		if not refresh_disabled:
 			request.session.modified = True
+
+
+class DeviceDetectionMiddleware:
+	def __init__(self, get_response):
+		self.get_response = get_response
+		self.mobile = re.compile('Mobile|Tablet|Android')
+
+	def __call__(self, request):
+		request.device = 'desktop'
+
+		if 'HTTP_USER_AGENT' in request.META:
+			user_agent = request.META['HTTP_USER_AGENT']
+			if self.mobile.search(user_agent):
+				request.device = 'mobile'
+
+		return self.get_response(request)
