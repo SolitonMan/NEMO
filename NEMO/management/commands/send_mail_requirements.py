@@ -33,11 +33,12 @@ class Command(BaseCommand):
 						f"Dear {getattr(record.user, 'first_name', record.user)} {getattr(record.user, 'last_name', record.user)} ,<br><br>"
 						f"Our records indicate that your requirement '{getattr(record.requirement, 'name', record.requirement)}' is currently '{status_message.get(record.status, record.status)}'. "
 						f"Please complete it at your earliest convenience."
-						f"<br><br>You can find more information and access the necessary resources here: {resource_link}."
-						"<br><br>Best regards,<br>Admin Team"
+						f"{f'<br><br>You can find more information and access the necessary resources here: {resource_link}.' if resource_link else ''}"
+						f"If this requirement is no longer relevant to your interests please reach out to a contact for related requested services to let them know to cancel the request."
+						"<br><br>Best regards,<br>LEO Help Team"
 					)
 					send_mail(
-						"TEST - Reminder: User Requirement Pending",
+						"Reminder: User Requirement Pending",
 						message_text,
 						"LEOHelp@psu.edu",
 						to=[record.user.email],
@@ -77,7 +78,7 @@ class Command(BaseCommand):
 				if resource_link:
 					message_text += f"<br><br>You can find more information and access the necessary resources here: {resource_link}."
 				
-				message_text += "<br><br>Best regards,<br>Admin Team"
+				message_text += "<br><br>Best regards,<br>LEO Help Team"
 				
 				send_mail(
 					f"{requirement_name} is expiring in {days_until_expiration} day{'s' if days_until_expiration != 1 else ''}",

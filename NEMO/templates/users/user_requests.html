@@ -82,14 +82,14 @@
 <div style="margin-bottom: 16px;">
 	<button
 		type="button"
-		aria-expanded="false"
+		aria-expanded="true"
 		aria-controls="instructions-content"
 		style="background: none; border: none; padding: 0; cursor: pointer; display: flex; align-items: center; font: inherit;"
 		id="instructions-toggle">
-		<span class="glyphicon glyphicon-chevron-right" aria-hidden="true" style="margin-right: 8px;"></span>
+		<span class="glyphicon glyphicon-chevron-down" aria-hidden="true" style="margin-right: 8px;"></span>
 		<h4 style="display: inline; margin: 0;">Instructions</h4>
 	</button>
-	<div id="instructions-content" style="display: none; margin-top: 8px;">
+	<div id="instructions-content" style="display: block; margin-top: 8px;">
 		Use this page to make and track requests for training, or for services like characterization and analysis. Click the Submit a request button to launch the request wizard and step through making a request:
 		<ol>
 			<li>Select the core</li>
@@ -553,11 +553,27 @@ document.getElementById('confirmCancelBtn').onclick = function() {
 })();
 </script>
 
+
 <script>
 (function () {
 	var $ = window.jQuery;
 	if (!$) return;
 
+	var autoCollapseTriggered = false;
+
+	// Auto-collapse functionality on page load
+	setTimeout(function () {
+		var $content = $('#instructions-content');
+		var $icon = $('#instructions-toggle').find('.glyphicon');
+		
+		// Collapse with 2-second animation
+		$content.slideUp(2000);
+		$('#instructions-toggle').attr('aria-expanded', 'false');
+		$icon.removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-right');
+		autoCollapseTriggered = true;
+	}, 10000); // Wait 10 seconds before collapsing
+
+	// Manual toggle functionality
 	$('#instructions-toggle').on('click', function () {
 		var $content = $('#instructions-content');
 		var $icon = $(this).find('.glyphicon');
@@ -569,6 +585,7 @@ document.getElementById('confirmCancelBtn').onclick = function() {
 	});
 })();
 </script>
+
 <script>
 (function () {
 	var $ = window.jQuery;
@@ -753,6 +770,5 @@ document.getElementById('confirmCancelBtn').onclick = function() {
 	});
 })();
 </script>
-
 
 {% endblock %}
