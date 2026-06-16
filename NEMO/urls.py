@@ -29,6 +29,7 @@ router.register(r'tasks', api.TaskViewSet)
 router.register(r'scheduled_outages', api.ScheduledOutageViewSet)
 
 urlpatterns = [
+	path('debug_session/', authentication.debug_session_info, name='debug_session'),
 	path('admin/', admin.site.urls),
 	path('ckeditor5/', include('django_ckeditor_5.urls')),  # Add this line for CKEditor 5
 	# Authentication & error pages:

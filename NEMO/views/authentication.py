@@ -5,7 +5,7 @@ from logging import exception, getLogger
 from django.conf import settings
 from django.contrib.auth import authenticate, login, REDIRECT_FIELD_NAME, logout
 from django.contrib.auth.backends import RemoteUserBackend, ModelBackend
-from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse, resolve
 from django.utils import timezone
@@ -273,3 +273,30 @@ def post_login_redirect(request, user):
 	if request.session.pop('force_requirements_redirect', False):
 		return HttpResponseRedirect(reverse('user_requests'))
 	return HttpResponseRedirect(reverse('landing'))
+
+
+@require_GET
+def debug_session_info(request):
+	"""Temporary view to debug session configuration"""
+	import datetime
+	
+	session_key = request.session.session_key
+	session_age = settings.SESSION_COOKIE_AGE if hasattr(settings, 'SESSION_COOKIE_AGE') else 'Not set'
+	session_engine = settings.SESSION_ENGINE if hasattr(settings, 'SESSION_ENGINE') else 'Not set'
+	session_save_every = settings.SESSION_SAVE_EVERY_REQUEST if hasattr(settings, 'SESSION_SAVE_EVERY_REQUEST') else 'Not set'
+	
+	# Check when session expires
+	if hasattr(request.session, 'get_expiry_date'):
+		expiry = request.session.get_expiry_date()
+	else:
+		expiry = 'Unknown'
+	
+	return JsonResponse({
+		'session_key': session_key,
+		'session_cookie_age_seconds': session_age,
+		'session_cookie_age_hours': session_age / 3600 if isinstance(session_age, int) else 'N/A',
+		'session_engine': session_engine,
+		'session_save_every_request': session_save_every,
+		'session_expires_at': str(expiry),
+		'current_time': str(timezone.now()),
+	})
