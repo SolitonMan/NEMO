@@ -50,25 +50,11 @@ class SessionTimeout:
 		# If the request is normal (instead of AJAX) and the user's session has expired
 		# then the @login_required decorator will redirect them to the login page.
 		if not request.user.is_authenticated:
-			return HttpResponseForbidden() if request.is_ajax() else None
+			# Django 4.0+ removed request.is_ajax() - check header manually
+			is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+			return HttpResponseForbidden() if is_ajax else None
 
 		# If the view is regularly polled by the webpage to update information then expiry refresh should be disabled.
 		refresh_disabled = getattr(view_function, 'disable_session_expiry_refresh', False)
 		if not refresh_disabled:
 			request.session.modified = True
-
-
-class DeviceDetectionMiddleware:
-	def __init__(self, get_response):
-		self.get_response = get_response
-		self.mobile = re.compile('Mobile|Tablet|Android')
-
-	def __call__(self, request):
-		request.device = 'desktop'
-
-		if 'HTTP_USER_AGENT' in request.META:
-			user_agent = request.META['HTTP_USER_AGENT']
-			if self.mobile.search(user_agent):
-				request.device = 'mobile'
-
-		return self.get_response(request)
