@@ -150,6 +150,14 @@
 							<!-- Options will be populated dynamically -->
 						</select>
 					</div>
+					<!-- Add new wizard step for dynamic questions -->
+					<div class="wizard-step" id="wizardStepDynamic" style="display:none;">
+						<h5>Additional Information</h5>
+						<p class="text-muted">Please provide the following details about your request:</p>
+						<div id="dynamicQuestionsContainer">
+							<!-- Questions will be dynamically inserted here -->
+						</div>
+					</div>
 					<!-- Step 3: Project Selection -->
 					<div class="wizard-step" id="wizardStepProject" style="display:none;">
 						<label for="wizard_project_select">Choose a project:</label>
@@ -455,6 +463,7 @@ document.getElementById('confirmCancelBtn').onclick = function() {
 
 	// Wizard state
 	var wizardStep = 0;
+	var dynamicQuestions = [];
 	var coreServices = {
 		"{{ mcl_core }}": [{ id: "{{ mcl_services.0.id }}", name: "{{ mcl_services.0.name }}" }{% for opt in mcl_services|slice:"1:" %}, { id: "{{ opt.id }}", name: "{{ opt.name }}" }{% endfor %}],
 		"{{ nano_core }}": [{ id: "{{ nano_services.0.id }}", name: "{{ nano_services.0.name }}" }{% for opt in nano_services|slice:"1:" %}, { id: "{{ opt.id }}", name: "{{ opt.name }}" }{% endfor %}],
@@ -465,21 +474,246 @@ document.getElementById('confirmCancelBtn').onclick = function() {
 		$('.wizard-step').hide();
 		$('#wizardStepCore').toggle(step === 0);
 		$('#wizardStepService').toggle(step === 1);
-		$('#wizardStepProject').toggle(step === 2);
-		$('#wizardStepTraining').toggle(step === 3);
+		$('#wizardStepDynamic').toggle(step === 2 && dynamicQuestions.length > 0);
+		$('#wizardStepProject').toggle(step === 2 && dynamicQuestions.length === 0 || step === 3);
+		$('#wizardStepTraining').toggle(step === 3 && dynamicQuestions.length === 0 || step === 4);
 
-		$('#wizardPrevBtn').toggle(step > 0);
-		$('#wizardNextBtn').toggle(step < 3);
-		$('#wizardSubmitBtn').toggle(step === 3);
+		var effectiveStep = step;
+		if (dynamicQuestions.length === 0 && step > 1) effectiveStep--;
 
-		if (step === 3) {
-			updateTrainingField();
+		$('#wizardPrevBtn').toggle(effectiveStep > 0);
+		$('#wizardNextBtn').toggle(effectiveStep < (dynamicQuestions.length > 0 ? 4 : 3));
+		$('#wizardSubmitBtn').toggle(effectiveStep === (dynamicQuestions.length > 0 ? 4 : 3));
+	}
+
+	function fetchDynamicQuestions(serviceTypeId) {
+		$.ajax({
+			url: '/api/service-type-questions/' + serviceTypeId + '/',
+			method: 'GET',
+			success: function(response) {
+				if (response.success && response.questions && response.questions.length > 0) {
+					dynamicQuestions = response.questions;
+					renderDynamicQuestions(response.questions);
+				} else {
+					dynamicQuestions = [];
+					$('#dynamicQuestionsContainer').empty();
+				}
+			},
+			error: function() {
+				dynamicQuestions = [];
+				$('#dynamicQuestionsContainer').empty();
+			}
+		});
+	}
+
+	function renderDynamicQuestions(questions) {
+		var $container = $('#dynamicQuestionsContainer');
+		$container.empty();
+		
+		questions.forEach(function(q) {
+			var fieldHtml = generateFieldHtml(q);
+			$container.append(fieldHtml);
+			
+			// Setup conditional logic
+			if (q.parent_question_id && q.parent_field_name) {
+				setupConditionalDisplay(q);
+			}
+			
+			// Setup validation
+			if (q.validation_rules && Object.keys(q.validation_rules).length > 0) {
+				setupValidation(q);
+			}
+		});
+	}
+
+	function generateFieldHtml(q) {
+		var groupClass = 'form-group';
+		if (q.parent_question_id) {
+			groupClass += ' conditional-question';
 		}
+		
+		var html = '<div class="' + groupClass + '" id="question_group_' + q.id + '" data-question-id="' + q.id + '"';
+		if (q.parent_question_id) {
+			html += ' data-parent-field="' + q.parent_field_name + '" data-trigger-value="' + q.trigger_value + '" style="display:none;"';
+		}
+		html += '>';
+		
+		html += '<label for="question_' + q.id + '">';
+		html += q.question_text;
+		if (q.is_required) {
+			html += ' <span class="text-danger" aria-label="required">*</span>';
+		}
+		html += '</label>';
+		
+		var fieldId = 'question_' + q.id;
+		var fieldName = 'question_' + q.id;
+		var requiredAttr = q.is_required ? ' required aria-required="true"' : '';
+		var placeholderAttr = q.placeholder ? ' placeholder="' + escapeHtml(q.placeholder) + '"' : '';
+		
+		switch(q.field_type) {
+			case 'text':
+			case 'email':
+			case 'number':
+				html += '<input type="' + q.field_type + '" class="form-control" id="' + fieldId + '" name="' + fieldName + '"' + requiredAttr + placeholderAttr;
+				if (q.validation_rules) {
+					if (q.validation_rules.min !== undefined) html += ' min="' + q.validation_rules.min + '"';
+					if (q.validation_rules.max !== undefined) html += ' max="' + q.validation_rules.max + '"';
+					if (q.validation_rules.pattern) html += ' pattern="' + q.validation_rules.pattern + '"';
+				}
+				html += '>';
+				break;
+				
+			case 'textarea':
+				html += '<textarea class="form-control" id="' + fieldId + '" name="' + fieldName + '" rows="4"' + requiredAttr + placeholderAttr + '></textarea>';
+				break;
+				
+			case 'select':
+				html += '<select class="form-control" id="' + fieldId + '" name="' + fieldName + '"' + requiredAttr + '>';
+				html += '<option value="">-- Please select --</option>';
+				if (q.choices && q.choices.length > 0) {
+					q.choices.forEach(function(choice) {
+						html += '<option value="' + escapeHtml(choice.value) + '">' + escapeHtml(choice.label) + '</option>';
+					});
+				}
+				html += '</select>';
+				break;
+				
+			case 'radio':
+				if (q.choices && q.choices.length > 0) {
+					q.choices.forEach(function(choice, idx) {
+						var radioId = fieldId + '_' + idx;
+						html += '<div class="radio">';
+						html += '<label>';
+						html += '<input type="radio" id="' + radioId + '" name="' + fieldName + '" value="' + escapeHtml(choice.value) + '"' + requiredAttr + '>';
+						html += ' ' + escapeHtml(choice.label);
+						html += '</label>';
+						html += '</div>';
+					});
+				}
+				break;
+				
+			case 'checkbox':
+				html += '<div class="checkbox">';
+				html += '<label>';
+				html += '<input type="checkbox" id="' + fieldId + '" name="' + fieldName + '" value="true">';
+				html += ' ' + (q.help_text || 'Check if applicable');
+				html += '</label>';
+				html += '</div>';
+				break;
+				
+			case 'multiselect':
+				html += '<select class="form-control" id="' + fieldId + '" name="' + fieldName + '" multiple' + requiredAttr + ' size="5">';
+				if (q.choices && q.choices.length > 0) {
+					q.choices.forEach(function(choice) {
+						html += '<option value="' + escapeHtml(choice.value) + '">' + escapeHtml(choice.label) + '</option>';
+					});
+				}
+				html += '</select>';
+				html += '<small class="form-text text-muted">Hold Ctrl (Cmd on Mac) to select multiple</small>';
+				break;
+				
+			case 'date':
+				html += '<input type="date" class="form-control" id="' + fieldId + '" name="' + fieldName + '"' + requiredAttr + '>';
+				break;
+				
+			case 'time':
+				html += '<input type="time" class="form-control" id="' + fieldId + '" name="' + fieldName + '"' + requiredAttr + '>';
+				break;
+		}
+		
+		if (q.help_text && q.field_type !== 'checkbox') {
+			html += '<small class="form-text text-muted">' + escapeHtml(q.help_text) + '</small>';
+		}
+		
+		html += '</div>';
+		return html;
+	}
+
+	function setupConditionalDisplay(question) {
+		// Find parent field
+		var parentField = $('[name="question_' + question.parent_question_id + '"]');
+		var childGroup = $('#question_group_' + question.id);
+		
+		function checkCondition() {
+			var parentValue = parentField.val();
+			if (parentField.attr('type') === 'checkbox') {
+				parentValue = parentField.is(':checked') ? 'true' : 'false';
+			} else if (parentField.attr('type') === 'radio') {
+				parentValue = $('[name="' + parentField.attr('name') + '"]:checked').val();
+			}
+			
+			if (parentValue === question.trigger_value) {
+				childGroup.slideDown(200);
+			} else {
+				childGroup.slideUp(200);
+				// Clear value when hidden
+				var childField = childGroup.find('input, select, textarea');
+				if (childField.attr('type') === 'checkbox') {
+					childField.prop('checked', false);
+				} else {
+					childField.val('');
+				}
+			}
+		}
+		
+		parentField.on('change', checkCondition);
+		checkCondition(); // Check initial state
+	}
+
+	function setupValidation(question) {
+		var field = $('#question_' + question.id);
+		
+		field.on('blur', function() {
+			var value = $(this).val();
+			var isValid = true;
+			var errorMessage = '';
+			
+			if (question.validation_rules) {
+				if (question.validation_rules.min !== undefined && parseFloat(value) < question.validation_rules.min) {
+					isValid = false;
+					errorMessage = 'Minimum value is ' + question.validation_rules.min;
+				}
+				if (question.validation_rules.max !== undefined && parseFloat(value) > question.validation_rules.max) {
+					isValid = false;
+					errorMessage = 'Maximum value is ' + question.validation_rules.max;
+				}
+				if (question.validation_rules.pattern && !new RegExp(question.validation_rules.pattern).test(value)) {
+					isValid = false;
+					errorMessage = question.validation_rules.custom_message || 'Invalid format';
+				}
+			}
+			
+			var feedbackDiv = field.siblings('.validation-feedback');
+			if (!feedbackDiv.length) {
+				feedbackDiv = $('<div class="validation-feedback text-danger" style="font-size: 12px; margin-top: 5px;"></div>');
+				field.after(feedbackDiv);
+			}
+			
+			if (!isValid && value) {
+				feedbackDiv.text(errorMessage).show();
+				field.addClass('is-invalid');
+			} else {
+				feedbackDiv.hide();
+				field.removeClass('is-invalid');
+			}
+		});
+	}
+
+	function escapeHtml(text) {
+		if (!text) return '';
+		var map = {
+			'&': '&amp;',
+			'<': '&lt;',
+			'>': '&gt;',
+			'"': '&quot;',
+			"'": '&#039;'
+		};
+		return text.replace(/[&<>"']/g, function(m) { return map[m]; });
 	}
 
 	function updateTrainingField() {
 		var core = $('#wizard_choose_core').val();
-		if (core === "{{ nano_core }}" || core === "{{ twodcc_core }}") { // Nanofab or 2DCC
+		if (core === "{{ nano_core }}" || core === "{{ twodcc_core }}") {
 			$('#wizard_training_select_group').hide();
 			$('#wizard_training_select_group select').prop('disabled', true);
 			$('#wizard_training_hidden').show().prop('disabled', false);
@@ -492,16 +726,21 @@ document.getElementById('confirmCancelBtn').onclick = function() {
 
 	$('#requestWizardModal').on('show.bs.modal', function () {
 		wizardStep = 0;
+		dynamicQuestions = [];
 		showStep(wizardStep);
 		$('#requestWizardForm')[0].reset();
 		$('#wizard_service_select').empty().append('<option value="">-- Choose a service --</option>');
+		$('#dynamicQuestionsContainer').empty();
 	});
 
 	$('#wizardNextBtn').on('click', function () {
-		// Validation per step
+		// Step 0: Core selection
 		if (wizardStep === 0) {
 			var core = $('#wizard_choose_core').val();
-			if (!core) { alert('Please select a core.'); return; }
+			if (!core) { 
+				alert('Please select a core.'); 
+				return; 
+			}
 			// Populate services
 			var services = coreServices[core] || [];
 			var $serviceSelect = $('#wizard_service_select');
@@ -511,11 +750,49 @@ document.getElementById('confirmCancelBtn').onclick = function() {
 			});
 			updateTrainingField();
 		}
+		
+		// Step 1: Service selection
 		if (wizardStep === 1) {
-			if (!$('#wizard_service_select').val()) { alert('Please select a service.'); return; }
+			var serviceId = $('#wizard_service_select').val();
+			if (!serviceId) { 
+				alert('Please select a service.'); 
+				return; 
+			}
+			// Fetch dynamic questions
+			fetchDynamicQuestions(serviceId);
 		}
-		if (wizardStep === 2) {
-			if (!$('#wizard_project_select').val()) { alert('Please select a project.'); return; }
+		
+		// Step 2: Dynamic questions (if any)
+		if (wizardStep === 2 && dynamicQuestions.length > 0) {
+			// Validate required dynamic questions
+			var allValid = true;
+			$('#dynamicQuestionsContainer .form-group:visible').each(function() {
+				var field = $(this).find('input, select, textarea');
+				if (field.prop('required') && !field.val()) {
+					allValid = false;
+					field.addClass('is-invalid');
+					if (!$(this).find('.validation-feedback').length) {
+						field.after('<div class="validation-feedback text-danger">This field is required</div>');
+					}
+				} else {
+					field.removeClass('is-invalid');
+					$(this).find('.validation-feedback').remove();
+				}
+			});
+			
+			if (!allValid) {
+				alert('Please fill in all required fields.');
+				return;
+			}
+		}
+		
+		// Step 2 or 3: Project selection
+		var projectStepNumber = dynamicQuestions.length > 0 ? 3 : 2;
+		if (wizardStep === projectStepNumber) {
+			if (!$('#wizard_project_select').val()) { 
+				alert('Please select a project.'); 
+				return; 
+			}
 		}
 		
 		wizardStep++;
@@ -528,25 +805,32 @@ document.getElementById('confirmCancelBtn').onclick = function() {
 	});
 
 	$('#requestWizardForm').on('submit', function (e) {
+		e.preventDefault();
+		
 		if ($('#wizard_description').val().trim() === '') {
 			alert('Please provide details about your request');
 			$('#wizard_description').focus();
-			e.preventDefault();
 			return false;
 		}
 
-		e.preventDefault();
 		var data = $(this).serialize();
 		ajax_post(
 			$(this).attr('action') || window.location.href,
 			data,
 			function (response) {
 				$('#requestWizardModal').modal('hide');
-				alert('Your request has been submitted');
+				alert('Your request has been submitted successfully!');
 				location.reload();
 			},
 			function (xhr) {
-				alert('There was an error submitting your request. Please try again.');
+				var errorMsg = 'There was an error submitting your request. Please try again.';
+				try {
+					var response = JSON.parse(xhr.responseText);
+					if (response.error) {
+						errorMsg = response.error;
+					}
+				} catch(e) {}
+				alert(errorMsg);
 			}
 		);
 	});
