@@ -1226,7 +1226,7 @@ class UserServiceRequestAdmin(admin.ModelAdmin):
 	autocomplete_fields = ['assignee', 'tool', 'servicetype']
 
 
-class ServiceTypeQuestionForm(ModelForm):
+class ServiceTypeQuestionForm(forms.ModelForm):
 	class Meta:
 		model = ServiceTypeQuestion
 		fields = '__all__'
