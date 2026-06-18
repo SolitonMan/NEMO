@@ -493,15 +493,21 @@ document.getElementById('confirmCancelBtn').onclick = function() {
 			success: function(response) {
 				if (response.success && response.questions && response.questions.length > 0) {
 					dynamicQuestions = response.questions;
-					renderDynamicQuestions(response.questions);
+					renderDynamicQuestions(response.questions);					
+					wizardStep++;
+					showStep(wizardStep);
 				} else {
 					dynamicQuestions = [];
-					$('#dynamicQuestionsContainer').empty();
+					$('#dynamicQuestionsContainer').empty();				
+					wizardStep++;
+					showStep(wizardStep);
 				}
 			},
 			error: function() {
 				dynamicQuestions = [];
-				$('#dynamicQuestionsContainer').empty();
+				$('#dynamicQuestionsContainer').empty();				
+				wizardStep++;
+				showStep(wizardStep);
 			}
 		});
 	}
@@ -760,6 +766,7 @@ document.getElementById('confirmCancelBtn').onclick = function() {
 			}
 			// Fetch dynamic questions
 			fetchDynamicQuestions(serviceId);
+			return;
 		}
 		
 		// Step 2: Dynamic questions (if any)
