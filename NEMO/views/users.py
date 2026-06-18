@@ -19,7 +19,7 @@ from django.views.decorators.http import require_GET, require_http_methods, requ
 
 from NEMO.admin import record_local_many_to_many_changes, record_active_state
 from NEMO.forms import UserForm, UserServiceRequestEditForm
-from NEMO.models import Account, Core, UserRelationship, UserRelationshipType, User, UserProfile, UserProfileSetting, Project, Tool, PhysicalAccessLevel, Reservation, StaffCharge, UsageEvent, AreaAccessRecord, ActivityHistory, ProbationaryQualifications, Sample, UserRequirementProgress, Requirement, AreaRequirement, ToolRequirement, ServiceType, UserServiceRequest
+from NEMO.models import Account, Core, UserRelationship, UserRelationshipType, User, UserProfile, UserProfileSetting, Project, Tool, PhysicalAccessLevel, Reservation, StaffCharge, UsageEvent, AreaAccessRecord, ActivityHistory, ProbationaryQualifications, Sample, UserRequirementProgress, Requirement, AreaRequirement, ToolRequirement, ServiceType, UserServiceRequest, ServiceTypeQuestion, UserServiceRequestAnswer
 from NEMO.views.requirements_admin import get_status_icon, get_leaf_requirements
 
 @staff_member_required(login_url=None)
@@ -530,6 +530,31 @@ def user_requests(request):
 				owner=svc.principle_assignee.email,
 				assignee=svc.principle_assignee
 			)
+				
+			# Save dynamic question answers
+			saved_answers = []
+			for key, value in request.POST.items():
+				if key.startswith('question_'):
+					question_id = key.replace('question_', '')
+					try:
+						question = ServiceTypeQuestion.objects.get(id=question_id, is_active=True)
+							
+						# Handle multiselect (comes as multiple values)
+						if question.field_type == 'multiselect':
+							values = request.POST.getlist(key)
+							answer_text = json.dumps(values)
+						else:
+							answer_text = value
+							
+						answer = UserServiceRequestAnswer.objects.create(
+							user_service_request=new_request,
+							question=question,
+							answer_text=answer_text
+						)
+						saved_answers.append(answer)
+							
+					except ServiceTypeQuestion.DoesNotExist:
+						continue
 
 			# Send email notification to assignee
 			if svc.principle_assignee and svc.principle_assignee.email and svc.core.name != 'Materials Characterization Lab (MCL)':

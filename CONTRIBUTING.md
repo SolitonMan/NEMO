@@ -8,3 +8,9 @@
 - Include clear context about line numbers or surrounding code
 - Never regenerate complete files unless explicitly requested
 - Make changes easy to review and apply
+
+## Character Encoding Standards
+- **All code must use only ASCII characters (characters 0-127)**
+- No Unicode characters allowed in code (e.g., no ?, —, •, etc.)
+- Use standard ASCII alternatives: hyphen (-) instead of em dash, asterisk (*) instead of bullet, etc.
+- Comments, strings, and all code content must be pure ASCII

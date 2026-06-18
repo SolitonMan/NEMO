@@ -402,6 +402,22 @@ class UserServiceRequest(models.Model):
 				check=~(Q(tool__isnull=True) & Q(service_type__isnull=True)),
 			)
 		]
+	
+	def get_answers_dict(self):
+		"""Return all answers as a dictionary keyed by field_name"""
+		answers = {}
+		for answer in self.dynamic_answers.select_related('question').all():
+			answers[answer.question.field_name] = {
+				'question_text': answer.question.question_text,
+				'value': answer.answer_text,
+				'display_value': answer.get_display_value(),
+				'field_type': answer.question.field_type,
+			}
+		return answers
+	
+	def get_answers_json(self):
+		"""Return all answers as JSON string for SQL Server sync"""
+		return json.dumps(self.get_answers_dict())
 
 
 
@@ -2253,3 +2269,120 @@ class ServiceType(models.Model):
 
 	def __str__(self):
 		return self.name
+
+
+class ServiceTypeQuestion(models.Model):
+	"""Defines questions that can be asked for specific service types"""
+	
+	FIELD_TYPE_CHOICES = [
+		('text', 'Text Input'),
+		('textarea', 'Text Area'),
+		('select', 'Dropdown'),
+		('multiselect', 'Multiple Selection'),
+		('checkbox', 'Checkbox'),
+		('radio', 'Radio Button'),
+		('number', 'Number'),
+		('email', 'Email'),
+		('date', 'Date'),
+		('time', 'Time'),
+	]
+	
+	service_type = models.ForeignKey('ServiceType', on_delete=models.CASCADE, related_name='questions')
+	question_text = models.CharField(max_length=5000, help_text="The question to display to the user")
+	field_name = models.CharField(max_length=1000, help_text="Internal field name (snake_case, no spaces)")
+	field_type = models.CharField(max_length=50, choices=FIELD_TYPE_CHOICES)
+	order = models.PositiveIntegerField(default=0, help_text="Display order (lower numbers first)")
+	is_required = models.BooleanField(default=False)
+	help_text = models.TextField(blank=True, help_text="Additional help text shown below the field")
+	placeholder = models.CharField(max_length=255, blank=True, help_text="Placeholder text for input fields")
+	
+	# For select/radio/multiselect fields - store as JSON array
+	# Example: [{"value": "yes", "label": "Yes"}, {"value": "no", "label": "No"}]
+	choices_json = models.JSONField(blank=True, null=True, help_text='JSON array of choices for select fields')
+	
+	# Conditional display logic
+	parent_question = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='child_questions')
+	trigger_value = models.CharField(max_length=255, blank=True, help_text="Show this question when parent has this value")
+	
+	# Validation rules (stored as JSON)
+	# Example: {"min": 0, "max": 100, "pattern": "^[0-9]+$", "custom_message": "Please enter a valid number"}
+	validation_rules = models.JSONField(blank=True, null=True, help_text='Validation rules as JSON')
+	
+	created = models.DateTimeField(auto_now_add=True)
+	updated = models.DateTimeField(auto_now=True)
+	is_active = models.BooleanField(default=True)
+	
+	class Meta:
+		ordering = ['service_type', 'order']
+		unique_together = ['service_type', 'field_name']
+		indexes = [
+			models.Index(fields=['service_type', 'is_active', 'order']),
+		]
+	
+	def __str__(self):
+		return f"{self.service_type.name} - {self.question_text}"
+	
+	def get_choices(self):
+		"""Return choices as list of dicts"""
+		if self.choices_json:
+			return self.choices_json
+		return []
+	
+	def clean(self):
+		from django.core.exceptions import ValidationError
+		# Ensure field_name is valid (no spaces, snake_case)
+		if ' ' in self.field_name:
+			raise ValidationError({'field_name': 'Field name cannot contain spaces. Use snake_case.'})
+		
+		# Validate choices_json structure if field type requires choices
+		if self.field_type in ['select', 'radio', 'multiselect'] and self.choices_json:
+			if not isinstance(self.choices_json, list):
+				raise ValidationError({'choices_json': 'Choices must be a JSON array'})
+			for choice in self.choices_json:
+				if not isinstance(choice, dict) or 'value' not in choice or 'label' not in choice:
+					raise ValidationError({'choices_json': 'Each choice must have "value" and "label" keys'})
+
+
+class UserServiceRequestAnswer(models.Model):
+	"""Stores answers to service type questions"""
+	
+	user_service_request = models.ForeignKey('UserServiceRequest', on_delete=models.CASCADE, related_name='dynamic_answers')
+	question = models.ForeignKey('ServiceTypeQuestion', on_delete=models.PROTECT)
+	answer_text = models.TextField(help_text="Answer stored as text (can be JSON for complex types)")
+	
+	created = models.DateTimeField(auto_now_add=True)
+	updated = models.DateTimeField(auto_now=True)
+	
+	class Meta:
+		unique_together = ['user_service_request', 'question']
+		indexes = [
+			models.Index(fields=['user_service_request', 'question']),
+		]
+	
+	def __str__(self):
+		return f"Answer to '{self.question.question_text}' for Request #{self.user_service_request.id}"
+	
+	def get_display_value(self):
+		"""Return formatted display value based on field type"""
+		if self.question.field_type == 'checkbox':
+			return 'Yes' if self.answer_text in ['True', 'true', '1', 'on'] else 'No'
+		elif self.question.field_type in ['select', 'radio']:
+			# Try to find label from choices
+			for choice in self.question.get_choices():
+				if choice.get('value') == self.answer_text:
+					return choice.get('label', self.answer_text)
+			return self.answer_text
+		elif self.question.field_type == 'multiselect':
+			try:
+				values = json.loads(self.answer_text) if isinstance(self.answer_text, str) else self.answer_text
+				labels = []
+				for val in values:
+					for choice in self.question.get_choices():
+						if choice.get('value') == val:
+							labels.append(choice.get('label', val))
+							break
+				return ', '.join(labels)
+			except:
+				return self.answer_text
+		else:
+			return self.answer_text

@@ -51,6 +51,9 @@ RUN pip install django-widget-tweaks
 # install ckeditor 5
 RUN pip install django-ckeditor-5
 
+# install django JSON editor
+RUN pip install django-json-widget
+
 # install sanitization
 RUN pip install nh3
 

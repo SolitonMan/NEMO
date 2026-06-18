@@ -4,6 +4,9 @@ from django.contrib.admin import register, widgets
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.contrib.auth.models import Permission
 from django.utils import timezone
+from django.utils.html import format_html
+
+from django_json_widget.widgets import JSONEditorWidget
 
 from django_ckeditor_5.widgets import CKEditor5Widget
 
@@ -11,7 +14,7 @@ from django_ckeditor_5.widgets import CKEditor5Widget
 #from microsoft_auth.admin import MicrosoftAccountAdmin
 
 from NEMO.actions import lock_selected_interlocks, synchronize_with_tool_usage, unlock_selected_interlocks
-from NEMO.models import Account, ActivityHistory, Alert, Area, AreaAccessRecord, AreaAccessRecordProject, AreaRequirement, BillingType, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableOrder, ConsumableOrderItem, ConsumableUnit, ConsumableCategory, ConsumableType, ConsumableWithdraw, ContactInformation, ContactInformationCategory, ContestTransaction, ContestTransactionData, ContestTransactionNewData, Core, CreditCostCollector, Customization, Door, EmailLog, GlobalFlag, Interlock, InterlockCard, InterlockType, LandingPageChoice, LockBilling, MembershipHistory, News, Notification, NsfCategory, Organization, OrganizationType, PhysicalAccessLevel, PhysicalAccessLog, Project, Project2DCC, Requirement, Reservation, ReservationConfiguration, ReservationProject, Resource, ResourceCategory, SafetyIssue, Sample, ScheduledOutage, ScheduledOutageCategory, ServiceType, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskHistory, TaskStatus, Tool, ToolRequirement, TrainingSession, UsageEvent, UsageEventProject, User, UserType, UserProfile, UserProfileSetting, UserRequirementProgress
+from NEMO.models import Account, ActivityHistory, Alert, Area, AreaAccessRecord, AreaAccessRecordProject, AreaRequirement, BillingType, Comment, Configuration, ConfigurationHistory, Consumable, ConsumableOrder, ConsumableOrderItem, ConsumableUnit, ConsumableCategory, ConsumableType, ConsumableWithdraw, ContactInformation, ContactInformationCategory, ContestTransaction, ContestTransactionData, ContestTransactionNewData, Core, CreditCostCollector, Customization, Door, EmailLog, GlobalFlag, Interlock, InterlockCard, InterlockType, LandingPageChoice, LockBilling, MembershipHistory, News, Notification, NsfCategory, Organization, OrganizationType, PhysicalAccessLevel, PhysicalAccessLog, Project, Project2DCC, Requirement, Reservation, ReservationConfiguration, ReservationProject, Resource, ResourceCategory, SafetyIssue, Sample, ScheduledOutage, ScheduledOutageCategory, ServiceType, StaffCharge, StaffChargeProject, Task, TaskCategory, TaskHistory, TaskStatus, Tool, ToolRequirement, TrainingSession, UsageEvent, UsageEventProject, User, UserType, UserProfile, UserProfileSetting, UserRequirementProgress, ServiceTypeQuestion, UserServiceRequest, UserServiceRequestAnswer
 from NEMO.utilities import send_mail
 from NEMO.views.customization import get_customization, get_media_file_contents
 
@@ -1214,3 +1217,81 @@ class ServiceTypeAdmin(admin.ModelAdmin):
 	list_display = ('name', 'active', 'core')
 	filter_horizontal = ('requirements',)
 	autocomplete_fields = ['principle_assignee', 'secondary_assignee']
+
+
+@admin.register(UserServiceRequest)
+class UserServiceRequestAdmin(admin.ModelAdmin):
+	list_display = ('user', 'servicetype', 'status', 'assignee', 'project')
+	search_fields = ('user__username', 'user__first_name', 'user__last_name', 'servicetype__name')
+	autocomplete_fields = ['assignee', 'tool', 'servicetype']
+
+
+class ServiceTypeQuestionForm(ModelForm):
+	class Meta:
+		model = ServiceTypeQuestion
+		fields = '__all__'
+		widgets = {
+			'choices_json': JSONEditorWidget(options={'mode': 'code', 'modes': ['code', 'tree']}),
+			'validation_rules': JSONEditorWidget(options={'mode': 'code', 'modes': ['code', 'tree']}),
+		}
+
+@admin.register(ServiceTypeQuestion)
+class ServiceTypeQuestionAdmin(admin.ModelAdmin):
+	form = ServiceTypeQuestionForm
+	list_display = ['order', 'question_text', 'service_type', 'field_name', 'field_type', 'is_required', 'is_active', 'has_children']
+	list_filter = ['service_type', 'field_type', 'is_required', 'is_active', 'created']
+	search_fields = ['question_text', 'field_name', 'help_text']
+	ordering = ['service_type', 'order']
+	list_editable = ['order', 'is_active']
+	
+	fieldsets = (
+		('Basic Information', {
+			'fields': ('service_type', 'question_text', 'field_name', 'field_type', 'order')
+		}),
+		('Display Options', {
+			'fields': ('help_text', 'placeholder', 'is_required', 'is_active')
+		}),
+		('Field Options', {
+			'fields': ('choices_json', 'validation_rules'),
+			'description': 'For select/radio/multiselect fields, provide choices as JSON array'
+		}),
+		('Conditional Logic', {
+			'fields': ('parent_question', 'trigger_value'),
+			'classes': ('collapse',),
+			'description': 'Show this question only when parent question has specific value'
+		}),
+		('Metadata', {
+			'fields': ('created', 'updated'),
+			'classes': ('collapse',),
+		}),
+	)
+	
+	readonly_fields = ['created', 'updated']
+	
+	def has_children(self, obj):
+		count = obj.child_questions.count()
+		if count > 0:
+			return format_html('<span style="color: green;">({})</span>', count)
+		return '-'
+	has_children.short_description = 'Has Conditional Questions'
+	
+	def get_queryset(self, request):
+		qs = super().get_queryset(request)
+		return qs.select_related('service_type', 'parent_question').prefetch_related('child_questions')
+
+
+@admin.register(UserServiceRequestAnswer)
+class UserServiceRequestAnswerAdmin(admin.ModelAdmin):
+	list_display = ['user_service_request', 'question_text', 'display_value', 'created']
+	list_filter = ['question__service_type', 'created']
+	search_fields = ['user_service_request__id', 'question__question_text', 'answer_text']
+	readonly_fields = ['created', 'updated']
+	
+	def question_text(self, obj):
+		return obj.question.question_text
+	question_text.short_description = 'Question'
+	
+	def display_value(self, obj):
+		return obj.get_display_value()
+	display_value.short_description = 'Answer'
+	
