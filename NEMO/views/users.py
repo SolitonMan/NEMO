@@ -1020,9 +1020,9 @@ def manage_user_requirements(request):
 		# Build requirements list with status information
 		for progress in progress_records:
 			req = progress.requirement
-			# Skip placeholder/recursive requirements
-			if ServiceType.objects.filter(name=req.name).exists():
-				continue
+			# Skip placeholder/recursive requirements  -  actually include them in this case for staff
+			#if ServiceType.objects.filter(name=req.name).exists():
+			#	continue
 				
 			requirements_list.append({
 				'id': req.id,
