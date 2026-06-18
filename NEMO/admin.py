@@ -1072,6 +1072,7 @@ class PermissionAdmin(admin.ModelAdmin):
 @register(Core)
 class CoreAdmin(admin.ModelAdmin):
 	list_display = ('id', 'name')
+	search_fields = ('name',)
 
 	def has_delete_permission(self, request, obj=None):
 		return False
@@ -1215,6 +1216,7 @@ class UserRequirementProgressAdmin(admin.ModelAdmin):
 @admin.register(ServiceType)
 class ServiceTypeAdmin(admin.ModelAdmin):
 	list_display = ('name', 'active', 'core')
+	search_fields = ('name', 'core__name')
 	filter_horizontal = ('requirements',)
 	autocomplete_fields = ['principle_assignee', 'secondary_assignee']
 
