@@ -1155,3 +1155,46 @@ def closed_user_service_requests(request):
 		return render(request, 'users/mobile_user_requests_closed.html', {'user_service_requests': user_service_requests,})
 	else:
 		return render(request, 'users/user_requests_closed.html', {'user_service_requests': user_service_requests,})
+
+
+@require_GET
+@login_required
+def get_service_type_questions(request, service_type_id):
+	"""API endpoint to fetch dynamic questions for a service type"""
+	try:
+		# Get all active questions for this service type
+		questions = ServiceTypeQuestion.objects.filter(
+			service_type_id=service_type_id,
+			is_active=True
+		).select_related('parent_question').order_by('order')
+		
+		questions_data = []
+		for q in questions:
+			question_dict = {
+				'id': q.id,
+				'question_text': q.question_text,
+				'field_name': q.field_name,
+				'field_type': q.field_type,
+				'order': q.order,
+				'is_required': q.is_required,
+				'help_text': q.help_text,
+				'placeholder': q.placeholder,
+				'choices': q.get_choices(),
+				'validation_rules': q.validation_rules or {},
+				'parent_question_id': q.parent_question_id,
+				'parent_field_name': q.parent_question.field_name if q.parent_question else None,
+				'trigger_value': q.trigger_value,
+			}
+			questions_data.append(question_dict)
+		
+		return JsonResponse({
+			'success': True,
+			'questions': questions_data,
+			'count': len(questions_data)
+		})
+	
+	except Exception as e:
+		return JsonResponse({
+			'success': False,
+			'error': str(e)
+		}, status=500)
