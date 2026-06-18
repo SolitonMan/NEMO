@@ -1221,9 +1221,9 @@ class ServiceTypeAdmin(admin.ModelAdmin):
 
 @admin.register(UserServiceRequest)
 class UserServiceRequestAdmin(admin.ModelAdmin):
-	list_display = ('user', 'servicetype', 'status', 'assignee', 'project')
-	search_fields = ('user__username', 'user__first_name', 'user__last_name', 'servicetype__name')
-	autocomplete_fields = ['assignee', 'tool', 'servicetype']
+	list_display = ('user', 'service_type', 'status', 'assignee', 'project')
+	search_fields = ('user__username', 'user__first_name', 'user__last_name', 'service_type__name')
+	autocomplete_fields = ['assignee', 'tool', 'service_type']
 
 
 class ServiceTypeQuestionForm(forms.ModelForm):
@@ -1242,7 +1242,6 @@ class ServiceTypeQuestionAdmin(admin.ModelAdmin):
 	list_filter = ['service_type', 'field_type', 'is_required', 'is_active', 'created']
 	search_fields = ['question_text', 'field_name', 'help_text']
 	ordering = ['service_type', 'order']
-	list_editable = ['order', 'is_active']
 	
 	fieldsets = (
 		('Basic Information', {
