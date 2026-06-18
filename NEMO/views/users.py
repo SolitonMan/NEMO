@@ -1,3 +1,4 @@
+import json
 from datetime import timedelta
 from http import HTTPStatus
 from urllib.parse import urljoin
@@ -547,7 +548,7 @@ def user_requests(request):
 							answer_text = value
 							
 						answer = UserServiceRequestAnswer.objects.create(
-							user_service_request=new_request,
+							user_service_request=new_service,
 							question=question,
 							answer_text=answer_text
 						)
