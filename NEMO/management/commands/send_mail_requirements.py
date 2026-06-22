@@ -3,7 +3,7 @@ from django.db.models import F
 from django.utils import timezone
 from datetime import timedelta
 
-from NEMO.models import Requirement, UserRequirementProgress
+from NEMO.models import Requirement, UserRequirementProgress, ServiceType
 from NEMO.utilities import send_mail
 
 
@@ -16,7 +16,7 @@ class Command(BaseCommand):
 		now = timezone.now()
 		status_type = ['not_started', 'in_progress', 'expired']
 
-		records = UserRequirementProgress.objects.filter(status__in=status_type)
+		records = UserRequirementProgress.objects.filter(status__in=status_type).exclude(requirement__name__in=ServiceType.objects.values_list('name', flat=True))
 
 		for record in records:
 			rqmt = record.requirement
