@@ -406,7 +406,7 @@ class UserServiceRequest(models.Model):
 	def get_answers_dict(self):
 		"""Return all answers as a dictionary keyed by field_name"""
 		answers = {}
-		for answer in self.dynamic_answers.select_related('question').all():
+		for answer in self.dynamic_answers.select_related('question').order_by('question__order').all():
 			answers[answer.question.field_name] = {
 				'question_text': answer.question.question_text,
 				'value': answer.answer_text,
