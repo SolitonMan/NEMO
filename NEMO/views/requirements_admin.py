@@ -25,6 +25,7 @@ def add_requirement(request):
 		expected_completion_time = request.POST.get("expected_completion_time")
 		login_requirement_flag = request.POST.get("login_requirement_flag") == 'on'
 		automated_update = request.POST.get("automated_update") == 'on'
+		autocompleted = request.POST.get("autocompleted") == 'on'
 		prerequisites = request.POST.get("prerequisites")
 
 		if name:
@@ -37,6 +38,7 @@ def add_requirement(request):
 				expected_completion_time=expected_completion_time,
 				login_requirement_flag=login_requirement_flag,
 				automated_update=automated_update,
+				autocompleted=autocompleted,
 				prerequisites=prerequisites
 			)
 			return redirect('add_requirement')
@@ -56,6 +58,7 @@ def edit_requirement(request, requirement_id):
 		requirement.expected_completion_time = request.POST.get("expected_completion_time")
 		requirement.login_requirement_flag = request.POST.get("login_requirement_flag") == 'on'
 		requirement.automated_update = request.POST.get("automated_update") == 'on'
+		requirement.autocompleted = request.POST.get("autocompleted") == 'on'
 		requirement.save()
 		return redirect("add_requirement")
 	return render(request, "requirements/edit_requirement.html", {"requirement": requirement})

@@ -1279,6 +1279,11 @@ class ServiceTypeQuestionAdmin(admin.ModelAdmin):
 	def get_queryset(self, request):
 		qs = super().get_queryset(request)
 		return qs.select_related('service_type', 'parent_question').prefetch_related('child_questions')
+	
+	def formfield_for_foreignkey(self, db_field, request, **kwargs):
+		if db_field.name == "service_type":
+			kwargs["queryset"] = ServiceType.objects.order_by('name')
+		return super(ServiceTypeQuestionAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 @admin.register(UserServiceRequestAnswer)

@@ -329,6 +329,7 @@ class Requirement(models.Model):
 	automated_update = models.BooleanField(default=False, help_text="Checked if this requirement is automatically updated by an external system")
 	prerequisites = models.TextField(blank=True)
 	logical_order = models.PositiveIntegerField(blank=True, null=True)
+	autocompleted = models.BooleanField(default=False, help_text="Checked if this requirement is added with a status of completed in UserRequirementProgress")
 
 	def __str__(self):
 		return self.name
