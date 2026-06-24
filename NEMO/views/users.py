@@ -745,34 +745,35 @@ def add_requirements_and_recursive_requests(service, user, service_type, project
 	# Get requirements for this service type
 	requirements = service_type.requirements.all()
 	for requirement in requirements:
-		# Add requirement if not already present
-		if not UserRequirementProgress.objects.filter(user=user, requirement=requirement).exists():
-			status_value = 'not_started'
-			if requirement.autocompleted:
-				status_value = 'completed'
-			UserRequirementProgress.objects.create(user=user, requirement=requirement, status=status_value, service_request=service, updated=timezone.now())
-			# Check for ServiceType with same name as requirement
-			matching_service_types = ServiceType.objects.filter(name=requirement.name, auto_include=auto_include)
-			for matching_service_type in matching_service_types:
-				# Check if user already has a request for this service type
-				if not UserServiceRequest.objects.filter(user=user, service_type=matching_service_type).exists():
-					# Recursively add request and requirements
-					new_service = UserServiceRequest.objects.create(
-						updated=timezone.now(),
-						status='OPEN',
-						description=f"Auto-generated request for requirement '{requirement.name}'",
-						core=matching_service_type.core,
-						pi_user=project.owner,
-						project=project,
-						service_type=matching_service_type,
-						user=user,
-						training_request=training_request,
-						owner=matching_service_type.principle_assignee.email,
-						assignee=matching_service_type.principle_assignee
-					)
-					add_requirements_and_recursive_requests(
-						new_service, user, matching_service_type, project, description, training_request, auto_include, processed_service_types
-					)
+		if requirement.auto_include == auto_include:
+			# Add requirement if not already present
+			if not UserRequirementProgress.objects.filter(user=user, requirement=requirement).exists():
+				status_value = 'not_started'
+				if requirement.autocompleted:
+					status_value = 'completed'
+				UserRequirementProgress.objects.create(user=user, requirement=requirement, status=status_value, service_request=service, updated=timezone.now())
+				# Check for ServiceType with same name as requirement
+				matching_service_types = ServiceType.objects.filter(name=requirement.name, auto_include=auto_include)
+				for matching_service_type in matching_service_types:
+					# Check if user already has a request for this service type
+					if not UserServiceRequest.objects.filter(user=user, service_type=matching_service_type).exists():
+						# Recursively add request and requirements
+						new_service = UserServiceRequest.objects.create(
+							updated=timezone.now(),
+							status='OPEN',
+							description=f"Auto-generated request for requirement '{requirement.name}'",
+							core=matching_service_type.core,
+							pi_user=project.owner,
+							project=project,
+							service_type=matching_service_type,
+							user=user,
+							training_request=training_request,
+							owner=matching_service_type.principle_assignee.email,
+							assignee=matching_service_type.principle_assignee
+						)
+						add_requirements_and_recursive_requests(
+							new_service, user, matching_service_type, project, description, training_request, auto_include, processed_service_types
+						)
 
 
 @login_required
@@ -1006,10 +1007,6 @@ LEO Admin Team"""
 	except UserServiceRequest.DoesNotExist:
 		return JsonResponse({'error': 'Request not found'}, status=404)
 
-# Add this import at the top with other imports
-from datetime import timedelta
-
-# Add this new view function (add it after the staff_service_requests function)
 
 @staff_member_required(login_url=None)
 @require_http_methods(['GET', 'POST'])

@@ -330,6 +330,7 @@ class Requirement(models.Model):
 	prerequisites = models.TextField(blank=True)
 	logical_order = models.PositiveIntegerField(blank=True, null=True)
 	autocompleted = models.BooleanField(default=False, help_text="Checked if this requirement is added with a status of completed in UserRequirementProgress")
+	auto_include = models.BooleanField(default=False, help_text="Checked when a requirement doesn't require some sort of approval before assignement")
 
 	def __str__(self):
 		return self.name
