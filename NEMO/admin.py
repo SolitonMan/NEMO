@@ -1199,7 +1199,7 @@ class RequirementAdmin(admin.ModelAdmin):
 			'fields': ('retrain_interval_days', 'notification_interval', 'expected_completion_time', 'logical_order')
 		}),
 		('System Settings', {
-			'fields': ('login_requirement_flag', 'automated_update', 'prerequisites'),
+			'fields': ('login_requirement_flag', 'automated_update', 'autocompleted', 'auto_include', 'prerequisites'),
 			'classes': ('collapse',)
 		}),
 	)
