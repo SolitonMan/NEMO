@@ -745,7 +745,7 @@ def add_requirements_and_recursive_requests(service, user, service_type, project
 	# Get requirements for this service type
 	requirements = service_type.requirements.all()
 	for requirement in requirements:
-		if requirement.auto_include == auto_include:
+		if requirement.auto_include == auto_include or service_type.auto_include == auto_include:
 			# Add requirement if not already present
 			if not UserRequirementProgress.objects.filter(user=user, requirement=requirement).exists():
 				status_value = 'not_started'
