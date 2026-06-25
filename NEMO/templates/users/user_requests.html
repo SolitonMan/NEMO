@@ -1094,6 +1094,18 @@ document.getElementById('confirmCancelBtn').onclick = function() {
         };
     }
 
+    function collapseDescriptionRow(pair) {
+        if (pair.descriptionRow) {
+            pair.descriptionRow.style.display = 'none';
+        }
+
+        var chevron = pair.mainRow.querySelector('.glyphicon');
+        if (chevron) {
+            chevron.classList.remove('glyphicon-chevron-down');
+            chevron.classList.add('glyphicon-chevron-right');
+        }
+    }
+
     var ths = Array.from(table.querySelectorAll('th.sortable')).filter(function(th) {
         var text = (th.textContent || '').trim();
         return text !== 'Complete this requirement';
@@ -1126,21 +1138,20 @@ document.getElementById('confirmCancelBtn').onclick = function() {
             var pairs = Array.from(tbody.querySelectorAll('tr.requirement-main-row')).map(function(mainRow) {
                 var requirementId = mainRow.getAttribute('data-requirement-id');
                 var descriptionRow = tbody.querySelector('tr.requirement-description-row[data-requirement-id="' + requirementId + '"]');
-                var isExpanded = !!(descriptionRow && descriptionRow.style.display !== 'none');
                 return {
                     mainRow: mainRow,
-                    descriptionRow: descriptionRow,
-                    isExpanded: isExpanded
+                    descriptionRow: descriptionRow
                 };
             });
 
+            pairs.forEach(collapseDescriptionRow);
             pairs.sort(comparer(idx, type, asc));
 
             pairs.forEach(function(pair) {
                 tbody.appendChild(pair.mainRow);
                 if (pair.descriptionRow) {
                     tbody.appendChild(pair.descriptionRow);
-                    pair.descriptionRow.style.display = pair.isExpanded ? '' : 'none';
+                    pair.descriptionRow.style.display = 'none';
                 }
             });
         });
