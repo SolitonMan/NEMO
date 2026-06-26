@@ -27,6 +27,7 @@ def add_requirement(request):
 		automated_update = request.POST.get("automated_update") == 'on'
 		autocompleted = request.POST.get("autocompleted") == 'on'
 		prerequisites = request.POST.get("prerequisites")
+		auto_include = request.POST.get("auto_include") == 'on'
 
 		if name:
 			Requirement.objects.create(
@@ -39,7 +40,8 @@ def add_requirement(request):
 				login_requirement_flag=login_requirement_flag,
 				automated_update=automated_update,
 				autocompleted=autocompleted,
-				prerequisites=prerequisites
+				prerequisites=prerequisites,
+				auto_include=auto_include
 			)
 			return redirect('add_requirement')
 	requirements = Requirement.objects.all().order_by('name')
@@ -59,6 +61,7 @@ def edit_requirement(request, requirement_id):
 		requirement.login_requirement_flag = request.POST.get("login_requirement_flag") == 'on'
 		requirement.automated_update = request.POST.get("automated_update") == 'on'
 		requirement.autocompleted = request.POST.get("autocompleted") == 'on'
+		requirement.auto_include = request.POST.get("auto_include") == 'on'
 		requirement.save()
 		return redirect("add_requirement")
 	return render(request, "requirements/edit_requirement.html", {"requirement": requirement})
