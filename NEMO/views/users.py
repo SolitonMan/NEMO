@@ -642,7 +642,7 @@ def user_requests(request):
 				'resource_link': r.resource_link,
 				'expected_completion_time': r.expected_completion_time,
 				'prerequisites': r.prerequisites,
-				'auto_include': True if r.auto_include else req.service_type.auto_include,
+				'auto_include': r.auto_include,
 			})
 		request_requirements[req.id] = req_list
 
