@@ -341,7 +341,7 @@
 			<td>{{ req.project.project_number }}</td>
 			<td>{{ req.user.get_full_name }}</td>
 			<td>{{ req.service_type.name }}</td>
-			<td>{{ req.assignee.get_gull_name }}</td>
+			<td>{{ req.assignee.get_full_name }}</td>
 			<td>{{ req.description|default:"" }}</td>
 			<td>
 				{% if req.assigned_to.id == request.user.id %}
