@@ -180,7 +180,7 @@
 	</thead>
 	<tbody>
 		{% for req in open_requests %}
-		<tr class="request-row" data-request-id="{{ req.id }}" data-training-request="{{ req.training_request }}" data-assigned-to="{{ req.assigned_to.id }}" data-case-number="{{ req.case_number }}" data-request-date="{{ req.created|date:'Y-m-d' }}" data-user-name="{{ req.user.get_full_name }}" data-service-type="{{ req.service_type.name }}" data-tool-name="{{ req.tool.name }}" data-description="{{ req.description|default:'' }}" style="cursor:pointer;">
+		<tr class="request-row" data-request-id="{{ req.id }}" data-training-request="{{ req.training_request }}" data-assigned-to="{{ req.assignee.id }}" data-case-number="{{ req.case_number }}" data-request-date="{{ req.created|date:'Y-m-d' }}" data-user-name="{{ req.user.get_full_name }}" data-service-type="{{ req.service_type.name }}" data-tool-name="{{ req.tool.name }}" data-description="{{ req.description|default:'' }}" style="cursor:pointer;">
 			<td><span class="glyphicon glyphicon-chevron-right"></span></td>
 			<td>{{ req.case_number }}</td>
 			<td>{{ req.created|date:"Y-m-d" }}</td>
@@ -336,7 +336,7 @@
 	</thead>
 	<tbody>
 		{% for req in closed_requests %}
-		<tr class="closed-request-row" data-assigned-to="{{ req.assigned_to.id }}" data-case-number="{{ req.case_number }}" data-project-number="{{ req.project.project_number }}" data-user-name="{{ req.user.get_full_name }}" data-service-type="{{ req.service_type.name }}" data-tool-name="{{ req.tool.name }}" data-description="{{ req.description|default:'' }}">
+		<tr class="closed-request-row" data-assigned-to="{{ req.assignee.id }}" data-case-number="{{ req.case_number }}" data-project-number="{{ req.project.project_number }}" data-user-name="{{ req.user.get_full_name }}" data-service-type="{{ req.service_type.name }}" data-tool-name="{{ req.tool.name }}" data-description="{{ req.description|default:'' }}">
 			<td><a href="{% url 'edit_service_request' req.id %}">{{ req.case_number }}</a></td>
 			<td>{{ req.project.project_number }}</td>
 			<td>{{ req.user.get_full_name }}</td>
