@@ -3,7 +3,7 @@
 {% block title %}Service and Training Requests{% endblock %}
 {% block extrahead %}
 	{% load static %}
-	<style>
+<style>
 	tr.requirements-row {
 		display: none;
 	}
@@ -14,7 +14,7 @@
 
 	.btn-requirements {
 		background-color: rgb(51, 122, 183) !important;
-		background-image: linear-gradient(rgb(51, 122, 183) 0%, rgb(38, 90, 136) 100%); 
+		background-image: linear-gradient(rgb(51, 122, 183) 0%, rgb(38, 90, 136) 100%);
 		background-repeat: repeat-x;
 		border: 0.66667px solid rgb(36, 85, 128);
 		color: #fff !important;
@@ -23,16 +23,16 @@
 		box-shadow: none;
 	}
 
-	.btn-requirements:hover, .btn-requirements.active, .btn-requirements:focus {
-		background-color: #283593 !important;
-		color: #fff !important;
-		border: none;
-		box-shadow: none;
-	}
+		.btn-requirements:hover, .btn-requirements.active, .btn-requirements:focus {
+			background-color: #283593 !important;
+			color: #fff !important;
+			border: none;
+			box-shadow: none;
+		}
 
-	.btn-requirements input[type="radio"] {
-		display: none;
-	}
+		.btn-requirements input[type="radio"] {
+			display: none;
+		}
 
 	#requirements-table-container th.sortable {
 		color: #337ab7;
@@ -41,9 +41,9 @@
 		transition: color 0.2s;
 	}
 
-	#requirements-table-container th.sortable:hover {
-		color: #23527c;
-	}
+		#requirements-table-container th.sortable:hover {
+			color: #23527c;
+		}
 
 	#requirements-table-container th.sorted-asc::after {
 		content: " \25B2";
@@ -54,12 +54,117 @@
 		content: " \25BC";
 		font-size: 12px;
 	}
+
+	.btn-toggle {
+		background-color: rgb(51, 122, 183) !important;
+		background-image: linear-gradient(rgb(51, 122, 183) 0%, rgb(38, 90, 136) 100%);
+		background-repeat: repeat-x;
+		border: 0.66667px solid rgb(36, 85, 128);
+		color: #fff !important;
+		font-weight: bold;
+		padding: 6px 12px;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+
+		.btn-toggle:hover {
+			background-color: #265a88 !important;
+		}
+
+		.btn-toggle.active {
+			background-color: #283593 !important;
+			background-image: none;
+			box-shadow: inset 0 3px 5px rgba(0,0,0,0.2);
+		}
+
+	.filter-container {
+		margin-bottom: 20px;
+		display: flex;
+		align-items: center;
+		gap: 15px;
+		flex-wrap: wrap;
+	}
+
+	.filter-input-wrapper {
+		position: relative;
+		flex: 1;
+		min-width: 300px;
+		max-width: 500px;
+	}
+
+	.filter-input {
+		width: 100%;
+		padding: 8px 30px 8px 12px;
+		border: 1px solid #ccc;
+		border-radius: 4px;
+		font-size: 14px;
+	}
+
+	.filter-clear {
+		position: absolute;
+		right: 8px;
+		top: 50%;
+		transform: translateY(-50%);
+		background: none;
+		border: none;
+		color: #999;
+		cursor: pointer;
+		font-size: 18px;
+		padding: 0;
+		width: 20px;
+		height: 20px;
+		line-height: 20px;
+		display: none;
+	}
+
+		.filter-clear:hover {
+			color: #333;
+		}
+
+		.filter-clear.visible {
+			display: block;
+		}
+
+	.request-count {
+		color: #666;
+		font-size: 14px;
+		font-style: italic;
+	}
+
+	.no-results-message {
+		display: none;
+		padding: 20px;
+		text-align: center;
+		color: #666;
+		font-style: italic;
+	}
+
+	.closed-request-row {
+		transition: opacity 0.2s;
+	}
 </style>
 {% endblock %}
 
 {% block content %}
-<h2>Open Service and Training Requests Assigned to You</h2>
-<table class="table">
+<h2 id="open-requests-heading">Open Service and Training Requests Assigned to You</h2>
+
+<div class="filter-container">
+	<div class="btn-group" role="group" aria-label="Request assignment filter">
+		<button type="button" class="btn btn-toggle active" id="btn-assigned" aria-pressed="true" aria-label="Show requests assigned to me">
+			Assigned to Me
+		</button>
+		<button type="button" class="btn btn-toggle" id="btn-all" aria-pressed="false" aria-label="Show all requests">
+			All Requests
+		</button>
+	</div>
+	<div class="filter-input-wrapper">
+		<input type="text" class="filter-input" id="open-filter-input" placeholder="Filter by case #, date, user, service type, tool, or description..." aria-label="Filter open requests">
+		<button class="filter-clear" id="open-filter-clear" aria-label="Clear filter">&times;</button>
+	</div>
+	<span class="request-count" id="open-request-count"></span>
+</div>
+
+<table class="table" id="open-requests-table">
 	<thead>
 		<tr>
 			<th></th>
@@ -75,7 +180,7 @@
 	</thead>
 	<tbody>
 		{% for req in open_requests %}
-		<tr class="request-row" data-request-id="{{ req.id }}" data-training-request="{{ req.training_request }}" style="cursor:pointer;">
+		<tr class="request-row" data-request-id="{{ req.id }}" data-training-request="{{ req.training_request }}" data-assigned-to="{{ req.assigned_to.id }}" data-case-number="{{ req.case_number }}" data-request-date="{{ req.created|date:'Y-m-d' }}" data-user-name="{{ req.user.get_full_name }}" data-service-type="{{ req.service_type.name }}" data-tool-name="{{ req.tool.name }}" data-description="{{ req.description|default:'' }}" style="cursor:pointer;">
 			<td><span class="glyphicon glyphicon-chevron-right"></span></td>
 			<td>{{ req.case_number }}</td>
 			<td>{{ req.created|date:"Y-m-d" }}</td>
@@ -85,26 +190,27 @@
 			<td>{{ req.description|default:"" }}</td>
 			<td>
 				{% with reqs=request_requirements|get_item:req.id %}
-					{% with total=reqs|length completed=reqs|completed_count %}
-						{% if total > 0 %}
-						<div style="display: flex; align-items: center; min-width: 120px;">
-										<div class="progress" style="flex: 1 1 auto; margin-bottom: 0; height: 18px; margin-right: 8px;">
-														<div class="progress-bar" role="progressbar"
-															style="width: {% if total > 0 %}{{ completed|floatformat:2|divided_by:total|floatformat:2 }}%{% else %}0{% endif %};{% if total == completed %}background-color: #4EA74E!important;background-image:none{% endif %}"
-															aria-valuenow="{{ completed }}" aria-valuemin="0" aria-valuemax="{{ total }}">
-														</div>
-										</div>
-										<span style="white-space: nowrap; font-size: 12px;">
-														{{ completed }}/{{ total }}
-										</span>
+				{% with total=reqs|length completed=reqs|completed_count %}
+				{% if total > 0 %}
+				<div style="display: flex; align-items: center; min-width: 120px;">
+					<div class="progress" style="flex: 1 1 auto; margin-bottom: 0; height: 18px; margin-right: 8px;">
+						<div class="progress-bar" role="progressbar"
+							 style="width: {% if total > 0 %}{{ completed|floatformat:2|divided_by:total|floatformat:2 }}%{% else %}0{% endif %};{% if total == completed %}background-color: #4EA74E!important;background-image:none{% endif %}"
+							 aria-valuenow="{{ completed }}" aria-valuemin="0" aria-valuemax="{{ total }}">
 						</div>
-						{% else %}
-						No requirements
-						{% endif %}
-					{% endwith %}
+					</div>
+					<span style="white-space: nowrap; font-size: 12px;">
+						{{ completed }}/{{ total }}
+					</span>
+				</div>
+				{% else %}
+				No requirements
+				{% endif %}
+				{% endwith %}
 				{% endwith %}
 			</td>
 			<td width="200px;">
+				{% if req.assigned_to.id == request.user.id %}
 				<form method="post" onsubmit="return confirm('Are you sure you want to close this case?');" style="display: inline-block;">
 					{% csrf_token %}
 					<input type="hidden" name="request_id" value="{{ req.id }}">
@@ -114,20 +220,20 @@
 				<button type="button" class="btn btn-success btn-sm" onclick="event.stopPropagation();" data-url="{% url 'edit_service_request' req.id %}" aria-label="Edit service request">
 					Edit
 				</button>
+				{% endif %}
 			</td>
 		</tr>
 		<tr class="requirements-row" data-request-id="{{ req.id }}" style="display:none;">
 			<td colspan="9">
-				<!-- Introductory details -->
 				<div>
 					{% if req.core.id != 2 %}
 					<strong>Case Number:</strong> {{ req.case_number|default:"-" }}<br>
 					{% endif %}
 					<strong>Contact:</strong>
 					{% if req.owner %}
-						<a href="mailto:{{ req.owner }}">{{ req.owner_first_name }} {{ req.owner_last_name }}</a>
+					<a href="mailto:{{ req.owner }}">{{ req.owner_first_name }} {{ req.owner_last_name }}</a>
 					{% else %}
-						-
+					-
 					{% endif %}
 					<br>
 					<strong>Description:</strong> {{ req.description|default:"-" }}<br>
@@ -155,58 +261,68 @@
 						</tr>
 					</thead>
 					<tbody>
-				{% for r in request_requirements|get_item:req.id %}
-					<tr style="margin: 3px 3px 3px 3px;">
-						<td style="width:20%;">{{ r.name }}</td>
-						<td style="width:10%;">
-						{% if r.has_progress %}
-							<span style="font-weight:bold; font-size: 10pt; border-radius: 12px; background-color: {% if r.status == 'Not Started' %}#ffcccc{% endif %}{% if r.status == 'Completed' %}#ccffcc{% endif %}{% if r.status == 'In Progress' %}#ffffcc{% endif %};">{{ r.status|default:"Not Started" }}</span>
-						{% else %}
-							Not assigned
-						{% endif %}
-						</td>
-						<td style="width:25%;"><a href="{{ r.resource_link }}" target="_blank">{{ r.resource_link_name }}</a></td>
-						<td style="width:5%;">{{ r.expected_completion_time }}</td>
-						<td>{{ r.prerequisites }}</td>
-						<td>
-							{% if not r.automated_update %}
-								{% if r.status != 'Completed' and r.has_progress %}
-									<form method="post" action="{% url 'staff_complete_user_requirement' %}" onsubmit="return confirm('Mark requirement {{ r.name }} as completed for {{ req.user.get_full_name }}?');" style="display: inline-block;">
-										{% csrf_token %}
-										<input type="hidden" name="redirect_url" value="{% url 'staff_service_requests' %}">
-										<input type="hidden" name="user_id" value="{{ r.user_id }}">
-										<input type="hidden" name="requirement_id" value="{{ r.id }}">
-										<button type="submit" class="btn btn-primary btn-sm" onclick="event.stopPropagation();">Mark Completed</button>
-									</form>
+						{% for r in request_requirements|get_item:req.id %}
+						<tr style="margin: 3px 3px 3px 3px;">
+							<td style="width:20%;">{{ r.name }}</td>
+							<td style="width:10%;">
+								{% if r.has_progress %}
+								<span style="font-weight:bold; font-size: 10pt; border-radius: 12px; background-color: {% if r.status == 'Not Started' %}#ffcccc{% endif %}{% if r.status == 'Completed' %}#ccffcc{% endif %}{% if r.status == 'In Progress' %}#ffffcc{% endif %};">{{ r.status|default:"Not Started" }}</span>
 								{% else %}
-									<form method="post" action="{% url 'staff_unmark_user_requirement' %}" onsubmit="return confirm('Mark requirement {{ r.name }} as not started for {{ req.user.get_full_name }}?');" style="display: inline-block;">
-										{% csrf_token %}
-										<input type="hidden" name="redirect_url" value="{% url 'staff_service_requests' %}">
-										<input type="hidden" name="user_id" value="{{ r.user_id }}">
-										<input type="hidden" name="requirement_id" value="{{ r.id }}">
-										<button type="submit" class="btn btn-warning btn-sm" onclick="event.stopPropagation();">Unmark Completed</button>
-									</form>
+								Not assigned
 								{% endif %}
-							{% else %}
+							</td>
+							<td style="width:25%;"><a href="{{ r.resource_link }}" target="_blank">{{ r.resource_link_name }}</a></td>
+							<td style="width:5%;">{{ r.expected_completion_time }}</td>
+							<td>{{ r.prerequisites }}</td>
+							<td>
+								{% if not r.automated_update %}
+								{% if r.status != 'Completed' and r.has_progress %}
+								<form method="post" action="{% url 'staff_complete_user_requirement' %}" onsubmit="return confirm('Mark requirement {{ r.name }} as completed for {{ req.user.get_full_name }}?');" style="display: inline-block;">
+									{% csrf_token %}
+									<input type="hidden" name="redirect_url" value="{% url 'staff_service_requests' %}">
+									<input type="hidden" name="user_id" value="{{ r.user_id }}">
+									<input type="hidden" name="requirement_id" value="{{ r.id }}">
+									<button type="submit" class="btn btn-primary btn-sm" onclick="event.stopPropagation();">Mark Completed</button>
+								</form>
+								{% else %}
+								<form method="post" action="{% url 'staff_unmark_user_requirement' %}" onsubmit="return confirm('Mark requirement {{ r.name }} as not started for {{ req.user.get_full_name }}?');" style="display: inline-block;">
+									{% csrf_token %}
+									<input type="hidden" name="redirect_url" value="{% url 'staff_service_requests' %}">
+									<input type="hidden" name="user_id" value="{{ r.user_id }}">
+									<input type="hidden" name="requirement_id" value="{{ r.id }}">
+									<button type="submit" class="btn btn-warning btn-sm" onclick="event.stopPropagation();">Unmark Completed</button>
+								</form>
+								{% endif %}
+								{% else %}
 								<span class="text-muted">Automated Update</span>
-							{% endif %}
-						</td>
-					</tr>
-				{% empty %}
-					<tr><td colspan="6">No requirements for this request.</td></tr>
-				{% endfor %}
+								{% endif %}
+							</td>
+						</tr>
+						{% empty %}
+						<tr><td colspan="6">No requirements for this request.</td></tr>
+						{% endfor %}
 					</tbody>
 				</table>
 			</td>
 		</tr>
 		{% empty %}
-		<tr><td colspan="9">No open requests assigned to you.</td></tr>
+		<tr class="no-results-row"><td colspan="9">No open requests assigned to you.</td></tr>
 		{% endfor %}
 	</tbody>
 </table>
+<div class="no-results-message" id="open-no-results">No matching requests found.</div>
 
-<h2>Recently Closed Service Requests</h2>
-<table class="table">
+<h2 id="closed-requests-heading">Recently Closed Service Requests</h2>
+
+<div class="filter-container">
+	<div class="filter-input-wrapper">
+		<input type="text" class="filter-input" id="closed-filter-input" placeholder="Filter by case #, project #, user, service type, tool, or description..." aria-label="Filter closed requests">
+		<button class="filter-clear" id="closed-filter-clear" aria-label="Clear filter">&times;</button>
+	</div>
+	<span class="request-count" id="closed-request-count"></span>
+</div>
+
+<table class="table" id="closed-requests-table">
 	<thead>
 		<tr>
 			<th>Case #</th>
@@ -220,7 +336,7 @@
 	</thead>
 	<tbody>
 		{% for req in closed_requests %}
-		<tr>
+		<tr class="closed-request-row" data-assigned-to="{{ req.assigned_to.id }}" data-case-number="{{ req.case_number }}" data-project-number="{{ req.project.project_number }}" data-user-name="{{ req.user.get_full_name }}" data-service-type="{{ req.service_type.name }}" data-tool-name="{{ req.tool.name }}" data-description="{{ req.description|default:'' }}">
 			<td><a href="{% url 'edit_service_request' req.id %}">{{ req.case_number }}</a></td>
 			<td>{{ req.project.project_number }}</td>
 			<td>{{ req.user.get_full_name }}</td>
@@ -228,43 +344,47 @@
 			<td>{{ req.tool.name }}</td>
 			<td>{{ req.description|default:"" }}</td>
 			<td>
+				{% if req.assigned_to.id == request.user.id %}
 				<form method="post" style="display:inline;" onsubmit="return confirm('Re-open this case?');">
 					{% csrf_token %}
 					<input type="hidden" name="request_id" value="{{ req.id }}">
 					<input type="hidden" name="action" value="reopen">
 					<button type="submit" class="btn btn-warning btn-sm">Re-open</button>
 				</form>
+				{% endif %}
 			</td>
 		</tr>
 		{% empty %}
-		<tr><td colspan="7">No recently closed requests.</td></tr>
+		<tr class="no-results-row"><td colspan="7">No recently closed requests.</td></tr>
 		{% endfor %}
 	</tbody>
 </table>
+<div class="no-results-message" id="closed-no-results">No matching requests found.</div>
 
 
 <div class="modal fade" id="cancelRequestModal" tabindex="-1" role="dialog" aria-labelledby="cancelRequestModalLabel" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="cancelRequestModalLabel">Cancel Request</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        <textarea id="cancelReason" class="form-control" placeholder="Add a reason (optional)"></textarea>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-danger" id="confirmCancelBtn">Confirm</button>
-      </div>
-    </div>
-  </div>
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="cancelRequestModalLabel">Cancel Request</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<textarea id="cancelReason" class="form-control" placeholder="Add a reason (optional)"></textarea>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+				<button type="button" class="btn btn-danger" id="confirmCancelBtn">Confirm</button>
+			</div>
+		</div>
+	</div>
 </div>
 
 
 <script>
+var currentUserId = {{ request.user.id }};
 let currentRequestId = null;
 
 function showCancelModal(requestId) {
@@ -297,47 +417,226 @@ document.getElementById('confirmCancelBtn').onclick = function() {
 
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-	document.querySelectorAll('.btn-success[data-url]').forEach(button => {
-		button.addEventListener('click', function(e) {
-			e.stopPropagation();
-			window.location.href = this.dataset.url;
+	document.addEventListener('DOMContentLoaded', function () {
+		document.querySelectorAll('.btn-success[data-url]').forEach(button => {
+			button.addEventListener('click', function (e) {
+				e.stopPropagation();
+				window.location.href = this.dataset.url;
+			});
 		});
 	});
-});
 
-(function () {
-	var $ = window.jQuery;
-	if (!$) return;
+	(function () {
+		var $ = window.jQuery;
+		if (!$) return;
 
-	// Filter and expand/collapse logic for requests table
-	function filterRequests(showTraining) {
-		$('.request-row').each(function () {
-			var isTraining = $(this).data('training-request') === true || $(this).data('training-request') === 'True' || $(this).data('training-request') === 'true';
-			var reqId = $(this).data('request-id');
-			var $requirementsRow = $('.requirements-row[data-request-id="' + reqId + '"]');
-			var $icon = $(this).find('.glyphicon');
-			if (showTraining ? isTraining : !isTraining) {
-				$(this).show();
-				$requirementsRow.hide();
-				$icon.removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-right');
+		var showAllRequests = false;
+
+		var btnAssigned = document.getElementById('btn-assigned');
+		var btnAll = document.getElementById('btn-all');
+		var openHeading = document.getElementById('open-requests-heading');
+		var openFilterInput = document.getElementById('open-filter-input');
+		var openFilterClear = document.getElementById('open-filter-clear');
+		var openRequestCount = document.getElementById('open-request-count');
+		var openNoResults = document.getElementById('open-no-results');
+		var closedFilterInput = document.getElementById('closed-filter-input');
+		var closedFilterClear = document.getElementById('closed-filter-clear');
+		var closedRequestCount = document.getElementById('closed-request-count');
+		var closedNoResults = document.getElementById('closed-no-results');
+
+		function updateToggleButtons() {
+			if (showAllRequests) {
+				btnAssigned.classList.remove('active');
+				btnAssigned.setAttribute('aria-pressed', 'false');
+				btnAll.classList.add('active');
+				btnAll.setAttribute('aria-pressed', 'true');
+				openHeading.textContent = 'All Open Service and Training Requests';
 			} else {
-				$(this).hide();
-				$requirementsRow.hide();
+				btnAssigned.classList.add('active');
+				btnAssigned.setAttribute('aria-pressed', 'true');
+				btnAll.classList.remove('active');
+				btnAll.setAttribute('aria-pressed', 'false');
+				openHeading.textContent = 'Open Service and Training Requests Assigned to You';
+			}
+		}
+
+		function applyFilters() {
+			var openFilterText = openFilterInput.value.toLowerCase();
+			var closedFilterText = closedFilterInput.value.toLowerCase();
+
+			var openVisible = 0;
+			var openTotal = 0;
+			var closedVisible = 0;
+			var closedTotal = 0;
+
+			$('.request-row').each(function () {
+				var $row = $(this);
+				var assignedTo = $row.data('assigned-to');
+				var reqId = $row.data('request-id');
+				var $detailsRow = $('.requirements-row[data-request-id="' + reqId + '"]');
+				var $icon = $row.find('.glyphicon');
+
+				var isAssignedToUser = (assignedTo == currentUserId);
+				var showByToggle = showAllRequests || isAssignedToUser;
+
+				if ($row.closest('tbody').find('.no-results-row').length === 0) {
+					openTotal++;
+				}
+
+				if (!showByToggle) {
+					$row.hide();
+					$detailsRow.hide();
+					return;
+				}
+
+				var showByFilter = true;
+				if (openFilterText) {
+					var caseNum = ($row.data('case-number') || '').toString().toLowerCase();
+					var reqDate = ($row.data('request-date') || '').toString().toLowerCase();
+					var userName = ($row.data('user-name') || '').toString().toLowerCase();
+					var serviceType = ($row.data('service-type') || '').toString().toLowerCase();
+					var toolName = ($row.data('tool-name') || '').toString().toLowerCase();
+					var description = ($row.data('description') || '').toString().toLowerCase();
+
+					showByFilter = caseNum.includes(openFilterText) ||
+						reqDate.includes(openFilterText) ||
+						userName.includes(openFilterText) ||
+						serviceType.includes(openFilterText) ||
+						toolName.includes(openFilterText) ||
+						description.includes(openFilterText);
+				}
+
+				if (showByFilter) {
+					$row.show();
+					openVisible++;
+				} else {
+					$row.hide();
+					$detailsRow.hide();
+					$icon.removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-right');
+				}
+			});
+
+			$('.closed-request-row').each(function () {
+				var $row = $(this);
+				var assignedTo = $row.data('assigned-to');
+
+				var isAssignedToUser = (assignedTo == currentUserId);
+				var showByToggle = showAllRequests || isAssignedToUser;
+
+				if ($row.closest('tbody').find('.no-results-row').length === 0) {
+					closedTotal++;
+				}
+
+				if (!showByToggle) {
+					$row.hide();
+					return;
+				}
+
+				var showByFilter = true;
+				if (closedFilterText) {
+					var caseNum = ($row.data('case-number') || '').toString().toLowerCase();
+					var projectNum = ($row.data('project-number') || '').toString().toLowerCase();
+					var userName = ($row.data('user-name') || '').toString().toLowerCase();
+					var serviceType = ($row.data('service-type') || '').toString().toLowerCase();
+					var toolName = ($row.data('tool-name') || '').toString().toLowerCase();
+					var description = ($row.data('description') || '').toString().toLowerCase();
+
+					showByFilter = caseNum.includes(closedFilterText) ||
+						projectNum.includes(closedFilterText) ||
+						userName.includes(closedFilterText) ||
+						serviceType.includes(closedFilterText) ||
+						toolName.includes(closedFilterText) ||
+						description.includes(closedFilterText);
+				}
+
+				if (showByFilter) {
+					$row.show();
+					closedVisible++;
+				} else {
+					$row.hide();
+				}
+			});
+
+			if (openTotal > 0) {
+				openRequestCount.textContent = 'Showing ' + openVisible + ' of ' + openTotal + ' requests';
+				if (openVisible === 0) {
+					openNoResults.style.display = 'block';
+				} else {
+					openNoResults.style.display = 'none';
+				}
+			} else {
+				openRequestCount.textContent = '';
+				openNoResults.style.display = 'none';
+			}
+
+			if (closedTotal > 0) {
+				closedRequestCount.textContent = 'Showing ' + closedVisible + ' of ' + closedTotal + ' requests';
+				if (closedVisible === 0) {
+					closedNoResults.style.display = 'block';
+				} else {
+					closedNoResults.style.display = 'none';
+				}
+			} else {
+				closedRequestCount.textContent = '';
+				closedNoResults.style.display = 'none';
+			}
+
+			if (openFilterText) {
+				openFilterClear.classList.add('visible');
+			} else {
+				openFilterClear.classList.remove('visible');
+			}
+
+			if (closedFilterText) {
+				closedFilterClear.classList.add('visible');
+			} else {
+				closedFilterClear.classList.remove('visible');
+			}
+		}
+
+		btnAssigned.addEventListener('click', function () {
+			showAllRequests = false;
+			updateToggleButtons();
+			applyFilters();
+		});
+
+		btnAll.addEventListener('click', function () {
+			showAllRequests = true;
+			updateToggleButtons();
+			applyFilters();
+		});
+
+		openFilterInput.addEventListener('input', function () {
+			applyFilters();
+		});
+
+		closedFilterInput.addEventListener('input', function () {
+			applyFilters();
+		});
+
+		openFilterClear.addEventListener('click', function () {
+			openFilterInput.value = '';
+			applyFilters();
+			openFilterInput.focus();
+		});
+
+		closedFilterClear.addEventListener('click', function () {
+			closedFilterInput.value = '';
+			applyFilters();
+			closedFilterInput.focus();
+		});
+
+		$(document).on('click', '.request-row', function () {
+			var reqId = $(this).data('request-id');
+			var $detailsRow = $('.requirements-row[data-request-id="' + reqId + '"]');
+			var $icon = $(this).find('.glyphicon');
+			if ($(this).is(':visible')) {
+				$detailsRow.toggle();
+				$icon.toggleClass('glyphicon-chevron-right glyphicon-chevron-down');
 			}
 		});
-	}
 
-	// Row-by-row expand/collapse
-	$(document).on('click', '.request-row', function () {
-		var reqId = $(this).data('request-id');
-		var $detailsRow = $('.requirements-row[data-request-id="' + reqId + '"]');
-		var $icon = $(this).find('.glyphicon');
-		if ($(this).is(':visible')) {
-			$detailsRow.toggle();
-			$icon.toggleClass('glyphicon-chevron-right glyphicon-chevron-down');
-		}
-	});
-})();
+		applyFilters();
+	})();
 </script>
 {% endblock %}
