@@ -172,7 +172,7 @@
 			<th>Request Date</th>
 			<th>User</th>
 			<th>Service Type</th>
-			<th>Tool</th>
+			<th>Assignee</th>
 			<th>Description</th>
 			<th>Requirement Completion Progress</th>
 			<th>Action</th>
@@ -186,7 +186,7 @@
 			<td>{{ req.created|date:"Y-m-d" }}</td>
 			<td>{{ req.user.get_full_name }}</td>
 			<td>{{ req.service_type.name }}</td>
-			<td>{{ req.tool.name }}</td>
+			<td>{{ req.assignee.get_full_name }}</td>
 			<td>{{ req.description|default:"" }}</td>
 			<td>
 				{% with reqs=request_requirements|get_item:req.id %}
