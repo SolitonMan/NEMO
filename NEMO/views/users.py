@@ -781,12 +781,10 @@ def add_requirements_and_recursive_requests(service, user, service_type, project
 def staff_service_requests(request):
 	staff_user = request.user
 	open_requests = UserServiceRequest.objects.filter(
-		assignee=staff_user,
 		status__iexact='OPEN'
 	).select_related('project', 'user', 'service_type', 'tool').order_by('-created')
 
 	closed_requests = UserServiceRequest.objects.filter(
-		assignee=staff_user,
 		status__iexact='CLOSED'
 	).select_related('project', 'user', 'service_type', 'tool').order_by('-updated')[:5]
 
