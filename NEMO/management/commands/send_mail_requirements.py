@@ -37,16 +37,17 @@ class Command(BaseCommand):
 						f"If this requirement is no longer relevant to your interests please reach out to a contact for related requested services to let them know to cancel the request."
 						"<br><br>Best regards,<br>LEO Help Team"
 					)
-					send_mail(
-						"Reminder: User Requirement Pending",
-						message_text,
-						"LEOHelp@psu.edu",
-						to=[record.user.email],
-						fail_silently=False,
-					)
-					record.last_notified = now
-					record.updated = now
-					record.save()
+					if record.user.is_active:
+						send_mail(
+							"Reminder: User Requirement Pending",
+							message_text,
+							"LEOHelp@psu.edu",
+							to=[record.user.email],
+							fail_silently=False,
+						)
+						record.last_notified = now
+						record.updated = now
+						record.save()
 
 		# Second query: Completed requirements expiring within 31 days
 		expiration_threshold = now + timedelta(days=31)
@@ -79,14 +80,15 @@ class Command(BaseCommand):
 					message_text += f"<br><br>You can find more information and access the necessary resources here: {resource_link}."
 				
 				message_text += "<br><br>Best regards,<br>LEO Help Team"
-				
-				send_mail(
-					f"{requirement_name} is expiring in {days_until_expiration} day{'s' if days_until_expiration != 1 else ''}",
-					message_text,
-					"LEOHelp@psu.edu",
-					to=[record.user.email],
-					fail_silently=False,
-				)
-				record.last_notified = now
-				record.updated = now
-				record.save()
+
+				if record.user.is_active:				
+					send_mail(
+						f"{requirement_name} is expiring in {days_until_expiration} day{'s' if days_until_expiration != 1 else ''}",
+						message_text,
+						"LEOHelp@psu.edu",
+						to=[record.user.email],
+						fail_silently=False,
+					)
+					record.last_notified = now
+					record.updated = now
+					record.save()
