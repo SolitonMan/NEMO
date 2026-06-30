@@ -782,11 +782,15 @@ def staff_service_requests(request):
 	staff_user = request.user
 	open_requests = UserServiceRequest.objects.filter(
 		status__iexact='OPEN'
-	).select_related('project', 'user', 'service_type', 'tool').order_by('-created')
+	).select_related('project', 'user', 'service_type', 'tool').exclude(
+		service_type__name__in=Requirement.objects.values_list('name', flat=True)
+	).order_by('-created')
 
 	closed_requests = UserServiceRequest.objects.filter(
 		status__iexact='CLOSED'
-	).select_related('project', 'user', 'service_type', 'tool').order_by('-updated')[:5]
+	).select_related('project', 'user', 'service_type', 'tool').exclude(
+		service_type__name__in=Requirement.objects.values_list('name', flat=True)
+	).order_by('-updated')[:5]
 
 	placeholder_req_ids = set(
 		Requirement.objects.filter(
