@@ -123,7 +123,7 @@ def login_user(request, context=None):
 		except:
 			next_page = reverse('landing')
 		if request.session.pop('force_requirements_redirect', False):
-			return HttpResponseRedirect(reverse('user_requests'))
+			return HttpResponseRedirect(reverse('user_requests'), query={"view":"requirements"})
 		return HttpResponseRedirect(next_page)
 
 	dictionary = {
@@ -146,7 +146,7 @@ def login_user(request, context=None):
 	initialize_user_session(request, user, next_page)
 
 	if request.session.pop('force_requirements_redirect', False):
-		return HttpResponseRedirect(reverse('user_requests'))
+		return HttpResponseRedirect(reverse('user_requests'), query={"view":"requirements"})
 
 	try:
 		resolve(next_page)
@@ -271,7 +271,7 @@ def post_login_redirect(request, user):
 	next_page = request.GET.get(REDIRECT_FIELD_NAME, reverse('landing'))
 	initialize_user_session(request, user, next_page)
 	if request.session.pop('force_requirements_redirect', False):
-		return HttpResponseRedirect(reverse('user_requests'))
+		return HttpResponseRedirect(reverse('user_requests'), query={"view":"requirements"})
 	return HttpResponseRedirect(reverse('landing'))
 
 

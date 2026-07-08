@@ -107,6 +107,12 @@
 
 <br/>
 
+{% if request.user.active_project_count == 0 %}
+<div id="no-active-projects" style="display: block; margin-top: 8px;">
+	This text is displaying because you do not have any active projects.  You will need to have an active project in order to submit a request.  
+	You can register a project through the <a href="https://pmd.mri.psu.edu/LEORegistration" target="_blank">LEO Registration</a> page.
+</div><br><br>
+{% endif %}
 <div class="container-fluid">
 {% if force_requirements_redirect %}
 <div class="alert alert-info" role="alert">
@@ -114,7 +120,7 @@
 </div>
 {% else %}
 <div>
-	<button class="btn btn-success" id="btn_add_service" type="button" data-toggle="modal" data-target="#requestWizardModal">Submit a request</button>
+	<button class="btn btn-success" id="btn_add_service" type="button" data-toggle="modal" data-target="#requestWizardModal" {% if request.user.active_project_count == 0 %}disabled{% endif %}>Submit a request</button>
 </div>
 {% endif %}
 

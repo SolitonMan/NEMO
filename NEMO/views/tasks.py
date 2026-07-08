@@ -86,7 +86,7 @@ def send_new_task_emails(request, task):
 
 	# Send an email to any user (excluding staff) with a future reservation on the tool:
 	user_office_email = get_customization('user_office_email_address')
-	message = get_media_file_contents('new_task_email.html')
+	message = get_media_file_contents('reservation_warning.html')
 	if user_office_email and message:
 		upcoming_reservations = Reservation.objects.filter(start__gt=timezone.now(), cancelled=False, tool=task.tool, user__is_staff=False)
 		for reservation in upcoming_reservations:
