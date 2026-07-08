@@ -64,7 +64,12 @@ class ToolTreeHelper:
 				f'role="treeitem" tabindex="0" aria-label="{node.name}"{aria_current}>{node.name}</a>'
 			)
 		else:
-			category_id = f"category-{self.__safe_id(node.name)}"
+			check_node = node 
+			id_name = node.name 
+			while check_node.parent.name != None: 
+				id_name += '_' + check_node.parent.name 
+				check_node = check_node.parent
+			category_id = f"category-{self.__safe_id(id_name)}"
 			# Determine if this category should be expanded
 			should_expand = selected_path and node in selected_path
 			aria_expanded = 'true' if should_expand else 'false'
