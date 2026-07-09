@@ -564,98 +564,86 @@
 	var $ = window.jQuery;
 	if (!$) return;
 
-	// Tab switching logic
+	// Filter and expand/collapse logic for requests table
 	function filterRequests(showTraining) {
-		$('.request-card').each(function () {
-			// Only filter cards in the requests-list-container, not requirements-table-container
-			if ($(this).closest('#requests-list-container').length === 0) return;
-
+		$('.request-row').each(function () {
 			var isTraining = $(this).data('training-request') === true || $(this).data('training-request') === 'True' || $(this).data('training-request') === 'true';
+			var reqId = $(this).data('request-id');
+			var $requirementsRow = $('.requirements-row[data-request-id="' + reqId + '"]');
+			var $icon = $(this).find('.glyphicon');
 			if (showTraining ? isTraining : !isTraining) {
 				$(this).show();
-				$(this).find('.details-section').hide();
-				$(this).find('.glyphicon').removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-right');
-				$(this).find('.request-card-button').attr('aria-expanded', 'false');
+				$requirementsRow.hide();
+				$icon.removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-right');
 			} else {
 				$(this).hide();
-				$(this).find('.details-section').hide();
+				$requirementsRow.hide();
 			}
 		});
 	}
 
-	function showRequestsList() {
-		$('#requests-list-container').show();
+	function showRequestsTable() {
+		$('#requests-table-container').show();
 		$('#requirements-table-container').hide();
 	}
 
 	function showRequirementsTable() {
-		$('#requests-list-container').hide();
+		$('#requests-table-container').hide();
 		$('#requirements-table-container').show();
-		// Make sure all requirement cards are visible when switching to requirements view
-		$('#requirements-table-container .request-card').show();
 	}
 
-	function updateTabStates(activeId) {
-		$('.toggle-btn-group button[role="tab"]').each(function() {
-			var isActive = $(this).attr('id') === activeId;
-			$(this).attr('aria-selected', isActive ? 'true' : 'false');
-			if (isActive) {
-				$(this).addClass('active');
-			} else {
-				$(this).removeClass('active');
-			}
-		});
+	function setView(view) {
+		if (view === 'training') {
+			$('#toggle-training').addClass('active');
+			$('#toggle-service').removeClass('active');
+			$('#toggle-requirements').removeClass('active');
+			$('#requests-table-title').text('My Training Requests');
+			showRequestsTable();
+			filterRequests(true);
+		} else if (view === 'service') {
+			$('#toggle-service').addClass('active');
+			$('#toggle-training').removeClass('active');
+			$('#toggle-requirements').removeClass('active');
+			$('#requests-table-title').text('My Service Requests');
+			showRequestsTable();
+			filterRequests(false);
+		} else if (view === 'requirements') {
+			$('#toggle-requirements').addClass('active');
+			$('#toggle-training').removeClass('active');
+			$('#toggle-service').removeClass('active');
+			showRequirementsTable();
+		}
+	}
+
+	// Helper function to get URL parameter
+	function getUrlParameter(name) {
+		name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+		var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+		var results = regex.exec(location.search);
+		return results === null ? null : decodeURIComponent(results[1].replace(/\+/g, ' '));
 	}
 
 	$('#toggle-training').on('click', function () {
-		updateTabStates('toggle-training');
-		$('#requests-table-title').text('My Training Requests')
-		showRequestsList();
-		filterRequests(true);
+		localStorage.setItem('user_requests_view', 'training');
+		setView('training');
 	});
 
 	$('#toggle-service').on('click', function () {
-		updateTabStates('toggle-service');
-		$('#requests-table-title').text('My Service Requests');
-		showRequestsList();
-		filterRequests(false);
+		localStorage.setItem('user_requests_view', 'service');
+		setView('service');
 	});
 
 	$('#toggle-requirements').on('click', function () {
-		updateTabStates('toggle-requirements');
-		showRequirementsTable();
+		localStorage.setItem('user_requests_view', 'requirements');
+		setView('requirements');
 	});
-
-	// Initial filter: show training requests
-	showRequestsList();
-	filterRequests(true);
-
-	// Expand/collapse details for each request card
-	$(document).on('click', '.request-card-button', function (e) {
-		var $button = $(this);
-		var $card = $button.closest('.request-card');
-		var $details = $card.find('.details-section');
-		var $icon = $button.find('.glyphicon');
-		var isExpanded = $button.attr('aria-expanded') === 'true';
-
-		$details.toggle();
-		$icon.toggleClass('glyphicon-chevron-right glyphicon-chevron-down');
-		$button.attr('aria-expanded', !isExpanded);
-	});
-
-	// Prevent form/link clicks within cards from toggling
-	$(document).on('click', '.request-card form, .request-card a', function(e) {
-		e.stopPropagation();
-	});
-
 
 	// On page load, determine the view to show based on:
 	// 1. URL parameter (highest priority)
 	// 2. force_requirements_redirect from backend
 	// 3. localStorage (fallback)
 	var urlView = getUrlParameter('view');
-	var forceRequirements = {{ force_requirements_redirect| yesno: "true,false"
-	}};
+	var forceRequirements = {{ force_requirements_redirect|yesno:"true,false" }};
 	var savedView = localStorage.getItem('user_requests_view');
 
 	var initialView = 'training'; // default
@@ -673,6 +661,16 @@
 
 	setView(initialView);
 
+	// Row-by-row expand/collapse
+	$(document).on('click', '.request-row', function () {
+		var reqId = $(this).data('request-id');
+		var $detailsRow = $('.requirements-row[data-request-id="' + reqId + '"]');
+		var $icon = $(this).find('.glyphicon');
+		if ($(this).is(':visible')) {
+			$detailsRow.toggle();
+			$icon.toggleClass('glyphicon-chevron-right glyphicon-chevron-down');
+		}
+	});
 })();
 </script>
 
