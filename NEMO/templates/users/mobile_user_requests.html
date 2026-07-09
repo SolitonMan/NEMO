@@ -647,6 +647,32 @@
 	$(document).on('click', '.request-card form, .request-card a', function(e) {
 		e.stopPropagation();
 	});
+
+
+	// On page load, determine the view to show based on:
+	// 1. URL parameter (highest priority)
+	// 2. force_requirements_redirect from backend
+	// 3. localStorage (fallback)
+	var urlView = getUrlParameter('view');
+	var forceRequirements = {{ force_requirements_redirect| yesno: "true,false"
+	}};
+	var savedView = localStorage.getItem('user_requests_view');
+
+	var initialView = 'training'; // default
+	if (urlView && ['training', 'service', 'requirements'].indexOf(urlView) !== -1) {
+		// URL parameter takes highest priority
+		initialView = urlView;
+		// Update localStorage so the view persists
+		localStorage.setItem('user_requests_view', urlView);
+	} else if (forceRequirements) {
+		initialView = 'requirements';
+		localStorage.setItem('user_requests_view', 'requirements');
+	} else if (savedView) {
+		initialView = savedView;
+	}
+
+	setView(initialView);
+
 })();
 </script>
 
