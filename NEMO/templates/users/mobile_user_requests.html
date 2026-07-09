@@ -233,243 +233,211 @@
 			</button>
 		</div>
 
-
-		{% if user_service_requests %}
-		<div id="requests-table-container">
+		<!-- Training/Service Requests List -->
+		<div id="requests-list-container" role="tabpanel" aria-label="Service and training requests list">
 			<h3 id="requests-table-title">My Training Requests</h3>
-			<table class="table table-striped">
-				<thead>
-					<tr>
-						<th></th>
-						<th>Request Type</th>
-						<th>Core</th>
-						<th>Project</th>
-						<th>Status</th>
-						<th>Requested</th>
-						<th>Requirement Completion Progress</th>
-					</tr>
-				</thead>
-				<tbody>
-					{% for req in user_service_requests %}
-					<tr class="request-row" data-request-id="{{ req.id }}" data-training-request="{{ req.training_request }}" style="cursor:pointer;">
-						<td><span class="glyphicon glyphicon-chevron-right"></span></td>
-						<td><span style="font-weight: bold;">{{ req.service_type.name }}</span></td>
-						<td>{{ req.service_type.core.name }}</td>
-						<td>{{ req.project.name }}</td>
-						<td><span style="background-color: {% if r.status == 'Not Started' %}#ffcccc{% endif %}{% if r.status == 'Completed' %}#ccffcc{% endif %}{% if r.status == 'In Progress' %}#ffffcc{% endif %};">{{ req.status }}</span></td>
-						<td>{{ req.created|date:"Y-m-d H:i" }}</td>
-						<td>
-							{% with reqs=request_requirements|get_item:req.id %}
-							{% with total=reqs|length completed=reqs|completed_count %}
-							{% if total > 0 %}
-							<div style="display: flex; align-items: center; min-width: 120px;">
-								<div class="progress" style="flex: 1 1 auto; margin-bottom: 0; height: 18px; margin-right: 8px;">
-									<div class="progress-bar" role="progressbar"
-										 style="width: {% if total > 0 %}{{ completed|floatformat:2|divided_by:total|floatformat:2 }}%{% else %}0{% endif %};{% if total == completed %}background-color: #4EA74E!important;background-image:none;{% endif %}"
-										 aria-valuenow="{{ completed }}" aria-valuemin="0" aria-valuemax="{{ total }}">
-									</div>
-								</div>
-								<span style="white-space: nowrap; font-size: 12px;">
-									{{ completed }}/{{ total }}
-								</span>
-							</div>
-							{% else %}
-							No requirements
-							{% endif %}
-							{% endwith %}
-							{% endwith %}
-						</td>
-					</tr>
-					<tr class="requirements-row" data-request-id="{{ req.id }}" style="display:none;">
-						<td colspan="7">
-							<!-- Introductory details -->
-							<div>
-								{% if req.core.id == mcl_core %}
-								<strong>Case Number:</strong> {{ req.case_number|default:"-" }}<br>
-								{% endif %}
-								<strong>Contact:</strong>
-								{% if req.owner %}
-								<a href="mailto:{{ req.owner }}">{{ req.owner_first_name }} {{ req.owner_last_name }}</a>
-								{% else %}
-								-
-								{% endif %}
-								<br>
-								<strong>Description:</strong> {{ req.description|default:"-" }}<br>
-								{% if req.core.id == mcl_core %}
-								<strong>Training Requested:</strong> {% if req.training_request %}Yes{% else %}No{% endif %}<br>
-								<strong>Training Approved:</strong> {% if req.training_approved %}Yes{% else %}No{% endif %}<br>
-								{% endif %}
-								<strong>Last Updated:</strong> {{ req.updated|date:"Y-m-d H:i" }}<br><br>
-
-								{% with answers=req.get_answers_dict %}
-								{% if answers %}
-								<br>
-								<strong>Additional Information:</strong><br>
-								<div style="margin-left: 20px;">
-									{% for field_name, data in answers.items %}
-									<strong>{{ data.question_text }}:</strong> {{ data.display_value }}<br>
-									{% endfor %}
-								</div>
-								{% endif %}
-								{% endwith %}
-
-								{% if req.core.id == nano_core or req.core.id == twodcc_core %}
-								{% if req.status != 'cancelled' and req.status != 'completed' %}
-								<button class="btn btn-danger btn-sm" onclick="showCancelModal({{ req.id }})">Cancel Request</button>
-								{% endif %}
-								{% endif %}
-							</div>
-							<hr>
-							<strong>Requirements for this request:</strong>
-							<table class="table highlight">
-								<thead>
-									<tr>
-										<th>Requirement</th>
-										<th>Status</th>
-										<th>Complete this requirement</th>
-										<th>Est.</th>
-										<th>Prerequisites</th>
-									</tr>
-								</thead>
-								<tbody>
-									{% for r in request_requirements|get_item:req.id %}
-									{% if req.training_request %}
-									<tr style="margin: 3px 3px 3px 3px;">
-										<td style="width:20%;">{{ r.name }}</td>
-										<td style="width:10%;">
-											{% if r.has_progress %}
-											<span style="font-weight:bold; font-size: 10pt; border-radius: 12px; background-color: {% if r.status == 'Not Started' %}#ffcccc{% endif %}{% if r.status == 'Completed' %}#ccffcc{% endif %}{% if r.status == 'In Progress' %}#ffffcc{% endif %};">{{ r.status|default:"Not Started" }}</span>
-											{% else %}
-											Not assigned
-											{% endif %}
-										</td>
-										<td style="width:25%;"><a href="{{ r.resource_link }}" target="_blank">{{ r.resource_link_name }}</a></td>
-										<td style="width:5%;">{{ r.expected_completion_time }}</td>
-										<td>{{ r.prerequisites }}</td>
-									</tr>
-									{% else %}
-									{% if r.auto_include %}
-									<tr style="margin: 3px 3px 3px 3px;">
-										<td style="width:20%;">{{ r.name }}</td>
-										<td style="width:10%;">
-											{% if r.has_progress %}
-											<span style="font-weight:bold; font-size: 10pt; border-radius: 12px; background-color: {% if r.status == 'Not Started' %}#ffcccc{% endif %}{% if r.status == 'Completed' %}#ccffcc{% endif %}{% if r.status == 'In Progress' %}#ffffcc{% endif %};">{{ r.status|default:"Not Started" }}</span>
-											{% else %}
-											Not assigned
-											{% endif %}
-										</td>
-										<td style="width:25%;"><a href="{{ r.resource_link }}" target="_blank">{{ r.resource_link_name }}</a></td>
-										<td style="width:5%;">{{ r.expected_completion_time }}</td>
-										<td>{{ r.prerequisites }}</td>
-									</tr>
-									{% endif %}
-									{% endif %}
-									{% empty %}
-									<tr><td>No requirements for this request.</td></tr>
-									{% endfor %}
-								</tbody>
-							</table>
-						</td>
-					</tr>
-					{% endfor %}
-				</tbody>
-			</table>
-		</div>
-		{% else %}
-		<p>No service requests found.</p>
-		{% endif %}
-
-
-		<div id="requirements-table-container" style="display:none;">
-			<h3>My Requirements</h3>
-			<table class="table table-striped">
-				<thead>
-					<tr>
-						<th style="width: 30px;"></th>
-						<th class="sortable">Requirement</th>
-						<th class="sortable">Status</th>
-						<th class="sortable">Added</th>
-						<th class="sortable">Completed On</th>
-						<th class="sortable">Complete this requirement</th>
-						<th class="sortable">Prerequisites</th>
-						<th class="sortable">Est. Completion (minutes)</th>
-						<th></th>
-					</tr>
-				</thead>
-				<tbody>
-					{% for req in requirements_table %}
-					<tr class="requirement-main-row" data-requirement-id="{{ req.id }}">
-						<td>
-							<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
-						</td>
-						<td><span style="font-weight: bold;">{{ req.name }}</span></td>
-						<td><span style="font-weight: bold; font-size: 10pt; border-radius: 12px; background-color:{% if req.status_value == 'Not Started' %}#ffcccc{% endif %}{% if req.status_value == 'Completed' %}#ccffcc{% endif %}{% if req.status_value == 'In Progress' %}#ffffcc{% endif %};">{{ req.status_value|default:"Not Started" }}</span></td>
-						<td>{{ req.created|date:"m/d/Y"|default:"" }}</td>
-						<td>{{ req.completed_on|date:"m/d/Y"|default:"" }}</td>
-						<td>
-							{% if req.resource_link and req.resource_link != 'NULL' %}
-							<a href="{{ req.resource_link }}" target="_blank">{{ req.resource_link_name }}</a>
-							{% else %}
-							N/A
-							{% endif %}
-						</td>
-						<td>{{ req.prerequisites }}</td>
-						<td>{% if req.expected_completion_time %}{{ req.expected_completion_time }}{% endif %}</td>
-						<td>
-							{% if not req.automated_update %}
-							{% if req.status_value == 'Completed' %}
-							<form method="post" action="{% url 'unmark_user_requirement' %}" onsubmit="return confirm('Please confirm that you wish to mark the requirement {{ req.name }} as incomplete.  Once you make this change you will have to sign again to mark it completed.');">
-								{% csrf_token %}
-								<input type="hidden" name="requirement_id" value="{{ req.id }}">
-								<button type="submit" class="btn btn-warning btn-sm">Unmark Completed</button>
-							</form>
-							{% elif req.status_value != 'Completed' %}
-							<form method="post" action="{% url 'complete_user_requirement' %}" onsubmit="return prompt('Please enter your email ({{ request.user.email }}) to indicate you have completed the requirement - {{ req.name }}') == '{{ request.user.email }}';">
-								{% csrf_token %}
-								<input type="hidden" name="requirement_id" value="{{ req.id }}">
-								<button type="submit" class="btn btn-primary btn-sm">Mark Completed</button>
-							</form>
-							{% endif %}
-							{% endif %}
-							{% if req.automated_update and req.status_value != 'Completed' %}
-							<span class="text-muted">Automated Update</span>
-							{% endif %}
-						</td>
-					</tr>
-					<tr class="requirement-description-row" data-requirement-id="{{ req.id }}" style="display:none;">
-						<td colspan="9">
-							<div class="requirement-description-content">
-								{% if req.description %}
-								{{ req.description|safe }}
-								{% else %}
-								<em>No description available for this requirement.</em>
-								{% endif %}
-							</div>
-						</td>
-					</tr>
-					{% endfor %}
-				</tbody>
-			</table>
-		</div>
-
-		<div class="modal fade" id="cancelRequestModal" tabindex="-1" role="dialog" aria-labelledby="cancelRequestModalLabel" aria-hidden="true">
-			<div class="modal-dialog" role="document">
-				<div class="modal-content">
-					<div class="modal-header">
-						<h5 class="modal-title" id="cancelRequestModalLabel">Cancel Request</h5>
-						<button type="button" class="close" data-dismiss="modal" aria-label="Close">
-							<span aria-hidden="true">&times;</span>
-						</button>
+			{% for req in user_service_requests %}
+			<div class="request-card"
+				 data-request-id="{{ req.id }}"
+				 data-training-request="{{ req.training_request|yesno:'true,false' }}">
+				<button class="request-card-button"
+						aria-expanded="false"
+						aria-controls="details-{{ req.id }}"
+						aria-label="Toggle details for {{ req.service_type.name }} request">
+					<div class="request-header">
+						<span>
+							{{ req.service_type.name }}
+						</span>
+						<span class="request-status
+								{% if req.status == 'Not Started' %}status-not-started{% endif %}
+								{% if req.status == 'Completed' %}status-completed{% endif %}
+								{% if req.status == 'In Progress' %}status-in-progress{% endif %}"
+							  role="status"
+							  aria-label="Status: {{ req.status }}">
+							{{ req.status }}
+						</span>
+						<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
 					</div>
-					<div class="modal-body">
-						<textarea id="cancelReason" class="form-control" placeholder="Add a reason (optional)"></textarea>
+				</button>
+				<div>
+					<strong>Core:</strong> {{ req.service_type.core.name }}<br>
+					<strong>Project:</strong> {{ req.project.name }}<br>
+					<strong>Requested:</strong> {{ req.created|date:"Y-m-d H:i" }}<br>
+					<strong>Training:</strong> {% if req.training_request %}Yes{% else %}No{% endif %}
+				</div>
+				<div style="margin-top: 8px;">
+					{% with reqs=request_requirements|get_item:req.id %}
+					{% with total=reqs|length completed=reqs|completed_count %}
+					<div style="display: flex; align-items: center;">
+						<div class="progress" style="flex: 1 1 auto; margin-right: 8px;">
+							<div class="progress-bar"
+								 role="progressbar"
+								 style="width: {% if total > 0 %}{{ completed|floatformat:2|divided_by:total|floatformat:2 }}{% else %}0{% endif %}%;"
+								 aria-valuenow="{{ completed }}"
+								 aria-valuemin="0"
+								 aria-valuemax="{{ total }}"
+								 aria-label="Requirements progress: {{ completed }} of {{ total }} completed">
+							</div>
+						</div>
+						<span style="font-size: 12px;" aria-hidden="true">{{ completed }}/{{ total }}</span>
 					</div>
-					<div class="modal-footer">
-						<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-						<button type="button" class="btn btn-danger" id="confirmCancelBtn">Confirm</button>
+					{% endwith %}
+					{% endwith %}
+				</div>
+				<div class="details-section"
+					 id="details-{{ req.id }}"
+					 role="region"
+					 aria-label="Details for {{ req.service_type.name }} request">
+					<hr>
+					<div>
+						{% if req.core.id == mcl_core %}
+						<strong>Case Number:</strong> {{ req.case_number|default:"-" }}<br>
+						{% endif %}
+						<strong>Contact:</strong>
+						{% if req.owner %}
+						<a href="mailto:{{ req.owner }}" aria-label="Email {{ req.owner_first_name }} {{ req.owner_last_name }}">
+							{{ req.owner_first_name }} {{ req.owner_last_name }}
+						</a>
+						{% else %}
+						-
+						{% endif %}
+						<br>
+						<strong>Description:</strong> {{ req.description|default:"-" }}<br>
+						{% if req.core.id == mcl_core %}
+						<strong>Training Requested:</strong> {% if req.training_request %}Yes{% else %}No{% endif %}<br>
+						<strong>Training Approved:</strong> {% if req.training_approved %}Yes{% else %}No{% endif %}<br>
+						{% endif %}
+						<strong>Last Updated:</strong> {{ req.updated|date:"Y-m-d H:i" }}
 					</div>
+					<hr>
+					<strong>Requirements:</strong>
+					{% with reqs=request_requirements|get_item:req.id %}
+					{% if reqs %}
+					<ul style="padding-left: 18px;">
+						{% for r in reqs %}
+						<li>
+							<span style="font-weight: bold;">{{ r.name }}</span>
+							<span class="request-status
+												{% if r.status == 'Not Started' %}status-not-started{% endif %}
+												{% if r.status == 'Completed' %}status-completed{% endif %}
+												{% if r.status == 'In Progress' %}status-in-progress{% endif %}"
+								  role="status"
+								  aria-label="Status: {{ r.status|default:'Not Started' }}">
+								{{ r.status|default:"Not Started" }}
+							</span>
+							<br>
+							<span style="font-size: 12px;">
+								{{ r.description }}<br>
+								{% if r.resource_link %}
+								<a href="{{ r.resource_link }}"
+								   target="_blank"
+								   rel="noopener noreferrer"
+								   aria-label="Open {{ r.resource_link_name }} in new tab">
+									{{ r.resource_link_name }}
+									<span class="visually-hidden">(opens in new tab)</span>
+								</a>
+								{% endif %}
+								{% if r.expected_completion_time %}
+								&nbsp;Est: {{ r.expected_completion_time }}
+								{% endif %}
+								{% if r.prerequisites %}
+								&nbsp;Prereq: {{ r.prerequisites }}
+								{% endif %}
+							</span>
+						</li>
+						{% endfor %}
+					</ul>
+					{% else %}
+					<p>No requirements for this request.</p>
+					{% endif %}
+					{% endwith %}
 				</div>
 			</div>
+			{% endfor %}
+		</div>
+
+		<!-- Requirements List (Mobile Friendly) -->
+		<div id="requirements-table-container"
+			 style="display:none;"
+			 role="tabpanel"
+			 aria-label="All requirements list">
+			<h3>My Requirements</h3>
+			{% if requirements_table %}
+			<div>
+				{% for req in requirements_table %}
+				<div class="request-card" style="margin-bottom: 12px;">
+					<div class="request-header" style="font-size:15px;">
+						<span>{{ req.name }}</span>
+						<span class="request-status
+									{% if req.status_value == 'Not Started' %}status-not-started{% endif %}
+									{% if req.status_value == 'Completed' %}status-completed{% endif %}
+									{% if req.status_value == 'In Progress' %}status-in-progress{% endif %}"
+							  role="status"
+							  aria-label="Status: {{ req.status_value|default:'Not Started' }}">
+							{{ req.status_value|default:"Not Started" }}
+						</span>
+					</div>
+					<div style="font-size:13px;">
+						<strong>Added:</strong> {{ req.created|date:"m/d/Y"|default:"" }}<br>
+						<strong>Completed On:</strong> {{ req.completed_on|date:"m/d/Y"|default:"" }}<br>
+						<strong>Resources:</strong>
+						{% if req.resource_link and req.resource_link != 'NULL' %}
+						<a href="{{ req.resource_link }}"
+						   target="_blank"
+						   rel="noopener noreferrer"
+						   aria-label="Open {{ req.resource_link_name }} in new tab">
+							{{ req.resource_link_name }}
+							<span class="visually-hidden">(opens in new tab)</span>
+						</a>
+						{% else %}
+						N/A
+						{% endif %}
+						<br>
+						<strong>Prerequisites:</strong> {{ req.prerequisites|default:"-" }}<br>
+						<strong>Estimated Time:</strong> {{ req.expected_completion_time|default:"-" }}
+					</div>
+					<div style="margin-top:10px;">
+						{% if not req.automated_update %}
+						{% if req.status_value == 'Completed' %}
+						<form method="post"
+							  action="{% url 'unmark_user_requirement' %}"
+							  style="display:inline;"
+							  onsubmit="return confirm('Please confirm that you wish to mark the requirement {{ req.name }} as incomplete.  Once you make this change you will have to sign again to mark it completed.');"
+							  aria-label="Unmark requirement {{ req.name }} as completed">
+							{% csrf_token %}
+							<input type="hidden" name="requirement_id" value="{{ req.id }}" aria-label="Requirement ID">
+							<button type="submit"
+									class="btn btn-warning btn-xs btn-block"
+									aria-label="Unmark {{ req.name }} as completed">
+								Unmark Completed
+							</button>
+						</form>
+						{% elif req.status_value != 'Completed' %}
+						<form method="post"
+							  action="{% url 'complete_user_requirement' %}"
+							  style="display:inline;"
+							  onsubmit="return prompt('Please enter your username ({{ request.user.username }}) to indicate you have completed the requirement - {{ req.name }}') == '{{ request.user.username }}';"
+							  aria-label="Mark requirement {{ req.name }} as completed">
+							{% csrf_token %}
+							<input type="hidden" name="requirement_id" value="{{ req.id }}" aria-label="Requirement ID">
+							<button type="submit"
+									class="btn btn-primary btn-xs btn-block"
+									aria-label="Mark {{ req.name }} as completed">
+								Mark Completed
+							</button>
+						</form>
+						{% endif %}
+						{% endif %}
+						{% if req.automated_update and req.status_value != 'Completed' %}
+						<span class="text-muted" role="status">Automated Update</span>
+						{% endif %}
+					</div>
+				</div>
+				{% endfor %}
+			</div>
+			{% else %}
+			<p>No requirements found.</p>
+			{% endif %}
 		</div>
 
 		<!-- Request Wizard Modal -->
@@ -598,7 +566,7 @@
 
 	// Filter and expand/collapse logic for requests table
 	function filterRequests(showTraining) {
-		$('.request-row').each(function () {
+		$('.request-card').each(function () {
 			var isTraining = $(this).data('training-request') === true || $(this).data('training-request') === 'True' || $(this).data('training-request') === 'true';
 			var reqId = $(this).data('request-id');
 			var $requirementsRow = $('.requirements-row[data-request-id="' + reqId + '"]');
@@ -615,12 +583,12 @@
 	}
 
 	function showRequestsTable() {
-		$('#requests-table-container').show();
+		$('#requests-list-container').show();
 		$('#requirements-table-container').hide();
 	}
 
 	function showRequirementsTable() {
-		$('#requests-table-container').hide();
+		$('#requests-list-container').hide();
 		$('#requirements-table-container').show();
 	}
 
