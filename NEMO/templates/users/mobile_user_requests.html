@@ -1085,4 +1085,24 @@
 		});
 	})();
 </script>
+
+<script>
+	(function () {
+		var $ = window.jQuery;
+		if (!$) return;
+
+		// Card expand/collapse for request cards
+		$(document).on('click', '.request-card-button', function () {
+			var $button = $(this);
+			var $card = $button.closest('.request-card');
+			var $detailsSection = $card.find('.details-section');
+			var $icon = $button.find('.glyphicon');
+			var isExpanded = $button.attr('aria-expanded') === 'true';
+
+			$detailsSection.slideToggle(200);
+			$button.attr('aria-expanded', !isExpanded);
+			$icon.toggleClass('glyphicon-chevron-right glyphicon-chevron-down');
+		});
+	})();
+</script>
 {% endblock %}
