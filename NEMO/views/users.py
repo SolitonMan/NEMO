@@ -88,13 +88,13 @@ def create_or_modify_user(request, user_id):
 				dictionary['externally_managed_physical_access_levels'] = result.json()
 			else:
 				dictionary['identity_service_available'] = False
-				warning_message = 'The identity service encountered a problem while attempting to return a list of externally managed areas. The NEMO administrator has been notified to resolve the problem.'
+				warning_message = 'The identity service encountered a problem while attempting to return a list of externally managed areas. The LEO administrator has been notified to resolve the problem.'
 				dictionary['warning'] = warning_message
 				warning_message += ' The HTTP error was {}: {}'.format(result.status_code, result.text)
 				logger.error(warning_message)
 		except Exception as e:
 			dictionary['identity_service_available'] = False
-			warning_message = 'There was a problem communicating with the identity service. NEMO is unable to retrieve the list of externally managed areas. The NEMO administrator has been notified to resolve the problem.'
+			warning_message = 'There was a problem communicating with the identity service. LEO is unable to retrieve the list of externally managed areas. The LEO administrator has been notified to resolve the problem.'
 			dictionary['warning'] = warning_message
 			warning_message += ' An exception was encountered: ' + type(e).__name__ + ' - ' + str(e)
 			logger.error(warning_message)
@@ -117,13 +117,13 @@ def create_or_modify_user(request, user_id):
 					dictionary['warning'] = "The identity service could not find username {} on the {} domain. Does the user's account reside on a different domain? If so, select that domain now and save the user information.".format(user.username, user.domain)
 				else:
 					dictionary['identity_service_available'] = False
-					warning_message = 'The identity service encountered a problem while attempting to search for a user. The NEMO administrator has been notified to resolve the problem.'
+					warning_message = 'The identity service encountered a problem while attempting to search for a user. The LEO administrator has been notified to resolve the problem.'
 					dictionary['warning'] = warning_message
 					warning_message += ' The HTTP error was {}: {}'.format(result.status_code, result.text)
 					logger.error(warning_message)
 		except Exception as e:
 			dictionary['identity_service_available'] = False
-			warning_message = 'There was a problem communicating with the identity service. NEMO is unable to search for a user. The NEMO administrator has been notified to resolve the problem.'
+			warning_message = 'There was a problem communicating with the identity service. LEO is unable to search for a user. The LEO administrator has been notified to resolve the problem.'
 			dictionary['warning'] = warning_message
 			warning_message += ' An exception was encountered: ' + type(e).__name__ + ' - ' + str(e)
 			logger.error(warning_message)
@@ -194,11 +194,11 @@ def deactivate(request, user_id):
 				# If the delete succeeds, or the user is not found, then everything is ok.
 				if result.status_code not in (HTTPStatus.OK, HTTPStatus.NOT_FOUND):
 					logger.error(f'The identity service encountered a problem while attempting to delete a user. The HTTP error is {result.status_code}: {result.text}')
-					dictionary['warning'] = 'The user information was not modified because the identity service could not delete the corresponding domain account. The NEMO administrator has been notified to resolve the problem.'
+					dictionary['warning'] = 'The user information was not modified because the identity service could not delete the corresponding domain account. The LEO administrator has been notified to resolve the problem.'
 					return render(request, 'users/safe_deactivation.html', dictionary)
 			except Exception as e:
 				logger.error('There was a problem communicating with the identity service while attempting to delete a user. An exception was encountered: ' + type(e).__name__ + ' - ' + str(e))
-				dictionary['warning'] = 'The user information was not modified because the identity service could not delete the corresponding domain account. The NEMO administrator has been notified to resolve the problem.'
+				dictionary['warning'] = 'The user information was not modified because the identity service could not delete the corresponding domain account. The LEO administrator has been notified to resolve the problem.'
 				return render(request, 'users/safe_deactivation.html', dictionary)
 
 		if request.POST.get('cancel_reservations') == 'on':
@@ -948,7 +948,7 @@ Requester: {usr.user.get_full_name()}
 Project: {usr.project.name if usr.project else 'N/A'}
 Cancellation Reason: {reason}
 
-You can view more details in NEMO.
+You can view more details in LEO.
 
 Thank you,
 LEO Admin Team"""

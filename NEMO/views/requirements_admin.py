@@ -333,7 +333,7 @@ def complete_user_requirement(request):
 				
 				<p>Please proceed with the next steps for this service request.</p>
 				
-				<p>Best regards,<br>NEMO System</p>
+				<p>Best regards,<br>LEO Admin</p>
 				"""
 				
 				try:
