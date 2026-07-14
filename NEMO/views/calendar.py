@@ -1746,7 +1746,8 @@ def find_available_slots(list_of_events, duration_minutes, window_start, window_
 				print(f"DEBUG: Added slot {len(slots)}: {slot_start} to {slot_end}")
 				if len(slots) >= max_results:
 					return slots
-					slot_start = slot_end  # Jump to end of this slot instead of stepping by 15 min
+				slot_start = slot_end  # Jump to end of this slot instead of stepping by 15 min				
+				print(f"DEBUG: Updated slot_start to: {slot_start}")
 			else:
 				slot_start += step  # Only step by 15 min if slot wasn't in business hours
 	return slots
