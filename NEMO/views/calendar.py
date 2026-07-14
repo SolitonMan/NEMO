@@ -1743,6 +1743,7 @@ def find_available_slots(list_of_events, duration_minutes, window_start, window_
 			slot_end = slot_start + delta
 			if is_business_hours(slot_start, slot_end):
 				slots.append((slot_start, slot_end, tool_id))
+				print(f"DEBUG: Added slot {len(slots)}: {slot_start} to {slot_end}")
 				if len(slots) >= max_results:
 					return slots
 					slot_start = slot_end  # Jump to end of this slot instead of stepping by 15 min
