@@ -1323,8 +1323,8 @@ def save_usage_event(request):
 			msg = 'The start date and end date are required to save an ad hoc usage event.'
 			raise Exception(msg)
 
-		logger.error(str(ad_hoc_start))
-		logger.error(str(ad_hoc_end))
+		#logger.error(str(ad_hoc_start))
+		#logger.error(str(ad_hoc_end))
 
 		ad_hoc_start = parse_datetime(ad_hoc_start)
 		ad_hoc_start = ad_hoc_start.astimezone(timezone.get_current_timezone())

@@ -618,8 +618,8 @@ def save_contest(request):
 				if id not in deletion:
 					deletion[id] = True
 
-	logger.error(str(submission))
-	logger.error(str(deletion))
+	#logger.error(str(submission))
+	#logger.error(str(deletion))
 	
 	if contest_type == "Staff Charge":
 		staff_charge_id = request.POST.get("staff_charge_id")
