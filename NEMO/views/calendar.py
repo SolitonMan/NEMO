@@ -1845,12 +1845,6 @@ def tool_training_schedule(request):
 			user_busy = fetch_busy(user_url)
 			owner_busy = fetch_busy(owner_url)
 
-			# Tool reservations
-			tool_busy = [
-				{"start": ensure_datetime(r.start), "end": ensure_datetime(r.end)}
-				for r in Reservation.objects.filter(tool=tool, cancelled=False, missed=False, shortened=False)
-			]
-
 			# Find common free slots (30 min, next 2 weeks, max 3)
 			earliest_date_str = request.GET.get("earliest_date")
 			if earliest_date_str:
@@ -1864,6 +1858,19 @@ def tool_training_schedule(request):
 				slot_duration = duration
 			else:
 				slot_duration = 30  # minutes
+
+			# Tool reservations
+			tool_busy = [
+				{"start": ensure_datetime(r.start), "end": ensure_datetime(r.end)}
+				for r in Reservation.objects.filter(
+					tool=tool, 
+					cancelled=False, 
+					missed=False, 
+					shortened=False,
+					end__gte=window_start,
+					start__lte=window_end
+				)
+			]
 
 			events_grouped = [tool_busy, user_busy, owner_busy]
 			available_slots = find_available_slots(events_grouped, slot_duration, window_start, window_end, 3, tool.id)
