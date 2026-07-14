@@ -1742,10 +1742,12 @@ def find_available_slots(list_of_events, duration_minutes, window_start, window_
 		while slot_start + delta <= e:
 			slot_end = slot_start + delta
 			if is_business_hours(slot_start, slot_end):
-				slots.append((slot_start, slot_end, tool_id))  # Include tool_id
+				slots.append((slot_start, slot_end, tool_id))
 				if len(slots) >= max_results:
 					return slots
-			slot_start += step
+					slot_start = slot_end  # Jump to end of this slot instead of stepping by 15 min
+			else:
+				slot_start += step  # Only step by 15 min if slot wasn't in business hours
 	return slots
 
 
