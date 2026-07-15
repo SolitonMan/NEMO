@@ -76,7 +76,7 @@ def create_or_modify_user(request, user_id):
 
 	requirements = Requirement.objects.all().order_by('name')
 	assigned_requirements = set(
-		UserRequirementProgress.objects.filter(user=user).values_list('requirement_id', flat=True).order_by('name')
+		UserRequirementProgress.objects.filter(user=user).values_list('requirement_id', flat=True).order_by('requirement__name')
 	)
 	dictionary['requirements'] = requirements
 	dictionary['assigned_requirements'] = assigned_requirements
