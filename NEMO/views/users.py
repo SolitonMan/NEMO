@@ -74,9 +74,9 @@ def create_or_modify_user(request, user_id):
 	except:
 		user = None
 
-	requirements = Requirement.objects.all()
+	requirements = Requirement.objects.all().order_by('name')
 	assigned_requirements = set(
-		UserRequirementProgress.objects.filter(user=user).values_list('requirement_id', flat=True)
+		UserRequirementProgress.objects.filter(user=user).values_list('requirement_id', flat=True).order_by('name')
 	)
 	dictionary['requirements'] = requirements
 	dictionary['assigned_requirements'] = assigned_requirements
@@ -790,7 +790,7 @@ def staff_service_requests(request):
 		status__iexact='CLOSED'
 	).select_related('project', 'user', 'service_type', 'tool').exclude(
 		service_type__name__in=Requirement.objects.values_list('name', flat=True)
-	).order_by('-updated')[:5]
+	).order_by('-updated')
 
 	placeholder_req_ids = set(
 		Requirement.objects.filter(

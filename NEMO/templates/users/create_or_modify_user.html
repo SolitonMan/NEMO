@@ -369,19 +369,31 @@
 			var $ = window.jQuery;
 			if (!$) return;
 
-			$('#add_requirement').on('click', function() {
-				$('#available_requirements option:selected').each(function() {
+			$('#add_requirement').on('click', function () {
+				$('#available_requirements option:selected').each(function () {
 					$('#assigned_requirements').append($(this).clone());
 					$(this).remove();
 				});
+				sortSelectOptions('#assigned_requirements');
+				sortSelectOptions('#available_requirements');
 			});
 
-			$('#remove_requirement').on('click', function() {
-				$('#assigned_requirements option:selected').each(function() {
+			$('#remove_requirement').on('click', function () {
+				$('#assigned_requirements option:selected').each(function () {
 					$('#available_requirements').append($(this).clone());
 					$(this).remove();
 				});
+				sortSelectOptions('#available_requirements');
+				sortSelectOptions('#assigned_requirements');
 			});
+
+			function sortSelectOptions(selectId) {
+				var options = $(selectId + ' option');
+				options.sort(function (a, b) {
+					return a.text.localeCompare(b.text);
+				});
+				$(selectId).empty().append(options);
+			}
 
 			// On form submit, select all assigned requirements so they are posted
 			$('#user_form').on('submit', function() {
