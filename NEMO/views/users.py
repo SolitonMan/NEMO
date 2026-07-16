@@ -155,6 +155,7 @@ def create_or_modify_user(request, user_id):
 				urp.updated = timezone.now()
 				if rqmt.autocompleted:
 					urp.status = 'completed'
+					urp.completed_on = timezone.now()
 				urp.save()
 
 		user = form.save(commit=False)

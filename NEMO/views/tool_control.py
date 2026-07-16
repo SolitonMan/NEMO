@@ -118,7 +118,7 @@ def create_or_modify_tool(request, tool_id):
 			tmp =None
 			pqd = None
 
-		dictionary['probationary_qualifications'] = tmp
+		dictionary['probationary_qualifications'] = probationary_qualifications
 		dictionary['pqd'] = pqd
 		dictionary['users'] = User.objects.filter(is_active=True, projects__active=True).distinct()
 		dictionary['tool'] = tool
