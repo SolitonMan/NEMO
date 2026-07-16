@@ -1263,7 +1263,7 @@ def do_cancel_unused_reservations():
 			continue
 		# Calculate the timestamp of how long a user can be late for a reservation.
 		threshold = (timezone.now() - timedelta(minutes=tool.missed_reservation_threshold))
-		threshold = datetime.replace(threshold, second=0, microsecond=0)  # Round down to the nearest minute.
+		threshold = datetime.datetime.replace(threshold, second=0, microsecond=0)  # Round down to the nearest minute.
 		# Find the reservations that began exactly at the threshold.
 		reservation = Reservation.objects.filter(cancelled=False, missed=False, shortened=False, tool=tool, user__is_staff=False, start=threshold, end__gt=timezone.now())
 		for r in reservation:
