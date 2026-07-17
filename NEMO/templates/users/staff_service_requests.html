@@ -158,7 +158,7 @@
 		</button>
 	</div>
 	<div class="filter-input-wrapper">
-		<input type="text" class="filter-input" id="open-filter-input" placeholder="Filter by case #, date, user, service type, tool, or description..." aria-label="Filter open requests">
+		<input type="text" class="filter-input" id="open-filter-input" placeholder="Filter by case #, core, date, user, service type, tool, or description..." aria-label="Filter open requests">
 		<button class="filter-clear" id="open-filter-clear" aria-label="Clear filter">&times;</button>
 	</div>
 	<span class="request-count" id="open-request-count"></span>
@@ -169,6 +169,7 @@
 		<tr>
 			<th></th>
 			<th>Case #</th>
+			<th>Core</th>
 			<th>Request Date</th>
 			<th>User</th>
 			<th>Service Type</th>
@@ -180,9 +181,10 @@
 	</thead>
 	<tbody>
 		{% for req in open_requests %}
-		<tr class="request-row" data-request-id="{{ req.id }}" data-training-request="{{ req.training_request }}" data-assigned-to="{{ req.assignee.id }}" data-case-number="{{ req.case_number }}" data-request-date="{{ req.created|date:'Y-m-d' }}" data-user-name="{{ req.user.get_full_name }}" data-service-type="{{ req.service_type.name }}" data-tool-name="{{ req.tool.name }}" data-description="{{ req.description|default:'' }}" style="cursor:pointer;">
+		<tr class="request-row" data-request-id="{{ req.id }}" data-training-request="{{ req.training_request }}" data-assigned-to="{{ req.assignee.id }}" data-case-number="{{ req.case_number }}" data-request-date="{{ req.created|date:'Y-m-d' }}" data-user-name="{{ req.user.get_full_name }}" data-service-type="{{ req.service_type.name }}" data-tool-name="{{ req.tool.name }}" data-description="{{ req.description|default:'' }}" data-core="{{ req.service_type.core }}" style="cursor:pointer;">
 			<td><span class="glyphicon glyphicon-chevron-right"></span></td>
 			<td>{{ req.case_number }}</td>
+			<td>{{ req.service_type.core }}</td>
 			<td>{{ req.created|date:"Y-m-d" }}</td>
 			<td>{{ req.user.get_full_name }}</td>
 			<td>{{ req.service_type.name }}</td>
@@ -312,11 +314,11 @@
 </table>
 <div class="no-results-message" id="open-no-results">No matching requests found.</div>
 
-<h2 id="closed-requests-heading">Recently Closed Service Requests</h2>
+<h2 id="closed-requests-heading">Closed Service Requests</h2>
 
 <div class="filter-container">
 	<div class="filter-input-wrapper">
-		<input type="text" class="filter-input" id="closed-filter-input" placeholder="Filter by case #, project #, user, service type, tool, or description..." aria-label="Filter closed requests">
+		<input type="text" class="filter-input" id="closed-filter-input" placeholder="Filter by case #, core, project #, user, service type, tool, or description..." aria-label="Filter closed requests">
 		<button class="filter-clear" id="closed-filter-clear" aria-label="Clear filter">&times;</button>
 	</div>
 	<span class="request-count" id="closed-request-count"></span>
@@ -326,6 +328,7 @@
 	<thead>
 		<tr>
 			<th>Case #</th>
+			<th>Core</th>
 			<th>Project #</th>
 			<th>User</th>
 			<th>Service Type</th>
@@ -336,8 +339,9 @@
 	</thead>
 	<tbody>
 		{% for req in closed_requests %}
-		<tr class="closed-request-row" data-assigned-to="{{ req.assignee.id }}" data-case-number="{{ req.case_number }}" data-project-number="{{ req.project.project_number }}" data-user-name="{{ req.user.get_full_name }}" data-service-type="{{ req.service_type.name }}" data-tool-name="{{ req.tool.name }}" data-description="{{ req.description|default:'' }}">
+		<tr class="closed-request-row" data-assigned-to="{{ req.assignee.id }}" data-case-number="{{ req.case_number }}" data-project-number="{{ req.project.project_number }}" data-user-name="{{ req.user.get_full_name }}" data-service-type="{{ req.service_type.name }}" data-tool-name="{{ req.tool.name }}" data-description="{{ req.description|default:'' }}" data-core="{{ req.service_type.core }}">
 			<td><a href="{% url 'edit_service_request' req.id %}">{{ req.case_number }}</a></td>
+			<td>{{ req.service_type.core }}</td>
 			<td>{{ req.project.project_number }}</td>
 			<td>{{ req.user.get_full_name }}</td>
 			<td>{{ req.service_type.name }}</td>
@@ -492,6 +496,7 @@ document.getElementById('confirmCancelBtn').onclick = function() {
 				var showByFilter = true;
 				if (openFilterText) {
 					var caseNum = ($row.data('case-number') || '').toString().toLowerCase();
+					var core = ($row.data('core') || '').toString().toLowerCase();
 					var reqDate = ($row.data('request-date') || '').toString().toLowerCase();
 					var userName = ($row.data('user-name') || '').toString().toLowerCase();
 					var serviceType = ($row.data('service-type') || '').toString().toLowerCase();
@@ -499,6 +504,7 @@ document.getElementById('confirmCancelBtn').onclick = function() {
 					var description = ($row.data('description') || '').toString().toLowerCase();
 
 					showByFilter = caseNum.includes(openFilterText) ||
+						core.includes(openFilterText) ||
 						reqDate.includes(openFilterText) ||
 						userName.includes(openFilterText) ||
 						serviceType.includes(openFilterText) ||
@@ -535,6 +541,7 @@ document.getElementById('confirmCancelBtn').onclick = function() {
 				var showByFilter = true;
 				if (closedFilterText) {
 					var caseNum = ($row.data('case-number') || '').toString().toLowerCase();
+					var core = ($row.data('core') || '').toString().toLowerCase();
 					var projectNum = ($row.data('project-number') || '').toString().toLowerCase();
 					var userName = ($row.data('user-name') || '').toString().toLowerCase();
 					var serviceType = ($row.data('service-type') || '').toString().toLowerCase();
@@ -542,6 +549,7 @@ document.getElementById('confirmCancelBtn').onclick = function() {
 					var description = ($row.data('description') || '').toString().toLowerCase();
 
 					showByFilter = caseNum.includes(closedFilterText) ||
+						core.includes(openFilterText) ||
 						projectNum.includes(closedFilterText) ||
 						userName.includes(closedFilterText) ||
 						serviceType.includes(closedFilterText) ||
