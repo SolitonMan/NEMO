@@ -762,7 +762,7 @@ def add_requirements_and_recursive_requests(service, user, service_type, project
 						# Recursively add request and requirements
 						new_service = UserServiceRequest.objects.create(
 							updated=timezone.now(),
-							status='OPEN',
+							status='CLOSED',
 							description=f"Auto-generated request for requirement '{requirement.name}'",
 							core=matching_service_type.core,
 							pi_user=project.owner,
