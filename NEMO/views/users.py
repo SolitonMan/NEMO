@@ -622,7 +622,11 @@ def user_requests(request):
 	request_requirements = {}
 	for req in user_service_requests:
 		# Get requirements for this service type
-		requirements = req.service_type.requirements.all()
+		if req.training_request:
+			requirements = req.service_type.requirements.all()
+		else:
+			requirements = req.service_type.requirements.filter(auto_include=True)
+
 		leaf_requirements = []
 		for r in requirements:
 			leaf_requirements.extend(get_leaf_requirements(r))
@@ -802,7 +806,10 @@ def staff_service_requests(request):
 	request_requirements = {}
 	for req in open_requests:
 		# Get requirements for this service type
-		requirements = req.service_type.requirements.all()
+		if req.training_request:
+			requirements = req.service_type.requirements.all()
+		else:
+			requirements = req.service_type.requirements.filter(auto_include=True)
 		leaf_requirements = []
 		for r in requirements:
 			leaf_requirements.extend(get_leaf_requirements(r))
