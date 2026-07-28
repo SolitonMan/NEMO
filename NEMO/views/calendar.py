@@ -1501,6 +1501,12 @@ def multi_calendar_view(request):
 			slot_duration = form.cleaned_data['slot_duration']
 			window_start = form.cleaned_data['window_start']
 			window_end = form.cleaned_data['window_end']
+			
+			# Make window times timezone-aware
+			if window_start and window_start.tzinfo is None:
+				window_start = window_start.replace(tzinfo=UTC)
+			if window_end and window_end.tzinfo is None:
+				window_end = window_end.replace(tzinfo=UTC)
 
 			# Parse manual ICS URLs as "Short Name:URL"
 			manual_url_map = {}
@@ -1546,6 +1552,12 @@ def multi_calendar_view(request):
 
 							start_dt = dtstart.dt if hasattr(dtstart, 'dt') else dtstart
 							end_dt = dtend.dt if dtend and hasattr(dtend, 'dt') else None
+						
+							# Ensure timezone awareness
+							if isinstance(start_dt, datetime.datetime) and start_dt.tzinfo is None:
+								start_dt = start_dt.replace(tzinfo=UTC)
+							if isinstance(end_dt, datetime.datetime) and end_dt and end_dt.tzinfo is None:
+								end_dt = end_dt.replace(tzinfo=UTC)
 
 							# Recurrence handling
 							if rrule:
@@ -1599,7 +1611,15 @@ def multi_calendar_view(request):
 									"event_json": event_json
 								})
 				except Exception as e:
-					error_messages.append(f"Failed to load {url}: {e}")
+					import traceback
+					error_msg = f"Failed to load {url}: {str(e)}"
+					error_messages.append(error_msg)
+					error_messages.append(traceback.format_exc())
+					# Log the full error for debugging
+					logging.error(f"Error parsing calendar from {url}: {str(e)}")
+					logging.error(traceback.format_exc())
+			error_messages.append(f"DEBUG: Total events parsed: {len(events)}")
+			error_messages.append(f"DEBUG: Window: {window_start} to {window_end}")
 
 			# Handle LEO tool reservations
 			tools = form.cleaned_data['tools_selected']
