@@ -98,7 +98,7 @@
 	</table>
 {% endif %}
 
-{% if events and 0 == 1 %}
+{% if events %}
     <h3>Events</h3>
     <table class="table table-striped">
         <thead>
@@ -108,6 +108,7 @@
                 <th>Start</th>
                 <th>End</th>
                 <th>Location</th>
+				<th>Properties</th>
             </tr>
         </thead>
         <tbody>
@@ -118,6 +119,7 @@
                 <td>{{ event.start }}</td>
                 <td>{{ event.end }}</td>
                 <td>{{ event.location }}</td>
+				<td>{{ event.event_json }}</td>
             </tr>
         {% endfor %}
         </tbody>

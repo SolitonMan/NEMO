@@ -1,4 +1,5 @@
 import io
+import json
 import logging
 from collections import defaultdict
 from datetime import timedelta
@@ -1538,6 +1539,7 @@ def multi_calendar_view(request):
 							location = event.get('location')
 							rrule = event.get('rrule')
 							exdate = event.get('exdate')
+							event_json = extract_event_properties(event)
 
 							if not dtstart or not summary:
 								continue
@@ -1582,7 +1584,8 @@ def multi_calendar_view(request):
 											"start": ensure_datetime(occ_start),
 											"end": ensure_datetime(occ_end),
 											"location": str(location) if location else "",
-											"type": "external"
+											"type": "external",
+											"event_json": event_json
 										})
 							else:
 							# Non-recurring event
@@ -1592,7 +1595,8 @@ def multi_calendar_view(request):
 									"start": ensure_datetime(start_dt),
 									"end": ensure_datetime(end_dt),
 									"location": str(location) if location else "",
-									"type": "external"
+									"type": "external",
+									"event_json": event_json
 								})
 				except Exception as e:
 					error_messages.append(f"Failed to load {url}: {e}")
@@ -2014,3 +2018,38 @@ def _get_tool_requirements_with_status(user):
 			})
 		result[tool.id] = reqs
 	return result
+
+
+def extract_event_properties(event):
+	"""Extract all properties from an iCalendar event and return as JSON string."""
+	properties = {}
+	
+	# List of all standard VEVENT properties
+	property_names = [
+		'uid', 'dtstart', 'dtend', 'summary', 'description', 'location',
+		'status', 'created', 'last-modified', 'dtstamp', 'categories',
+		'class', 'priority', 'organizer', 'attendee', 'rrule', 'rdate',
+		'exdate', 'recurrence-id', 'duration', 'transp', 'url', 'attach',
+		'related-to', 'sequence', 'geo', 'contact'
+	]
+	
+	for prop_name in property_names:
+		value = event.get(prop_name)
+		if value is not None:
+			# Convert to string representation
+			if hasattr(value, 'dt'):
+				properties[prop_name] = str(value.dt)
+			elif hasattr(value, 'to_ical'):
+				properties[prop_name] = value.to_ical().decode('utf-8') if isinstance(value.to_ical(), bytes) else str(value.to_ical())
+			else:
+				properties[prop_name] = str(value)
+	
+	# Also capture any custom X- properties
+	for key in event.keys():
+		if key.lower().startswith('x-') and key not in properties:
+			value = event.get(key)
+			if value is not None:
+				properties[key] = str(value)
+	
+	# Convert to JSON string
+	return json.dumps(properties, indent=2)
