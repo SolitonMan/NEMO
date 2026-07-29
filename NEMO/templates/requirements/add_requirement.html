@@ -92,6 +92,7 @@
 			<th>Description</th>
 			<th>Resource Link</th>
 			<th>Prerequisites</th>
+			<th>Logical Order</th>
 			<th>Retrain Interval (days)</th>
 			<th>Expected Completion Time (minutes)</th>
 		</tr>
@@ -117,6 +118,7 @@
 				{% endif %}
 			</td>
 			<td>{{ req.prerequisites|default:"-" }}</td>
+			<td>{% if req.logical_order %}{{ req.logical_order }}{% endif %}</td>
 			<td>{{ req.retrain_interval_days }}</td>
 			<td>
 				{% if req.expected_completion_time %}{{ req.expected_completion_time }}{% else %}-{% endif %}
