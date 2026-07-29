@@ -1635,7 +1635,8 @@ def multi_calendar_view(request):
 						"start": ensure_datetime(r.start),
 						"end": ensure_datetime(r.end),
 						"location": "",
-						"type": "leo"
+						"type": "leo",
+						"event_json": None
 					})
 	else:
 		form = MultiCalendarForm()
