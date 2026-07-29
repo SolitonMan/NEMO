@@ -27,6 +27,7 @@ def add_requirement(request):
 		automated_update = request.POST.get("automated_update") == 'on'
 		autocompleted = request.POST.get("autocompleted") == 'on'
 		prerequisites = request.POST.get("prerequisites")
+		logical_order = request.POST.get("logical_order")
 		auto_include = request.POST.get("auto_include") == 'on'
 
 		if name:
@@ -41,6 +42,7 @@ def add_requirement(request):
 				automated_update=automated_update,
 				autocompleted=autocompleted,
 				prerequisites=prerequisites,
+				logical_order=logical_order,
 				auto_include=auto_include
 			)
 			return redirect('add_requirement')
@@ -56,6 +58,7 @@ def edit_requirement(request, requirement_id):
 		requirement.resource_link = request.POST.get("resource_link")
 		requirement.resource_link_name = request.POST.get("resource_link_name")
 		requirement.prerequisites = request.POST.get("prerequisites")
+		requirement.logical_order = request.POST.get("logical_order")
 		requirement.retrain_interval_days = request.POST.get("retrain_interval_days")
 		requirement.expected_completion_time = request.POST.get("expected_completion_time")
 		requirement.login_requirement_flag = request.POST.get("login_requirement_flag") == 'on'
