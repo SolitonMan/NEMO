@@ -65,10 +65,15 @@ function toggleToolField(select) {
 
 	if (select.value === 'gap') {
 		toolCell.style.display = 'none';
-		toolSelect.removeAttribute('required');
+		if (toolSelect) {
+			toolSelect.removeAttribute('required');
+			toolSelect.disabled = true;
+		}
 	} else {
 		toolCell.style.display = '';
-		toolSelect.setAttribute('required', 'required');
+		if (toolSelect) {
+			toolSelect.removeAttribute('disabled');
+		}
 	}
 }
 
@@ -100,20 +105,27 @@ document.getElementById('add-row').onclick = function() {
 	newRow.id = '';
 	newRow.classList.add('tool-row');
 
-	// Update the names and ids
+	// Update the names and ids - must do this before appending
 	newRow.querySelectorAll('select, input').forEach(function(el) {
-		el.name = el.name.replace('__prefix__', currentCount);
-		el.id = el.id.replace('__prefix__', currentCount);
+		if (el.name) {
+			el.name = el.name.replace('__prefix__', currentCount);
+		}
+		if (el.id) {
+			el.id = el.id.replace('__prefix__', currentCount);
+		}
 	});
 
-	// Add event handlers
+	// Append to table first
+	document.getElementById('tool-table').appendChild(newRow);
+
+	// Then add event handlers
 	var removeBtn = newRow.querySelector('.remove-row');
 	addRemoveHandler(removeBtn);
 
 	var entryTypeSelect = newRow.querySelector('.entry-type-select');
 	addEntryTypeHandler(entryTypeSelect);
 
-	document.getElementById('tool-table').appendChild(newRow);
+	// Update form count
 	totalForms.value = currentCount + 1;
 };</script>
 {% endblock %}
