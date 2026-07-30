@@ -382,8 +382,27 @@ class MultiCalendarForm(forms.Form):
 
 
 class ToolDurationForm(forms.Form):
-	tool = forms.ModelChoiceField(queryset=Tool.objects.filter(visible=True).order_by('name'), label="Tool")
+	entry_type = forms.ChoiceField(
+		choices=[('tool', 'Tool'), ('gap', 'Gap')],
+		initial='tool',
+		label="Type"
+	)
+	tool = forms.ModelChoiceField(
+		queryset=Tool.objects.filter(visible=True).order_by('name'),
+		label="Tool",
+		required=False
+	)
 	duration = forms.IntegerField(min_value=1, label="Duration (minutes)")
+
+	def clean(self):
+		cleaned_data = super().clean()
+		entry_type = cleaned_data.get('entry_type')
+		tool = cleaned_data.get('tool')
+
+		if entry_type == 'tool' and not tool:
+			raise forms.ValidationError('Tool is required when entry type is "Tool".')
+
+		return cleaned_data
 
 ToolDurationFormSet = forms.formset_factory(ToolDurationForm, extra=1, min_num=1, validate_min=True)
 

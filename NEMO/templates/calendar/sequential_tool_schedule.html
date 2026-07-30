@@ -7,50 +7,77 @@
 	{{ formset.management_form }}
 	<table id="tool-table">
 		<tr>
+			<th>Type</th>
 			<th>Tool</th>
 			<th>Duration (minutes)</th>
 			<th></th>
 		</tr>
 		{% for form in formset %}
 		<tr class="tool-row">
-			<td>{{ form.tool|add_class:"form-control" }}</td>
+			<td>{{ form.entry_type|add_class:"form-control entry-type-select" }}</td>
+			<td class="tool-cell">{{ form.tool|add_class:"form-control" }}</td>
 			<td>{{ form.duration|add_class:"form-control" }}</td>
 			<td><button type="button" class="btn btn-danger remove-row">Delete</button></td>
 		</tr>
 		{% endfor %}
 		<tr id="empty-form-row" style="display:none;">
-			<td>{{ formset.empty_form.tool|add_class:"form-control" }}</td>
+			<td>{{ formset.empty_form.entry_type|add_class:"form-control entry-type-select" }}</td>
+			<td class="tool-cell">{{ formset.empty_form.tool|add_class:"form-control" }}</td>
 			<td>{{ formset.empty_form.duration|add_class:"form-control" }}</td>
 			<td><button type="button" class="btn btn-danger remove-row">Delete</button></td>
 		</tr>
 	</table>
-	<button type="button" id="add-row" class="btn btn-success">Add Tool</button>
+	<br />
+	<button type="button" id="add-row" class="btn btn-success">Add Row</button>
 	<button type="submit" class="btn btn-success">Find Schedule</button>
 </form>
 
 {% if schedule %}
-	<h3>Proposed Schedule</h3>
-	<table>
-		<tr>
-			<th>Tool</th>
-			<th>Start</th>
-			<th>End</th>
-		</tr>
-		{% for item in schedule %}
-		<tr>
-			<td>{{ item.tool }}</td>
-			<td>{{ item.start|date:"m/d/Y h:i A" }}</td>
-			<td>{{ item.end|date:"m/d/Y h:i A" }}</td>
-		</tr>
-		{% endfor %}
-	</table>
+<h3>Proposed Schedule</h3>
+<table>
+	<tr>
+		<th>Type</th>
+		<th>Tool</th>
+		<th>Start</th>
+		<th>End</th>
+	</tr>
+	{% for item in schedule %}
+	<tr {% if item.is_gap %}style="background-color: #f0f0f0;" {% endif %}>
+		<td>{% if item.is_gap %}Gap{% else %}Tool{% endif %}</td>
+		<td>{% if item.is_gap %}-{% else %}{{ item.tool }}{% endif %}</td>
+		<td>{{ item.start|date:"m/d/Y h:i A" }}</td>
+		<td>{{ item.end|date:"m/d/Y h:i A" }}</td>
+	</tr>
+	{% endfor %}
+</table>
 {% endif %}
 
-<script>
-function updateTotalForms() {
+<script>function updateTotalForms() {
 	var totalForms = document.getElementById('id_form-TOTAL_FORMS');
 	var rowCount = document.querySelectorAll('#tool-table tr.tool-row').length;
 	totalForms.value = rowCount;
+}
+
+function toggleToolField(select) {
+	var row = select.closest('tr');
+	var toolCell = row.querySelector('.tool-cell');
+	var toolSelect = toolCell.querySelector('select');
+
+	if (select.value === 'gap') {
+		toolCell.style.display = 'none';
+		toolSelect.removeAttribute('required');
+	} else {
+		toolCell.style.display = '';
+		toolSelect.setAttribute('required', 'required');
+	}
+}
+
+function addEntryTypeHandler(select) {
+	select.addEventListener('change', function() {
+		toggleToolField(this);
+	});
+	// Initialize visibility on page load
+	toggleToolField(select);
 }
 
 function addRemoveHandler(btn) {
@@ -61,7 +88,9 @@ function addRemoveHandler(btn) {
 	};
 }
 
+// Initialize existing rows
 document.querySelectorAll('.remove-row').forEach(addRemoveHandler);
+document.querySelectorAll('.entry-type-select').forEach(addEntryTypeHandler);
 
 document.getElementById('add-row').onclick = function() {
 	var totalForms = document.getElementById('id_form-TOTAL_FORMS');
@@ -70,16 +99,21 @@ document.getElementById('add-row').onclick = function() {
 	newRow.style.display = '';
 	newRow.id = '';
 	newRow.classList.add('tool-row');
+
 	// Update the names and ids
 	newRow.querySelectorAll('select, input').forEach(function(el) {
 		el.name = el.name.replace('__prefix__', currentCount);
 		el.id = el.id.replace('__prefix__', currentCount);
 	});
-	// Add remove handler to the new button
+
+	// Add event handlers
 	var removeBtn = newRow.querySelector('.remove-row');
 	addRemoveHandler(removeBtn);
+
+	var entryTypeSelect = newRow.querySelector('.entry-type-select');
+	addEntryTypeHandler(entryTypeSelect);
+
 	document.getElementById('tool-table').appendChild(newRow);
 	totalForms.value = currentCount + 1;
-};
-</script>
+};</script>
 {% endblock %}

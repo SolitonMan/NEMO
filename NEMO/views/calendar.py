@@ -1803,15 +1803,29 @@ def sequential_tool_schedule(request):
 			schedule = []
 			current_time = timezone.now()
 			for form in formset:
-				tool = form.cleaned_data['tool']
+				entry_type = form.cleaned_data.get('entry_type', 'tool')
 				duration = form.cleaned_data['duration']
-				start, end = find_next_available_slot(tool, duration, current_time)
-				schedule.append({
-					'tool': tool,
-					'start': start,
-					'end': end,
-				})
-				current_time = end
+	
+				if entry_type == 'gap':
+					# Simple gap - just add time to current_time
+					current_time = current_time + timedelta(minutes=duration)
+					schedule.append({
+						'tool': 'Time Gap',  # or None
+						'start': current_time - timedelta(minutes=duration),
+						'end': current_time,
+						'is_gap': True
+					})
+				else:
+					# Tool reservation - find available slot
+					tool = form.cleaned_data['tool']
+					start, end = find_next_available_slot(tool, duration, current_time)
+					schedule.append({
+						'tool': tool,
+						'start': start,
+						'end': end,
+						'is_gap': False
+					})
+					current_time = end
 			return render(request, "calendar/sequential_tool_schedule.html", {
 				"formset": formset,
 				"schedule": schedule,
