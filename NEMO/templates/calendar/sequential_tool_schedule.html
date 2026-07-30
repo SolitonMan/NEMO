@@ -52,7 +52,8 @@
 </table>
 {% endif %}
 
-<script>function updateTotalForms() {
+<script>
+function updateTotalForms() {
 	var totalForms = document.getElementById('id_form-TOTAL_FORMS');
 	var rowCount = document.querySelectorAll('#tool-table tr.tool-row').length;
 	totalForms.value = rowCount;
@@ -64,13 +65,13 @@ function toggleToolField(select) {
 	var toolSelect = toolCell.querySelector('select');
 
 	if (select.value === 'gap') {
-		toolCell.style.display = 'none';
+		toolCell.children[0].style.display = 'none';
 		if (toolSelect) {
 			toolSelect.removeAttribute('required');
 			toolSelect.disabled = true;
 		}
 	} else {
-		toolCell.style.display = '';
+		toolCell.children[0].style.display = '';
 		if (toolSelect) {
 			toolSelect.removeAttribute('disabled');
 		}
