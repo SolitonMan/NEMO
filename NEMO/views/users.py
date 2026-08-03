@@ -566,7 +566,7 @@ def user_requests(request):
 				send_mail(
 					subject=f'New Service Request: {svc.name}',
 					message=f'A new service request has been submitted by {request.user.get_full_name()}.\n\nService: {svc.name}\nProject: {proj.name}\nDescription: {description}',
-					from_email=settings.SERVER_EMAIL,
+					from_email=request.user.email,
 					recipient_list=[svc.principle_assignee.email],
 					fail_silently=True,
 				)

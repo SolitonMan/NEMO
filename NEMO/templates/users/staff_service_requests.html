@@ -186,7 +186,7 @@
 			<td>{{ req.case_number }}</td>
 			<td>{{ req.service_type.core }}</td>
 			<td>{{ req.created|date:"Y-m-d" }}</td>
-			<td>{{ req.user.get_full_name }}</td>
+			<td><a href="mailto:{{ req.user.email }}" onclick="event.stopPropagation();">{{ req.user.get_full_name }}</a></td>
 			<td>{{ req.service_type.name }}</td>
 			<td>{{ req.assignee.get_full_name }}</td>
 			<td>{{ req.description|default:"" }}</td>
