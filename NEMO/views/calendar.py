@@ -1458,7 +1458,7 @@ def create_ics_for_reservation(request, reservation, cancelled=False):
 	return attachment
 
 
-@login_required
+@staff_member_required(login_url=None)
 def multi_calendar_view(request):
 
 	def format_slot(slot):
@@ -1796,6 +1796,8 @@ def find_next_available_slot(tool, duration_minutes, after_time):
 		slot_end = slot_start + datetime.timedelta(minutes=duration_minutes)
 	return slot_start, slot_end
 
+
+@staff_member_required(login_url=None)
 def sequential_tool_schedule(request):
 	if request.method == "POST":
 		formset = ToolDurationFormSet(request.POST)
@@ -1836,7 +1838,8 @@ def sequential_tool_schedule(request):
 		"formset": formset,
 	})
 
-@login_required
+
+@staff_member_required(login_url=None)
 def tool_training_schedule(request):
 	tools = Tool.objects.filter(visible=True, operational=True).order_by('name')
 	available_slots = []
