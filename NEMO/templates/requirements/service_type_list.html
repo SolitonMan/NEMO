@@ -1,19 +1,12 @@
 {% extends 'base.html' %}
 {% block content %}
 <h2>Service Types</h2>
-<form method="get" action="{% url 'service_type_edit' 0 %}">
-	<div class="form-group">
-		<label for="service_type_select">Edit Service Type:</label>
-		<select id="service_type_select" name="pk" class="form-control" onchange="if(this.value) window.location.href='{% url 'service_type_edit' '0' %}'.replace('0', this.value);">
-			<option value="">-- Select Service Type --</option>
-			{% for st in service_types %}
-				<option value="{{ st.id }}">{{ st.name }}</option>
-			{% endfor %}
-		</select>
-	</div>
-</form>
-<a href="{% url 'service_type_add' %}" class="btn btn-success">Add New Service Type</a>
-<table class="table table-striped mt-3">
+<a href="{% url 'service_type_add' %}" class="btn btn-success mb-3">Add New Service Type</a>
+<div class="form-group">
+	<label for="filter_input">Filter Service Types:</label>
+	<input type="text" id="filter_input" class="form-control" placeholder="Search by name, core, or assignee..." onkeyup="filterTable()">
+</div>
+<table class="table table-striped mt-3" id="service_type_table">
 	<thead>
 		<tr>
 			<th>Name</th>
@@ -21,6 +14,7 @@
 			<th>Core</th>
 			<th>Principle Assignee</th>
 			<th>Secondary Assignee</th>
+			<th>Actions</th>
 		</tr>
 	</thead>
 	<tbody>
@@ -31,8 +25,31 @@
 			<td>{{ st.core }}</td>
 			<td>{{ st.principle_assignee }}</td>
 			<td>{{ st.secondary_assignee }}</td>
+			<td><a href="{% url 'service_type_edit' st.id %}" class="btn btn-primary btn-sm">Edit</a></td>
 		</tr>
 		{% endfor %}
 	</tbody>
 </table>
+
+<script>function filterTable() {
+	var input = document.getElementById('filter_input');
+	var filter = input.value.toLowerCase();
+	var table = document.getElementById('service_type_table');
+	var rows = table.getElementsByTagName('tr');
+
+	for (var i = 1; i < rows.length; i++) {
+		var cells = rows[i].getElementsByTagName('td');
+		var found = false;
+
+		for (var j = 0; j < cells.length - 1; j++) {
+			var cellText = cells[j].textContent || cells[j].innerText;
+			if (cellText.toLowerCase().indexOf(filter) > -1) {
+				found = true;
+				break;
+			}
+		}
+
+		rows[i].style.display = found ? '' : 'none';
+	}
+}</script>
 {% endblock %}
