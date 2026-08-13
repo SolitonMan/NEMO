@@ -1,5 +1,5 @@
 {% if samples is None %}
-	<span class="danger-highlight">No samples associated with the project</span>
+	<span style="color: black; font-weight: bold;">No samples associated with the project</span>
 {% else %}
 	{% if entry_number == '0' %}
 	<select name="sample_id" class="form-control" id="sample_id"  multiple size="4" style="width:{% if request.device != 'mobile' %}fit-content{% else %}100%{% endif %};">
