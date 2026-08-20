@@ -1215,7 +1215,7 @@ class UserRequirementProgressAdmin(admin.ModelAdmin):
 
 @admin.register(ServiceType)
 class ServiceTypeAdmin(admin.ModelAdmin):
-	list_display = ('name', 'active', 'core')
+	list_display = ('name', 'active', 'core', 'logical_order')
 	search_fields = ('name', 'core__name')
 	filter_horizontal = ('requirements',)
 	autocomplete_fields = ['principle_assignee', 'secondary_assignee']

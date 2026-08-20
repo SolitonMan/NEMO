@@ -417,6 +417,7 @@ class ServiceTypeForm(forms.ModelForm):
 			'principle_assignee',
 			'secondary_assignee',
 			'auto_include',
+			'logical_order',
 		]
 		widgets = {
 			'description': forms.Textarea(attrs={'rows': 3}),
