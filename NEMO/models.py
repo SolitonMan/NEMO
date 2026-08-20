@@ -2268,6 +2268,7 @@ class ServiceType(models.Model):
 	created = models.DateTimeField(null=True, blank=True, default=timezone.now)
 	updated = models.DateTimeField(null=True, blank=True)
 	auto_include = models.BooleanField(default=False)
+	logical_order = models.PositiveIntegerField(null=True,blank=True)
 
 	def __str__(self):
 		return self.name
