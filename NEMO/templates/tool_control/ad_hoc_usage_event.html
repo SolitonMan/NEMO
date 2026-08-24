@@ -161,7 +161,7 @@
 					<select id="tool_select" name="tool_select" class="form-control">
 						<option value="">Please select a tool</option>
 						{% for t in tools %}
-						<option value="{{ t.id }}" {% if t.id == tool_id %} selected{% endif %}>{{ t.name }}</option>
+						<option value="{{ t.id }}" {% if t.id= =tool_id %} selected{% endif %}>{{ t.name }}</option>
 						{% endfor %}
 					</select>
 				</td>
@@ -211,30 +211,6 @@
 				</td>
 			</tr>
 			{% endif %}
-			<tr id="radio_options" style="{% if request.user.is_superuser or request.user.is_staff %}display: none;{% else %}display: table-row;{% endif %}">
-				<td colspan="2">
-					<div class="radio">
-						<label>
-							<input type="radio" id="use_mode" name="use_mode" value="0" onchange="set_mode(0);">
-							{% if request.user.is_superuser or request.user.is_staff %}
-							The tool was used by the operator
-							{% else %}
-							I used the tool for myself
-							{% endif %}
-						</label>
-					</div>
-					<div class="radio">
-						<label>
-							<input type="radio" id="use_mode" name="use_mode" value="1" onchange="set_mode(1);">
-							{% if request.user.is_superuser or request.user.is_staff %}
-							The tool was used for others
-							{% else %}
-							I used the tool for others
-							{% endif %}
-						</label>
-					</div>
-				</td>
-			</tr>
 			<tr>
 				<td colspan=2>
 					<div class="checkbox"><label><input type="checkbox" name="staff_charge" id="staff_charge" value="1" checked />Include a staff charge for the same customer(s), project(s) and time period.  Any discrepancies can be addressed via the contest feature.</label></div>
@@ -258,6 +234,30 @@
 						{% endfor %}
 					</select>
 					{% endif %}
+				</td>
+			</tr>
+			<tr id="radio_options" style="{% if request.user.is_superuser or request.user.is_staff %}display: none;{% else %}display: table-row;{% endif %}">
+				<td colspan="2">
+					<div class="radio">
+						<label>
+							<input type="radio" id="use_mode" name="use_mode" value="0" onchange="set_mode(0);">
+							{% if request.user.is_superuser or request.user.is_staff %}
+							The tool was used by the operator
+							{% else %}
+							I used the tool for myself
+							{% endif %}
+						</label>
+					</div>
+					<div class="radio">
+						<label>
+							<input type="radio" id="use_mode" name="use_mode" value="1" onchange="set_mode(1);">
+							{% if request.user.is_superuser or request.user.is_staff %}
+							The tool was used for others
+							{% else %}
+							I used the tool for others
+							{% endif %}
+						</label>
+					</div>
 				</td>
 			</tr>
 		</table>
