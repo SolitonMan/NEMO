@@ -160,9 +160,9 @@
 				<td>
 					<select id="tool_select" name="tool_select" class="form-control">
 						<option value="">Please select a tool</option>
-					{% for t in tools %}
-						<option value="{{ t.id }}"{% if t.id == tool_id %} selected{% endif %}>{{ t.name }}</option>
-					{% endfor %}
+						{% for t in tools %}
+						<option value="{{ t.id }}" {% if t.id= =tool_id %} selected{% endif %}>{{ t.name }}</option>
+						{% endfor %}
 					</select>
 				</td>
 			</tr>
@@ -192,41 +192,72 @@
 			{% if request.user.physical_access_levels.all|length > 0 %}
 			<tr>
 				<td colspan="2">
-				<div class="form-group">
-					<input type="checkbox" name="area_access_record" id="area_access_record" onclick="toggle_area()" />
-					<label for="area_access_record">Include an area access record
-				</div>
+					<div class="form-group">
+						<input type="checkbox" name="area_access_record" id="area_access_record" onclick="toggle_area()" />
+						<label for="area_access_record">Include an area access record
+					</div>
 				</td>
 			</tr>
 			<tr>
 				<td>Area</td>
 				<td>
-				<div class="form-group">
-					<select name="ad_hoc_area" id="ad_hoc_area" class="form-control" disabled>
-					{% for a in request.user.physical_access_levels.all %}
-					<option value="{{ a.area.id }}">{{ a.area.name }}</option>
-					{% endfor %}
-					</select>
-				</div>	
+					<div class="form-group">
+						<select name="ad_hoc_area" id="ad_hoc_area" class="form-control" disabled>
+							{% for a in request.user.physical_access_levels.all %}
+							<option value="{{ a.area.id }}">{{ a.area.name }}</option>
+							{% endfor %}
+						</select>
+					</div>
 				</td>
 			</tr>
 			{% endif %}
 			<tr id="radio_options" style="{% if request.user.is_superuser or request.user.is_staff %}display: none;{% else %}display: table-row;{% endif %}">
 				<td colspan="2">
-					<div class="radio"><label><input type="radio" id="use_mode" name="use_mode" value="0" onchange="set_mode(0);">
-					{% if request.user.is_superuser or request.user.is_staff %}
-					The tool was used by the operator
-					{% else %}
-					I used the tool for myself
+					<div class="radio">
+						<label>
+							<input type="radio" id="use_mode" name="use_mode" value="0" onchange="set_mode(0);">
+							{% if request.user.is_superuser or request.user.is_staff %}
+							The tool was used by the operator
+							{% else %}
+							I used the tool for myself
+							{% endif %}
+						</label>
+					</div>
+					<div class="radio">
+						<label>
+							<input type="radio" id="use_mode" name="use_mode" value="1" onchange="set_mode(1);">
+							{% if request.user.is_superuser or request.user.is_staff %}
+							The tool was used for others
+							{% else %}
+							I used the tool for others
+							{% endif %}
+						</label>
+					</div>
+				</td>
+			</tr>
+			<tr>
+				<td colspan=2>
+					<div class="checkbox"><label><input type="checkbox" name="staff_charge" id="staff_charge" value="1" checked />Include a staff charge for the same customer(s), project(s) and time period.  Any discrepancies can be addressed via the contest feature.</label></div>
+
+					{% if multi_core_user %}
+					<select id="ad_hoc_core_select" name="ad_hoc_core_select" class="form-control" onchange="ad_hoc_core_override_select();">
+						<option value="0">Please select the core for which this charge is being made</option>
+						{% for c in request.user.core_ids.all %}
+						<option value="{{ c.id }}">{{ c.name }}</option>
+						{% endfor %}
+					</select>
+
+					<select id="ad_hoc_credit_cost_collector_select" name="ad_hoc_credit_cost_collector_select" class="form-control" style="display: none;">
+						<option value="0">You may select a credit cost collector to receive funds for this work</option>
+						{% for c in request.user.core_ids.all %}
+
+						{% for ccc in c.creditcostcollector_set.all %}
+						<option value="{{ ccc.id }}" style="display: none;" class="ad_hoc_core_{{ c.id }}">{{ ccc.name }}</option>
+						{% endfor %}
+
+						{% endfor %}
+					</select>
 					{% endif %}
-					</label></div>
-					<div class="radio"><label><input type="radio" id="use_mode" name="use_mode" value="1" onchange="set_mode(1);">
-					{% if request.user.is_superuser or request.user.is_staff %}
-					The tool was used for others
-					{% else %}
-					I used the tool for others
-					{% endif %}
-					</label></div>
 				</td>
 			</tr>
 		</table>
@@ -257,31 +288,6 @@
 </table>
 
 <table id="other_customer" style="display: none">
-	<tr>
-		<td colspan=2>
-			<div class="checkbox"><label><input type="checkbox" name="staff_charge" id="staff_charge" value="1" checked />Include a staff charge for the same customer(s), project(s) and time period.  Any discrepancies can be addressed via the contest feature.</label></div>
-
-			{% if multi_core_user %}
-			<select id="ad_hoc_core_select" name="ad_hoc_core_select" class="form-control" onchange="ad_hoc_core_override_select();">
-				<option value="0">Please select the core for which this charge is being made</option>
-				{% for c in request.user.core_ids.all %}
-				<option value="{{ c.id }}">{{ c.name }}</option>
-				{% endfor %}
-			</select>
-
-			<select id="ad_hoc_credit_cost_collector_select" name="ad_hoc_credit_cost_collector_select" class="form-control" style="display: none;">
-				<option value="0">You may select a credit cost collector to receive funds for this work</option>
-			{% for c in request.user.core_ids.all %}
-
-				{% for ccc in c.creditcostcollector_set.all %}
-					<option value="{{ ccc.id }}" style="display: none;" class="ad_hoc_core_{{ c.id }}">{{ ccc.name }}</option>
-				{% endfor %}
-
-			{% endfor %}
-			</select>
-			{% endif %}
-		</td>	
-	</tr>
 	<tr>
 		<td colspan=2>
 			<table id="event_charge_entries" class="table">
