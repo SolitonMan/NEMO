@@ -161,7 +161,7 @@
 					<select id="tool_select" name="tool_select" class="form-control">
 						<option value="">Please select a tool</option>
 						{% for t in tools %}
-						<option value="{{ t.id }}" {% if t.id= =tool_id %} selected{% endif %}>{{ t.name }}</option>
+						<option value="{{ t.id }}" {% if t.id == tool_id %} selected{% endif %}>{{ t.name }}</option>
 						{% endfor %}
 					</select>
 				</td>
