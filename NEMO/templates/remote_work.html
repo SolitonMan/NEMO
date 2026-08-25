@@ -425,7 +425,7 @@ th {
 				aria-label="Edit customer comment for {{ v.customer }}. Current comment: {% if v.comment %}{{ v.comment }}{% else %}No comment{% endif %}"
 				onclick="edit_comment({{ v.id }}, '{{ value.type }} customer', $('#cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa{% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__customer__{{ v.id }}').text(), '{{ v.customer|escapejs }}')"
 				onkeypress="if(event.key === 'Enter' || event.key === ' ') { edit_comment({{ v.id }}, '{{ value.type }} customer', $('#cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa{% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__customer__{{ v.id }}').text(), '{{ v.customer|escapejs }}'); event.preventDefault(); }">
-				<span style="width: 90%;" id="cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa{% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__customer__{{ v.id }}">{% if v.comment %}{{ v.comment }}{% else %}<em>Click to add</em>{% endif %}</span>
+				<span style="width: 90%;" id="cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa{% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__customer__{{ v.id }}" placeholder="Click to add a comment">{% if v.comment %}{{ v.comment }}{% endif %}</span>
 			</td>
 			{% endif %}
 			</tr>
@@ -441,7 +441,7 @@ th {
 					onclick="edit_comment({{ value.id }}, '{{ value.type }}', $('#cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa{% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__{{ value.id }}').text(), 'Transaction')"
 					onkeypress="if(event.key === 'Enter' || event.key === ' ') { edit_comment({{ value.id }}, '{{ value.type }}', $('#cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa{% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__{{ value.id }}').text(), 'Transaction'); event.preventDefault(); }">
 					<span style="font-weight: bold;">General Comment: </span>
-					<span id="cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa{% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__{{ value.id }}">{% if value.comment %}{{ value.comment }}{% else %}<em>Click to add</em>{% endif %}</span>
+					<span id="cmt__{% if value.type == "Tool Use" %}tu{% endif %}{% if value.type == "Staff Charge" %}sc{% endif %}{% if value.type == "Area Access" %}aa{% endif %}{% if value.type == "Withdraw" %}wd{% endif %}__{{ value.id }}" placeholder="Click to add a comment">{% if value.comment %}{{ value.comment }}{% endif %}</span>
 				</td>
 			</tr>
 			{% if value.contest_rejection_reason != '' %}
@@ -783,7 +783,7 @@ function edit_comment(id, type, comment, entityName) {
 			url,
 			params,
 			function() {
-				$(span_id).html(newComment || '<em>Click to add</em>');
+				$(span_id).html(newComment || '');
 				$('#comment_dialog').modal('hide');
 				announceStatus('Comment updated successfully');
 			},
