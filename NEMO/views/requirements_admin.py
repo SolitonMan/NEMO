@@ -293,6 +293,7 @@ def complete_user_requirement(request):
 		status='OPEN'
 	).select_related('service_type', 'assignee')
 
+	mail_sent = []
 	for service_request in open_requests:
 		if service_request.service_type:
 			service_type_requirements = service_request.service_type.requirements.all()
@@ -315,8 +316,9 @@ def complete_user_requirement(request):
 					all_completed = False
 					break
 			
-			if all_completed and service_request.assignee and service_request.assignee.email and service_request.service_type.core != mcl_core:
-				subject = f"Service Request Ready: All Requirements Completed for {request.user.get_full_name()}"
+			if all_completed and service_request.assignee and service_request.assignee.email and service_request.service_type.core != mcl_core and service_request.id not in mail_sent:
+				mail_sent.append(service_request.id)
+				subject = f"{service_request.service_type.name} Request Ready: All Requirements Completed for {request.user.get_full_name()}"
 				
 				requirements_html = "<ul>"
 				for req_name in sorted(completed_requirements_list):
@@ -327,7 +329,7 @@ def complete_user_requirement(request):
 				<p>Dear {service_request.assignee.get_full_name()},</p>
 				
 				<p>This is to notify you that <strong>{request.user.get_full_name()}</strong> has completed all requirements 
-				for the service request and can now advance to the next step.</p>
+				for the {service_request.service_type.name} request and can now advance to the next step.</p>
 				
 				<p><strong>Service Type:</strong> {service_request.service_type.name}</p>
 				
