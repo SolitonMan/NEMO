@@ -12,6 +12,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
+from django.core.mail import EmailMultiAlternatives
 from django.db.models import F, Q
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
@@ -1508,6 +1509,25 @@ def save_contest_resolution(request):
 		contest_transaction.content_object.validated = False
 		contest_transaction.content_object.save()
 
+		# send an email to the user to let them know their contest was declined				
+		body = f"""
+		<p>Dear {request.user.get_full_name()},</p>
+				
+		<p>This is to notify you that your transaction contest submitted on {contest_transaction.contested_date} has been declined.  The reason for this was given as:</p>
+
+		<p>{contest_transaction.contest_description}</p>
+				
+		<p>Please review the transaction in the transaction validation screen and submit it again with any needed changes.  If you have any questions please contact the LEO admin team at LEOHelp@psu.edu.
+		<br>LEO Admin</p>
+		"""
+		email = EmailMultiAlternatives(
+			subject='Contest Declined',
+			body=body,
+			from_email='LEOHelp@psu.edu',
+			to=[request.user.email]
+		)
+		email.attach_alternative(body, 'text/html')
+		email.send()
 
 	return HttpResponseRedirect('/review_contested_items/')
 
