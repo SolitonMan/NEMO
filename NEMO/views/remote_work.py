@@ -1513,7 +1513,7 @@ def save_contest_resolution(request):
 		body = f"""
 		<p>Dear {request.user.get_full_name()},</p>
 				
-		<p>This is to notify you that your transaction contest submitted on {contest_transaction.contested_date} has been declined.  The reason for this was given as:</p>
+		<p>This is to notify you that your transaction contest submitted on {DateFormat(timezone.localtime(contest_transaction.contested_date)).format('m/d/Y g:i A')} has been declined.  The reason for this was given as:</p>
 
 		<p>{contest_transaction.contest_description}</p>
 				
