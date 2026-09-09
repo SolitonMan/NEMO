@@ -1515,7 +1515,7 @@ def save_contest_resolution(request):
 				
 		<p>This is to notify you that your transaction contest submitted on {DateFormat(timezone.localtime(contest_transaction.contested_date)).format('m/d/Y g:i A')} has been declined.  The reason for this was given as:</p>
 
-		<p>{contest_transaction.contest_description}</p>
+		<p>{contest_transaction.contest_rejection_reason}</p>
 				
 		<p>Please review the transaction in the transaction validation screen and submit it again with any needed changes.  If you have any questions please contact the LEO admin team at LEOHelp@psu.edu.
 		<br>LEO Admin</p>
