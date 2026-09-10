@@ -1513,15 +1513,16 @@ def save_contest_resolution(request):
 		body = f"""
 		<p>Dear {request.user.get_full_name()},</p>
 				
-		<p>This is to notify you that your transaction contest submitted on {DateFormat(timezone.localtime(contest_transaction.contested_date)).format('m/d/Y g:i A')} has been declined.  The reason for this was given as:</p>
+		<p>This is to notify you that your contested LEO transaction submitted on {DateFormat(timezone.localtime(contest_transaction.contested_date)).format('m/d/Y g:i A')} has been declined.  The reason for this was given as:</p>
 
 		<p>{contest_transaction.contest_rejection_reason}</p>
 				
-		<p>Please review the transaction in the transaction validation screen and submit it again with any needed changes.  If you have any questions please contact the LEO admin team at LEOHelp@psu.edu.
+		<p>Please review the transaction in the LEO Transaction Validation screen and if appropriate submit it again with any needed changes as soon as possible.  Any corrections must be completed by the 24th of the monthly billing cycle.  If you have any questions please contact the LEO admin team at LEOHelp@psu.edu.
+		<br><br>Thank you,
 		<br>LEO Admin</p>
 		"""
 		email = EmailMultiAlternatives(
-			subject='Contest Declined',
+			subject='LEO Contest Declined',
 			body=body,
 			from_email='LEOHelp@psu.edu',
 			to=[request.user.email]
