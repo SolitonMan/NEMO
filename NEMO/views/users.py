@@ -1108,6 +1108,36 @@ def staff_complete_user_requirement(request):
 		progress.expires_on = timezone.now() + timedelta(days=requirement.retrain_interval_days)
 	progress.updated = timezone.now()
 	progress.save()
+
+	service_type_names = set(ServiceType.objects.values_list('name', flat=True))
+	placeholder_progresses = UserRequirementProgress.objects.filter(
+		user=user,
+		requirement__name__in=service_type_names
+	).exclude(status='completed').select_related('requirement')
+
+	for placeholder_progress in placeholder_progresses:
+		placeholder_name = placeholder_progress.requirement.name
+		service_type = ServiceType.objects.filter(name=placeholder_name).first()
+		if service_type:
+			service_type_reqs = service_type.requirements.all()
+			all_met = True
+			for st_req in service_type_reqs:
+				try:
+					user_req_progress = UserRequirementProgress.objects.get(user=user, requirement=st_req)
+					if user_req_progress.status != 'completed' or (user_req_progress.expires_on and user_req_progress.expires_on <= timezone.now()):
+						all_met = False
+						break
+				except UserRequirementProgress.DoesNotExist:
+					all_met = False
+					break
+			
+			if all_met:
+				placeholder_progress.status = 'completed'
+				placeholder_progress.completed_on = timezone.now()
+				if placeholder_progress.requirement.retrain_interval_days and placeholder_progress.requirement.retrain_interval_days > 0:
+					placeholder_progress.expires_on = timezone.now() + timedelta(days=placeholder_progress.requirement.retrain_interval_days)
+				placeholder_progress.updated = timezone.now()
+				placeholder_progress.save()
 	
 	redirect_url = request.POST.get('redirect_url', reverse('staff_service_requests'))
 	return HttpResponseRedirect(redirect_url)
