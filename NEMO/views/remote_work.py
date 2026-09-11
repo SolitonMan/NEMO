@@ -1509,26 +1509,41 @@ def save_contest_resolution(request):
 		contest_transaction.content_object.validated = False
 		contest_transaction.content_object.save()
 
-		# send an email to the user to let them know their contest was declined				
-		body = f"""
-		<p>Dear {request.user.get_full_name()},</p>
-				
-		<p>This is to notify you that your contested LEO transaction submitted on {DateFormat(timezone.localtime(contest_transaction.contested_date)).format('m/d/Y g:i A')} has been declined.  The reason for this was given as:</p>
+		# determine the correct user to notify based on the content_object type
+		content_object = contest_transaction.content_object
 
-		<p>{contest_transaction.contest_rejection_reason}</p>
+		if isinstance(content_object, AreaAccessRecord):
+			email_user = content_object.user
+		elif isinstance(content_object, ConsumableWithdraw):
+			email_user = content_object.customer
+		elif isinstance(content_object, StaffCharge):
+			email_user = content_object.staff_member
+		elif isinstance(content_object, UsageEvent):
+			email_user = content_object.operator
+		else:
+			email_user = None
+
+		if email_user:
+			# send an email to the user to let them know their contest was declined
+			body = f"""
+			<p>Dear {email_user.get_full_name() if email_user else "User"},</p>
 				
-		<p>Please review the transaction in the LEO Transaction Validation screen and if appropriate submit it again with any needed changes as soon as possible.  Any corrections must be completed by the 24th of the monthly billing cycle.  If you have any questions please contact the LEO admin team at LEOHelp@psu.edu.
-		<br><br>Thank you,
-		<br>LEO Admin</p>
-		"""
-		email = EmailMultiAlternatives(
-			subject='LEO Contest Declined',
-			body=body,
-			from_email='LEOHelp@psu.edu',
-			to=[request.user.email]
-		)
-		email.attach_alternative(body, 'text/html')
-		email.send()
+			<p>This is to notify you that your contested LEO transaction submitted on {DateFormat(timezone.localtime(contest_transaction.contested_date)).format('m/d/Y g:i A')} has been declined.  The reason for this was given as:</p>
+
+			<p>{contest_transaction.contest_rejection_reason}</p>
+				
+			<p>Please review the transaction in the LEO Transaction Validation screen and if appropriate submit it again with any needed changes as soon as possible.  Any corrections must be completed by the 24th of the monthly billing cycle.  If you have any questions please contact the LEO admin team at LEOHelp@psu.edu.
+			<br><br>Thank you,
+			<br>LEO Admin</p>
+			"""
+			email = EmailMultiAlternatives(
+				subject='LEO Contest Declined',
+				body=body,
+				from_email='LEOHelp@psu.edu',
+				to=[email_user.email] if email_user else []
+			)
+			email.attach_alternative(body, 'text/html')
+			email.send()
 
 	return HttpResponseRedirect('/review_contested_items/')
 
