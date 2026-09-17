@@ -2,7 +2,7 @@
 import json
 #import pytz
 
-from datetime import datetime #, timezone
+from datetime import datetime, timedelta #, timezone
 from logging import getLogger
 #from pytz import timezone
 from re import search
@@ -29,6 +29,13 @@ from NEMO.utilities import month_list, get_month_timeframe
 def get_dummy_projects():
 	projects = Project.objects.filter(Q(simba_cost_center__iregex=r'^[a-zA-Z]') | Q(internal_order__iregex=r'^[a-zA-Z]') | Q(wbs_element__iregex=r'^[a-zA-Z]'))
 	return projects
+
+
+def is_last_day_to_validate(end, validated):
+	# the last day to validate a transaction is 4 days after its end/transaction date; after 5 days it is auto validated
+	if validated or end is None:
+		return False
+	return timezone.now().date() == (end.date() + timedelta(days=4))
 
 #@staff_member_required(login_url=None)
 @login_required
@@ -115,9 +122,10 @@ def remote_work(request):
 				'ad_hoc_created': u.ad_hoc_created,
 				'cost_per_sample_run': u.cost_per_sample_run,
 				'show_contested': False,
+				'last_day_to_validate': is_last_day_to_validate(u.end, u.validated),
 			}
 
-			if u.validated:
+		if u.validated:
 				transactions[transaction_key]['class'] = 'success-highlight'
 				if u.contest_record.all().count() > 0:
 					transactions[transaction_key]['class'] = 'success-highlight-contested'
@@ -190,6 +198,7 @@ def remote_work(request):
 				'cost_per_sample_run': s.cost_per_sample_run,
 				'related_usage_event': s.related_usage_event,
 				'show_contested': False,
+				'last_day_to_validate': is_last_day_to_validate(s.end, s.validated),
 			}
 
 			if s.validated:
@@ -262,6 +271,7 @@ def remote_work(request):
 				'cost_per_sample_run': a.cost_per_sample_run,
 				'related_usage_event': a.related_usage_event,
 				'show_contested': False,
+				'last_day_to_validate': is_last_day_to_validate(a.end, a.validated),
 			}
 
 			if a.validated:
@@ -343,6 +353,7 @@ def remote_work(request):
 				'ad_hoc_created': False,
 				'related_usage_event': c.usage_event,
 				'show_contested': False,
+				'last_day_to_validate': is_last_day_to_validate(c.date, c.validated),
 			}
 
 			if c.validated:

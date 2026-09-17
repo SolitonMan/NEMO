@@ -73,6 +73,34 @@ p {
 	color: #ffffff;
 }
 
+/* High-contrast, accessible styling for the Validate button on the last day to validate */
+.btn-validate-urgent {
+	background-color: #6a0000 !important;
+	border: 3px solid #000000 !important;
+	color: #ffffff !important;
+	font-weight: bold;
+	animation: validate-urgent-pulse 1.5s ease-in-out infinite;
+}
+
+.btn-validate-urgent:hover,
+.btn-validate-urgent:focus {
+	background-color: #8a0000 !important;
+	outline: 3px solid #ffbf00;
+	outline-offset: 2px;
+}
+
+@keyframes validate-urgent-pulse {
+	0% { box-shadow: 0 0 0 0 rgba(106, 0, 0, 0.7); }
+	70% { box-shadow: 0 0 0 8px rgba(106, 0, 0, 0); }
+	100% { box-shadow: 0 0 0 0 rgba(106, 0, 0, 0); }
+}
+
+.validate-urgent-text {
+	display: block;
+	font-size: 0.75rem;
+	text-transform: uppercase;
+}
+
 /* Editable cell styles with keyboard focus support */
 .editable-cell {
 	cursor: pointer;
@@ -344,16 +372,16 @@ th {
 			{% if show_buttons %}
 				{% if not value.validated %}
 					{% if value.type == "Tool Use" %}
-			<button id="b_c_{{ forloop.counter }}" {% if value.contested %}disabled{% endif %} class="btn btn-success" onclick="validate_charge('{% url 'validate_usage_event' value.id %}', this, '#transaction_row_{{ forloop.counter }}', '{{ value.type|escapejs }}', '{{ value.tool|escapejs }}')" aria-label="Validate {{ value.type }} for {{ value.tool }}">Validate</button>
+			<button id="b_c_{{ forloop.counter }}" {% if value.contested %}disabled{% endif %} class="btn btn-success{% if value.last_day_to_validate %} btn-validate-urgent{% endif %}" onclick="validate_charge('{% url 'validate_usage_event' value.id %}', this, '#transaction_row_{{ forloop.counter }}', '{{ value.type|escapejs }}', '{{ value.tool|escapejs }}')" aria-label="{% if value.last_day_to_validate %}Last day to validate. {% endif %}Validate {{ value.type }} for {{ value.tool }}">Validate{% if value.last_day_to_validate %}<span class="validate-urgent-text" aria-hidden="true">Last Day!</span>{% endif %}</button>
 					{% endif %}
 					{% if value.type == "Staff Charge" %}
-			<button id="b_c_{{ forloop.counter }}" {% if value.contested %}disabled{% endif %} class="btn btn-success" onclick="validate_charge('{% url 'validate_staff_charge' value.id %}', this, '#transaction_row_{{ forloop.counter }}', '{{ value.type|escapejs }}', '{{ value.tool|escapejs }}')" aria-label="Validate {{ value.type }} for {{ value.tool }}">Validate</button>
+			<button id="b_c_{{ forloop.counter }}" {% if value.contested %}disabled{% endif %} class="btn btn-success{% if value.last_day_to_validate %} btn-validate-urgent{% endif %}" onclick="validate_charge('{% url 'validate_staff_charge' value.id %}', this, '#transaction_row_{{ forloop.counter }}', '{{ value.type|escapejs }}', '{{ value.tool|escapejs }}')" aria-label="{% if value.last_day_to_validate %}Last day to validate. {% endif %}Validate {{ value.type }} for {{ value.tool }}">Validate{% if value.last_day_to_validate %}<span class="validate-urgent-text" aria-hidden="true">Last Day!</span>{% endif %}</button>
 					{% endif %}
 					{% if value.type == "Area Access" %}
-			<button id="b_c_{{ forloop.counter }}" {% if value.contested %}disabled{% endif %} class="btn btn-success" onclick="validate_charge('{% url 'validate_area_access_record' value.id %}', this, '#transaction_row_{{ forloop.counter }}', '{{ value.type|escapejs }}', '{{ value.tool|escapejs }}')" aria-label="Validate {{ value.type }} for {{ value.tool }}">Validate</button>
+			<button id="b_c_{{ forloop.counter }}" {% if value.contested %}disabled{% endif %} class="btn btn-success{% if value.last_day_to_validate %} btn-validate-urgent{% endif %}" onclick="validate_charge('{% url 'validate_area_access_record' value.id %}', this, '#transaction_row_{{ forloop.counter }}', '{{ value.type|escapejs }}', '{{ value.tool|escapejs }}')" aria-label="{% if value.last_day_to_validate %}Last day to validate. {% endif %}Validate {{ value.type }} for {{ value.tool }}">Validate{% if value.last_day_to_validate %}<span class="validate-urgent-text" aria-hidden="true">Last Day!</span>{% endif %}</button>
 					{% endif %}
 					{% if value.type == "Withdraw" %}
-			<button id="b_c_{{ forloop.counter }}" {% if value.contested %}disabled{% endif %} class="btn btn-success" onclick="validate_charge('{% url 'validate_consumable_withdraw' value.id %}', this, '#transaction_row_{{ forloop.counter }}', '{{ value.type|escapejs }}', '{{ value.tool|escapejs }}')" aria-label="Validate {{ value.type }} for {{ value.tool }}">Validate</button>
+			<button id="b_c_{{ forloop.counter }}" {% if value.contested %}disabled{% endif %} class="btn btn-success{% if value.last_day_to_validate %} btn-validate-urgent{% endif %}" onclick="validate_charge('{% url 'validate_consumable_withdraw' value.id %}', this, '#transaction_row_{{ forloop.counter }}', '{{ value.type|escapejs }}', '{{ value.tool|escapejs }}')" aria-label="{% if value.last_day_to_validate %}Last day to validate. {% endif %}Validate {{ value.type }} for {{ value.tool }}">Validate{% if value.last_day_to_validate %}<span class="validate-urgent-text" aria-hidden="true">Last Day!</span>{% endif %}</button>
 					{% endif %}
 				{% endif %}
 			{% endif %}
