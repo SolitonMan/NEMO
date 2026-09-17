@@ -125,7 +125,7 @@ def remote_work(request):
 				'last_day_to_validate': is_last_day_to_validate(u.end, u.validated),
 			}
 
-		if u.validated:
+			if u.validated:
 				transactions[transaction_key]['class'] = 'success-highlight'
 				if u.contest_record.all().count() > 0:
 					transactions[transaction_key]['class'] = 'success-highlight-contested'
