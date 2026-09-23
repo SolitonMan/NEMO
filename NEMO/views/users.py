@@ -973,15 +973,26 @@ LEO Admin Team"""
 		if usr.service_type:
 			# Get all requirements associated with this cancelled service request
 			cancelled_requirements = usr.service_type.requirements.all()
-			
+
+			# check to see if any requirements support existing tool qualifications
+			needed_requirement_ids = set()
+			if usr.user.is_active:
+				qualified_tool_ids = ProbationaryQualifications.objects.filter(
+					user=usr.user, disabled=False
+				).values_list('tool_id', flat=True)
+				for tool_requirement in ToolRequirement.objects.filter(tool_id__in=qualified_tool_ids):
+					needed_requirement_ids.add(tool_requirement.requirement_id)
+					leaf_reqs = get_leaf_requirements(tool_requirement.requirement)
+					needed_requirement_ids.update(r.id for r in leaf_reqs)			
+
 			# Get all other open service requests for this user
 			other_open_requests = UserServiceRequest.objects.filter(
 				user=usr.user,
 				status='Open'
 			).exclude(id=usr.id)
 			
+			
 			# Build a set of requirement IDs that are still needed by other open requests
-			needed_requirement_ids = set()
 			for open_request in other_open_requests:
 				if open_request.service_type:
 					# Get all requirements (including nested/leaf requirements)
