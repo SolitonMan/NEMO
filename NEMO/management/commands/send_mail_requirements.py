@@ -16,7 +16,7 @@ class Command(BaseCommand):
 		now = timezone.now()
 		status_type = ['not_started', 'in_progress', 'expired']
 
-		records = UserRequirementProgress.objects.filter(status__in=status_type).exclude(requirement__name__in=ServiceType.objects.values_list('name', flat=True))
+		records = UserRequirementProgress.objects.filter(status__in=status_type, user__is_active=True).exclude(requirement__name__in=ServiceType.objects.values_list('name', flat=True))
 
 		for record in records:
 			rqmt = record.requirement
@@ -56,7 +56,8 @@ class Command(BaseCommand):
 			expires_on__lt=expiration_threshold,
 			expires_on__gt=now,
 			requirement__retrain_interval_days__gt=0,
-			requirement__retrain_interval_days__isnull=False
+			requirement__retrain_interval_days__isnull=False, 
+			user__is_active=True
 		)
 
 		for record in expiring_records:
