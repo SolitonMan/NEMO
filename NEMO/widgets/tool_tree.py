@@ -78,7 +78,7 @@ class ToolTreeHelper:
 			icon_class = "glyphicon glyphicon-chevron-down" if should_expand else "glyphicon glyphicon-chevron-right"
 			onclick = f"toggle_tool_tree_category(this, '{category_id}')"
 			result += (
-				f'<button class="tree-toggler nav-header" aria-expanded="{aria_expanded}" aria-controls="{category_id}" '
+				f'<button style="padding: 0px !important;" class="tree-toggler nav-header btn btn-link" aria-expanded="{aria_expanded}" aria-controls="{category_id}" '
 				f'onclick="{onclick}" '
 				f'type="button" tabindex="0" aria-label="Expand/collapse {node.name}">'
 				f'<span class="{icon_class}" aria-hidden="true"></span> '
