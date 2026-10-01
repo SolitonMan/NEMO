@@ -174,6 +174,17 @@
 			{% endif %}
 		</div>
 		<div class="form-group">
+			<label class="control-label col-sm-2" for="email"><strong>Preferred E-mail address</strong></label>
+			<div class="col-sm-4">
+				<input id="preferred_email" name="preferred_email" type="text" autocomplete="off" class="form-control" value="{{ form.preferred_email.value|default_if_none:"" }}">
+			</div>
+			{% if form.email.errors %}
+				<div class="col-sm-6 form-control-static danger-highlight">
+					{{ form.email.errors|striptags }}
+				</div>
+			{% endif %}
+		</div>
+		<div class="form-group">
 			<label class="control-label col-sm-2" for="type"><strong>Type</strong></label>
 			<div class="col-sm-4">
 				{% if request.user.is_superuser %}

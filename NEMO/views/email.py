@@ -41,7 +41,7 @@ def get_email_form(request):
 @require_GET
 def get_email_form_for_user(request, user_id):
 	recipient = get_object_or_404(User, id=user_id)
-	return render(request, 'email/email_form.html', {'name': recipient.get_full_name(), 'recipient': recipient.email})
+	return render(request, 'email/email_form.html', {'name': recipient.get_full_name(), 'recipient': recipient.get_preferred_email})
 
 
 @login_required
@@ -53,7 +53,7 @@ def send_email(request):
 		recipient_list = [recipient]
 	except:
 		return HttpResponseBadRequest('The intended recipient was not a valid email address. The email was not sent.')
-	sender = request.user.email
+	sender = request.user.get_preferred_email
 	subject = request.POST.get('subject')
 	body = request.POST.get('body')
 	if request.POST.get('copy_me'):
@@ -366,18 +366,18 @@ def send_broadcast_email(request):
 	subject = request.POST.get('subject')#  form.cleaned_data['subject']
 	if subject == '' or subject is None:
 		subject = 'LEO System Email from ' + str(request.user)
-	users = [x.email for x in users]
+	users = [x.get_preferred_email for x in users]
 	if request.POST.get('copy_me'):#  form.cleaned_data['copy_me']:
-		users += [request.user.email]
+		users += [request.user.get_preferred_email]
 	try:
 		content = content.replace("\r\n\r\n", "</p><p>")
 		content = content.replace("\r\n", "<br />")
 
 		for u in users:
-			email = mail.EmailMessage(subject, strip_tags(content), request.user.email, [u], reply_to=['LEOHelp@psu.edu'])
+			email = mail.EmailMessage(subject, strip_tags(content), request.user.get_preferred_email, [u], reply_to=['LEOHelp@psu.edu'])
 			create_email_log(email, EmailCategory.GENERAL)
 			if settings.EMAIL_ENVIRONMENT == "PRODUCTION":
-				mail.send_mail(subject, strip_tags(content), request.user.email, [u], html_message=content)
+				mail.send_mail(subject, strip_tags(content), request.user.get_preferred_email, [u], html_message=content)
 
 	except SMTPException as error:
 		error_message = 'NEMO was unable to send the email through the email server. The error message that NEMO received is: ' + str(error) + ' for users with emails: ' + str(users)

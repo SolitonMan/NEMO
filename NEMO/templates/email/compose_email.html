@@ -9,7 +9,7 @@
 	<h1>Compose an email</h1>
 	{% if generic_email_sample %}
 		<div class="row">
-			<form action="{% url 'send_broadcast_email' %}" method="post" id="compose_email" onsubmit="return on_submit();">
+						<form action="{% url 'send_broadcast_email' %}" method="post" id="compose_email" onsubmit="return on_submit();" onkeydown="return check_enter_key(event);">
 				{% csrf_token %}
 				<div class="col-sm-6">
 					<h3>Recipients</h3>
@@ -121,6 +121,21 @@
 			var s = "#rec_" + id;
 			$(s).next().remove();
 			$(s).remove();
+			}
+		function check_enter_key(event)
+		{
+			var key_code = event.keyCode ? event.keyCode : event.which;
+			if (key_code == 13)
+			{
+				var tag_name = event.target.tagName.toLowerCase();
+				if (tag_name == 'textarea')
+				{
+					return true;
+				}
+				return false;
+			}
+
+			return true;
 		}
 		function on_submit() 
 		{

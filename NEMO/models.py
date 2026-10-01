@@ -13,7 +13,9 @@ from django.contrib import auth
 from django.contrib.auth.models import BaseUserManager, Group, Permission
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
+from django.core.validators import validate_email
 from django.db import models
 from django.db.models import Q, Subquery
 from django.db.models.signals import pre_delete
@@ -121,6 +123,7 @@ class User(models.Model):
 
 	user_comment = models.TextField(null=True, blank=True)
 	user_shareable_calendar_link = models.CharField(max_length=4000, null=True, blank=True)
+	preferred_email = models.EmailField(blank=True, verbose_name='preferred email address')
 
 	def has_perm(self, perm, obj=None):
 		"""
@@ -182,6 +185,20 @@ class User(models.Model):
 		""" Sends an email to this user. """
 		send_mail(subject=subject, message='', from_email=from_email, recipient_list=[self.email], html_message=message)
 		#send_mail(subject, message, from_email, [self.email], html_message=message)
+
+	@property
+	def get_preferred_email(self):
+		"""
+		Returns the user's preferred_email if it is set and passes validation,
+		otherwise falls back to the user's primary email address.
+		"""
+		if self.preferred_email:
+			try:
+				validate_email(self.preferred_email)
+				return self.preferred_email
+			except ValidationError:
+				pass
+		return self.email
 
 	def get_full_name(self):
 		fname = ""
