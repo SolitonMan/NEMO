@@ -123,7 +123,7 @@
 			<div style="margin-bottom: 16px; width: 100%; display: flex; align-items: center; justify-content: space-between;">
 				<div>
 					<button class="btn btn-success" id="btn_add_service" type="button" data-toggle="modal" data-target="#requestWizardModal" {% if request.user.active_project_count == 0 %}disabled{% endif %}>Submit a request</button>
-
+					<span style="width: 150px;">&nbsp;</span>
 					<label style="font-weight: bold; margin-right: 8px;">Show:</label>
 					<div class="btn-group btn-group-toggle" data-toggle="buttons">
 						<label class="btn btn-default active" id="toggle-training">
@@ -224,14 +224,25 @@
 <div class="row">
 	<div class="col-12">
 		<div class="alert alert-warning" role="alert">
-		<span class="glyphicon glyphicon-exclamation-sign"></span>
-		<div>
-			<b>Need to mark requirements complete?</b><br/>
-			<p>Use Requirements Management to review and mark your assigned requirements complete.</p>
-		</div>
-		<label class="btn btn-requirements" id="toggle-requirements">
-			<input type="radio" name="toggle" autocomplete="off"> Requirements Management
-		</label>
+		<table>
+		<tr>
+			<td width="15%">
+				<span class="glyphicon glyphicon-exclamation-sign" style="font-size: 48pt;"></span>
+			</td>
+			<td style="font-size: 48pt; margin-left: 20px; margin-right: 20px;" width="5%">|</td>
+			<td width="60%">
+				<div>
+					<b>Need to mark requirements complete?</b><br/>
+					<p>Use Requirements Management to review and mark your assigned requirements complete.</p>
+				</div>
+			</td>
+			<td width="20%">
+				<label class="btn btn-requirements" id="toggle-requirements">
+					<input type="radio" name="toggle" autocomplete="off"> Requirements Management
+				</label>
+			</td>
+		</tr>
+		</table>
 		</div>
 	</div>
 </div>
