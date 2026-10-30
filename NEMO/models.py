@@ -842,6 +842,7 @@ class TrainingSession(models.Model):
 	type = models.IntegerField(choices=Type.Choices)
 	date = models.DateTimeField(default=timezone.now)
 	qualified = models.BooleanField(default=False, help_text="Indicates that after this training session the user was qualified to use the tool.")
+	notes = models.TextField(null=True, blank=True)
 
 	class Meta:
 		ordering = ['-date']
@@ -1172,6 +1173,7 @@ class Reservation(CalendarDisplay):
 	project = models.ForeignKey(Project, on_delete=models.SET_NULL, null=True, blank=True, help_text="Indicates the intended project for this reservation. A missed reservation would be billed to this project.")
 	projects = models.ManyToManyField('Project', through='ReservationProject', related_name='reservation_projects')
 	customers = models.ManyToManyField('User', through='ReservationProject', related_name='reservation_customers')
+	training_session = models.ForeignKey('TrainingSession', on_delete=models.SET_NULL, null=True, blank=True, related_name='reservations', help_text="Indicates this reservation is part of a multi-tool, multi-user training session.")
 	start = models.DateTimeField('start')
 	end = models.DateTimeField('end')
 	short_notice = models.BooleanField(default=None, help_text="Indicates that the reservation was made after the configuration deadline for a tool. Laboratory staff may not have enough time to properly configure the tool before the user is scheduled to use it.")

@@ -28,11 +28,12 @@ from django.template import Template, Context
 from django.utils import timezone, dateformat
 from django.views.decorators.http import require_GET, require_POST
 from django.utils.html import escape
+from django.utils.dateparse import parse_datetime
 from django.utils.safestring import mark_safe
 
 from NEMO.decorators import disable_session_expiry_refresh
-from NEMO.forms import MultiCalendarForm, ToolDurationFormSet
-from NEMO.models import Tool, Reservation, Configuration, ReservationConfiguration, ReservationProject, ReservationNotification, Consumable, UsageEvent, UsageEventProject, AreaAccessRecord, StaffCharge, StaffChargeProject, User, Project, ScheduledOutage, ScheduledOutageCategory, UserProfile, UserProfileSetting, Sample, ToolRequirement, Requirement, UserRequirementProgress, ProbationaryQualifications
+from NEMO.forms import MultiCalendarForm, ToolDurationFormSet, MultiUserTrainingSetupForm, MultiUserTrainingToolFormSet
+from NEMO.models import Tool, Reservation, Configuration, ReservationConfiguration, ReservationProject, ReservationNotification, Consumable, UsageEvent, UsageEventProject, AreaAccessRecord, StaffCharge, StaffChargeProject, User, Project, ScheduledOutage, ScheduledOutageCategory, UserProfile, UserProfileSetting, Sample, ToolRequirement, Requirement, UserRequirementProgress, ProbationaryQualifications, TrainingSession
 from NEMO.utilities import EmailCategory, create_email_log, bootstrap_primary_color, create_email_attachment, extract_times, extract_dates, format_datetime, parse_parameter_string
 from NEMO.views.constants import ADDITIONAL_INFORMATION_MAXIMUM_LENGTH
 from NEMO.views.customization import get_customization, get_media_file_contents
@@ -2091,3 +2092,162 @@ def extract_event_properties(event):
 	
 	# Convert to JSON string
 	return json.dumps(properties, indent=2)
+
+
+def fetch_busy_calendar(url, errors):
+	events = []
+	if not url:
+		return events
+	try:
+		resp = requests.get(url, timeout=10)
+		resp.raise_for_status()
+		cal = Calendar.from_ical(resp.text)
+		for component in cal.walk():
+			if component.name == "VEVENT":
+				event = Event.from_ical(component.to_ical())
+				dtstart = event.get('dtstart')
+				dtend = event.get('dtend')
+				if dtstart and dtend:
+					start = dtstart.dt if hasattr(dtstart, 'dt') else dtstart
+					end = dtend.dt if hasattr(dtend, 'dt') else dtend
+					events.append({"start": ensure_datetime(start), "end": ensure_datetime(end)})
+	except Exception as e:
+		errors.append("Failed to load a shared calendar: " + str(e))
+	return events
+
+
+def find_sequential_training_slots(tool_entries, busy_lists, window_start, window_end):
+	schedule = []
+	current_time = window_start
+
+	for tool, duration in tool_entries:
+		tool_busy = [
+			{"start": ensure_datetime(r.start), "end": ensure_datetime(r.end)}
+			for r in Reservation.objects.filter(
+				tool=tool, cancelled=False, missed=False, shortened=False,
+				end__gte=current_time, start__lte=window_end
+			)
+		]
+
+		events_grouped = [tool_busy] + busy_lists
+
+		slots = find_available_slots(events_grouped, duration, current_time, window_end, 1, tool.id)
+
+		if not slots:
+			return schedule, "No common available time could be found for " + str(tool.name) + " within the requested window."
+
+		start, end, _ = slots[0]
+		schedule.append({
+			"tool_id": tool.id,
+			"tool_name": tool.name,
+			"start": start.strftime("%m/%d/%Y %I:%M %p"),
+			"end": end.strftime("%m/%d/%Y %I:%M %p"),
+			"start_iso": start.isoformat(),
+			"end_iso": end.isoformat(),
+		})
+
+		current_time = end
+
+	return schedule, None
+
+
+@staff_member_required(login_url=None)
+def multi_user_training_schedule(request):
+	proposed_schedule = None
+	errors = []
+
+	if request.method == "POST" and request.POST.get("action") == "propose":
+		tool_formset = MultiUserTrainingToolFormSet(request.POST, prefix="tools")
+		setup_form = MultiUserTrainingSetupForm(request.POST)
+
+		if tool_formset.is_valid() and setup_form.is_valid():
+			trainees = list(setup_form.cleaned_data['trainees'])
+			trainer = setup_form.cleaned_data['trainer']
+			project = setup_form.cleaned_data['project']
+			session_type = int(setup_form.cleaned_data['session_type'])
+			window_start = setup_form.cleaned_data['window_start'] or timezone.now()
+			window_end = setup_form.cleaned_data['window_end'] or (window_start + timedelta(days=14))
+
+			tool_entries = []
+			for f in tool_formset:
+				if f.cleaned_data:
+					tool_entries.append((f.cleaned_data['tool'], f.cleaned_data['duration']))
+
+			busy_lists = []
+			for u in trainees + [trainer]:
+				busy_lists.append(fetch_busy_calendar(u.user_shareable_calendar_link, errors))
+
+			schedule, failure = find_sequential_training_slots(tool_entries, busy_lists, window_start, window_end)
+
+			if failure:
+				errors.append(failure)
+			else:
+				proposed_schedule = schedule
+				request.session['pending_training_schedule'] = {
+					"entries": [{"tool_id": e["tool_id"], "start": e["start_iso"], "end": e["end_iso"]} for e in schedule],
+					"trainee_ids": [t.id for t in trainees],
+					"trainer_id": trainer.id,
+					"session_type": session_type,
+					"project_id": project.id if project else None,
+				}
+		else:
+			errors.append("Please correct the errors below.")
+	else:
+		tool_formset = MultiUserTrainingToolFormSet(prefix="tools")
+		setup_form = MultiUserTrainingSetupForm()
+
+	return render(request, "calendar/multi_user_training_schedule.html", {
+		"tool_formset": tool_formset,
+		"setup_form": setup_form,
+		"proposed_schedule": proposed_schedule,
+		"errors": errors,
+	})
+
+
+@staff_member_required(login_url=None)
+@require_POST
+def confirm_multi_user_training_schedule(request):
+	pending = request.session.get('pending_training_schedule')
+	if not pending:
+		return HttpResponseBadRequest("No pending schedule found. Please generate a schedule again.")
+
+	trainer = get_object_or_404(User, id=pending['trainer_id'])
+	trainees = User.objects.filter(id__in=pending['trainee_ids'])
+	project = Project.objects.filter(id=pending['project_id']).first() if pending.get('project_id') else None
+
+	session = TrainingSession()
+	session.trainer = trainer
+	session.type = pending['session_type']
+	session.date = timezone.now()
+	session.notes = request.POST.get('notes', '')
+	session.save()
+
+	for entry in pending['entries']:
+		tool = get_object_or_404(Tool, id=entry['tool_id'])
+		start = parse_datetime(entry['start'])
+		end = parse_datetime(entry['end'])
+
+		reservation = Reservation()
+		reservation.user = trainer
+		reservation.creator = request.user
+		reservation.tool = tool
+		reservation.project = project
+		reservation.start = start
+		reservation.end = end
+		reservation.short_notice = False
+		reservation.training_session = session
+		reservation.created = timezone.now()
+		reservation.save()
+
+		for trainee in trainees:
+			rp = ReservationProject()
+			rp.reservation = reservation
+			rp.project = project
+			rp.customer = trainee
+			rp.created = timezone.now()
+			rp.save()
+
+	del request.session['pending_training_schedule']
+
+	messages.success(request, "Training session #" + str(session.id) + " was created with " + str(len(pending['entries'])) + " reservation(s).")
+	return redirect('multi_user_training_schedule')

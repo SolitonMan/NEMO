@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}Multi-user training schedule{% endblock %}
+{% block content %}
+	<h1>Schedule a multi-tool training session</h1>
+
+	{% if errors %}
+		<div class="alert alert-danger">
+			<ul>
+				{% for e in errors %}
+					<li>{{ e }}</li>
+				{% endfor %}
+			</ul>
+		</div>
+	{% endif %}
+
+	<form method="post">
+		{% csrf_token %}
+		<input type="hidden" name="action" value="propose">
+
+		<h3>Trainees, trainer, and project</h3>
+		{{ setup_form.as_p }}
+
+		<h3>Tools (in order)</h3>
+		{{ tool_formset.management_form }}
+		{% for form in tool_formset %}
+			<div class="well">
+				{{ form.as_p }}
+			</div>
+		{% endfor %}
+
+		<button type="submit" class="btn btn-primary">Propose schedule</button>
+	</form>
+
+	{% if proposed_schedule %}
+		<h3>Proposed schedule</h3>
+		<table class="table">
+			<thead>
+				<tr><th>Tool</th><th>Start</th><th>End</th></tr>
+			</thead>
+			<tbody>
+				{% for entry in proposed_schedule %}
+					<tr>
+						<td>{{ entry.tool_name }}</td>
+						<td>{{ entry.start }}</td>
+						<td>{{ entry.end }}</td>
+					</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+
+		<form method="post" action="{% url 'confirm_multi_user_training_schedule' %}">
+			{% csrf_token %}
+			<div class="form-group">
+				<label>Notes</label>
+				<textarea name="notes" class="form-control"></textarea>
+			</div>
+			<button type="submit" class="btn btn-success">Confirm and create reservations</button>
+		</form>
+	{% endif %}
+{% endblock %}

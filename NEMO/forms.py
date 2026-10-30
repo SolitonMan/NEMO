@@ -9,7 +9,7 @@ from django.forms.utils import ErrorDict
 from django.utils import timezone
 from django.utils.dateparse import parse_time, parse_date, parse_datetime
 
-from NEMO.models import Account, Alert, Comment, Consumable, ConsumableWithdraw, Project, SafetyIssue, Sample, ScheduledOutage, Task, TaskCategory, Tool, User, ConsumableOrder, ConsumableOrderItem, Core, ServiceType, UserServiceRequest
+from NEMO.models import Account, Alert, Comment, Consumable, ConsumableWithdraw, Project, SafetyIssue, Sample, ScheduledOutage, Task, TaskCategory, Tool, TrainingSession, User, ConsumableOrder, ConsumableOrderItem, Core, ServiceType, UserServiceRequest
 from NEMO.utilities import bootstrap_primary_color, format_datetime
 
 logger = getLogger(__name__)
@@ -448,3 +448,51 @@ class UserServiceRequestEditForm(forms.ModelForm):
 		self.fields['project'].queryset = user_projects
 		self.fields['tool'].queryset = tools
 		self.fields['assignee'].queryset = staff_members
+
+
+class MultiUserTrainingToolForm(forms.Form):
+	tool = forms.ModelChoiceField(
+		queryset=Tool.objects.filter(visible=True).order_by('category', 'name'),
+		label="Tool"
+	)
+	duration = forms.IntegerField(min_value=1, initial=120, label="Duration (minutes)")
+
+
+MultiUserTrainingToolFormSet = forms.formset_factory(MultiUserTrainingToolForm, extra=1, min_num=1, validate_min=True)
+
+
+class MultiUserTrainingSetupForm(forms.Form):
+	trainees = forms.ModelMultipleChoiceField(
+		queryset=User.objects.filter(is_active=True).order_by('last_name', 'first_name'),
+		widget=forms.SelectMultiple(attrs={'size': 8, 'class': 'form-control'}),
+		label="Trainees"
+	)
+
+	trainer = forms.ModelChoiceField(
+		queryset=User.objects.filter(is_active=True, is_staff=True).order_by('last_name', 'first_name'),
+		label="Trainer"
+	)
+
+	project = forms.ModelChoiceField(
+		queryset=Project.objects.filter(active=True).order_by('project_number'),
+		label="Project",
+		required=False
+	)
+
+	session_type = forms.ChoiceField(
+		choices=[(0, 'Individual'), (1, 'Group')],
+		label="Session Type",
+		initial=1
+	)
+
+	window_start = forms.DateTimeField(
+		label="Search Window Start",
+		required=False,
+		widget=forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'})
+	)
+
+	window_end = forms.DateTimeField(
+		label="Search Window End",
+		required=False,
+		widget=forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'})
+	)

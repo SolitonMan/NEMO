@@ -114,6 +114,8 @@ urlpatterns = [
 	path('sequential_tool_schedule/', calendar.sequential_tool_schedule, name='sequential_tool_schedule'),
 	path('tool_training/', calendar.tool_training_schedule, name='tool_training_schedule'),
 	path('book_training_slot/', calendar.book_training_slot, name='book_training_slot'),
+	path('multi_user_training_schedule/', calendar.multi_user_training_schedule, name='multi_user_training_schedule'),
+	path('confirm_multi_user_training_schedule/', calendar.confirm_multi_user_training_schedule, name='confirm_multi_user_training_schedule'),
 
 	# Requirements:
 	path('requirements/', requirements_admin.manage_requirements, name='manage_requirements'),

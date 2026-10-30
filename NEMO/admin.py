@@ -237,20 +237,27 @@ class ToolAdmin(admin.ModelAdmin):
 		return False
 
 
+class TrainingSessionReservationInline(admin.TabularInline):
+	model = Reservation
+	fk_name = 'training_session'
+	extra = 0
+	fields = ('tool', 'start', 'end', 'user')
+	readonly_fields = ('tool', 'start', 'end', 'user')
+	can_delete = False
+
+	def has_add_permission(self, request, obj=None):
+		return False
+
 
 @register(TrainingSession)
 class TrainingSessionAdmin(admin.ModelAdmin):
-	list_display = ('id', 'trainer', 'trainee', 'tool', 'project', 'type', 'date', 'duration', 'qualified')
-	list_filter = ('qualified', 'date', 'type')
+	list_display = ('id', 'trainer', 'type', 'date')
+	list_filter = ('type', 'date')
 	date_hierarchy = 'date'
 
-	search_fields = ('trainee__first_name','trainee__last_name','trainer__first_name','trainer__last_name','project__project_number')
-	autocomplete_fields = ['trainer', 'trainee', 'tool', 'project']
-
-	def formfield_for_foreignkey(self, db_field, request, **kwargs):
-		if db_field.name == "project":
-			kwargs["queryset"] = Project.objects.filter(active=True,end_date__gte=timezone.now().date()).order_by('project_number')
-		return super(TrainingSessionAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+	search_fields = ('trainer__first_name', 'trainer__last_name', 'notes')
+	autocomplete_fields = ['trainer']
+	inlines = [TrainingSessionReservationInline]
 
 	def has_delete_permission(self, request, obj=None):
 		return False
