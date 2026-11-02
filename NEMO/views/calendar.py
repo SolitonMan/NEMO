@@ -32,7 +32,7 @@ from django.utils.dateparse import parse_datetime
 from django.utils.safestring import mark_safe
 
 from NEMO.decorators import disable_session_expiry_refresh
-from NEMO.forms import MultiCalendarForm, ToolDurationFormSet, MultiUserTrainingSetupForm, MultiUserTrainingToolFormSet, TraineeProjectFormSet
+from NEMO.forms import MultiCalendarForm, ToolDurationFormSet, MultiUserTrainingSetupForm, TraineeProjectFormSet
 from NEMO.models import Tool, Reservation, Configuration, ReservationConfiguration, ReservationProject, ReservationNotification, Consumable, UsageEvent, UsageEventProject, AreaAccessRecord, StaffCharge, StaffChargeProject, User, Project, ScheduledOutage, ScheduledOutageCategory, UserProfile, UserProfileSetting, Sample, ToolRequirement, Requirement, UserRequirementProgress, ProbationaryQualifications, TrainingSession
 from NEMO.utilities import EmailCategory, create_email_log, bootstrap_primary_color, create_email_attachment, extract_times, extract_dates, format_datetime, parse_parameter_string
 from NEMO.views.constants import ADDITIONAL_INFORMATION_MAXIMUM_LENGTH
@@ -42,6 +42,8 @@ from NEMO.views.requirements_admin import evaluate_requirements
 from NEMO.views.users import get_leaf_requirements
 from NEMO.widgets.tool_tree import ToolTree
 
+
+TRAINING_SESSION_DEFAULT_DURATION = 120
 
 @login_required
 @require_GET
@@ -2116,11 +2118,18 @@ def fetch_busy_calendar(url, errors):
 	return events
 
 
-def find_sequential_training_slots(tool_entries, busy_lists, window_start, window_end):
+def find_sequential_training_slots(entries, busy_lists, window_start, window_end):
 	schedule = []
 	current_time = window_start
 
-	for tool, duration in tool_entries:
+	for entry in entries:
+		if entry["type"] == "gap":
+			current_time = current_time + timedelta(minutes=entry["minutes"])
+			continue
+
+		tool = entry["tool"]
+		duration = TRAINING_SESSION_DEFAULT_DURATION
+
 		tool_busy = [
 			{"start": ensure_datetime(r.start), "end": ensure_datetime(r.end)}
 			for r in Reservation.objects.filter(
@@ -2156,40 +2165,80 @@ def multi_user_training_schedule(request):
 	proposed_schedule = None
 	errors = []
 	trainees = User.objects.filter(is_active=True, projects__active=True).distinct().order_by('last_name', 'first_name')
+	tools_for_search = Tool.objects.filter(visible=True).order_by('category', 'name')
+
+	submitted_trainees = []
+	submitted_entries = []
 
 	if request.method == "POST" and request.POST.get("action") == "propose":
-		tool_formset = MultiUserTrainingToolFormSet(request.POST, prefix="tools")
 		setup_form = MultiUserTrainingSetupForm(request.POST)
 
-		trainee_project_pairs = []
-		for key, value in request.POST.items():
-			if search("^chosen_trainee__[0-9]+$", key) is not None and value:
-				index = key.partition("__")[2]
-				project_key = "chosen_project__" + index
-				project_value = request.POST.get(project_key)
-				if project_value and project_value != "-1":
-					trainee_project_pairs.append((
-						get_object_or_404(User, id=value),
-						get_object_or_404(Project, id=project_value)
-					))
+		# Parse submitted trainee rows and echo them back regardless of validation outcome.
+		trainee_indexes = set()
+		for key in request.POST.keys():
+			m = search("^chosen_trainee__([0-9]+)$", key)
+			if m is not None:
+				trainee_indexes.add(int(m.group(1)))
 
-		if tool_formset.is_valid() and setup_form.is_valid() and trainee_project_pairs:
+		trainee_project_pairs = []
+		for index in sorted(trainee_indexes):
+			user_id = request.POST.get("chosen_trainee__" + str(index))
+			project_id = request.POST.get("chosen_project__" + str(index))
+			if not user_id:
+				continue
+			trainee_user = User.objects.filter(id=user_id).first()
+			project = Project.objects.filter(id=project_id).first() if project_id and project_id != "-1" else None
+			submitted_trainees.append({
+				"entry_number": index,
+				"trainee": trainee_user,
+				"project": project,
+			})
+			if trainee_user and project:
+				trainee_project_pairs.append((trainee_user, project))
+
+		# Parse submitted tool/gap rows and echo them back regardless of validation outcome.
+		row_indexes = set()
+		for key in request.POST.keys():
+			m = search("^row_type__([0-9]+)$", key)
+			if m is not None:
+				row_indexes.add(int(m.group(1)))
+
+		entries = []
+		for index in sorted(row_indexes):
+			row_type = request.POST.get("row_type__" + str(index))
+			if row_type == "gap":
+				minutes_value = request.POST.get("gap_minutes__" + str(index))
+				minutes = int(minutes_value) if minutes_value else 0
+				submitted_entries.append({
+					"entry_number": index,
+					"row_type": "gap",
+					"gap_minutes": minutes,
+				})
+				if minutes > 0:
+					entries.append({"type": "gap", "minutes": minutes})
+			else:
+				tool_id = request.POST.get("chosen_tool__" + str(index))
+				tool_obj = Tool.objects.filter(id=tool_id).first() if tool_id else None
+				submitted_entries.append({
+					"entry_number": index,
+					"row_type": "tool",
+					"tool": tool_obj,
+				})
+				if tool_obj:
+					entries.append({"type": "tool", "tool": tool_obj})
+
+		if setup_form.is_valid() and trainee_project_pairs and any(e["type"] == "tool" for e in entries):
 			trainer = setup_form.cleaned_data['trainer']
 			session_type = int(setup_form.cleaned_data['session_type'])
 			window_start = setup_form.cleaned_data['window_start'] or timezone.now()
 			window_end = setup_form.cleaned_data['window_end'] or (window_start + timedelta(days=14))
-
-			tool_entries = []
-			for f in tool_formset:
-				if f.cleaned_data:
-					tool_entries.append((f.cleaned_data['tool'], f.cleaned_data['duration']))
 
 			busy_lists = []
 			for trainee, _ in trainee_project_pairs:
 				busy_lists.append(fetch_busy_calendar(trainee.user_shareable_calendar_link, errors))
 			busy_lists.append(fetch_busy_calendar(trainer.user_shareable_calendar_link, errors))
 
-			schedule, failure = find_sequential_training_slots(tool_entries, busy_lists, window_start, window_end)
+			schedule, failure = find_sequential_training_slots(entries, busy_lists, window_start, window_end)
 
 			if failure:
 				errors.append(failure)
@@ -2202,17 +2251,18 @@ def multi_user_training_schedule(request):
 					"session_type": session_type,
 				}
 		else:
-			errors.append("Please select at least one trainee with a project, and correct any other errors below.")
+			errors.append("Please select at least one trainee with a project, at least one tool, and correct any other errors below.")
 	else:
-		tool_formset = MultiUserTrainingToolFormSet(prefix="tools")
 		setup_form = MultiUserTrainingSetupForm()
 
 	return render(request, "calendar/multi_user_training_schedule.html", {
-		"tool_formset": tool_formset,
 		"setup_form": setup_form,
 		"proposed_schedule": proposed_schedule,
 		"errors": errors,
 		"trainees": trainees,
+		"tools_for_search": tools_for_search,
+		"submitted_trainees": submitted_trainees,
+		"submitted_entries": submitted_entries,
 	})
 
 
@@ -2271,3 +2321,12 @@ def confirm_multi_user_training_schedule(request):
 def multi_user_training_entry(request):
 	entry_number = int(request.GET['entry_number'])
 	return render(request, 'calendar/multi_user_training_entry.html', {'entry_number': entry_number})
+
+
+@staff_member_required(login_url=None)
+@require_GET
+def multi_user_training_tool_entry(request):
+	entry_number = int(request.GET['entry_number'])
+	row_type = request.GET.get('row_type', 'tool')
+	return render(request, 'calendar/multi_user_training_tool_entry.html', {'entry_number': entry_number, 'row_type': row_type})
+

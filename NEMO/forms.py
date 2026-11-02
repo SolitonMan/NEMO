@@ -450,39 +450,6 @@ class UserServiceRequestEditForm(forms.ModelForm):
 		self.fields['assignee'].queryset = staff_members
 
 
-class MultiUserTrainingToolForm(forms.Form):
-	tool = forms.ModelChoiceField(
-		queryset=Tool.objects.filter(visible=True).order_by('category', 'name'),
-		label="Tool",
-		widget=forms.Select(attrs={'class': 'form-control'})
-	)
-	duration = forms.IntegerField(
-		min_value=1,
-		initial=120,
-		label="Duration (minutes)",
-		widget=forms.NumberInput(attrs={'class': 'form-control'})
-	)
-
-
-MultiUserTrainingToolFormSet = forms.formset_factory(MultiUserTrainingToolForm, extra=1, min_num=1, validate_min=True)
-
-
-class TraineeProjectForm(forms.Form):
-	trainee = forms.ModelChoiceField(
-		queryset=User.objects.filter(is_active=True).order_by('last_name', 'first_name'),
-		label="Trainee",
-		widget=forms.Select(attrs={'class': 'form-control'})
-	)
-	project = forms.ModelChoiceField(
-		queryset=Project.objects.filter(active=True).order_by('project_number'),
-		label="Project",
-		widget=forms.Select(attrs={'class': 'form-control'})
-	)
-
-
-TraineeProjectFormSet = forms.formset_factory(TraineeProjectForm, extra=1, min_num=1, validate_min=True)
-
-
 class MultiUserTrainingSetupForm(forms.Form):
 	trainer = forms.ModelChoiceField(
 		queryset=User.objects.filter(is_active=True, is_staff=True).order_by('last_name', 'first_name'),
@@ -508,3 +475,18 @@ class MultiUserTrainingSetupForm(forms.Form):
 		required=False,
 		widget=forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'})
 	)
+
+class TraineeProjectForm(forms.Form):
+	trainee = forms.ModelChoiceField(
+		queryset=User.objects.filter(is_active=True).order_by('last_name', 'first_name'),
+		label="Trainee",
+		widget=forms.Select(attrs={'class': 'form-control'})
+	)
+	project = forms.ModelChoiceField(
+		queryset=Project.objects.filter(active=True).order_by('project_number'),
+		label="Project",
+		widget=forms.Select(attrs={'class': 'form-control'})
+	)
+
+
+TraineeProjectFormSet = forms.formset_factory(TraineeProjectForm, extra=1, min_num=1, validate_min=True)

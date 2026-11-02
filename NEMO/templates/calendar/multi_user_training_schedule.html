@@ -49,18 +49,69 @@
 				<th style="min-width:200px">Trainee</th>
 				<th style="min-width:200px">Project</th>
 			</tr>
+			{% for row in submitted_trainees %}
+				<tr id="trainee_row_{{ row.entry_number }}">
+					<td style="vertical-align: top"><span class="glyphicon glyphicon-remove-circle grey pointer" onclick="remove_trainee_row({{ row.entry_number }})"></span></td>
+					<td>
+						<input type="text" class="form-control" id="trainee_textbox__{{ row.entry_number }}" name="chosen_trainee_name__{{ row.entry_number }}" data-row="{{ row.entry_number }}" value="{{ row.trainee }}" style="display:none">
+						<input type="button" class="btn btn-default" id="trainee_button__{{ row.entry_number }}" value="{{ row.trainee }}" onclick="purge_trainee({{ row.entry_number }})">
+						<input type="hidden" id="chosen_trainee__{{ row.entry_number }}" name="chosen_trainee__{{ row.entry_number }}" value="{{ row.trainee.id }}">
+					</td>
+					<td id="trainee_project__{{ row.entry_number }}">
+						{% if row.project %}
+							<select name="chosen_project__{{ row.entry_number }}" class="form-control" id="chosen_project__{{ row.entry_number }}">
+								{% for p in row.trainee.active_projects %}
+									<option value="{{ p.id }}" {% if p.id == row.project.id %}selected{% endif %}>{{ p }}</option>
+								{% endfor %}
+							</select>
+						{% endif %}
+					</td>
+				</tr>
+			{% endfor %}
 			<tr>
 				<td colspan="3" style="text-align:center"><a href="javascript:void(0)" onclick="add_trainee()">Add another trainee</a></td>
 			</tr>
 		</table>
 
 		<h3>Tools (in order)</h3>
-		{{ tool_formset.management_form }}
-		{% for form in tool_formset %}
-			<div class="well">
-				{{ form.as_p }}
-			</div>
-		{% endfor %}
+		<p>Search for and select each tool in the order training should occur. Use "Add a time gap" to require a break between two tools.</p>
+		<table id="tool_entries" class="table">
+			<tr>
+				<th>&nbsp;</th>
+				<th style="min-width:200px">Tool or Gap</th>
+				<th>&nbsp;</th>
+			</tr>
+			{% for row in submitted_entries %}
+				{% if row.row_type == "gap" %}
+					<tr id="tool_row_{{ row.entry_number }}">
+						<td style="vertical-align: top"><span class="glyphicon glyphicon-remove-circle grey pointer" onclick="remove_tool_row({{ row.entry_number }})"></span></td>
+						<td colspan="2">
+							<input type="hidden" name="row_type__{{ row.entry_number }}" value="gap">
+							<label>Gap (minutes)</label>
+							<input type="number" min="1" class="form-control" name="gap_minutes__{{ row.entry_number }}" value="{{ row.gap_minutes }}">
+						</td>
+					</tr>
+				{% else %}
+					<tr id="tool_row_{{ row.entry_number }}">
+						<td style="vertical-align: top"><span class="glyphicon glyphicon-remove-circle grey pointer" onclick="remove_tool_row({{ row.entry_number }})"></span></td>
+						<td>
+							<input type="hidden" name="row_type__{{ row.entry_number }}" value="tool">
+							<input type="text" class="form-control" id="tool_textbox__{{ row.entry_number }}" name="chosen_tool_name__{{ row.entry_number }}" data-row="{{ row.entry_number }}" value="{{ row.tool }}" style="display:none">
+							<input type="button" class="btn btn-default" id="tool_button__{{ row.entry_number }}" value="{{ row.tool }}" onclick="purge_tool({{ row.entry_number }})">
+							<input type="hidden" id="chosen_tool__{{ row.entry_number }}" name="chosen_tool__{{ row.entry_number }}" value="{{ row.tool.id }}">
+						</td>
+						<td>&nbsp;</td>
+					</tr>
+				{% endif %}
+			{% endfor %}
+			<tr>
+				<td colspan="3" style="text-align:center">
+					<a href="javascript:void(0)" onclick="add_tool()">Add another tool</a>
+					&nbsp;|&nbsp;
+					<a href="javascript:void(0)" onclick="add_gap()">Add a time gap</a>
+				</td>
+			</tr>
+		</table>
 
 		<button type="submit" class="btn btn-primary">Propose schedule</button>
 	</form>
@@ -93,7 +144,31 @@
 	{% endif %}
 
 	<script type="text/javascript">
-		var current_trainee_entry_number = 1;
+		var current_trainee_entry_number = {{ submitted_trainees|length|default:0 }};
+		var current_tool_entry_number = {{ submitted_entries|length|default:0 }};
+
+		{% for row in submitted_trainees %}
+			enable_trainee_autocompletion_if_empty({{ row.entry_number }});
+		{% endfor %}
+		{% for row in submitted_entries %}
+			{% if row.row_type != "gap" %}
+				enable_tool_autocompletion_if_empty({{ row.entry_number }});
+			{% endif %}
+		{% endfor %}
+
+		function enable_trainee_autocompletion_if_empty(entry_number)
+		{
+			if ($("#chosen_trainee__" + entry_number).val() == "") {
+				enable_trainee_autocompletion(entry_number);
+			}
+		}
+
+		function enable_tool_autocompletion_if_empty(entry_number)
+		{
+			if ($("#chosen_tool__" + entry_number).val() == "") {
+				enable_tool_autocompletion(entry_number);
+			}
+		}
 
 		function add_trainee()
 		{
@@ -110,6 +185,8 @@
 		function enable_trainee_autocompletion(entry_number)
 		{
 			var id = "#trainee_textbox__" + entry_number;
+			$(id).show();
+			$("#trainee_button__" + entry_number).hide();
 			$(id).autocomplete('trainee', on_trainee_autocomplete_selection, {{ trainees|json_search_base }}).focus();
 		}
 
@@ -117,6 +194,7 @@
 		{
 			$(this).typeahead('val', search_selection.id).hide();
 			var row = $(this).data('row');
+			$("#chosen_trainee__" + row).val(search_selection.id);
 			var button_id = "#trainee_button__" + row;
 			$(button_id).val(search_selection.name).show();
 			fetch_trainee_projects(row, search_selection.id);
@@ -132,7 +210,6 @@
 			};
 			var target_element = "#trainee_project__" + row;
 			var url = "{% url 'get_projects' %}?" + jQuery.param(parameters);
-			var report_error = ajax_complete_callback("Could not fetch projects for trainee", "There was a problem obtaining the list of projects for the trainee.");
 			$(target_element).load(url, undefined, function(responseTxt, statusTxt, xhr) {
 				if (statusTxt != "success") {
 					ajax_complete_callback("Could not fetch projects for trainee", "There was a problem obtaining the list of projects for the trainee.");
@@ -143,6 +220,7 @@
 		function purge_trainee(row)
 		{
 			$("#trainee_button__" + row).hide();
+			$("#chosen_trainee__" + row).val("");
 			$("#trainee_project__" + row).html("");
 			$("#trainee_textbox__" + row).typeahead('val', '').show().focus();
 		}
@@ -152,6 +230,58 @@
 			$("#trainee_row_" + row).remove();
 		}
 
+		function add_tool()
+		{
+			var failure_dialog = ajax_failure_callback("Cannot add new entry", "The web browser was not able to communicate with the server.");
+			ajax_get("{% url 'multi_user_training_tool_entry' %}", { "entry_number": current_tool_entry_number, "row_type": "tool" }, add_entry_success_callback, failure_dialog);
+			function add_entry_success_callback(response, status, xml_http_request)
+			{
+				$("#tool_entries tr:last").before(response);
+				enable_tool_autocompletion(current_tool_entry_number);
+				current_tool_entry_number++;
+			}
+		}
+
+		function add_gap()
+		{
+			var failure_dialog = ajax_failure_callback("Cannot add new entry", "The web browser was not able to communicate with the server.");
+			ajax_get("{% url 'multi_user_training_tool_entry' %}", { "entry_number": current_tool_entry_number, "row_type": "gap" }, add_entry_success_callback, failure_dialog);
+			function add_entry_success_callback(response, status, xml_http_request)
+			{
+				$("#tool_entries tr:last").before(response);
+				current_tool_entry_number++;
+			}
+		}
+
+		function enable_tool_autocompletion(entry_number)
+		{
+			var id = "#tool_textbox__" + entry_number;
+			$(id).show();
+			$("#tool_button__" + entry_number).hide();
+			$(id).autocomplete('tool', on_tool_autocomplete_selection, {{ tools_for_search|json_search_base }}).focus();
+		}
+
+		function on_tool_autocomplete_selection(jquery_event, search_selection, dataset_name)
+		{
+			$(this).typeahead('val', search_selection.id).hide();
+			var row = $(this).data('row');
+			$("#chosen_tool__" + row).val(search_selection.id);
+			var button_id = "#tool_button__" + row;
+			$(button_id).val(search_selection.name).show();
+		}
+
+		function purge_tool(row)
+		{
+			$("#tool_button__" + row).hide();
+			$("#chosen_tool__" + row).val("");
+			$("#tool_textbox__" + row).typeahead('val', '').show().focus();
+		}
+
+		function remove_tool_row(row)
+		{
+			$("#tool_row_" + row).remove();
+		}
+
 		function on_submit()
 		{
 			var s;
@@ -159,6 +289,14 @@
 				s = "#trainee_textbox__" + i;
 				if ($(s).length && $(s).css("display") != "none") {
 					alert("Please select a trainee for each row, or else delete the row.");
+					$(s).focus();
+					return false;
+				}
+			}
+			for (var i = 0; i < current_tool_entry_number; i++) {
+				s = "#tool_textbox__" + i;
+				if ($(s).length && $(s).css("display") != "none") {
+					alert("Please select a tool for each row, or else delete the row.");
 					$(s).focus();
 					return false;
 				}

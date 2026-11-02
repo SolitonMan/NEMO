@@ -1,0 +1,21 @@
+{% if row_type == "gap" %}
+<tr id="tool_row_{{ entry_number }}">
+	<td style="vertical-align: top"><span class="glyphicon glyphicon-remove-circle grey pointer" onclick="remove_tool_row({{ entry_number }})"></span></td>
+	<td colspan="2">
+		<input type="hidden" name="row_type__{{ entry_number }}" value="gap">
+		<label>Gap (minutes)</label>
+		<input type="number" min="1" class="form-control" name="gap_minutes__{{ entry_number }}" value="{{ gap_minutes|default:"" }}">
+	</td>
+</tr>
+{% else %}
+<tr id="tool_row_{{ entry_number }}">
+	<td style="vertical-align: top"><span class="glyphicon glyphicon-remove-circle grey pointer" onclick="remove_tool_row({{ entry_number }})"></span></td>
+	<td>
+		<input type="hidden" name="row_type__{{ entry_number }}" value="tool">
+		<input type="text" class="form-control" id="tool_textbox__{{ entry_number }}" name="chosen_tool_name__{{ entry_number }}" data-row="{{ entry_number }}" value="{{ tool_display|default:"" }}" {% if tool_id %}style="display:none"{% endif %}>
+		<input type="button" class="btn btn-default" style="display:{% if tool_id %}inline-block{% else %}none{% endif %}" id="tool_button__{{ entry_number }}" value="{{ tool_display|default:"" }}" onclick="purge_tool({{ entry_number }})">
+		<input type="hidden" id="chosen_tool__{{ entry_number }}" name="chosen_tool__{{ entry_number }}" value="{{ tool_id|default:"" }}">
+	</td>
+	<td>&nbsp;</td>
+</tr>
+{% endif %}

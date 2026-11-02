@@ -117,6 +117,7 @@ urlpatterns = [
 	path('multi_user_training_schedule/', calendar.multi_user_training_schedule, name='multi_user_training_schedule'),
 	path('confirm_multi_user_training_schedule/', calendar.confirm_multi_user_training_schedule, name='confirm_multi_user_training_schedule'),
 	path('multi_user_training_entry/', calendar.multi_user_training_entry, name='multi_user_training_entry'),
+	path('multi_user_training_tool_entry/', calendar.multi_user_training_tool_entry, name='multi_user_training_tool_entry'),
 
 	# Requirements:
 	path('requirements/', requirements_admin.manage_requirements, name='manage_requirements'),
