@@ -214,7 +214,8 @@
 											{% if user.is_superuser %}
 											{% navigation_url 'tool_training_schedule' 'Tool Training Scheduler' %}
 											{% navigation_url 'sequential_tool_schedule' 'Process Scheduling' %}
-											{% navigation_url 'multi_calendar' 'Multi-calendar Scheduler' %}
+											{% navigation_url 'multi_calendar' 'Multi-user Training Scheduler' %}
+											{% navigation_url 'multi_user_training_schedule' 'Multi-calendar Scheduler' %}
 											{% endif %}
 											{% navigation_url 'create_notification_scheme' 'Notification Schemes' %}
 											<li role="menuitem"><a href="{% url 'order_list' 0 %}">Orders</a></li>
