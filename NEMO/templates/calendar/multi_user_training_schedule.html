@@ -17,8 +17,16 @@
 		{% csrf_token %}
 		<input type="hidden" name="action" value="propose">
 
-		<h3>Trainees, trainer, and project</h3>
+		<h3>Trainer and schedule window</h3>
 		{{ setup_form.as_p }}
+
+		<h3>Trainees and their projects</h3>
+		{{ trainee_formset.management_form }}
+		{% for form in trainee_formset %}
+			<div class="well">
+				{{ form.as_p }}
+			</div>
+		{% endfor %}
 
 		<h3>Tools (in order)</h3>
 		{{ tool_formset.management_form }}

@@ -2158,12 +2158,16 @@ def multi_user_training_schedule(request):
 
 	if request.method == "POST" and request.POST.get("action") == "propose":
 		tool_formset = MultiUserTrainingToolFormSet(request.POST, prefix="tools")
+		trainee_formset = TraineeProjectFormSet(request.POST, prefix="trainees")
 		setup_form = MultiUserTrainingSetupForm(request.POST)
 
-		if tool_formset.is_valid() and setup_form.is_valid():
-			trainees = list(setup_form.cleaned_data['trainees'])
+		if tool_formset.is_valid() and trainee_formset.is_valid() and setup_form.is_valid():
+			trainee_project_pairs = []
+			for f in trainee_formset:
+				if f.cleaned_data:
+					trainee_project_pairs.append((f.cleaned_data['trainee'], f.cleaned_data['project']))
+
 			trainer = setup_form.cleaned_data['trainer']
-			project = setup_form.cleaned_data['project']
 			session_type = int(setup_form.cleaned_data['session_type'])
 			window_start = setup_form.cleaned_data['window_start'] or timezone.now()
 			window_end = setup_form.cleaned_data['window_end'] or (window_start + timedelta(days=14))
@@ -2174,8 +2178,9 @@ def multi_user_training_schedule(request):
 					tool_entries.append((f.cleaned_data['tool'], f.cleaned_data['duration']))
 
 			busy_lists = []
-			for u in trainees + [trainer]:
-				busy_lists.append(fetch_busy_calendar(u.user_shareable_calendar_link, errors))
+			for trainee, _ in trainee_project_pairs:
+				busy_lists.append(fetch_busy_calendar(trainee.user_shareable_calendar_link, errors))
+			busy_lists.append(fetch_busy_calendar(trainer.user_shareable_calendar_link, errors))
 
 			schedule, failure = find_sequential_training_slots(tool_entries, busy_lists, window_start, window_end)
 
@@ -2185,19 +2190,20 @@ def multi_user_training_schedule(request):
 				proposed_schedule = schedule
 				request.session['pending_training_schedule'] = {
 					"entries": [{"tool_id": e["tool_id"], "start": e["start_iso"], "end": e["end_iso"]} for e in schedule],
-					"trainee_ids": [t.id for t in trainees],
+					"trainee_project_pairs": [{"trainee_id": t.id, "project_id": p.id} for t, p in trainee_project_pairs],
 					"trainer_id": trainer.id,
 					"session_type": session_type,
-					"project_id": project.id if project else None,
 				}
 		else:
 			errors.append("Please correct the errors below.")
 	else:
 		tool_formset = MultiUserTrainingToolFormSet(prefix="tools")
+		trainee_formset = TraineeProjectFormSet(prefix="trainees")
 		setup_form = MultiUserTrainingSetupForm()
 
 	return render(request, "calendar/multi_user_training_schedule.html", {
 		"tool_formset": tool_formset,
+		"trainee_formset": trainee_formset,
 		"setup_form": setup_form,
 		"proposed_schedule": proposed_schedule,
 		"errors": errors,
@@ -2212,8 +2218,7 @@ def confirm_multi_user_training_schedule(request):
 		return HttpResponseBadRequest("No pending schedule found. Please generate a schedule again.")
 
 	trainer = get_object_or_404(User, id=pending['trainer_id'])
-	trainees = User.objects.filter(id__in=pending['trainee_ids'])
-	project = Project.objects.filter(id=pending['project_id']).first() if pending.get('project_id') else None
+	pairs = pending['trainee_project_pairs']
 
 	session = TrainingSession()
 	session.trainer = trainer
@@ -2231,7 +2236,6 @@ def confirm_multi_user_training_schedule(request):
 		reservation.user = trainer
 		reservation.creator = request.user
 		reservation.tool = tool
-		reservation.project = project
 		reservation.start = start
 		reservation.end = end
 		reservation.short_notice = False
@@ -2239,7 +2243,10 @@ def confirm_multi_user_training_schedule(request):
 		reservation.created = timezone.now()
 		reservation.save()
 
-		for trainee in trainees:
+		for pair in pairs:
+			trainee = get_object_or_404(User, id=pair['trainee_id'])
+			project = get_object_or_404(Project, id=pair['project_id'])
+
 			rp = ReservationProject()
 			rp.reservation = reservation
 			rp.project = project
