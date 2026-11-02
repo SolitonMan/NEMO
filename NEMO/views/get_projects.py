@@ -22,6 +22,9 @@ def get_projects(request):
 	elif source_template == 'staff_charges':
 		entry_number = int(request.GET['entry_number'])
 		return render(request, 'staff_charges/get_projects.html', {'projects': projects, 'entry_number': entry_number, 'ad_hoc': ad_hoc})
+	elif source_template == 'multi_user_training':
+		entry_number = int(request.GET['entry_number'])
+		return render(request, 'calendar/multi_user_training_get_projects.html', {'projects': projects, 'entry_number': entry_number})
 	elif source_template == 'contest_transaction':
 		entry_number = request.GET['entry_number']
 		return render(request, 'get_projects.html', {'projects': projects, 'entry_number': entry_number})
@@ -32,7 +35,6 @@ def get_projects(request):
 	for p in projects:
 		send_name = '[' + str(p.project_number) + ']' + str(p.name) + '[' + str(p.get_project()) + ']'
 		projects_out.append({'id':p.id,'name':send_name})
-	#return JsonResponse(dict(projects=list(projects.values('id', 'name', 'project_number'))))
 	return JsonResponse(dict(projects=projects_out))
 
 @staff_member_required(login_url=None)

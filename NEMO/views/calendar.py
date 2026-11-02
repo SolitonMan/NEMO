@@ -2155,18 +2155,25 @@ def find_sequential_training_slots(tool_entries, busy_lists, window_start, windo
 def multi_user_training_schedule(request):
 	proposed_schedule = None
 	errors = []
+	trainees = User.objects.filter(is_active=True, projects__active=True).distinct().order_by('last_name', 'first_name')
 
 	if request.method == "POST" and request.POST.get("action") == "propose":
 		tool_formset = MultiUserTrainingToolFormSet(request.POST, prefix="tools")
-		trainee_formset = TraineeProjectFormSet(request.POST, prefix="trainees")
 		setup_form = MultiUserTrainingSetupForm(request.POST)
 
-		if tool_formset.is_valid() and trainee_formset.is_valid() and setup_form.is_valid():
-			trainee_project_pairs = []
-			for f in trainee_formset:
-				if f.cleaned_data:
-					trainee_project_pairs.append((f.cleaned_data['trainee'], f.cleaned_data['project']))
+		trainee_project_pairs = []
+		for key, value in request.POST.items():
+			if search("^chosen_trainee__[0-9]+$", key) is not None and value:
+				index = key.partition("__")[2]
+				project_key = "chosen_project__" + index
+				project_value = request.POST.get(project_key)
+				if project_value and project_value != "-1":
+					trainee_project_pairs.append((
+						get_object_or_404(User, id=value),
+						get_object_or_404(Project, id=project_value)
+					))
 
+		if tool_formset.is_valid() and setup_form.is_valid() and trainee_project_pairs:
 			trainer = setup_form.cleaned_data['trainer']
 			session_type = int(setup_form.cleaned_data['session_type'])
 			window_start = setup_form.cleaned_data['window_start'] or timezone.now()
@@ -2195,18 +2202,17 @@ def multi_user_training_schedule(request):
 					"session_type": session_type,
 				}
 		else:
-			errors.append("Please correct the errors below.")
+			errors.append("Please select at least one trainee with a project, and correct any other errors below.")
 	else:
 		tool_formset = MultiUserTrainingToolFormSet(prefix="tools")
-		trainee_formset = TraineeProjectFormSet(prefix="trainees")
 		setup_form = MultiUserTrainingSetupForm()
 
 	return render(request, "calendar/multi_user_training_schedule.html", {
 		"tool_formset": tool_formset,
-		"trainee_formset": trainee_formset,
 		"setup_form": setup_form,
 		"proposed_schedule": proposed_schedule,
 		"errors": errors,
+		"trainees": trainees,
 	})
 
 
@@ -2258,3 +2264,10 @@ def confirm_multi_user_training_schedule(request):
 
 	messages.success(request, "Training session #" + str(session.id) + " was created with " + str(len(pending['entries'])) + " reservation(s).")
 	return redirect('multi_user_training_schedule')
+
+
+@staff_member_required(login_url=None)
+@require_GET
+def multi_user_training_entry(request):
+	entry_number = int(request.GET['entry_number'])
+	return render(request, 'calendar/multi_user_training_entry.html', {'entry_number': entry_number})

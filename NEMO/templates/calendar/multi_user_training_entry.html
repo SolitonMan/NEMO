@@ -1,0 +1,10 @@
+<tr id="trainee_row_{{ entry_number }}">
+	<td style="vertical-align: top"><span class="glyphicon glyphicon-remove-circle grey pointer" onclick="remove_trainee_row({{ entry_number }})"></span></td>
+	<td>
+		<input type="text" class="form-control" id="trainee_textbox__{{ entry_number }}" name="chosen_trainee__{{ entry_number }}" data-row="{{ entry_number }}">
+		<input type="button" class="btn btn-default" style="display:none" id="trainee_button__{{ entry_number }}" onclick="purge_trainee({{ entry_number }})">
+	</td>
+	<td id="trainee_project__{{ entry_number }}" style="vertical-align: top">
+
+	</td>
+</tr>

@@ -1,5 +1,11 @@
 {% extends 'base.html' %}
+{% load custom_tags_and_filters %}
 {% block title %}Multi-user training schedule{% endblock %}
+{% block extrahead %}
+	{% load static %}
+	<script type="text/javascript" src="{% static "datetimepicker/bootstrap-datetimepicker.js" %}"></script>
+	<link rel="stylesheet" type="text/css" href="{% static "datetimepicker/bootstrap-datetimepicker.css" %}" />
+{% endblock %}
 {% block content %}
 	<h1>Schedule a multi-tool training session</h1>
 
@@ -13,20 +19,40 @@
 		</div>
 	{% endif %}
 
-	<form method="post">
+	<form id="multi_user_training_form" method="post" onsubmit="return on_submit();">
 		{% csrf_token %}
 		<input type="hidden" name="action" value="propose">
 
 		<h3>Trainer and schedule window</h3>
-		{{ setup_form.as_p }}
+		<div class="form-group">
+			<label for="id_trainer">Trainer</label>
+			{{ setup_form.trainer }}
+		</div>
+		<div class="form-group">
+			<label for="id_session_type">Session Type</label>
+			{{ setup_form.session_type }}
+		</div>
+		<div class="form-group">
+			<label for="id_window_start">Search Window Start</label>
+			{{ setup_form.window_start }}
+		</div>
+		<div class="form-group">
+			<label for="id_window_end">Search Window End</label>
+			{{ setup_form.window_end }}
+		</div>
 
-		<h3>Trainees and their projects</h3>
-		{{ trainee_formset.management_form }}
-		{% for form in trainee_formset %}
-			<div class="well">
-				{{ form.as_p }}
-			</div>
-		{% endfor %}
+		<h3>Trainees</h3>
+		<p>Search for and select each trainee. Once selected, the trainee's active projects will load so you can choose which project to bill for this session.</p>
+		<table id="trainee_entries" class="table">
+			<tr>
+				<th>&nbsp;</th>
+				<th style="min-width:200px">Trainee</th>
+				<th style="min-width:200px">Project</th>
+			</tr>
+			<tr>
+				<td colspan="3" style="text-align:center"><a href="javascript:void(0)" onclick="add_trainee()">Add another trainee</a></td>
+			</tr>
+		</table>
 
 		<h3>Tools (in order)</h3>
 		{{ tool_formset.management_form }}
@@ -65,4 +91,79 @@
 			<button type="submit" class="btn btn-success">Confirm and create reservations</button>
 		</form>
 	{% endif %}
+
+	<script type="text/javascript">
+		var current_trainee_entry_number = 1;
+
+		function add_trainee()
+		{
+			var failure_dialog = ajax_failure_callback("Cannot add new entry", "The web browser was not able to communicate with the server.");
+			ajax_get("{% url 'multi_user_training_entry' %}", { "entry_number": current_trainee_entry_number }, add_entry_success_callback, failure_dialog);
+			function add_entry_success_callback(response, status, xml_http_request)
+			{
+				$("#trainee_entries tr:last").before(response);
+				enable_trainee_autocompletion(current_trainee_entry_number);
+				current_trainee_entry_number++;
+			}
+		}
+
+		function enable_trainee_autocompletion(entry_number)
+		{
+			var id = "#trainee_textbox__" + entry_number;
+			$(id).autocomplete('trainee', on_trainee_autocomplete_selection, {{ trainees|json_search_base }}).focus();
+		}
+
+		function on_trainee_autocomplete_selection(jquery_event, search_selection, dataset_name)
+		{
+			$(this).typeahead('val', search_selection.id).hide();
+			var row = $(this).data('row');
+			var button_id = "#trainee_button__" + row;
+			$(button_id).val(search_selection.name).show();
+			fetch_trainee_projects(row, search_selection.id);
+		}
+
+		function fetch_trainee_projects(row, user_id)
+		{
+			var parameters =
+			{
+				"source_template": "multi_user_training",
+				"user_id": user_id,
+				"entry_number": row,
+			};
+			var target_element = "#trainee_project__" + row;
+			var url = "{% url 'get_projects' %}?" + jQuery.param(parameters);
+			var report_error = ajax_complete_callback("Could not fetch projects for trainee", "There was a problem obtaining the list of projects for the trainee.");
+			$(target_element).load(url, undefined, function(responseTxt, statusTxt, xhr) {
+				if (statusTxt != "success") {
+					ajax_complete_callback("Could not fetch projects for trainee", "There was a problem obtaining the list of projects for the trainee.");
+				}
+			});
+		}
+
+		function purge_trainee(row)
+		{
+			$("#trainee_button__" + row).hide();
+			$("#trainee_project__" + row).html("");
+			$("#trainee_textbox__" + row).typeahead('val', '').show().focus();
+		}
+
+		function remove_trainee_row(row)
+		{
+			$("#trainee_row_" + row).remove();
+		}
+
+		function on_submit()
+		{
+			var s;
+			for (var i = 0; i < current_trainee_entry_number; i++) {
+				s = "#trainee_textbox__" + i;
+				if ($(s).length && $(s).css("display") != "none") {
+					alert("Please select a trainee for each row, or else delete the row.");
+					$(s).focus();
+					return false;
+				}
+			}
+			return true;
+		}
+	</script>
 {% endblock %}
