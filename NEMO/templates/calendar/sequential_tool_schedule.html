@@ -1,132 +1,116 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+{% load custom_tags_and_filters %}
 {% load widget_tweaks %}
+{% block title %}Tool Reservation Schedule{% endblock %}
 {% block content %}
-<h2>Sequential Tool Scheduler</h2>
-<form method="post">
-	{% csrf_token %}
-	{{ formset.management_form }}
-	<table id="tool-table">
-		<tr>
-			<th>Type</th>
-			<th>Tool</th>
-			<th>Duration (minutes)</th>
-			<th></th>
-		</tr>
-		{% for form in formset %}
-		<tr class="tool-row">
-			<td>{{ form.entry_type|add_class:"form-control entry-type-select" }}</td>
-			<td class="tool-cell">{{ form.tool|add_class:"form-control" }}</td>
-			<td>{{ form.duration|add_class:"form-control" }}</td>
-			<td><button type="button" class="btn btn-danger remove-row">Delete</button></td>
-		</tr>
+
+{% if messages %}
+	{% for message in messages %}
+		<div class="alert alert-{{ message.tags }}">{{ message }}</div>
+	{% endfor %}
+{% endif %}
+
+<h2>Find a Reservation Time</h2>
+<p>Search for a tool, choose the project to bill, and specify how long you need the tool along with the range of
+days you would like to use it. Available time slots within that range will be shown below.</p>
+
+{% if errors %}
+	<div class="alert alert-danger">
+		<ul>
+		{% for error in errors %}
+			<li>{{ error }}</li>
 		{% endfor %}
-		<tr id="empty-form-row" style="display:none;">
-			<td>{{ formset.empty_form.entry_type|add_class:"form-control entry-type-select" }}</td>
-			<td class="tool-cell">{{ formset.empty_form.tool|add_class:"form-control" }}</td>
-			<td>{{ formset.empty_form.duration|add_class:"form-control" }}</td>
-			<td><button type="button" class="btn btn-danger remove-row">Delete</button></td>
-		</tr>
-	</table>
-	<br />
-	<button type="button" id="add-row" class="btn btn-success">Add Row</button>
-	<button type="submit" class="btn btn-success">Find Schedule</button>
+		</ul>
+	</div>
+{% endif %}
+
+<form method="get" id="schedule-search-form">
+	<div class="form-group">
+		<label for="tool_search">Tool</label>
+		<input type="text" id="tool_search" placeholder="Search for a tool" class="form-control" autocomplete="off" value="{% if selected_tool %}{{ selected_tool.category }}/{{ selected_tool.name }}{% endif %}">
+		<input type="hidden" name="tool_id" id="id_tool_id" value="{{ selected_tool.id|default_if_none:'' }}">
+	</div>
+
+	<div class="form-group">
+		<label for="id_project">Project</label>
+		{{ form.project|add_class:"form-control" }}
+	</div>
+
+	<div class="form-group">
+		<label for="id_duration">Duration (minutes)</label>
+		{{ form.duration|add_class:"form-control" }}
+	</div>
+
+	<div class="form-group">
+		<label for="id_start_date">Earliest date</label>
+		{{ form.start_date|add_class:"form-control" }}
+	</div>
+
+	<div class="form-group">
+		<label for="id_end_date">Latest date</label>
+		{{ form.end_date|add_class:"form-control" }}
+	</div>
+
+	<button type="submit" class="btn btn-primary" id="search-button" disabled>Find Available Times</button>
 </form>
 
-{% if schedule %}
-<h3>Proposed Schedule</h3>
-<table>
-	<tr>
-		<th>Type</th>
-		<th>Tool</th>
-		<th>Start</th>
-		<th>End</th>
-	</tr>
-	{% for item in schedule %}
-	<tr {% if item.is_gap %}style="background-color: #f0f0f0;" {% endif %}>
-		<td>{% if item.is_gap %}Gap{% else %}Tool{% endif %}</td>
-		<td>{% if item.is_gap %}-{% else %}{{ item.tool }}{% endif %}</td>
-		<td>{{ item.start|date:"m/d/Y h:i A" }}</td>
-		<td>{{ item.end|date:"m/d/Y h:i A" }}</td>
-	</tr>
-	{% endfor %}
-</table>
+<br/>
+
+{% if available_slots %}
+	<h3>Available Times for {{ selected_tool.name }}</h3>
+	<table class="table">
+		<thead>
+			<tr>
+				<th>Start</th>
+				<th>End</th>
+				<th>Action</th>
+			</tr>
+		</thead>
+		<tbody>
+		{% for slot in available_slots %}
+			<tr>
+				<td>{{ slot.start_full|date:"l" }}, {{ slot.start }}</td>
+				<td>{{ slot.end_full|date:"l" }}, {{ slot.end }}</td>
+				<td>
+					<form method="post" action="{% url 'book_sequential_tool_slot' %}">
+						{% csrf_token %}
+						<input type="hidden" name="tool_id" value="{{ slot.tool_id }}">
+						<input type="hidden" name="project_id" value="{{ slot.project_id }}">
+						<input type="hidden" name="start" value="{{ slot.start }}">
+						<input type="hidden" name="end" value="{{ slot.end }}">
+						<button type="submit" class="btn btn-success">Reserve</button>
+					</form>
+				</td>
+			</tr>
+		{% endfor %}
+		</tbody>
+	</table>
 {% endif %}
 
 <script>
-function updateTotalForms() {
-	var totalForms = document.getElementById('id_form-TOTAL_FORMS');
-	var rowCount = document.querySelectorAll('#tool-table tr.tool-row').length;
-	totalForms.value = rowCount;
-}
+$(function() {
+	$('#tool_search').autocomplete('tools', on_tool_search_selection, {{ cat_tools }});
 
-function toggleToolField(select) {
-	var row = select.closest('tr');
-	var toolCell = row.querySelector('.tool-cell');
-	var toolSelect = toolCell.querySelector('select');
-
-	if (select.value === 'gap') {
-		toolCell.children[0].style.display = 'none';
-		if (toolSelect) {
-			toolSelect.removeAttribute('required');
-			toolSelect.disabled = true;
-		}
-	} else {
-		toolCell.children[0].style.display = '';
-		if (toolSelect) {
-			toolSelect.removeAttribute('disabled');
-		}
+	function on_tool_search_selection(jquery_event, search_selection, dataset_name)
+	{
+		$('#tool_search').typeahead('val', search_selection.name);
+		$('#id_tool_id').val(search_selection.id);
+		$('#search-button').prop('disabled', false);
 	}
-}
 
-function addEntryTypeHandler(select) {
-	select.addEventListener('change', function() {
-		toggleToolField(this);
+	// Enable the search button immediately if a tool was already selected (e.g. after a search).
+	if ($('#id_tool_id').val())
+	{
+		$('#search-button').prop('disabled', false);
+	}
+
+	// If the user edits the tool search box directly, clear the hidden tool id until a new selection is made.
+	$('#tool_search').on('input', function()
+	{
+		$('#id_tool_id').val('');
+		$('#search-button').prop('disabled', true);
 	});
-	// Initialize visibility on page load
-	toggleToolField(select);
-}
+});
+</script>
 
-function addRemoveHandler(btn) {
-	btn.onclick = function() {
-		var row = btn.closest('tr');
-		row.parentNode.removeChild(row);
-		updateTotalForms();
-	};
-}
-
-// Initialize existing rows
-document.querySelectorAll('.remove-row').forEach(addRemoveHandler);
-document.querySelectorAll('.entry-type-select').forEach(addEntryTypeHandler);
-
-document.getElementById('add-row').onclick = function() {
-	var totalForms = document.getElementById('id_form-TOTAL_FORMS');
-	var currentCount = parseInt(totalForms.value);
-	var newRow = document.getElementById('empty-form-row').cloneNode(true);
-	newRow.style.display = '';
-	newRow.id = '';
-	newRow.classList.add('tool-row');
-
-	// Update the names and ids - must do this before appending
-	newRow.querySelectorAll('select, input').forEach(function(el) {
-		if (el.name) {
-			el.name = el.name.replace('__prefix__', currentCount);
-		}
-		if (el.id) {
-			el.id = el.id.replace('__prefix__', currentCount);
-		}
-	});
-
-	// Append to table first
-	document.getElementById('tool-table').appendChild(newRow);
-
-	// Then add event handlers
-	var removeBtn = newRow.querySelector('.remove-row');
-	addRemoveHandler(removeBtn);
-
-	var entryTypeSelect = newRow.querySelector('.entry-type-select');
-	addEntryTypeHandler(entryTypeSelect);
-
-	// Update form count
-	totalForms.value = currentCount + 1;
-};</script>
 {% endblock %}

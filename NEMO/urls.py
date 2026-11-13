@@ -113,6 +113,7 @@ urlpatterns = [
 	path('multi_calendar/', calendar.multi_calendar_view, name='multi_calendar'),
 	path('sequential_tool_schedule/', calendar.sequential_tool_schedule, name='sequential_tool_schedule'),
 	path('tool_training/', calendar.tool_training_schedule, name='tool_training_schedule'),
+	path('book_sequential_tool_slot/', calendar.book_sequential_tool_slot, name='book_sequential_tool_slot'),
 	path('book_training_slot/', calendar.book_training_slot, name='book_training_slot'),
 	path('multi_user_training_schedule/', calendar.multi_user_training_schedule, name='multi_user_training_schedule'),
 	path('confirm_multi_user_training_schedule/', calendar.confirm_multi_user_training_schedule, name='confirm_multi_user_training_schedule'),

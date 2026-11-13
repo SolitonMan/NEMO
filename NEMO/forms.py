@@ -9,7 +9,7 @@ from django.forms.utils import ErrorDict
 from django.utils import timezone
 from django.utils.dateparse import parse_time, parse_date, parse_datetime
 
-from NEMO.models import Account, Alert, Comment, Consumable, ConsumableWithdraw, Project, SafetyIssue, Sample, ScheduledOutage, Task, TaskCategory, Tool, TrainingSession, User, ConsumableOrder, ConsumableOrderItem, Core, ServiceType, UserServiceRequest
+from NEMO.models import Account, Alert, Comment, Consumable, ConsumableWithdraw, ProbationaryQualifications, Project, SafetyIssue, Sample, ScheduledOutage, Task, TaskCategory, Tool, TrainingSession, User, ConsumableOrder, ConsumableOrderItem, Core, ServiceType, UserServiceRequest
 from NEMO.utilities import bootstrap_primary_color, format_datetime
 
 logger = getLogger(__name__)
@@ -405,6 +405,46 @@ class ToolDurationForm(forms.Form):
 		return cleaned_data
 
 ToolDurationFormSet = forms.formset_factory(ToolDurationForm, extra=1, min_num=1, validate_min=True)
+
+class SingleToolScheduleForm(forms.Form):
+	tool = forms.ModelChoiceField(
+		queryset=Tool.objects.filter(visible=True).order_by('name'),
+		label="Tool",
+		widget=forms.HiddenInput(),
+	)
+	project = forms.ModelChoiceField(
+		queryset=Project.objects.none(),
+		label="Project",
+		required=True,
+	)
+	duration = forms.IntegerField(min_value=1, initial=60, label="Duration (minutes)")
+	start_date = forms.DateField(
+		label="Earliest date",
+		widget=forms.DateInput(attrs={'type': 'date'}),
+	)
+	end_date = forms.DateField(
+		label="Latest date",
+		widget=forms.DateInput(attrs={'type': 'date'}),
+	)
+
+	def __init__(self, *args, **kwargs):
+		user = kwargs.pop('user', None)
+		super().__init__(*args, **kwargs)
+		if user is not None:
+			self.fields['project'].queryset = user.active_projects()
+			if not user.is_staff:
+				self.fields['tool'].queryset = Tool.objects.filter(
+					visible=True,
+					id__in=ProbationaryQualifications.objects.filter(user=user, disabled=False).values_list('tool_id', flat=True),
+				).order_by('name')
+
+	def clean(self):
+		cleaned_data = super().clean()
+		start_date = cleaned_data.get('start_date')
+		end_date = cleaned_data.get('end_date')
+		if start_date and end_date and end_date < start_date:
+			raise forms.ValidationError('The latest date must be on or after the earliest date.')
+		return cleaned_data
 
 class ServiceTypeForm(forms.ModelForm):
 	class Meta:

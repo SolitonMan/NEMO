@@ -32,7 +32,7 @@ from django.utils.dateparse import parse_datetime
 from django.utils.safestring import mark_safe
 
 from NEMO.decorators import disable_session_expiry_refresh
-from NEMO.forms import MultiCalendarForm, ToolDurationFormSet, MultiUserTrainingSetupForm, TraineeProjectFormSet
+from NEMO.forms import MultiCalendarForm, ToolDurationFormSet, SingleToolScheduleForm, MultiUserTrainingSetupForm, TraineeProjectFormSet
 from NEMO.models import Tool, Reservation, Configuration, ReservationConfiguration, ReservationProject, ReservationNotification, Consumable, UsageEvent, UsageEventProject, AreaAccessRecord, StaffCharge, StaffChargeProject, User, Project, ScheduledOutage, ScheduledOutageCategory, UserProfile, UserProfileSetting, Sample, ToolRequirement, Requirement, UserRequirementProgress, ProbationaryQualifications, TrainingSession
 from NEMO.utilities import EmailCategory, create_email_log, bootstrap_primary_color, create_email_attachment, extract_times, extract_dates, format_datetime, parse_parameter_string
 from NEMO.views.constants import ADDITIONAL_INFORMATION_MAXIMUM_LENGTH
@@ -1697,7 +1697,7 @@ def ensure_datetime(dt):
 		return datetime.datetime(dt.year, dt.month, dt.day, tzinfo=UTC)
 	return dt
 
-def find_available_slots(list_of_events, duration_minutes, window_start, window_end, max_results=3, tool_id=None):
+def find_available_slots(list_of_events, duration_minutes, window_start, window_end, max_results=3, tool_id=None, enforce_business_hours=True):
 	# list_of_events: list of lists of {"start": datetime, "end": datetime}
 	# duration_minutes: int
 	# window_start, window_end: datetime
@@ -1761,7 +1761,7 @@ def find_available_slots(list_of_events, duration_minutes, window_start, window_
 	# 2. Intersect all free intervals
 	common_free = intersect_intervals(free_intervals_per_source)
 
-	# 3. Find slots of required duration within business hours
+	# 3. Find slots of required duration, optionally restricted to business hours
 	slots = []
 	delta = datetime.timedelta(minutes=int(duration_minutes))
 	step = datetime.timedelta(minutes=15)
@@ -1769,7 +1769,7 @@ def find_available_slots(list_of_events, duration_minutes, window_start, window_
 		slot_start = s
 		while slot_start + delta <= e:
 			slot_end = slot_start + delta
-			if is_business_hours(slot_start, slot_end):
+			if not enforce_business_hours or is_business_hours(slot_start, slot_end):
 				slots.append((slot_start, slot_end, tool_id))
 				if len(slots) >= max_results:
 					return slots
@@ -1799,46 +1799,83 @@ def find_next_available_slot(tool, duration_minutes, after_time):
 		slot_end = slot_start + datetime.timedelta(minutes=duration_minutes)
 	return slot_start, slot_end
 
-
-@staff_member_required(login_url=None)
+@login_required
 def sequential_tool_schedule(request):
-	if request.method == "POST":
-		formset = ToolDurationFormSet(request.POST)
-		if formset.is_valid():
-			schedule = []
-			current_time = timezone.now()
-			for form in formset:
-				entry_type = form.cleaned_data.get('entry_type', 'tool')
-				duration = form.cleaned_data['duration']
-	
-				if entry_type == 'gap':
-					# Simple gap - just add time to current_time
-					current_time = current_time + timedelta(minutes=duration)
-					schedule.append({
-						'tool': 'Time Gap',  # or None
-						'start': current_time - timedelta(minutes=duration),
-						'end': current_time,
-						'is_gap': True
-					})
-				else:
-					# Tool reservation - find available slot
-					tool = form.cleaned_data['tool']
-					start, end = find_next_available_slot(tool, duration, current_time)
-					schedule.append({
-						'tool': tool,
-						'start': start,
-						'end': end,
-						'is_gap': False
-					})
-					current_time = end
-			return render(request, "calendar/sequential_tool_schedule.html", {
-				"formset": formset,
-				"schedule": schedule,
-			})
-	else:
-		formset = ToolDurationFormSet()
+	""" Present a single-tool, date-range reservation search for all users (staff and non-staff). """
+	form = SingleToolScheduleForm(user=request.user)
+	available_slots = []
+	selected_tool = None
+	errors = []
+
+	tools_qs = Tool.objects.filter(visible=True).order_by('category', 'name')
+	if not request.user.is_staff:
+		qualified_tool_ids = ProbationaryQualifications.objects.filter(user=request.user, disabled=False).values_list('tool_id', flat=True)
+		tools_qs = tools_qs.filter(id__in=qualified_tool_ids)
+
+	# create searchable names for tools that include the category, for the autocomplete box
+	categorized_tools = "["
+	for t in tools_qs:
+		categorized_tools += '{{"name":"{0}", "id":{1}}},'.format(escape(str(t.category)) + "/" + escape(str(t.name)), t.id)
+	categorized_tools = categorized_tools.rstrip(",") + "]"
+	categorized_tools = mark_safe(categorized_tools)
+
+	if request.GET.get("tool_id"):
+		form = SingleToolScheduleForm(request.GET, user=request.user)
+		if form.is_valid():
+			selected_tool = form.cleaned_data['tool']
+			project = form.cleaned_data['project']
+			duration = form.cleaned_data['duration']
+			start_date = form.cleaned_data['start_date']
+			end_date = form.cleaned_data['end_date']
+
+			# Make sure a non-staff user didn't request a tool they're not qualified for.
+			if not request.user.is_staff and not tools_qs.filter(id=selected_tool.id).exists():
+				errors.append("You are not qualified to use this tool.")
+			else:
+				local_tz = pytz.timezone(settings.TIME_ZONE)
+				window_start = local_tz.localize(datetime.datetime.combine(start_date, datetime.time(0, 0, 0)))
+				window_end = local_tz.localize(datetime.datetime.combine(end_date, datetime.time(23, 59, 59)))
+				window_start = max(window_start, timezone.now())
+
+				tool_busy = [
+					{"start": ensure_datetime(r.start), "end": ensure_datetime(r.end)}
+					for r in Reservation.objects.filter(
+						tool=selected_tool,
+						cancelled=False,
+						missed=False,
+						shortened=False,
+						end__gte=window_start,
+						start__lte=window_end,
+					)
+				]
+
+				enforce_business_hours = not request.user.is_staff
+				slots = find_available_slots(
+					[tool_busy], duration, window_start, window_end, max_results=10,
+					tool_id=selected_tool.id, enforce_business_hours=enforce_business_hours,
+				)
+				available_slots = [
+					{
+						"start": s.strftime("%m/%d/%Y %I:%M %p"),
+						"end": e.strftime("%m/%d/%Y %I:%M %p"),
+						"start_full": s,
+						"end_full": e,
+						"tool_id": selected_tool.id,
+						"project_id": project.id,
+					}
+					for s, e, t in slots
+				]
+				if not available_slots:
+					errors.append("No available time slots were found for " + str(selected_tool.name) + " within the requested date range.")
+		else:
+			errors.append("Please correct the errors below.")
+
 	return render(request, "calendar/sequential_tool_schedule.html", {
-		"formset": formset,
+		"form": form,
+		"cat_tools": categorized_tools,
+		"available_slots": available_slots,
+		"selected_tool": selected_tool,
+		"errors": errors,
 	})
 
 
@@ -2330,3 +2367,64 @@ def multi_user_training_tool_entry(request):
 	row_type = request.GET.get('row_type', 'tool')
 	return render(request, 'calendar/multi_user_training_tool_entry.html', {'entry_number': entry_number, 'row_type': row_type})
 
+@login_required
+@require_POST
+def book_sequential_tool_slot(request):
+	logger = logging.getLogger(__name__)
+	tool_id = request.POST.get("tool_id")
+	project_id = request.POST.get("project_id")
+	start_str = request.POST.get("start")
+	end_str = request.POST.get("end")
+	user = request.user
+
+	try:
+		explicit_policy_override = False
+		tool = get_object_or_404(Tool, id=tool_id)
+		project = get_object_or_404(Project, id=project_id)
+		local_tz = pytz.timezone(settings.TIME_ZONE)
+
+		start_naive = datetime.datetime.strptime(start_str, "%m/%d/%Y %I:%M %p")
+		end_naive = datetime.datetime.strptime(end_str, "%m/%d/%Y %I:%M %p")
+
+		start_local = local_tz.localize(start_naive)
+		end_local = local_tz.localize(end_naive)
+
+		start = start_local.astimezone(pytz.UTC)
+		end = end_local.astimezone(pytz.UTC)
+
+		reservation = Reservation()
+		reservation.user = user
+		reservation.creator = user
+		reservation.tool = tool
+		reservation.project = project
+		reservation.start = start
+		reservation.end = end
+		reservation.short_notice = determine_insufficient_notice(tool, start)
+		reservation.created = timezone.now()
+		reservation.updated = timezone.now()
+
+		policy_problems, overridable = check_policy_to_save_reservation(request, None, reservation, user, explicit_policy_override)
+
+		if policy_problems:
+			messages.error(request, " ".join(policy_problems))
+			return redirect(request.META.get('HTTP_REFERER', 'sequential_tool_schedule'))
+
+		reservation.save()
+
+		res_proj = ReservationProject()
+		res_proj.reservation = reservation
+		res_proj.customer = user
+		res_proj.project = project
+		res_proj.created = timezone.now()
+		res_proj.updated = timezone.now()
+		res_proj.save()
+
+		messages.success(
+			request,
+			"Successful reservation for " + str(tool.name) + " on " + start_local.strftime('%A, %B %d, %Y at %I:%M %p')
+		)
+		return redirect('sequential_tool_schedule')
+	except Exception as e:
+		logger.exception(str(e))
+		messages.error(request, "A problem occurred while creating your reservation: " + str(e))
+		return redirect('sequential_tool_schedule')
