@@ -1874,7 +1874,7 @@ def sequential_tool_schedule(request):
 				window_end = local_tz.localize(datetime.datetime.combine(end_date, datetime.time(23, 59, 59)))
 				window_start = max(window_start, timezone.now())
 
-								tool_reservations = Reservation.objects.filter(
+				tool_reservations = Reservation.objects.filter(
 					tool=selected_tool,
 					cancelled=False,
 					missed=False,
