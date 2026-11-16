@@ -1464,6 +1464,8 @@ def create_ics_for_reservation(request, reservation, cancelled=False):
 @staff_member_required(login_url=None)
 def multi_calendar_view(request):
 
+	local_tz = pytz.timezone(settings.TIME_ZONE)
+
 	def format_slot(slot):
 		# slot can be a tuple (start, end, tool_id) or a dict
 		if isinstance(slot, dict):
@@ -1476,14 +1478,14 @@ def multi_calendar_view(request):
 			# Defensive: handle both (start, end, tool_id) and (start, end)
 			if len(slot) == 3:
 				return {
-					"start": slot[0].strftime("%m/%d/%Y %I:%M %p"),
-					"end": slot[1].strftime("%m/%d/%Y %I:%M %p"),
+					"start": timezone.localtime(slot[0], local_tz).strftime("%m/%d/%Y %I:%M %p"),
+					"end": timezone.localtime(slot[1], local_tz).strftime("%m/%d/%Y %I:%M %p"),
 					"tool_id": slot[2],
 				}
 			elif len(slot) == 2:
 				return {
-					"start": slot[0].strftime("%m/%d/%Y %I:%M %p"),
-					"end": slot[1].strftime("%m/%d/%Y %I:%M %p"),
+					"start": timezone.localtime(slot[0], local_tz).strftime("%m/%d/%Y %I:%M %p"),
+					"end": timezone.localtime(slot[1], local_tz).strftime("%m/%d/%Y %I:%M %p"),
 					"tool_id": None,
 				}
 		# fallback
@@ -1504,12 +1506,13 @@ def multi_calendar_view(request):
 			slot_duration = form.cleaned_data['slot_duration']
 			window_start = form.cleaned_data['window_start']
 			window_end = form.cleaned_data['window_end']
-			
-			# Make window times timezone-aware
+
+			# The datetime-local widget submits naive local wall-clock time; localize it properly
+			# instead of assuming it's already UTC.
 			if window_start and window_start.tzinfo is None:
-				window_start = window_start.replace(tzinfo=UTC)
+				window_start = local_tz.localize(window_start)
 			if window_end and window_end.tzinfo is None:
-				window_end = window_end.replace(tzinfo=UTC)
+				window_end = local_tz.localize(window_end)
 
 			# Parse manual ICS URLs as "Short Name:URL"
 			manual_url_map = {}
@@ -1918,10 +1921,10 @@ def sequential_tool_schedule(request):
 				)
 				available_slots = [
 					{
-						"start": s.strftime("%m/%d/%Y %I:%M %p"),
-						"end": e.strftime("%m/%d/%Y %I:%M %p"),
-						"start_full": s,
-						"end_full": e,
+						"start": timezone.localtime(s, local_tz).strftime("%m/%d/%Y %I:%M %p"),
+						"end": timezone.localtime(e, local_tz).strftime("%m/%d/%Y %I:%M %p"),
+						"start_full": timezone.localtime(s, local_tz),
+						"end_full": timezone.localtime(e, local_tz),
 						"tool_id": selected_tool.id,
 						"project_id": project.id,
 					}
@@ -2014,9 +2017,9 @@ def tool_training_schedule(request):
 			owner_busy = fetch_busy(owner_url)
 
 			# Find common free slots (30 min, next 2 weeks, max 3)
+			local_tz = pytz.timezone(settings.TIME_ZONE)
 			earliest_date_str = request.GET.get("earliest_date")
 			if earliest_date_str:
-				local_tz = pytz.timezone(settings.TIME_ZONE)
 				earliest_date = datetime.datetime.strptime(earliest_date_str, "%Y-%m-%d")
 				window_start = local_tz.localize(earliest_date)
 			else:
@@ -2044,10 +2047,10 @@ def tool_training_schedule(request):
 			available_slots = find_available_slots(events_grouped, slot_duration, window_start, window_end, 3, tool.id)
 			available_slots = [
 				{
-					"start": s.strftime("%m/%d/%Y %I:%M %p"),
-					"end": e.strftime("%m/%d/%Y %I:%M %p"),
-					"start_full": s,
-					"end_full": e,
+					"start": timezone.localtime(s, local_tz).strftime("%m/%d/%Y %I:%M %p"),
+					"end": timezone.localtime(e, local_tz).strftime("%m/%d/%Y %I:%M %p"),
+					"start_full": timezone.localtime(s, local_tz),
+					"end_full": timezone.localtime(e, local_tz),
 					"tool_id": tool.id,
 				}
 				for s, e, t in available_slots
