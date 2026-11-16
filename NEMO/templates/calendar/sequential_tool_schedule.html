@@ -2,6 +2,69 @@
 {% load custom_tags_and_filters %}
 {% load widget_tweaks %}
 {% block title %}Tool Reservation Schedule{% endblock %}
+{% block extrahead %}
+<style>
+.schedule-grid-wrapper {
+	display: flex;
+	overflow-x: auto;
+	border: 1px solid #ddd;
+}
+.schedule-grid-time-axis, .schedule-grid-day {
+	display: flex;
+	flex-direction: column;
+	min-width: 70px;
+	flex: 1 0 auto;
+}
+.schedule-grid-time-axis {
+	min-width: 50px;
+	flex: 0 0 50px;
+	border-right: 1px solid #ddd;
+}
+.schedule-grid-header {
+	height: 30px;
+	text-align: center;
+	font-size: 11px;
+	font-weight: bold;
+	border-bottom: 1px solid #ddd;
+	padding-top: 2px;
+}
+.schedule-grid-column {
+	position: relative;
+	height: 480px;
+	border-left: 1px solid #eee;
+	background-image: repeating-linear-gradient(to bottom, #f5f5f5 0, #f5f5f5 1px, transparent 1px, transparent calc(100% / 6));
+}
+.schedule-grid-hour-label {
+	position: relative;
+	height: 480px;
+}
+.schedule-grid-event {
+	position: absolute;
+	left: 2px;
+	right: 2px;
+	border-radius: 3px;
+	font-size: 10px;
+}
+.grid-tool-busy {
+	background-color: #337ab7;
+}
+.grid-outage {
+	background-color: #d9534f;
+}
+.grid-other-reservation {
+	background-color: #5cb85c;
+	opacity: 0.5;
+}
+.grid-legend {
+	display: inline-block;
+	width: 14px;
+	height: 14px;
+	border-radius: 3px;
+	vertical-align: middle;
+	margin-right: 4px;
+}
+</style>
+{% endblock %}
 {% block content %}
 
 {% if messages %}
@@ -86,7 +149,26 @@ days you would like to use it. Available time slots within that range will be sh
 		</tbody>
 	</table>
 {% endif %}
-
+{% if grid_days %}
+	<h3>Schedule Overview for {{ selected_tool.name }} (6 AM - 6 PM)</h3>
+	<p>
+		<span class="grid-legend grid-tool-busy"></span> {{ selected_tool.name }} reservations/outages &nbsp;
+		<span class="grid-legend grid-outage"></span> Scheduled outages &nbsp;
+		<span class="grid-legend grid-other-reservation"></span> Your other reservations
+	</p>
+	<div class="schedule-grid-wrapper">
+		{% for day in grid_days %}
+			<div class="schedule-grid-day">
+				<div class="schedule-grid-header">{{ day.date|date:"D" }}<br/>{{ day.date|date:"n/j" }}</div>
+				<div class="schedule-grid-column">
+					{% for event in day.events %}
+						<div class="schedule-grid-event {{ event.css_class }}" style="top: {{ event.top_pct }}%; height: {{ event.height_pct }}%;" title="{{ event.start_label }} - {{ event.end_label }}"></div>
+					{% endfor %}
+				</div>
+			</div>
+		{% endfor %}
+	</div>
+{% endif %}
 <script>
 $(function() {
 	$('#tool_search').autocomplete('tools', on_tool_search_selection, {{ cat_tools }});
@@ -112,5 +194,26 @@ $(function() {
 	});
 });
 </script>
+<script>
+$(function() {
+	function clamp_end_date()
+	{
+		var start = $('#id_start_date').val();
+		if (!start) return;
+		var start_date = new Date(start + 'T00:00:00');
+		var max_date = new Date(start_date.getTime() + 13 * 24 * 60 * 60 * 1000);
+		var max_str = max_date.toISOString().slice(0, 10);
+		$('#id_end_date').attr('min', start);
+		$('#id_end_date').attr('max', max_str);
+		var end_val = $('#id_end_date').val();
+		if (end_val && end_val < start)
+			$('#id_end_date').val(start);
+		if (end_val && end_val > max_str)
+			$('#id_end_date').val(max_str);
+	}
 
+	$('#id_start_date').on('change', clamp_end_date);
+	clamp_end_date();
+});
+</script>
 {% endblock %}

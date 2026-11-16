@@ -1799,6 +1799,42 @@ def find_next_available_slot(tool, duration_minutes, after_time):
 		slot_end = slot_start + datetime.timedelta(minutes=duration_minutes)
 	return slot_start, slot_end
 
+GRID_WINDOW_START_HOUR = 6
+GRID_WINDOW_END_HOUR = 18
+
+def _build_grid_day_events(events, local_tz, day_date):
+	""" Clip a list of {'start': aware_dt, 'end': aware_dt} events to the display window for a single day
+	and return positioning info (top/height as a percentage of the window) for rendering. """
+	day_start = local_tz.localize(datetime.datetime.combine(day_date, datetime.time(0, 0, 0)))
+	day_end = day_start + timedelta(days=1)
+	window_start = day_start.replace(hour=GRID_WINDOW_START_HOUR)
+	window_end = day_start.replace(hour=GRID_WINDOW_END_HOUR)
+	window_minutes = (window_end - window_start).total_seconds() / 60
+
+	day_events = []
+	for event in events:
+		ev_start = timezone.localtime(event['start'], local_tz)
+		ev_end = timezone.localtime(event['end'], local_tz)
+		if ev_end <= day_start or ev_start >= day_end:
+			continue
+		clipped_start = max(ev_start, window_start)
+		clipped_end = min(ev_end, window_end)
+		if clipped_end <= clipped_start:
+			continue
+		top_minutes = (clipped_start - window_start).total_seconds() / 60
+		height_minutes = (clipped_end - clipped_start).total_seconds() / 60
+		top_pct = max(0.0, min(100.0, (top_minutes / window_minutes) * 100))
+		height_pct = max(0.0, min(100.0 - top_pct, (height_minutes / window_minutes) * 100))
+		day_events.append({
+			"css_class": event["css_class"],
+			"top_pct": top_pct,
+			"height_pct": height_pct,
+			"start_label": ev_start.strftime("%I:%M %p").lstrip("0"),
+			"end_label": ev_end.strftime("%I:%M %p").lstrip("0"),
+		})
+	return day_events
+
+
 @login_required
 def sequential_tool_schedule(request):
 	""" Present a single-tool, date-range reservation search for all users (staff and non-staff). """
@@ -1806,6 +1842,7 @@ def sequential_tool_schedule(request):
 	available_slots = []
 	selected_tool = None
 	errors = []
+	grid_days = []
 
 	tools_qs = Tool.objects.filter(visible=True).order_by('category', 'name')
 	if not request.user.is_staff:
@@ -1837,21 +1874,46 @@ def sequential_tool_schedule(request):
 				window_end = local_tz.localize(datetime.datetime.combine(end_date, datetime.time(23, 59, 59)))
 				window_start = max(window_start, timezone.now())
 
+								tool_reservations = Reservation.objects.filter(
+					tool=selected_tool,
+					cancelled=False,
+					missed=False,
+					shortened=False,
+					end__gte=window_start,
+					start__lte=window_end,
+				)
 				tool_busy = [
 					{"start": ensure_datetime(r.start), "end": ensure_datetime(r.end)}
-					for r in Reservation.objects.filter(
-						tool=selected_tool,
-						cancelled=False,
-						missed=False,
-						shortened=False,
-						end__gte=window_start,
-						start__lte=window_end,
-					)
+					for r in tool_reservations
+				]
+
+				outages = ScheduledOutage.objects.filter(
+					Q(tool=selected_tool) | Q(resource__fully_dependent_tools__in=[selected_tool])
+				)
+				outages = outages.exclude(start__lt=window_start, end__lt=window_start)
+				outages = outages.exclude(start__gt=window_end, end__gt=window_end)
+				outage_events = [
+					{"start": ensure_datetime(o.start), "end": ensure_datetime(o.end)}
+					for o in outages
+				]
+
+				# The user's other active reservations (for other tools) within the same window, for the grid overlay.
+				other_reservations = Reservation.objects.filter(
+					user=request.user,
+					cancelled=False,
+					missed=False,
+					shortened=False,
+					end__gte=window_start,
+					start__lte=window_end,
+				).exclude(tool=selected_tool)
+				other_reservation_events = [
+					{"start": ensure_datetime(r.start), "end": ensure_datetime(r.end)}
+					for r in other_reservations
 				]
 
 				enforce_business_hours = not request.user.is_staff
 				slots = find_available_slots(
-					[tool_busy], duration, window_start, window_end, max_results=10,
+					[tool_busy + outage_events], duration, window_start, window_end, max_results=10,
 					tool_id=selected_tool.id, enforce_business_hours=enforce_business_hours,
 				)
 				available_slots = [
@@ -1867,6 +1929,21 @@ def sequential_tool_schedule(request):
 				]
 				if not available_slots:
 					errors.append("No available time slots were found for " + str(selected_tool.name) + " within the requested date range.")
+
+				# Build the read-only mini-calendar grid: one column per day in the requested range.
+				combined_events = (
+					[{"start": e["start"], "end": e["end"], "css_class": "grid-tool-busy"} for e in tool_busy]
+					+ [{"start": e["start"], "end": e["end"], "css_class": "grid-outage"} for e in outage_events]
+					+ [{"start": e["start"], "end": e["end"], "css_class": "grid-other-reservation"} for e in other_reservation_events]
+				)
+
+				day_cursor = start_date
+				while day_cursor <= end_date:
+					grid_days.append({
+						"date": day_cursor,
+						"events": _build_grid_day_events(combined_events, local_tz, day_cursor),
+					})
+					day_cursor += timedelta(days=1)
 		else:
 			for field_name, field_errors in form.errors.items():
 				label = form.fields[field_name].label if field_name in form.fields else field_name
@@ -1879,7 +1956,11 @@ def sequential_tool_schedule(request):
 		"available_slots": available_slots,
 		"selected_tool": selected_tool,
 		"errors": errors,
+		"grid_days": grid_days,
+		"grid_window_start_hour": GRID_WINDOW_START_HOUR,
+		"grid_window_end_hour": GRID_WINDOW_END_HOUR,
 	})
+
 
 
 @staff_member_required(login_url=None)

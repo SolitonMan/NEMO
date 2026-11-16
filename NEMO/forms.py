@@ -430,6 +430,9 @@ class SingleToolScheduleForm(forms.Form):
 	def __init__(self, *args, **kwargs):
 		user = kwargs.pop('user', None)
 		super().__init__(*args, **kwargs)
+		today_iso = timezone.localdate().isoformat()
+		self.fields['start_date'].widget.attrs['min'] = today_iso
+		self.fields['end_date'].widget.attrs['min'] = today_iso
 		if user is not None:
 			self.fields['project'].queryset = user.active_projects()
 			if not user.is_staff:
@@ -438,13 +441,29 @@ class SingleToolScheduleForm(forms.Form):
 					id__in=ProbationaryQualifications.objects.filter(user=user, disabled=False).values_list('tool_id', flat=True),
 				).order_by('name')
 
+	def clean_start_date(self):
+		start_date = self.cleaned_data['start_date']
+		if start_date < timezone.localdate():
+			raise forms.ValidationError('The earliest date cannot be in the past.')
+		return start_date
+
+	def clean_end_date(self):
+		end_date = self.cleaned_data['end_date']
+		if end_date < timezone.localdate():
+			raise forms.ValidationError('The latest date cannot be in the past.')
+		return end_date
+
 	def clean(self):
 		cleaned_data = super().clean()
 		start_date = cleaned_data.get('start_date')
 		end_date = cleaned_data.get('end_date')
-		if start_date and end_date and end_date < start_date:
-			raise forms.ValidationError('The latest date must be on or after the earliest date.')
+		if start_date and end_date:
+			if end_date < start_date:
+				raise forms.ValidationError('The latest date must be on or after the earliest date.')
+			if (end_date - start_date).days > 13:
+				raise forms.ValidationError('The date range may not span more than 14 days.')
 		return cleaned_data
+
 
 class ServiceTypeForm(forms.ModelForm):
 	class Meta:
