@@ -168,6 +168,7 @@
 								</li>
 								{% navigation_url 'samples' 'Samples' %}
 								{% navigation_url 'user_requests' 'Requests and Requirements' %}
+								{% navigation_url 'sequential_tool_schedule' 'Reservation Search' %}
 								<li><a href="{% url 'status_dashboard' %}">Status dashboard</a></li>
                                 {% if request.session.pi or user_delegate %}
                                 {% if not request.session.technical_staff %}
@@ -213,7 +214,6 @@
 											{% endif %}
 											{% if user.is_superuser %}
 											{% navigation_url 'tool_training_schedule' 'Tool Training Scheduler' %}
-											{% navigation_url 'sequential_tool_schedule' 'Reservation Search' %}
 											{% navigation_url 'multi_calendar' 'Multi-calendar Scheduler' %}
 											{% navigation_url 'multi_user_training_schedule' 'Multi-user Training Scheduler' %}
 											{% endif %}

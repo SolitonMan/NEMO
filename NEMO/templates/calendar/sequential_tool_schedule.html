@@ -28,7 +28,7 @@ days you would like to use it. Available time slots within that range will be sh
 	<div class="form-group">
 		<label for="tool_search">Tool</label>
 		<input type="text" id="tool_search" placeholder="Search for a tool" class="form-control" autocomplete="off" value="{% if selected_tool %}{{ selected_tool.category }}/{{ selected_tool.name }}{% endif %}">
-		<input type="hidden" name="tool_id" id="id_tool_id" value="{{ selected_tool.id|default_if_none:'' }}">
+		<input type="hidden" name="tool" id="id_tool" value="{{ selected_tool.id|default_if_none:'' }}">
 	</div>
 
 	<div class="form-group">
@@ -94,12 +94,12 @@ $(function() {
 	function on_tool_search_selection(jquery_event, search_selection, dataset_name)
 	{
 		$('#tool_search').typeahead('val', search_selection.name);
-		$('#id_tool_id').val(search_selection.id);
+		$('#id_tool').val(search_selection.id);
 		$('#search-button').prop('disabled', false);
 	}
 
 	// Enable the search button immediately if a tool was already selected (e.g. after a search).
-	if ($('#id_tool_id').val())
+	if ($('#id_tool').val())
 	{
 		$('#search-button').prop('disabled', false);
 	}
@@ -107,7 +107,7 @@ $(function() {
 	// If the user edits the tool search box directly, clear the hidden tool id until a new selection is made.
 	$('#tool_search').on('input', function()
 	{
-		$('#id_tool_id').val('');
+		$('#id_tool').val('');
 		$('#search-button').prop('disabled', true);
 	});
 });

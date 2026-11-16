@@ -1819,7 +1819,7 @@ def sequential_tool_schedule(request):
 	categorized_tools = categorized_tools.rstrip(",") + "]"
 	categorized_tools = mark_safe(categorized_tools)
 
-	if request.GET.get("tool_id"):
+	if request.GET.get("tool"):
 		form = SingleToolScheduleForm(request.GET, user=request.user)
 		if form.is_valid():
 			selected_tool = form.cleaned_data['tool']
@@ -1868,7 +1868,10 @@ def sequential_tool_schedule(request):
 				if not available_slots:
 					errors.append("No available time slots were found for " + str(selected_tool.name) + " within the requested date range.")
 		else:
-			errors.append("Please correct the errors below.")
+			for field_name, field_errors in form.errors.items():
+				label = form.fields[field_name].label if field_name in form.fields else field_name
+				for err in field_errors:
+					errors.append(label + ": " + err)
 
 	return render(request, "calendar/sequential_tool_schedule.html", {
 		"form": form,
