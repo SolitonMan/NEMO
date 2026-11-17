@@ -2462,6 +2462,7 @@ def book_sequential_tool_slot(request):
 	project_id = request.POST.get("project_id")
 	start_str = request.POST.get("start")
 	end_str = request.POST.get("end")
+	configured = (request.POST.get('configured') == "true")
 	user = request.user
 
 	try:
@@ -2479,6 +2480,16 @@ def book_sequential_tool_slot(request):
 		start = start_local.astimezone(pytz.UTC)
 		end = end_local.astimezone(pytz.UTC)
 
+		# If this tool requires configuration and the user hasn't submitted configuration
+		# information yet, present a configuration form before finalizing the reservation.
+		if tool.is_configurable() and not configured:
+			configuration_information = tool.get_configuration_information(user=user, start=start)
+			configuration_information['tool_id'] = tool.id
+			configuration_information['project_id'] = project.id
+			configuration_information['start'] = start_str
+			configuration_information['end'] = end_str
+			return render(request, 'calendar/sequential_tool_configuration.html', configuration_information)
+
 		reservation = Reservation()
 		reservation.user = user
 		reservation.creator = user
@@ -2487,6 +2498,15 @@ def book_sequential_tool_slot(request):
 		reservation.start = start
 		reservation.end = end
 		reservation.short_notice = determine_insufficient_notice(tool, start)
+
+		if tool.is_configurable() and configured:
+			reservation.additional_information, reservation.self_configuration, res_conf = extract_configuration(request)
+			# Reservation can't be short notice if the user is configuring the tool themselves.
+			if reservation.self_configuration:
+				reservation.short_notice = False
+		else:
+			res_conf = []
+
 		reservation.created = timezone.now()
 		reservation.updated = timezone.now()
 
@@ -2497,6 +2517,12 @@ def book_sequential_tool_slot(request):
 			return redirect(request.META.get('HTTP_REFERER', 'sequential_tool_schedule'))
 
 		reservation.save()
+
+		for rc in res_conf:
+			if rc is not None:
+				rc.reservation = reservation
+				rc.updated = timezone.now()
+				rc.save()
 
 		res_proj = ReservationProject()
 		res_proj.reservation = reservation

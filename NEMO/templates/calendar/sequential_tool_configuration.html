@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% load custom_tags_and_filters %}
+{% block title %}Tool Configuration{% endblock %}
+{% block content %}
+
+<h2>Choose Tool Configuration</h2>
+<p>This tool requires configuration before your reservation can be finalized. Please make your selections below and
+submit to complete the reservation.</p>
+
+{% if not sufficient_notice %}
+	<div class="alert alert-danger">
+		<strong>Warning:</strong> {{ notice_limit }} hours of advance notice is required when reserving this tool in order to configure it properly. You may still create this reservation, but there is no guarantee the tool will be properly configured when you arrive to use it.
+	</div>
+{% endif %}
+
+<form method="post" action="{% url 'book_sequential_tool_slot' %}">
+	{% csrf_token %}
+	<input type="hidden" name="configured" value="true">
+	<input type="hidden" name="tool_id" value="{{ tool_id }}">
+	<input type="hidden" name="project_id" value="{{ project_id }}">
+	<input type="hidden" name="start" value="{{ start }}">
+	<input type="hidden" name="end" value="{{ end }}">
+
+	{% include 'calendar/configuration_helper.html' %}
+
+	<button type="submit" class="btn btn-success">Create this reservation</button>
+	<a href="{% url 'sequential_tool_schedule' %}" class="btn btn-default">Cancel</a>
+</form>
+
+<script>
+	$('[data-toggle~="tooltip"]').tooltip();
+</script>
+{% endblock %}
