@@ -119,6 +119,29 @@ days you would like to use it. Available time slots within that range will be sh
 
 <br/>
 
+{% if grid_days %}
+	<h3>Schedule Overview for {{ selected_tool.name }} (6 AM - 6 PM)</h3>
+	<p>
+		<span class="grid-legend grid-tool-busy"></span> {{ selected_tool.name }} reservations/outages &nbsp;
+		<span class="grid-legend grid-outage"></span> Scheduled outages &nbsp;
+		<span class="grid-legend grid-other-reservation"></span> Your other reservations
+	</p>
+	<div class="schedule-grid-wrapper">
+		{% for day in grid_days %}
+			<div class="schedule-grid-day">
+				<div class="schedule-grid-header">{{ day.date|date:"D" }}<br/>{{ day.date|date:"n/j" }}</div>
+				<div class="schedule-grid-column">
+					{% for event in day.events %}
+						<div class="schedule-grid-event {{ event.css_class }}" style="top: {{ event.top_pct }}%; height: {{ event.height_pct }}%;" title="{{ event.start_label }} - {{ event.end_label }}"></div>
+					{% endfor %}
+				</div>
+			</div>
+		{% endfor %}
+	</div>
+{% endif %}
+
+<br/>
+
 {% if available_slots %}
 	<h3>Available Times for {{ selected_tool.name }}</h3>
 	<table class="table">
@@ -148,26 +171,6 @@ days you would like to use it. Available time slots within that range will be sh
 		{% endfor %}
 		</tbody>
 	</table>
-{% endif %}
-{% if grid_days %}
-	<h3>Schedule Overview for {{ selected_tool.name }} (6 AM - 6 PM)</h3>
-	<p>
-		<span class="grid-legend grid-tool-busy"></span> {{ selected_tool.name }} reservations/outages &nbsp;
-		<span class="grid-legend grid-outage"></span> Scheduled outages &nbsp;
-		<span class="grid-legend grid-other-reservation"></span> Your other reservations
-	</p>
-	<div class="schedule-grid-wrapper">
-		{% for day in grid_days %}
-			<div class="schedule-grid-day">
-				<div class="schedule-grid-header">{{ day.date|date:"D" }}<br/>{{ day.date|date:"n/j" }}</div>
-				<div class="schedule-grid-column">
-					{% for event in day.events %}
-						<div class="schedule-grid-event {{ event.css_class }}" style="top: {{ event.top_pct }}%; height: {{ event.height_pct }}%;" title="{{ event.start_label }} - {{ event.end_label }}"></div>
-					{% endfor %}
-				</div>
-			</div>
-		{% endfor %}
-	</div>
 {% endif %}
 <script>
 $(function() {
